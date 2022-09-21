@@ -6,7 +6,7 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of halfmoon is to …
+The goal of halfmoon is to cultivate balance in propensity score models.
 
 ## Installation
 
@@ -20,36 +20,63 @@ devtools::install_github("malcolmbarrett/halfmoon")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+halfmoon includes several techniques for assessing the balance created
+by propensity score weights.
 
 ``` r
 library(halfmoon)
-## basic example code
+library(ggplot2)
+
+# weighted mirrored histograms
+ggplot(nhefs_weights, aes(.fitted)) +
+  geom_mirror_histogram(
+    aes(group = qsmk),
+    bins = 50
+  ) +
+  geom_mirror_histogram(
+    aes(fill = qsmk, weight = w_ate),
+    bins = 50,
+    alpha = 0.5
+  ) + scale_y_continuous(labels = abs)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+<img src="man/figures/README-example-1.png" width="100%" />
 
 ``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
+
+# weighted ecdf
+ggplot(
+  nhefs_weights,
+  aes(x = smokeyrs, color = qsmk)
+) +
+  geom_ecdf(aes(weights = w_ato)) +
+  xlab("Smoking Years") +
+  ylab("Proportion <= x")
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this. You could also
-use GitHub Actions to re-render `README.Rmd` every time you push. An
-example workflow can be found here:
-<https://github.com/r-lib/actions/tree/v1/examples>.
+<img src="man/figures/README-example-2.png" width="100%" />
 
-You can also embed plots, for example:
+``` r
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+# weighted SMDs
+plot_df <- tidy_smd(
+  nhefs_weights,
+  race:active,
+  .group = qsmk,
+  .wts = starts_with("w_")
+)
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+ggplot(
+  plot_df,
+  aes(
+    x = abs(smd),
+    y = variable,
+    group = weights,
+    color = weights,
+    fill = weights
+  )
+) +
+  geom_love()
+```
+
+<img src="man/figures/README-example-3.png" width="100%" />
