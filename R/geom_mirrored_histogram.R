@@ -48,6 +48,10 @@ geom_mirror_histogram <- function(
 StatMirrorCount <- ggplot2::ggproto(
   "StatMirrorCount",
   ggplot2::StatBin,
+  setup_data = function(data, params) {
+    print(params)
+    data
+  },
   compute_group = function(data, scales, binwidth = NULL, bins = NULL,
                            center = NULL, boundary = NULL,
                            closed = c("right", "left"), pad = FALSE,
@@ -64,7 +68,15 @@ StatMirrorCount <- ggplot2::ggproto(
     if (group == 1) {
       data$count <- -data$count
     } else if (group > 2) {
-      rlang::abort("Groups of three or greater not supported in `geom_mirror_histogram()`")
+      cli::cli_abort(
+        "Groups of three or greater not supported in `geom_mirror_histogram()`"
+      )
+    } else if (group == -1) {
+      cli::cli_abort(c(
+        "No group detected.",
+        "*" = "Do you need to use {.var factor()} or \\
+        {.var character()} on your grouping variable?"
+      ))
     }
     data
   }
