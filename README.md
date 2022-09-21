@@ -72,8 +72,7 @@ ggplot(
     x = abs(smd),
     y = variable,
     group = weights,
-    color = weights,
-    fill = weights
+    color = weights
   )
 ) +
   geom_love()
