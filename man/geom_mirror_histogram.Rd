@@ -86,3 +86,7 @@ a geom
 \description{
 Create mirrored histograms
 }
+\examples{
+library(ggplot2)
+nhefs_weights <- tidysmd::nhefs_weights
+}
