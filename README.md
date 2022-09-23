@@ -6,6 +6,14 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
+> Within light there is darkness, but do not try to understand that
+> darkness. Within darkness there is light, but do not look for that
+> light. Light and darkness are a pair like the foot before and the foot
+> behind in walking.
+
+– From the Zen teaching poem
+[Sandokai](https://en.wikipedia.org/wiki/Sandokai).
+
 The goal of halfmoon is to cultivate balance in propensity score models.
 
 ## Installation
