@@ -48,10 +48,6 @@ geom_mirror_histogram <- function(
 StatMirrorCount <- ggplot2::ggproto(
   "StatMirrorCount",
   ggplot2::StatBin,
-  setup_data = function(data, params) {
-    print(params)
-    data
-  },
   compute_group = function(data, scales, binwidth = NULL, bins = NULL,
                            center = NULL, boundary = NULL,
                            closed = c("right", "left"), pad = FALSE,
