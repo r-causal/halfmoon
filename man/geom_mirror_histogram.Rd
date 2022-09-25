@@ -88,5 +88,15 @@ Create mirrored histograms
 }
 \examples{
 library(ggplot2)
-nhefs_weights <- tidysmd::nhefs_weights
+ggplot(nhefs_weights, aes(.fitted)) +
+  geom_mirror_histogram(
+    aes(group = qsmk),
+    bins = 50
+  ) +
+  geom_mirror_histogram(
+    aes(fill = qsmk, weight = w_ate),
+    bins = 50,
+    alpha = 0.5
+  ) +
+  scale_y_continuous(labels = abs)
 }

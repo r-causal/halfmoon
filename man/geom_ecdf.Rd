@@ -84,11 +84,10 @@ weights }
 
 \examples{
 library(ggplot2)
-nhefs_weights <- tidysmd::nhefs_weights
 
 ggplot(
   nhefs_weights,
-  aes(x = smokeyrs, color = factor(qsmk))
+  aes(x = smokeyrs, color = qsmk)
 ) +
   geom_ecdf(aes(weights = w_ato)) +
   xlab("Smoking Years") +
