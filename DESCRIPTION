@@ -15,7 +15,7 @@ Depends:
 Imports: 
     cli,
     ggplot2,
-    rlang,
+    rlang (>= 1.0.5),
     tidyselect,
     tidysmd (>= 0.1.1.9000)
 Suggests: 

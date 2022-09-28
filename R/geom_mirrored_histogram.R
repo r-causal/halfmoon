@@ -64,11 +64,11 @@ StatMirrorCount <- ggplot2::ggproto(
     if (group == 1) {
       data$count <- -data$count
     } else if (group > 2) {
-      cli::cli_abort(
+      abort(
         "Groups of three or greater not supported in `geom_mirror_histogram()`"
       )
     } else if (group == -1) {
-      cli::cli_abort(c(
+      abort(c(
         "No group detected.",
         "*" = "Do you need to use {.var factor()} or \\
         {.var character()} on your grouping variable?"
