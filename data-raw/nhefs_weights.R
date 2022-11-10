@@ -32,6 +32,7 @@ nhefs_weights <- propensity_model %>%
     qsmk,
     race,
     age,
+    sex,
     education,
     smokeintensity,
     smokeyrs,
