@@ -8,7 +8,8 @@ Description: Techniques to build better balance in causal inference
     models. 'halfmoon' helps you assess propensity score models for
     balance between groups.
 License: MIT + file LICENSE
-URL: https://github.com/malcolmbarrett/halfmoon
+URL: https://github.com/malcolmbarrett/halfmoon,
+    https://malcolmbarrett.github.io/halfmoon/
 BugReports: https://github.com/malcolmbarrett/halfmoon/issues
 Depends: 
     R (>= 2.10)
