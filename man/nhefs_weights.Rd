@@ -6,7 +6,7 @@
 \title{NHEFS with various propensity score weights}
 \format{
 A data frame with 1566 rows and 14 variables: \describe{
-\item{qsmk}{Quit smoking} \item{race}{Race} \item{age}{Age}
+\item{qsmk}{Quit smoking} \item{race}{Race} \item{age}{Age} \item{sex}{Sex}
 \item{education}{Education level} \item{smokeintensity}{Smoking intensity}
 \item{smokeyrs}{Number of smoke-years} \item{exercise}{Exercise level}
 \item{active}{Daily activity level} \item{wt71}{Participant weight in 1971
