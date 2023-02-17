@@ -4,6 +4,8 @@
 # halfmoon <img src="man/figures/logo.png" align="right" height="138" />
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/malcolmbarrett/halfmoon/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/malcolmbarrett/halfmoon/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 > Within light there is darkness, but do not try to understand that
