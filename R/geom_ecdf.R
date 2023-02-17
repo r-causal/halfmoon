@@ -40,7 +40,11 @@ StatWeightedECDF <- ggplot2::ggproto(
   compute_group = function(data, scales, n = NULL, pad = NULL) {
     if ("weights" %in% names(data)) {
       data <- data[order(data$x), ]
-      data$y <- cumsum(data$weights) / sum(data$weights)
+      if (packageVersion("ggplot2") >= "3.4.1") {
+        data$ecdf <- cumsum(data$weights) / sum(data$weights)
+      } else {
+        data$y <- cumsum(data$weights) / sum(data$weights)
+      }
       data
     } else {
       ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad)
