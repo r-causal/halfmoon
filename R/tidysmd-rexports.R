@@ -12,4 +12,8 @@ tidysmd::love_plot
 #' @importFrom tidysmd tidy_smd
 #' @export
 tidysmd::tidy_smd
+#' @aliases tidysmd
+#' @importFrom tidysmd bind_matches
+#' @export
+tidysmd::bind_matches
 
