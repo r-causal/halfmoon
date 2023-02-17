@@ -38,7 +38,7 @@ You can install the development version of halfmoon from [GitHub](https://github
 devtools::install_github("malcolmbarrett/halfmoon")
 ```
 
-## Example
+## Example: Weighting
 
 halfmoon includes several techniques for assessing the balance created by propensity score weights.
 
@@ -80,9 +80,81 @@ ggplot(
   aes(
     x = abs(smd),
     y = variable,
-    group = weights,
-    color = weights
+    group = method,
+    color = method
   )
 ) +
   geom_love()
 ```
+
+## Example: Matching
+
+halfmoon also has support for working with matched datasets. Consider these two objects from the [MatchIt](https://github.com/kosukeimai/MatchIt) documentation:
+
+```{r}
+library(MatchIt)
+# Default: 1:1 NN PS matching w/o replacement
+m.out1 <- matchit(treat ~ age + educ + race + nodegree +
+                   married + re74 + re75, data = lalonde)
+
+# 1:1 NN Mahalanobis distance matching w/ replacement and
+# exact matching on married and race
+m.out2 <- matchit(treat ~ age + educ + race + nodegree +
+                   married + re74 + re75, data = lalonde,
+                   distance = "mahalanobis", replace = TRUE,
+                  exact = ~ married + race)
+```
+
+One option is to just look at the matched dataset with halfmoon:
+
+```{r}
+matched_data <- get_matches(m.out1)
+
+match_smd <- tidy_smd(
+  matched_data,
+  c(age, educ, race, nodegree, married, re74, re75), 
+  .group = treat
+)
+
+love_plot(match_smd)
+```
+
+The downside here is that you can't compare multiple matching strategies to the observed dataset; the label on the plot is also wrong. halfmoon comes with a helper function, `bind_matches()`, that creates a dataset more appropriate for this task:
+
+```{r}
+matches <- bind_matches(lalonde, m.out1, m.out2)
+head(matches)
+```
+
+`matches` includes an binary variable for each `matchit` object which indicates if the row was included in the match or not. Since downweighting to 0 is equivalent to filtering the datasets to the matches, we can more easily compare multiple matched datasets with `.wts`:
+
+```{r}
+many_matched_smds <- tidy_smd(
+  matches,
+  c(age, educ, race, nodegree, married, re74, re75), 
+  .group = treat, 
+  .wts = c(m.out1, m.out2)
+) 
+
+love_plot(many_matched_smds)
+```
+
+We can also extend the idea that matching indicators are weights to weighted mirrored histograms, giving us a good idea of the range of propensity scores that are being removed from the dataset.
+
+```{r}
+# use the distance as the propensity score
+matches$ps <- m.out1$distance
+
+ggplot(matches, aes(ps)) +
+    geom_mirror_histogram(
+        aes(group = factor(treat)),
+        bins = 50
+    ) +
+    geom_mirror_histogram(
+        aes(fill = factor(treat), weight = m.out1),
+        bins = 50,
+        alpha = 0.5
+    ) + scale_y_continuous(labels = abs)
+```
+
+
