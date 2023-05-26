@@ -7,7 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="Techniques to build better balance in causal inference
     models. halfmoon helps you assess propensity score models for
-    balance between groups.">
+    balance between groups using metrics like SMDs and visualization
+    techniques like mirrored histograms. halfmoon supports both
+    weighting and matching techniques.">
 <title>Techniques to Build Better Balance • halfmoon</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -22,7 +24,9 @@
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Techniques to Build Better Balance">
 <meta property="og:description" content="Techniques to build better balance in causal inference
     models. halfmoon helps you assess propensity score models for
-    balance between groups.">
+    balance between groups using metrics like SMDs and visualization
+    techniques like mirrored histograms. halfmoon supports both
+    weighting and matching techniques.">
 <meta property="og:image" content="https://malcolmbarrett.github.io/halfmoon/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -83,8 +87,11 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of halfmoon from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>You can install the most recent version of halfmoon from CRAN with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"halfmoon"</span><span class="op">)</span></span></code></pre></div>
+<p>You can also install the development version of halfmoon from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"malcolmbarrett/halfmoon"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -92,7 +99,7 @@
 <h2 id="example-weighting">Example: Weighting<a class="anchor" aria-label="anchor" href="#example-weighting"></a>
 </h2>
 <p>halfmoon includes several techniques for assessing the balance created by propensity score weights.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/malcolmbarrett/halfmoon" class="external-link">halfmoon</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
@@ -106,9 +113,13 @@
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">qsmk</span>, weight <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span>,</span>
 <span>    bins <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>    alpha <span class="op">=</span> <span class="fl">0.5</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="va">abs</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="va">abs</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Computation failed in `stat_mirror_count()`</span></span>
+<span><span class="co">#&gt; Computation failed in `stat_mirror_count()`</span></span>
+<span><span class="co">#&gt; Caused by error in `compute_group()`:</span></span>
+<span><span class="co">#&gt; ! unused argument (width = NULL)</span></span></code></pre></div>
 <p><img src="reference/figures/README-example-1.png" width="100%"></p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># weighted ecdf</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span></span>
@@ -119,7 +130,7 @@
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Smoking Years"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"Proportion &lt;= x"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-example-2.png" width="100%"></p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># weighted SMDs</span></span>
 <span><span class="va">plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://malcolmbarrett.github.io/tidysmd/reference/tidy_smd.html" class="external-link">tidy_smd</a></span><span class="op">(</span></span>
@@ -145,7 +156,7 @@
 <h2 id="example-matching">Example: Matching<a class="anchor" aria-label="anchor" href="#example-matching"></a>
 </h2>
 <p>halfmoon also has support for working with matched datasets. Consider these two objects from the <a href="https://github.com/kosukeimai/MatchIt" class="external-link">MatchIt</a> documentation:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://kosukeimai.github.io/MatchIt/" class="external-link">MatchIt</a></span><span class="op">)</span></span>
 <span><span class="co"># Default: 1:1 NN PS matching w/o replacement</span></span>
 <span><span class="va">m.out1</span> <span class="op">&lt;-</span> <span class="fu">matchit</span><span class="op">(</span><span class="va">treat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span> <span class="op">+</span> <span class="va">race</span> <span class="op">+</span> <span class="va">nodegree</span> <span class="op">+</span></span>
@@ -158,7 +169,7 @@
 <span>                   distance <span class="op">=</span> <span class="st">"mahalanobis"</span>, replace <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                  exact <span class="op">=</span> <span class="op">~</span> <span class="va">married</span> <span class="op">+</span> <span class="va">race</span><span class="op">)</span></span></code></pre></div>
 <p>One option is to just look at the matched dataset with halfmoon:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">matched_data</span> <span class="op">&lt;-</span> <span class="fu">get_matches</span><span class="op">(</span><span class="va">m.out1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">match_smd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://malcolmbarrett.github.io/tidysmd/reference/tidy_smd.html" class="external-link">tidy_smd</a></span><span class="op">(</span></span>
@@ -170,7 +181,7 @@
 <span><span class="fu"><a href="https://malcolmbarrett.github.io/tidysmd/reference/geom_love.html" class="external-link">love_plot</a></span><span class="op">(</span><span class="va">match_smd</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-3-1.png" width="100%"></p>
 <p>The downside here is that you can’t compare multiple matching strategies to the observed dataset; the label on the plot is also wrong. halfmoon comes with a helper function, <code><a href="https://malcolmbarrett.github.io/tidysmd/reference/bind_matches.html" class="external-link">bind_matches()</a></code>, that creates a dataset more appropriate for this task:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">matches</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://malcolmbarrett.github.io/tidysmd/reference/bind_matches.html" class="external-link">bind_matches</a></span><span class="op">(</span><span class="va">lalonde</span>, <span class="va">m.out1</span>, <span class="va">m.out2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">matches</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      treat age educ   race married nodegree re74 re75       re78 m.out1 m.out2</span></span>
@@ -181,7 +192,7 @@
 <span><span class="co">#&gt; NSW5     1  33    8  black       0        1    0    0   289.7899      1      1</span></span>
 <span><span class="co">#&gt; NSW6     1  22    9  black       0        1    0    0  4056.4940      1      1</span></span></code></pre></div>
 <p><code>matches</code> includes an binary variable for each <code>matchit</code> object which indicates if the row was included in the match or not. Since downweighting to 0 is equivalent to filtering the datasets to the matches, we can more easily compare multiple matched datasets with <code>.wts</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">many_matched_smds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://malcolmbarrett.github.io/tidysmd/reference/tidy_smd.html" class="external-link">tidy_smd</a></span><span class="op">(</span></span>
 <span>  <span class="va">matches</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">educ</span>, <span class="va">race</span>, <span class="va">nodegree</span>, <span class="va">married</span>, <span class="va">re74</span>, <span class="va">re75</span><span class="op">)</span>, </span>
@@ -192,7 +203,7 @@
 <span><span class="fu"><a href="https://malcolmbarrett.github.io/tidysmd/reference/geom_love.html" class="external-link">love_plot</a></span><span class="op">(</span><span class="va">many_matched_smds</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-5-1.png" width="100%"></p>
 <p>We can also extend the idea that matching indicators are weights to weighted mirrored histograms, giving us a good idea of the range of propensity scores that are being removed from the dataset.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># use the distance as the propensity score</span></span>
 <span><span class="va">matches</span><span class="op">$</span><span class="va">ps</span> <span class="op">&lt;-</span> <span class="va">m.out1</span><span class="op">$</span><span class="va">distance</span></span>
 <span></span>
@@ -205,7 +216,11 @@
 <span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">treat</span><span class="op">)</span>, weight <span class="op">=</span> <span class="va">m.out1</span><span class="op">)</span>,</span>
 <span>        bins <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>        alpha <span class="op">=</span> <span class="fl">0.5</span></span>
-<span>    <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="va">abs</span><span class="op">)</span></span></code></pre></div>
+<span>    <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="va">abs</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Computation failed in `stat_mirror_count()`</span></span>
+<span><span class="co">#&gt; Computation failed in `stat_mirror_count()`</span></span>
+<span><span class="co">#&gt; Caused by error in `compute_group()`:</span></span>
+<span><span class="co">#&gt; ! unused argument (width = NULL)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="100%"></p>
 </div>
 </div>
