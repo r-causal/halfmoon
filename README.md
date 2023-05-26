@@ -54,10 +54,6 @@ ggplot(nhefs_weights, aes(.fitted)) +
     bins = 50,
     alpha = 0.5
   ) + scale_y_continuous(labels = abs)
-#> Warning: Computation failed in `stat_mirror_count()`
-#> Computation failed in `stat_mirror_count()`
-#> Caused by error in `compute_group()`:
-#> ! unused argument (width = NULL)
 ```
 
 <img src="man/figures/README-example-1.png" width="100%" />
@@ -190,10 +186,6 @@ ggplot(matches, aes(ps)) +
         bins = 50,
         alpha = 0.5
     ) + scale_y_continuous(labels = abs)
-#> Warning: Computation failed in `stat_mirror_count()`
-#> Computation failed in `stat_mirror_count()`
-#> Caused by error in `compute_group()`:
-#> ! unused argument (width = NULL)
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
