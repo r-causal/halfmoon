@@ -52,15 +52,13 @@ StatMirrorCount <- ggplot2::ggproto(
                            center = NULL, boundary = NULL,
                            closed = c("right", "left"), pad = FALSE,
                            breaks = NULL, flipped_aes = FALSE,
-                           origin = NULL, right = NULL, drop = NULL,
-                           width = NULL) {
+                           origin = NULL, right = NULL, drop = NULL) {
     group <- unique(data$group)
     data <- ggplot2::StatBin$compute_group(data = data, scales = scales, binwidth = binwidth, bins = bins,
                                            center = center, boundary = boundary,
                                            closed = closed, pad = pad,
                                            breaks = breaks, flipped_aes = flipped_aes,
-                                           origin = origin, right = right, drop = drop,
-                                           width = width)
+                                           origin = origin, right = right, drop = drop)
     if (group == 1) {
       data$count <- -data$count
     } else if (group > 2) {
