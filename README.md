@@ -8,6 +8,10 @@
 [![R-CMD-check](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/malcolmbarrett/halfmoon/branch/main/graph/badge.svg)](https://app.codecov.io/gh/malcolmbarrett/halfmoon?branch=main)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/halfmoon)](https://CRAN.R-project.org/package=halfmoon)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 > Within light there is darkness, but do not try to understand that
