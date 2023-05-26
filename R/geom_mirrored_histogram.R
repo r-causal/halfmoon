@@ -68,8 +68,8 @@ StatMirrorCount <- ggplot2::ggproto(
     } else if (group == -1) {
       abort(c(
         "No group detected.",
-        "*" = "Do you need to use {.var factor()} or \\
-        {.var character()} on your grouping variable?"
+        "*" = "Do you need to use {.var aes(group = ...)}  \\
+        with your grouping variable?"
       ))
     }
     data
