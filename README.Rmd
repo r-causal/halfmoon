@@ -32,7 +32,13 @@ The goal of halfmoon is to cultivate balance in propensity score models.
 
 ## Installation
 
-You can install the development version of halfmoon from [GitHub](https://github.com/) with:
+You can install the most recent version of halfmoon from CRAN with:
+
+``` r
+install.packages("halfmoon")
+```
+
+You can also install the development version of halfmoon from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
