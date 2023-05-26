@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/malcolmbarrett/halfmoon/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/malcolmbarrett/halfmoon/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 > Within light there is darkness, but do not try to understand that

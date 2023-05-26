@@ -10,9 +10,9 @@ Description: Build better balance in causal inference models. 'halfmoon'
     techniques like mirrored histograms. 'halfmoon' supports both
     weighting and matching techniques.
 License: MIT + file LICENSE
-URL: https://github.com/malcolmbarrett/halfmoon,
-    https://malcolmbarrett.github.io/halfmoon/
-BugReports: https://github.com/malcolmbarrett/halfmoon/issues
+URL: https://github.com/r-causal/halfmoon,
+    https://r-causal.github.io/halfmoon/
+BugReports: https://github.com/r-causal/halfmoon/issues
 Depends: 
     R (>= 2.10)
 Imports: 
