@@ -4,9 +4,9 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Malcolm", "Barrett", , "malcolmbarrett@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0299-5825"))
-Description: Build better balance in causal inference
-    models. 'halfmoon' helps you assess propensity score models for
-    balance between groups using metrics like SMDs and visualization
+Description: Build better balance in causal inference models. 'halfmoon'
+    helps you assess propensity score models for balance between groups
+    using metrics like standardized mean differences and visualization
     techniques like mirrored histograms. 'halfmoon' supports both
     weighting and matching techniques.
 License: MIT + file LICENSE
