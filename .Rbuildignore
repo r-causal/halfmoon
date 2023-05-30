@@ -10,3 +10,4 @@
 ^cran-comments\.md$
 ^rhub\.R$
 ^codecov\.yml$
+^CRAN-SUBMISSION$
