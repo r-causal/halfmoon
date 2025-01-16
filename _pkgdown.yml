@@ -1,4 +1,5 @@
 url: https://r-causal.github.io/halfmoon/
 template:
+  math-rendering: mathjax
   bootstrap: 5
 
