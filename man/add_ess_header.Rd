@@ -21,6 +21,7 @@ a 'gtsummary' table
 Add ESS Header to gtsummary tbl
 }
 \examples{
+\dontshow{if (rlang::check_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
 
 gtsummary::tbl_svysummary(svy, include = age) |>
@@ -28,4 +29,5 @@ gtsummary::tbl_svysummary(svy, include = age) |>
 
 gtsummary::tbl_svysummary(svy, by = trt, include = age) |>
   add_ess_header(header = "**{level}**  \nN = {n} / {N}")
+\dontshow{\}) # examplesIf}
 }

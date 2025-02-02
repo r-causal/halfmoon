@@ -8,8 +8,9 @@
 #'
 #' @returns a 'gtsummary' table
 #' @export
+#' @importFrom rlang .env .data
 #'
-#' @examples
+#' @examplesIf rlang::check_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))
 #' svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
 #'
 #' gtsummary::tbl_svysummary(svy, include = age) |>
@@ -19,7 +20,7 @@
 #'   add_ess_header(header = "**{level}**  \nN = {n} / {N}")
 add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
   # check inputs ---------------------------------------------------------------
-  rlang::check_installed(c("gtsummary", "cards", "dplyr"))
+  rlang::check_installed(c("cards", "dplyr"))
   if (!inherits(x, "tbl_svysummary")) {
     cli::cli_abort("Argument {.arg x} must be class {.cls tbl_svysummary} typically created with {.fun gtsummary::tbl_svysummary}.")
   }
@@ -63,10 +64,6 @@ add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
 
 # this is an ARD function in the style of the cardx::ard_survy_*() functions
 ard_survey_ess <- function(data, by = NULL) {
-  # check inputs ---------------------------------------------------------------
-  cardx:::check_not_missing(data)
-  cardx:::check_class(data, "survey.design")
-
   # calculate ESS --------------------------------------------------------------
   cards::ard_continuous(
     data =
