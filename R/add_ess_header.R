@@ -10,7 +10,7 @@
 #' @export
 #' @importFrom rlang .env .data
 #'
-#' @examplesIf rlang::check_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))
+#' @examplesIf rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))
 #' svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
 #'
 #' gtsummary::tbl_svysummary(svy, include = age) |>
