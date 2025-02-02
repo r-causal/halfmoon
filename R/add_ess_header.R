@@ -26,7 +26,7 @@ add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
   # check inputs ---------------------------------------------------------------
   rlang::check_installed(c("cards", "dplyr"))
   if (!inherits(x, "tbl_svysummary")) {
-    cli::cli_abort("Argument {.arg x} must be class {.cls tbl_svysummary} typically created with {.fun gtsummary::tbl_svysummary}.")
+    cli::cli_abort("Argument {.arg x} must be class {.cls tbl_svysummary} and typically created with {.fun gtsummary::tbl_svysummary}.")
   }
   if (!rlang::is_string(header)) {
     cli::cli_abort("Argument {.arg header} must be a string.")
