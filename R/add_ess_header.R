@@ -70,7 +70,7 @@ add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
   x
 }
 
-# this is an ARD function in the style of the cardx::ard_survy_*() functions
+# this is an ARD function in the style of the cardx::ard_survey_*() functions
 ard_survey_ess <- function(data, by = NULL) {
   # calculate ESS --------------------------------------------------------------
   cards::ard_continuous(
