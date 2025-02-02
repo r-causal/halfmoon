@@ -10,7 +10,7 @@
 #' @export
 #' @importFrom rlang .env .data
 #'
-#' @examplesIf rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))
+#' @examplesIf rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr", "tidyr"))
 #' svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
 #'
 #' gtsummary::tbl_svysummary(svy, include = age) |>
@@ -20,7 +20,7 @@
 #'   add_ess_header(header = "**{level}**  \nN = {n} / {N}")
 add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
   # check inputs ---------------------------------------------------------------
-  rlang::check_installed(c("cards", "dplyr"))
+  rlang::check_installed(c("cards", "dplyr", "tidyr"))
   if (!inherits(x, "tbl_svysummary")) {
     cli::cli_abort("Argument {.arg x} must be class {.cls tbl_svysummary} typically created with {.fun gtsummary::tbl_svysummary}.")
   }
@@ -52,7 +52,8 @@ add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
           ) |>
           dplyr::select("column", tidyselect::starts_with("modify_stat_")),
         by = "column"
-      )
+      ) |>
+      tidyr::fill(.data$modify_stat_N, .direction = "downup")
   }
 
   # update the header and return table -----------------------------------------
