@@ -1,0 +1,84 @@
+#' Add ESS Header to gtsummary tbl
+#'
+#' @param x (`tbl_svysummary`)\cr
+#'   Object of class `'tbl_svysummary'` typically created with `gtsummary::tbl_svysummary()`.
+#' @param header (`string`)\cr
+#'   String specifying updated header.
+#'   Review `gtsummary::modify_header()` for details on use.
+#'
+#' @returns a 'gtsummary' table
+#' @export
+#'
+#' @examples
+#' svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
+#'
+#' gtsummary::tbl_svysummary(svy, include = age) |>
+#'   add_ess_header()
+#'
+#' gtsummary::tbl_svysummary(svy, by = trt, include = age) |>
+#'   add_ess_header(header = "**{level}**  \nN = {n} / {N}")
+add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
+  # check inputs ---------------------------------------------------------------
+  rlang::check_installed(c("gtsummary", "cards", "dplyr"))
+  if (!inherits(x, "tbl_svysummary")) {
+    cli::cli_abort("Argument {.arg x} must be class {.cls tbl_svysummary} typically created with {.fun gtsummary::tbl_svysummary}.")
+  }
+  if (!rlang::is_string(header)) {
+    cli::cli_abort("Argument {.arg header} must be a string.")
+  }
+
+  # calculate ARD with ESS counts ----------------------------------------------
+  ard_ess <- ard_survey_ess(data = x$inputs$data, by = x$inputs$by)
+
+  # replace statistics in `x$table_styling$table_header` with ESS --------------
+  if (rlang::is_empty(x$inputs$by)) {
+    x$table_styling$header$modify_stat_level <- "Overall"
+    x$table_styling$header$modify_stat_N <- ard_ess$stat[[1]]
+    x$table_styling$header$modify_stat_n <- ard_ess$stat[[1]]
+    x$table_styling$header$modify_stat_p <- 1
+  }
+  else {
+    x$table_styling$header <-
+      dplyr::rows_update(
+        x$table_styling$header,
+        ard_ess |>
+          dplyr::mutate(
+            column = paste0("stat_", seq_len(nrow(.env$ard_ess))),
+            modify_stat_level = lapply(.data$group1_level, FUN = as.character) |> unlist(),
+            modify_stat_n = unlist(.data$stat),
+            modify_stat_N = sum(.data$modify_stat_n),
+            modify_stat_p = .data$modify_stat_n / .data$modify_stat_N
+          ) |>
+          dplyr::select("column", tidyselect::starts_with("modify_stat_")),
+        by = "column"
+      )
+  }
+
+  # update the header and return table -----------------------------------------
+  x <- gtsummary::modify_header(x, gtsummary::all_stat_cols() ~ header)
+  x$cards$add_ess_header <- ard_ess
+  x$call_list <- append(x$call_list, list(add_ess_header = match.call()))
+  x
+}
+
+# this is an ARD function in the style of the cardx::ard_survy_*() functions
+ard_survey_ess <- function(data, by = NULL) {
+  # check inputs ---------------------------------------------------------------
+  cardx:::check_not_missing(data)
+  cardx:::check_class(data, "survey.design")
+
+  # calculate ESS --------------------------------------------------------------
+  cards::ard_continuous(
+    data =
+      data$variables |>
+      dplyr::mutate(...cards_survey_design_weights_column... = stats::weights(data)),
+    variables = "...cards_survey_design_weights_column...",
+    by = {{ by }},
+    statistic = everything() ~ list(ess = \(x) ess(x))
+  ) |>
+    dplyr::mutate(
+      variable = "..ess..",
+      context = "survey_ess",
+      stat_label = "Effective Sample Size"
+    )
+}
