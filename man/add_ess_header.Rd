@@ -2,7 +2,7 @@
 % Please edit documentation in R/add_ess_header.R
 \name{add_ess_header}
 \alias{add_ess_header}
-\title{Add ESS Header to gtsummary tbl}
+\title{Add ESS Table Header}
 \usage{
 add_ess_header(x, header = "**{level}**  \\nN = {round(n)}")
 }
@@ -18,7 +18,9 @@ Review \code{gtsummary::modify_header()} for details on use.}
 a 'gtsummary' table
 }
 \description{
-Add ESS Header to gtsummary tbl
+This function replaces the counts in the default header of
+\code{gtsummary::tbl_svysummary()} tables to counts representing the
+Effective Sample Size (ESS). See \code{\link[=ess]{ess()}} for details.
 }
 \examples{
 \dontshow{if (rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

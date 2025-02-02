@@ -1,4 +1,8 @@
-#' Add ESS Header to gtsummary tbl
+#' Add ESS Table Header
+#'
+#' This function replaces the counts in the default header of
+#' `gtsummary::tbl_svysummary()` tables to counts representing the
+#' Effective Sample Size (ESS). See [`ess()`] for details.
 #'
 #' @param x (`tbl_svysummary`)\cr
 #'   Object of class `'tbl_svysummary'` typically created with `gtsummary::tbl_svysummary()`.
@@ -27,6 +31,7 @@ add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
   if (!rlang::is_string(header)) {
     cli::cli_abort("Argument {.arg header} must be a string.")
   }
+  updated_call <- append(x$call_list, list(add_ess_header = match.call()))
 
   # calculate ARD with ESS counts ----------------------------------------------
   ard_ess <- ard_survey_ess(data = x$inputs$data, by = x$inputs$by)
@@ -59,9 +64,9 @@ add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
   }
 
   # update the header and return table -----------------------------------------
-  x <- gtsummary::modify_header(x, gtsummary::all_stat_cols() ~ header)
-  x$cards$add_ess_header <- ard_ess
-  x$call_list <- append(x$call_list, list(add_ess_header = match.call()))
+  x <- gtsummary::modify_header(x, gtsummary::all_stat_cols() ~ header) # replace header
+  x$cards$add_ess_header <- ard_ess # add ESS ARD to results
+  x$call_list <- updated_call # update the call list
   x
 }
 
