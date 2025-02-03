@@ -4,7 +4,7 @@
 \alias{add_ess_header}
 \title{Add ESS Table Header}
 \usage{
-add_ess_header(x, header = "**{level}**  \\nN = {round(n)}")
+add_ess_header(x, header = "**{level}**  \\nESS = {round(n, 1)}")
 }
 \arguments{
 \item{x}{(\code{tbl_svysummary})\cr
@@ -24,12 +24,12 @@ Effective Sample Size (ESS). See \code{\link[=ess]{ess()}} for details.
 }
 \examples{
 \dontshow{if (rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
+svy <- survey::svydesign(~1, data = nhefs_weights, weights = ~ w_ate)
 
-gtsummary::tbl_svysummary(svy, include = age) |>
+gtsummary::tbl_svysummary(svy, include = c(age, sex, smokeyrs)) |>
   add_ess_header()
 
-gtsummary::tbl_svysummary(svy, by = trt, include = age) |>
-  add_ess_header(header = "**{level}**  \nN = {n} / {N}")
+gtsummary::tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs)) |>
+  add_ess_header(header = "**{level}**  \nN = {round(n, 1)} / {round(N, 1)}")
 \dontshow{\}) # examplesIf}
 }
