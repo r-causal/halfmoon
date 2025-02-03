@@ -15,14 +15,14 @@
 #' @importFrom rlang .env .data
 #'
 #' @examplesIf rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))
-#' svy <- survey::svydesign(~1, data = gtsummary::trial, weights = ~1)
+#' svy <- survey::svydesign(~1, data = nhefs_weights, weights = ~ w_ate)
 #'
-#' gtsummary::tbl_svysummary(svy, include = age) |>
+#' gtsummary::tbl_svysummary(svy, include = c(age, sex, smokeyrs)) |>
 #'   add_ess_header()
 #'
-#' gtsummary::tbl_svysummary(svy, by = trt, include = age) |>
-#'   add_ess_header(header = "**{level}**  \nN = {n} / {N}")
-add_ess_header <- function(x, header = "**{level}**  \nN = {round(n)}") {
+#' gtsummary::tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs)) |>
+#'   add_ess_header(header = "**{level}**  \nN = {round(n, 1)} / {round(N, 1)}")
+add_ess_header <- function(x, header = "**{level}**  \nESS = {round(n, 1)}") {
   # check inputs ---------------------------------------------------------------
   rlang::check_installed(c("cards", "dplyr"))
   if (!inherits(x, "tbl_svysummary")) {
