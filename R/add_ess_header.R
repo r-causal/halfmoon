@@ -21,8 +21,8 @@
 #'   add_ess_header()
 #'
 #' gtsummary::tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs)) |>
-#'   add_ess_header(header = "**{level}**  \nN = {n_unweighted}; \nESS = {round(n, 1)}")
-add_ess_header <- function(x, header = "**{level}**  \nESS = {round(n, 1)}") {
+#'   add_ess_header(header = "**{level}**  \nN = {n_unweighted}; \nESS = {format(n, digits = 1, nsmall = 1)}")
+add_ess_header <- function(x, header = "**{level}**  \nESS = {format(n, digits = 1, nsmall = 1)}") {
   # check inputs ---------------------------------------------------------------
   rlang::check_installed(c("cards", "dplyr"))
   if (!inherits(x, "tbl_svysummary")) {
@@ -67,6 +67,12 @@ add_ess_header <- function(x, header = "**{level}**  \nESS = {round(n, 1)}") {
   x <- gtsummary::modify_header(x, gtsummary::all_stat_cols() ~ header) # replace header
   x$cards$add_ess_header <- ard_ess # add ESS ARD to results
   x$call_list <- updated_call # update the call list
+
+  # add abbreviation -----------------------------------------------------------
+  if (grepl(pattern = "ESS", x = header, fixed = TRUE)) {
+    x <- gtsummary::modify_abbreviation(x, "ESS = Effective Sample Size")
+  }
+
   x
 }
 
