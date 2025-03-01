@@ -38,15 +38,20 @@ add_ess_header <- function(x, header = "**{level}**  \nESS = {format(n, digits =
 
   # calculate ARD with ESS counts ----------------------------------------------
   ard_ess <- ard_survey_ess(data = x$inputs$data, by = x$inputs$by)
+  if ("add_overall" %in% names(x$call_list)) {
+    ard_ess_overall <- ard_survey_ess(data = x$inputs$data)
+  }
 
   # replace statistics in `x$table_styling$table_header` with ESS --------------
+  # no `tbl_svysummary(by)` specified
   if (rlang::is_empty(x$inputs$by)) {
     x$table_styling$header$modify_stat_level <- "Overall"
     x$table_styling$header$modify_stat_N <- ard_ess$stat[[1]]
     x$table_styling$header$modify_stat_n <- ard_ess$stat[[1]]
     x$table_styling$header$modify_stat_p <- 1
   }
-  else {
+  # with a `tbl_svysummary(by)` value but no overall column
+  else if (!"add_overall" %in% names(x$call_list)) {
     x$table_styling$header <-
       dplyr::rows_update(
         x$table_styling$header,
@@ -63,6 +68,25 @@ add_ess_header <- function(x, header = "**{level}**  \nESS = {format(n, digits =
       ) |>
       dplyr::mutate(
         modify_stat_N = sum(.data$modify_stat_n, na.rm = TRUE)
+      )
+  }
+  # with both a `tbl_svysummary(by)` value and an overall column
+  else {
+    x$table_styling$header <-
+      dplyr::rows_update(
+        x$table_styling$header,
+        dplyr::bind_rows(ard_ess_overall, ard_ess) |>
+          dplyr::mutate(
+            column = paste0("stat_", dplyr::row_number() - 1L),
+            modify_stat_level = lapply(.data$group1_level, FUN = \(x) as.character(x %||% "Overall")) |> unlist(),
+            modify_stat_n = unlist(.data$stat)
+          ) |>
+          dplyr::select("column", tidyselect::starts_with("modify_stat_")),
+        by = "column"
+      ) |>
+      dplyr::mutate(
+        modify_stat_N = unlist(.env$ard_ess_overall$stat),
+        modify_stat_p = .data$modify_stat_n / .data$modify_stat_N
       )
   }
 
