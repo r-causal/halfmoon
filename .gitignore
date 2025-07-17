@@ -8,4 +8,4 @@ cran-comments.md
 rhub.R
 CRAN-SUBMISSION
 scratch/
-.claude/settings.local.json
+.claude/
