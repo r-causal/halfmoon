@@ -6,6 +6,11 @@
 <url><loc>https://r-causal.github.io/halfmoon/index.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/news/index.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/add_ess_header.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/bal_corr.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/bal_ks.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/bal_smd.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/bal_vr.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/check_balance.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/ess.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_ecdf.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_mirror_histogram.html</loc></url>
