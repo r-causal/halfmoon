@@ -194,13 +194,20 @@ check_balance <- function(
             simplify = FALSE
           )
 
-          for (combo in var_combinations) {
+          # Create interaction terms using functional programming
+          interaction_terms <- purrr::map(var_combinations, function(combo) {
             var1 <- combo[1]
             var2 <- combo[2]
             interaction_name <- paste(var1, var2, sep = "_x_")
-            vars_data[[interaction_name]] <- original_numeric[[var1]] *
-              original_numeric[[var2]]
-          }
+            
+            # Return a named list with the interaction term
+            interaction_value <- original_numeric[[var1]] * original_numeric[[var2]]
+            stats::setNames(list(interaction_value), interaction_name)
+          })
+          
+          # Flatten the list and add to vars_data
+          interaction_terms <- purrr::flatten(interaction_terms)
+          vars_data <- c(vars_data, interaction_terms)
         }
       }
     }
