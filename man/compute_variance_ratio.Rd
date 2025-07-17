@@ -38,10 +38,10 @@ For binary variables, uses the p*(1-p) variance formula. For continuous variable
 uses Bessel's correction for weighted sample variance.
 }
 \examples{
-# Basic usage
-compute_variance_ratio(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"))
+# Basic usage with nhefs data
+compute_variance_ratio(nhefs_weights$age, nhefs_weights$qsmk)
 
 # With reference group specified
-compute_variance_ratio(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"),
-                       reference_group = "B")
+compute_variance_ratio(nhefs_weights$wt71, nhefs_weights$qsmk,
+                       reference_group = 0)
 }

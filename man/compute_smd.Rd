@@ -39,10 +39,10 @@ smd package. This is a common measure of effect size for comparing group
 differences while accounting for variability.
 }
 \examples{
-# Basic usage
-compute_smd(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"))
+# Basic usage with nhefs data
+compute_smd(nhefs_weights$age, nhefs_weights$qsmk)
 
 # With weights
-compute_smd(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"),
-            weights = c(1, 1, 2, 2, 2))
+compute_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
+            weights = nhefs_weights$w_ate)
 }

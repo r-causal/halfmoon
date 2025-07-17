@@ -8,22 +8,22 @@
 #' @param group A vector (factor or numeric) indicating group membership. Must
 #'   have exactly two unique levels.
 #' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as \code{covariate}. All weights must be non-negative.
+#'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the comparison
 #'   baseline. Can be either a group level or index. Defaults to the first level.
 #' @param na_rm A logical value indicating whether to remove missing values
-#'   before computation. If \code{FALSE} (default), missing values result in
-#'   \code{NA} output.
+#'   before computation. If `FALSE` (default), missing values result in
+#'   `NA` output.
 #' @return A numeric value representing the standardized mean difference.
 #'   Positive values indicate the comparison group has a higher mean than
 #'   the reference group.
 #' @examples
-#' # Basic usage
-#' compute_smd(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"))
+#' # Basic usage with nhefs data
+#' compute_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
-#' compute_smd(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"),
-#'             weights = c(1, 1, 2, 2, 2))
+#' compute_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
+#'             weights = nhefs_weights$w_ate)
 #' @export
 compute_smd <- function(
   covariate,
@@ -107,21 +107,21 @@ is_binary <- function(x) {
 #' @param group A vector (factor or numeric) indicating group membership. Must
 #'   have exactly two unique levels.
 #' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as \code{covariate}. All weights must be non-negative.
+#'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the denominator.
-#'   If \code{NULL} (default), uses the first level.
+#'   If `NULL` (default), uses the first level.
 #' @param na_rm A logical value indicating whether to remove missing values
-#'   before computation. If \code{FALSE} (default), missing values result in
-#'   \code{NA} output.
+#'   before computation. If `FALSE` (default), missing values result in
+#'   `NA` output.
 #' @return A numeric value representing the variance ratio. Values greater than 1
 #'   indicate the comparison group has higher variance than the reference group.
 #' @examples
-#' # Basic usage
-#' compute_variance_ratio(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"))
+#' # Basic usage with nhefs data
+#' compute_variance_ratio(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With reference group specified
-#' compute_variance_ratio(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"),
-#'                        reference_group = "B")
+#' compute_variance_ratio(nhefs_weights$wt71, nhefs_weights$qsmk,
+#'                        reference_group = 0)
 #' @export
 compute_variance_ratio <- function(
   covariate,
@@ -263,22 +263,22 @@ compute_variance_ratio <- function(
 #' @param group A vector (factor or numeric) indicating group membership. Must
 #'   have exactly two unique levels.
 #' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as \code{covariate}. All weights must be non-negative.
+#'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the comparison
-#'   baseline. If \code{NULL} (default), uses the first level.
+#'   baseline. If `NULL` (default), uses the first level.
 #' @param na_rm A logical value indicating whether to remove missing values
-#'   before computation. If \code{FALSE} (default), missing values result in
-#'   \code{NA} output.
+#'   before computation. If `FALSE` (default), missing values result in
+#'   `NA` output.
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,
 #'   with 0 indicating identical distributions and 1 indicating completely separate
 #'   distributions.
 #' @examples
-#' # Basic usage
-#' compute_ks(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"))
+#' # Basic usage with nhefs data
+#' compute_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
-#' compute_ks(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"),
-#'            weights = c(1, 1, 2, 2, 2))
+#' compute_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
+#'            weights = nhefs_weights$w_ate)
 #' @export
 compute_ks <- function(
   covariate,
@@ -392,21 +392,21 @@ compute_ks <- function(
 #'
 #' @param x A numeric vector containing the first variable.
 #' @param y A numeric vector containing the second variable. Must have the same
-#'   length as \code{x}.
+#'   length as `x`.
 #' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as \code{x} and \code{y}. All weights must be non-negative.
+#'   have the same length as `x` and `y`. All weights must be non-negative.
 #' @param na_rm A logical value indicating whether to remove missing values
-#'   before computation. If \code{FALSE} (default), missing values result in
-#'   \code{NA} output.
+#'   before computation. If `FALSE` (default), missing values result in
+#'   `NA` output.
 #' @return A numeric value representing the correlation coefficient between -1 and 1.
-#'   Returns \code{NA} if either variable has zero variance.
+#'   Returns `NA` if either variable has zero variance.
 #' @examples
-#' # Basic usage
-#' compute_correlation(c(1, 2, 3, 4, 5), c(2, 4, 6, 8, 10))
+#' # Basic usage with nhefs data
+#' compute_correlation(nhefs_weights$age, nhefs_weights$wt71)
 #'
 #' # With weights
-#' compute_correlation(c(1, 2, 3, 4, 5), c(2, 4, 6, 8, 10),
-#'                     weights = c(1, 1, 2, 2, 2))
+#' compute_correlation(nhefs_weights$age, nhefs_weights$smokeintensity,
+#'                     weights = nhefs_weights$w_ate)
 #' @export
 compute_correlation <- function(x, y, weights = NULL, na_rm = FALSE) {
   # Input validation

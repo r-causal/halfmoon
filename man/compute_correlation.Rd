@@ -29,10 +29,10 @@ with optional case weights. Uses the standard correlation formula for
 unweighted data and weighted covariance for weighted data.
 }
 \examples{
-# Basic usage
-compute_correlation(c(1, 2, 3, 4, 5), c(2, 4, 6, 8, 10))
+# Basic usage with nhefs data
+compute_correlation(nhefs_weights$age, nhefs_weights$wt71)
 
 # With weights
-compute_correlation(c(1, 2, 3, 4, 5), c(2, 4, 6, 8, 10),
-                    weights = c(1, 1, 2, 2, 2))
+compute_correlation(nhefs_weights$age, nhefs_weights$smokeintensity,
+                    weights = nhefs_weights$w_ate)
 }
