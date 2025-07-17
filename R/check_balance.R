@@ -13,7 +13,7 @@
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes.
 #' @param .metrics Character vector specifying which metrics to compute.
-#'   Available options: "smd" (standardized mean difference), "variance_ratio",
+#'   Available options: "smd" (standardized mean difference), "vr",
 #'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures).
 #'   Defaults to the first three.
 #' @param include_observed Logical. If using `.wts`, also calculate observed
@@ -38,7 +38,7 @@
 #'   \item{variable}{Character. The variable name being analyzed.}
 #'   \item{group_level}{Character. The non-reference group level.}
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
-#'   \item{metric}{Character. The balance metric computed ("smd", "variance_ratio", "ks").}
+#'   \item{metric}{Character. The balance metric computed ("smd", "vr", "ks").}
 #'   \item{estimate}{Numeric. The computed balance statistic.}
 #'
 #' @examples
@@ -65,7 +65,7 @@ check_balance <- function(
   .vars,
   .group,
   .wts = NULL,
-  .metrics = c("smd", "variance_ratio", "ks"),
+  .metrics = c("smd", "vr", "ks"),
   include_observed = TRUE,
   reference_group = 1L,
   na.rm = FALSE,
@@ -326,7 +326,7 @@ check_balance <- function(
   }
 
   # Validate metrics
-  available_metrics <- c("smd", "variance_ratio", "ks", "correlation")
+  available_metrics <- c("smd", "vr", "ks", "correlation")
   invalid_metrics <- setdiff(.metrics, available_metrics)
   if (length(invalid_metrics) > 0) {
     stop(
@@ -340,7 +340,7 @@ check_balance <- function(
   # Create metric function mapping
   metric_functions <- list(
     smd = bal_smd,
-    variance_ratio = bal_vr,
+    vr = bal_vr,
     ks = bal_ks,
     correlation = bal_corr
   )

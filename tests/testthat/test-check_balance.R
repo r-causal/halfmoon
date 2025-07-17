@@ -78,11 +78,11 @@ test_that("check_balance works with multiple metrics", {
     data,
     age,
     qsmk,
-    .metrics = c("smd", "variance_ratio", "ks")
+    .metrics = c("smd", "vr", "ks")
   )
 
   expect_equal(nrow(result), 3) # 1 variable × 3 metrics
-  expect_equal(sort(unique(result$metric)), c("ks", "smd", "variance_ratio"))
+  expect_equal(sort(unique(result$metric)), c("ks", "smd", "vr"))
   expect_true(all(result$variable == "age"))
   expect_true(all(result$method == "observed"))
   expect_true(all(is.finite(result$estimate)))
@@ -206,13 +206,13 @@ test_that("check_balance SMD matches bal_smd", {
   expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
 })
 
-test_that("check_balance variance_ratio matches bal_vr", {
+test_that("check_balance vr matches bal_vr", {
   data <- get_nhefs_test_data()
 
   # Get result from check_balance
-  result <- check_balance_basic(data, age, qsmk, .metrics = "variance_ratio")
+  result <- check_balance_basic(data, age, qsmk, .metrics = "vr")
   balance_vr <- result$estimate[
-    result$metric == "variance_ratio" & result$method == "observed"
+    result$metric == "vr" & result$method == "observed"
   ]
 
   # Get result from bal_vr directly
@@ -275,10 +275,10 @@ test_that("check_balance weighted results match individual weighted functions", 
     age,
     qsmk,
     .wts = w_test1,
-    .metrics = "variance_ratio"
+    .metrics = "vr"
   )
   balance_vr <- result_vr$estimate[
-    result_vr$metric == "variance_ratio" & result_vr$method == "w_test1"
+    result_vr$metric == "vr" & result_vr$method == "w_test1"
   ]
 
   direct_vr <- bal_vr(
@@ -455,7 +455,7 @@ test_that("check_balance handles binary variables correctly", {
     data,
     qsmk_num,
     sex_num,
-    .metrics = c("smd", "variance_ratio", "ks")
+    .metrics = c("smd", "vr", "ks")
   )
 
   expect_equal(nrow(result), 3)
@@ -552,7 +552,7 @@ test_that("check_balance works with mixed variable types from NHEFS", {
     data,
     c(age, wt71, sex_num, education_num, smokeintensity),
     qsmk,
-    .metrics = c("smd", "variance_ratio")
+    .metrics = c("smd", "vr")
   )
 
   expect_equal(nrow(result), 10) # 5 variables × 2 metrics
@@ -617,7 +617,7 @@ test_that("check_balance handles full NHEFS dataset efficiently", {
       c(age, wt71, smokeintensity),
       qsmk,
       .wts = c(w_ate, w_att),
-      .metrics = c("smd", "variance_ratio", "ks")
+      .metrics = c("smd", "vr", "ks")
     )
   })
 
@@ -1126,7 +1126,7 @@ test_that("transformations work with multiple metrics", {
     data,
     c(age, wt71),
     qsmk,
-    .metrics = c("smd", "variance_ratio"),
+    .metrics = c("smd", "vr"),
     squares = TRUE,
     cubes = FALSE,
     interactions = FALSE
@@ -1136,7 +1136,7 @@ test_that("transformations work with multiple metrics", {
   expect_equal(nrow(result_multi_metrics), 8)
 
   metrics <- unique(result_multi_metrics$metric)
-  expect_equal(sort(metrics), c("smd", "variance_ratio"))
+  expect_equal(sort(metrics), c("smd", "vr"))
 })
 
 test_that("edge cases handled correctly", {

@@ -9,7 +9,7 @@ check_balance(
   .vars,
   .group,
   .wts = NULL,
-  .metrics = c("smd", "variance_ratio", "ks"),
+  .metrics = c("smd", "vr", "ks"),
   include_observed = TRUE,
   reference_group = 1L,
   na.rm = FALSE,
@@ -32,7 +32,7 @@ a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
 \item{.metrics}{Character vector specifying which metrics to compute.
-Available options: "smd" (standardized mean difference), "variance_ratio",
+Available options: "smd" (standardized mean difference), "vr",
 "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures).
 Defaults to the first three.}
 
@@ -65,7 +65,7 @@ A tibble with columns:
 \item{variable}{Character. The variable name being analyzed.}
 \item{group_level}{Character. The non-reference group level.}
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
-\item{metric}{Character. The balance metric computed ("smd", "variance_ratio", "ks").}
+\item{metric}{Character. The balance metric computed ("smd", "vr", "ks").}
 \item{estimate}{Numeric. The computed balance statistic.}
 }
 \description{
