@@ -871,11 +871,11 @@ test_that("make_dummy_vars works with categorical variables", {
   var_names_mixed <- unique(result_mixed$variable)
   expect_true("age" %in% var_names_mixed)
   expect_true("sex" %in% var_names_mixed)
-  
+
   # Education should be expanded to dummy variables
   education_vars <- var_names_mixed[grepl("education", var_names_mixed)]
   expect_true(length(education_vars) > 1)
-  
+
   # Should have more variables than original 3 due to education expansion
   expect_true(length(var_names_mixed) > 3)
 })
@@ -1177,87 +1177,92 @@ test_that("edge cases handled correctly", {
 
 test_that("check_balance works with tidyselect helpers in .wts parameter", {
   data <- get_nhefs_test_data()
-  
+
   # Test with starts_with()
   result1 <- check_balance_basic(
-    data, 
-    c(age, wt71), 
-    qsmk, 
+    data,
+    c(age, wt71),
+    qsmk,
     .wts = starts_with("w_test")
   )
-  
+
   expect_s3_class(result1, "data.frame")
   expect_gt(nrow(result1), 0)
-  
+
   # Check that we got the correct weight methods
   weight_methods <- setdiff(unique(result1$method), "observed")
   expect_true(all(grepl("^w_test", weight_methods)))
   expect_equal(length(weight_methods), 2) # w_test1, w_test2
-  
+
   # Test with ends_with()
   result2 <- check_balance_basic(
-    data, 
-    c(age, wt71), 
-    qsmk, 
+    data,
+    c(age, wt71),
+    qsmk,
     .wts = ends_with("_test1")
   )
-  
+
   expect_s3_class(result2, "data.frame")
   expect_true("w_test1" %in% unique(result2$method))
-  
+
   # Test with contains()
   result3 <- check_balance_basic(
-    data, 
-    c(age, wt71), 
-    qsmk, 
+    data,
+    c(age, wt71),
+    qsmk,
     .wts = contains("extreme")
   )
-  
+
   expect_s3_class(result3, "data.frame")
   expect_true("w_extreme" %in% unique(result3$method))
 })
 
 test_that("check_balance new defaults work correctly", {
   data <- get_nhefs_test_data()
-  
+
   # Test that make_dummy_vars = TRUE is now the default
-  result_default <- check_balance(data, c(age, sex, race), qsmk, .metrics = "smd")
-  
+  result_default <- check_balance(
+    data,
+    c(age, sex, race),
+    qsmk,
+    .metrics = "smd"
+  )
+
   # Should have age, sex, and race as single variables (sex and race are binary)
   var_names <- unique(result_default$variable)
   expect_true("age" %in% var_names)
   expect_true("sex" %in% var_names)
   expect_true("race" %in% var_names)
-  
+
   # Should have exactly 3 variables (age + sex + race, no expansion for binary variables)
   expect_equal(length(var_names), 3)
-  
+
   # Test that squares, cubes, interactions are FALSE by default
   result_minimal <- check_balance(data, c(age, wt71), qsmk, .metrics = "smd")
   var_names_minimal <- unique(result_minimal$variable)
-  
+
   # Should not have squared, cubed, or interaction terms
   expect_false(any(grepl("_squared", var_names_minimal)))
   expect_false(any(grepl("_cubed", var_names_minimal)))
   expect_false(any(grepl("_x_", var_names_minimal)))
-  
+
   # Should only have the original variables
   expect_equal(sort(var_names_minimal), c("age", "wt71"))
 })
 
 test_that("check_balance dummy variables include all levels for multi-level variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test with a factor that has multiple levels (education has 5 levels)
   result <- check_balance(data, education, qsmk, .metrics = "smd")
-  
+
   # Should have dummy variables for all levels of education
   var_names <- unique(result$variable)
   education_dummies <- var_names[grepl("education", var_names)]
-  
+
   # Should have all education levels (not dropping the first one)
   expect_gt(length(education_dummies), 1)
-  
+
   # Check that we have the expected number of education levels
   n_education_levels <- length(levels(data$education))
   expect_equal(length(education_dummies), n_education_levels)
@@ -1265,33 +1270,38 @@ test_that("check_balance dummy variables include all levels for multi-level vari
 
 test_that("check_balance handles binary vs multi-level variables correctly", {
   data <- get_nhefs_test_data()
-  
+
   # Test with multiple categorical variables
   result <- check_balance(data, c(sex, race, education), qsmk, .metrics = "smd")
   var_names <- unique(result$variable)
-  
+
   # Check sex (binary variable - should remain as single variable)
   sex_vars <- var_names[grepl("^sex", var_names)]
   expect_equal(sex_vars, "sex")
-  
+
   # Check race (binary variable - should remain as single variable)
   race_vars <- var_names[grepl("^race", var_names)]
   expect_equal(race_vars, "race")
-  
+
   # Check education (multi-level variable - should have education1, education2, etc.)
   education_dummies <- var_names[grepl("^education", var_names)]
   expected_education <- paste0("education", levels(data$education))
   expect_equal(sort(education_dummies), sort(expected_education))
-  
+
   # Test with exercise and active (3-level factors)
-  result_multi <- check_balance(data, c(exercise, active), qsmk, .metrics = "smd")
+  result_multi <- check_balance(
+    data,
+    c(exercise, active),
+    qsmk,
+    .metrics = "smd"
+  )
   var_names_multi <- unique(result_multi$variable)
-  
+
   # Check exercise (should have exercise0, exercise1, exercise2)
   exercise_dummies <- var_names_multi[grepl("^exercise", var_names_multi)]
   expected_exercise <- paste0("exercise", levels(data$exercise))
   expect_equal(sort(exercise_dummies), sort(expected_exercise))
-  
+
   # Check active (should have active0, active1, active2)
   active_dummies <- var_names_multi[grepl("^active", var_names_multi)]
   expected_active <- paste0("active", levels(data$active))
@@ -1305,26 +1315,42 @@ test_that("dummy variable creation handles edge cases correctly", {
     two_level = factor(c(rep("X", 5), rep("Y", 5))),
     qsmk = c(rep(0, 5), rep(1, 5))
   )
-  
-  result <- check_balance(test_data, c(single_level, two_level), qsmk, .metrics = "smd")
+
+  result <- check_balance(
+    test_data,
+    c(single_level, two_level),
+    qsmk,
+    .metrics = "smd"
+  )
   var_names <- unique(result$variable)
-  
+
   # Single level factor should create dummy (not binary)
   expect_true("single_levelA" %in% var_names)
   # Two level factor should remain as single variable (binary behavior)
   expect_true("two_level" %in% var_names)
   expect_false("two_levelX" %in% var_names)
   expect_false("two_levelY" %in% var_names)
-  
+
   # Test with character variables
   test_char <- data.frame(
-    char_var = c("cat", "dog", "cat", "bird", "dog", "cat", "bird", "dog", "cat", "dog"),
+    char_var = c(
+      "cat",
+      "dog",
+      "cat",
+      "bird",
+      "dog",
+      "cat",
+      "bird",
+      "dog",
+      "cat",
+      "dog"
+    ),
     qsmk = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)
   )
-  
+
   result_char <- check_balance(test_char, char_var, qsmk, .metrics = "smd")
   var_names_char <- unique(result_char$variable)
-  
+
   # Should create dummies for all unique character values (3 levels > 2)
   expect_true("char_varbird" %in% var_names_char)
   expect_true("char_varcat" %in% var_names_char)
@@ -1337,30 +1363,32 @@ test_that("dummy variables have correct values", {
     x = factor(c("A", "B", "A", "C", "B", "A", "C", "B", "A", "B")),
     qsmk = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)
   )
-  
+
   result <- check_balance(test_data, x, qsmk, .metrics = "smd")
-  
+
   # Check that we have all three dummies
   var_names <- unique(result$variable)
   expect_equal(sort(var_names), c("xA", "xB", "xC"))
-  
+
   # Check SMD values are reasonable (not NA, finite)
   expect_true(all(is.finite(result$estimate)))
-  
+
   # Test that the transformation preserves information
   # A appears 4 times (in positions 1,3,6,9), B appears 4 times, C appears 2 times
   # So we should see different SMD values for each
-  smd_values <- result$estimate[result$method == "observed" & result$metric == "smd"]
-  expect_equal(length(unique(smd_values)), 3)  # Three different SMD values
+  smd_values <- result$estimate[
+    result$method == "observed" & result$metric == "smd"
+  ]
+  expect_equal(length(unique(smd_values)), 3) # Three different SMD values
 })
 
 test_that("binary variables are treated as single variables in main effects", {
   data <- get_nhefs_test_data()
-  
+
   # Test with binary variables only
   result_binary <- check_balance(data, c(race, sex), qsmk, .metrics = "smd")
   var_names_binary <- unique(result_binary$variable)
-  
+
   # Should have race and sex as single variables (not race0/race1, sex0/sex1)
   expect_equal(sort(var_names_binary), c("race", "sex"))
   expect_true(all(is.finite(result_binary$estimate)))
@@ -1368,49 +1396,64 @@ test_that("binary variables are treated as single variables in main effects", {
 
 test_that("multi-level variables get dummy variables in main effects", {
   data <- get_nhefs_test_data()
-  
+
   # Test with multi-level variables
-  result_multi <- check_balance(data, c(education, exercise), qsmk, .metrics = "smd")
+  result_multi <- check_balance(
+    data,
+    c(education, exercise),
+    qsmk,
+    .metrics = "smd"
+  )
   var_names_multi <- unique(result_multi$variable)
-  
+
   # Should have dummy variables for each level
   education_vars <- var_names_multi[grepl("^education", var_names_multi)]
   exercise_vars <- var_names_multi[grepl("^exercise", var_names_multi)]
-  
-  expect_equal(length(education_vars), 5)  # education1-5
-  expect_equal(length(exercise_vars), 3)   # exercise0-2
+
+  expect_equal(length(education_vars), 5) # education1-5
+  expect_equal(length(exercise_vars), 3) # exercise0-2
   expect_true(all(is.finite(result_multi$estimate)))
 })
 
 test_that("mixed binary and multi-level variables work correctly", {
   data <- get_nhefs_test_data()
-  
+
   # Test with mix of binary and multi-level
-  result_mixed <- check_balance(data, c(race, sex, education, exercise), qsmk, .metrics = "smd")
+  result_mixed <- check_balance(
+    data,
+    c(race, sex, education, exercise),
+    qsmk,
+    .metrics = "smd"
+  )
   var_names_mixed <- unique(result_mixed$variable)
-  
+
   # Should have binary variables as single variables
   expect_true("race" %in% var_names_mixed)
   expect_true("sex" %in% var_names_mixed)
-  
+
   # Should have multi-level variables as dummy variables
   education_vars <- var_names_mixed[grepl("^education", var_names_mixed)]
   exercise_vars <- var_names_mixed[grepl("^exercise", var_names_mixed)]
-  
-  expect_equal(length(education_vars), 5)  # education1-5
-  expect_equal(length(exercise_vars), 3)   # exercise0-2
+
+  expect_equal(length(education_vars), 5) # education1-5
+  expect_equal(length(exercise_vars), 3) # exercise0-2
   expect_true(all(is.finite(result_mixed$estimate)))
 })
 
 test_that("binary variables are expanded for interactions", {
   data <- get_nhefs_test_data()
-  
+
   # Test interactions with binary variables
-  result_interact <- check_balance(data, c(age, race, sex), qsmk, 
-                                  interactions = TRUE, .metrics = "smd")
+  result_interact <- check_balance(
+    data,
+    c(age, race, sex),
+    qsmk,
+    interactions = TRUE,
+    .metrics = "smd"
+  )
   var_names_interact <- unique(result_interact$variable)
   interact_vars <- var_names_interact[grepl("_x_", var_names_interact)]
-  
+
   # Should have interactions with expanded binary variables
   expect_true("age_x_race0" %in% interact_vars)
   expect_true("age_x_race1" %in% interact_vars)
@@ -1420,25 +1463,30 @@ test_that("binary variables are expanded for interactions", {
   expect_true("race0_x_sex1" %in% interact_vars)
   expect_true("race1_x_sex0" %in% interact_vars)
   expect_true("race1_x_sex1" %in% interact_vars)
-  
+
   # Should not have interactions between levels of same variable
   expect_false("race0_x_race1" %in% interact_vars)
   expect_false("sex0_x_sex1" %in% interact_vars)
-  
+
   expect_true(all(is.finite(result_interact$estimate)))
 })
 
 test_that("no dummy variables when make_dummy_vars = FALSE", {
   data <- get_nhefs_test_data()
-  
+
   # Test with dummy variables disabled
-  result_no_dummy <- check_balance(data, c(race, sex, education), qsmk, 
-                                  make_dummy_vars = FALSE, .metrics = "smd")
+  result_no_dummy <- check_balance(
+    data,
+    c(race, sex, education),
+    qsmk,
+    make_dummy_vars = FALSE,
+    .metrics = "smd"
+  )
   var_names_no_dummy <- unique(result_no_dummy$variable)
-  
+
   # Should have original variable names
   expect_equal(sort(var_names_no_dummy), c("education", "race", "sex"))
-  
+
   # All should be NA because balance functions expect numeric variables
   expect_true(all(is.na(result_no_dummy$estimate)))
 })

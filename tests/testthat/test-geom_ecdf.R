@@ -18,6 +18,4 @@ test_that("geom_ecdf works", {
 
   expect_doppelganger("ecdf (no weights)", p_no_wts)
   expect_doppelganger("ecdf (weights)", p_wts)
-
 })
-
