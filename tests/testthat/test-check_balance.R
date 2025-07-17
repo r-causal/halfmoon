@@ -1,0 +1,800 @@
+# Comprehensive tests for check_balance() using NHEFS data
+
+# Test data setup using nhefs_weights from halfmoon package
+get_nhefs_test_data <- function() {
+  data(nhefs_weights, package = "halfmoon")
+
+  # Create a subset with relevant variables for testing
+  # Use factor variables and continuous variables
+  nhefs_test <- nhefs_weights[
+    1:200,
+    c(
+      "qsmk",
+      "sex",
+      "race",
+      "education",
+      "age",
+      "wt71",
+      "smokeintensity",
+      "smokeyrs",
+      "active",
+      "exercise",
+      "w_ate",
+      "w_att",
+      "w_atc"
+    )
+  ]
+
+  # Add some additional test weights for comprehensive testing
+  set.seed(123)
+  nhefs_test$w_test1 <- runif(nrow(nhefs_test), 0.5, 2.0)
+  nhefs_test$w_test2 <- rexp(nrow(nhefs_test), rate = 1)
+  nhefs_test$w_extreme <- rep(c(0.1, 3.0), length.out = nrow(nhefs_test))
+
+  return(nhefs_test)
+}
+
+# =============================================================================
+# BASIC FUNCTIONALITY TESTS
+# =============================================================================
+
+test_that("check_balance works with single variable and single metric", {
+  data <- get_nhefs_test_data()
+
+  # Test with SMD only
+  result <- check_balance(data, age, qsmk, .metrics = "smd")
+
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 1)
+  expect_equal(ncol(result), 5)
+  expect_equal(
+    names(result),
+    c("variable", "group_level", "method", "metric", "estimate")
+  )
+
+  expect_equal(result$variable, "age")
+  expect_equal(result$metric, "smd")
+  expect_equal(result$method, "observed")
+  expect_equal(result$group_level, "0") # qsmk is 0/1, reference = 1L -> first level = 0, but check_balance shows comparison group
+  expect_true(is.numeric(result$estimate))
+  expect_true(is.finite(result$estimate))
+})
+
+test_that("check_balance works with multiple metrics", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(
+    data,
+    age,
+    qsmk,
+    .metrics = c("smd", "variance_ratio", "ks")
+  )
+
+  expect_equal(nrow(result), 3) # 1 variable × 3 metrics
+  expect_equal(sort(unique(result$metric)), c("ks", "smd", "variance_ratio"))
+  expect_true(all(result$variable == "age"))
+  expect_true(all(result$method == "observed"))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+test_that("check_balance works with multiple variables", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(data, c(age, wt71), qsmk, .metrics = "smd")
+
+  expect_equal(nrow(result), 2) # 2 variables × 1 metric
+  expect_equal(sort(unique(result$variable)), c("age", "wt71"))
+  expect_true(all(result$metric == "smd"))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+# =============================================================================
+# WEIGHTING TESTS
+# =============================================================================
+
+test_that("check_balance works with single weight", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(data, age, qsmk, .wts = w_test1, .metrics = "smd")
+
+  expect_equal(nrow(result), 2) # observed + 1 weight
+  expect_equal(sort(unique(result$method)), c("observed", "w_test1"))
+  expect_true(all(result$variable == "age"))
+  expect_true(all(result$metric == "smd"))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+test_that("check_balance works with multiple weights", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = c(w_test1, w_test2),
+    .metrics = "smd"
+  )
+
+  expect_equal(nrow(result), 3) # observed + 2 weights
+  expect_equal(sort(unique(result$method)), c("observed", "w_test1", "w_test2"))
+  expect_true(all(result$variable == "age"))
+  expect_true(all(result$metric == "smd"))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+test_that("check_balance respects include_observed = FALSE", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = w_test1,
+    .metrics = "smd",
+    include_observed = FALSE
+  )
+
+  expect_equal(nrow(result), 1) # only weighted
+  expect_equal(result$method, "w_test1")
+  expect_false("observed" %in% result$method)
+})
+
+# =============================================================================
+# COMPREHENSIVE INTEGRATION TESTS
+# =============================================================================
+
+test_that("check_balance produces expected structure with multiple vars, weights, and metrics", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(
+    data,
+    c(age, wt71),
+    qsmk,
+    .wts = c(w_test1, w_test2),
+    .metrics = c("smd", "ks")
+  )
+
+  # Should have: 2 variables × 3 methods (observed + 2 weights) × 2 metrics = 12 rows
+  expect_equal(nrow(result), 12)
+  expect_equal(length(unique(result$variable)), 2)
+  expect_equal(length(unique(result$method)), 3)
+  expect_equal(length(unique(result$metric)), 2)
+
+  # Check structure
+  expect_true(all(c("age", "wt71") %in% result$variable))
+  expect_true(all(c("observed", "w_test1", "w_test2") %in% result$method))
+  expect_true(all(c("smd", "ks") %in% result$metric))
+})
+
+# =============================================================================
+# CONSISTENCY TESTS - VERIFY AGAINST INDIVIDUAL FUNCTIONS
+# =============================================================================
+
+test_that("check_balance SMD matches compute_smd", {
+  data <- get_nhefs_test_data()
+
+  # Get result from check_balance
+  result <- check_balance(data, age, qsmk, .metrics = "smd")
+  balance_smd <- result$estimate[
+    result$metric == "smd" & result$method == "observed"
+  ]
+
+  # Get result from compute_smd directly
+  direct_smd <- compute_smd(
+    covariate = data$age,
+    group = data$qsmk,
+    reference_group = 1L
+  )
+
+  expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
+})
+
+test_that("check_balance variance_ratio matches compute_variance_ratio", {
+  data <- get_nhefs_test_data()
+
+  # Get result from check_balance
+  result <- check_balance(data, age, qsmk, .metrics = "variance_ratio")
+  balance_vr <- result$estimate[
+    result$metric == "variance_ratio" & result$method == "observed"
+  ]
+
+  # Get result from compute_variance_ratio directly
+  # check_balance uses reference_group=1L which maps to first level (0) for compute_variance_ratio
+  direct_vr <- compute_variance_ratio(
+    covariate = data$age,
+    group = data$qsmk,
+    reference_group = 0 # First level of qsmk (group_levels[1])
+  )
+
+  expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
+})
+
+test_that("check_balance KS matches compute_ks", {
+  data <- get_nhefs_test_data()
+
+  # Get result from check_balance
+  result <- check_balance(data, age, qsmk, .metrics = "ks")
+  balance_ks <- result$estimate[
+    result$metric == "ks" & result$method == "observed"
+  ]
+
+  # Get result from compute_ks directly
+  direct_ks <- compute_ks(
+    covariate = data$age,
+    group = data$qsmk,
+    reference_group = 0 # First level of qsmk
+  )
+
+  expect_equal(balance_ks, direct_ks, tolerance = 1e-10)
+})
+
+test_that("check_balance weighted results match individual weighted functions", {
+  data <- get_nhefs_test_data()
+
+  # Test weighted SMD
+  result <- check_balance(data, age, qsmk, .wts = w_test1, .metrics = "smd")
+  balance_smd <- result$estimate[
+    result$metric == "smd" & result$method == "w_test1"
+  ]
+
+  direct_smd <- compute_smd(
+    covariate = data$age,
+    group = data$qsmk,
+    weights = data$w_test1,
+    reference_group = 1L
+  )
+
+  expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
+
+  # Test weighted variance ratio
+  result_vr <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = w_test1,
+    .metrics = "variance_ratio"
+  )
+  balance_vr <- result_vr$estimate[
+    result_vr$metric == "variance_ratio" & result_vr$method == "w_test1"
+  ]
+
+  direct_vr <- compute_variance_ratio(
+    covariate = data$age,
+    group = data$qsmk,
+    weights = data$w_test1,
+    reference_group = 0 # First level (group_levels[1])
+  )
+
+  expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
+})
+
+# =============================================================================
+# REFERENCE GROUP TESTS
+# =============================================================================
+
+test_that("check_balance handles different reference groups correctly", {
+  data <- get_nhefs_test_data()
+
+  # Test with numeric reference group
+  result1 <- check_balance(
+    data,
+    age,
+    qsmk,
+    .metrics = "smd",
+    reference_group = 0
+  )
+  result2 <- check_balance(
+    data,
+    age,
+    qsmk,
+    .metrics = "smd",
+    reference_group = 1
+  )
+
+  # SMDs should be negatives of each other
+  expect_equal(result1$estimate, -result2$estimate, tolerance = 1e-10)
+
+  # Group levels should be different
+  expect_equal(result1$group_level, "1")
+  expect_equal(result2$group_level, "0")
+})
+
+test_that("check_balance handles factor reference groups", {
+  data <- get_nhefs_test_data()
+
+  # Test with factor level reference group (sex is a factor)
+  result1 <- check_balance(
+    data,
+    age,
+    sex,
+    .metrics = "smd",
+    reference_group = "0"
+  )
+  result2 <- check_balance(
+    data,
+    age,
+    sex,
+    .metrics = "smd",
+    reference_group = "1"
+  )
+
+  # SMDs should be negatives of each other
+  expect_equal(result1$estimate, -result2$estimate, tolerance = 1e-10)
+
+  # Group levels should be different
+  expect_equal(result1$group_level, "1")
+  expect_equal(result2$group_level, "0")
+})
+
+# =============================================================================
+# MISSING VALUE HANDLING
+# =============================================================================
+
+test_that("check_balance handles missing values correctly", {
+  data <- get_nhefs_test_data()
+
+  # Introduce missing values
+  data_na <- data
+  data_na$age[1:20] <- NA
+
+  # Test with na_rm = FALSE (should return NA)
+  result_na_false <- check_balance(
+    data_na,
+    age,
+    qsmk,
+    .metrics = "smd",
+    na_rm = FALSE
+  )
+  expect_true(is.na(result_na_false$estimate))
+
+  # Test with na_rm = TRUE (should work)
+  result_na_true <- check_balance(
+    data_na,
+    age,
+    qsmk,
+    .metrics = "smd",
+    na_rm = TRUE
+  )
+  expect_true(is.finite(result_na_true$estimate))
+
+  # Verify the na_rm = TRUE result matches direct computation
+  direct_smd <- compute_smd(
+    covariate = data_na$age,
+    group = data_na$qsmk,
+    reference_group = 1L,
+    na_rm = TRUE
+  )
+  expect_equal(result_na_true$estimate, direct_smd, tolerance = 1e-10)
+})
+
+# =============================================================================
+# ERROR HANDLING TESTS
+# =============================================================================
+
+test_that("check_balance validates inputs correctly", {
+  data <- get_nhefs_test_data()
+
+  # Test invalid data type
+  expect_error(
+    check_balance("not_a_dataframe", age, qsmk),
+    "must be a data frame"
+  )
+
+  # Test invalid group variable
+  expect_error(check_balance(data, age, nonexistent_group), "not found in data")
+
+  # Test invalid metrics
+  expect_error(
+    check_balance(data, age, qsmk, .metrics = "invalid_metric"),
+    "Invalid metrics"
+  )
+
+  # Test no variables selected
+  expect_error(check_balance(data, c(), qsmk), "No variables selected")
+
+  # Test group with wrong number of levels
+  data_bad_group <- data
+  data_bad_group$bad_group <- rep(1, nrow(data))
+  expect_error(
+    check_balance(data_bad_group, age, bad_group),
+    "must have exactly two levels"
+  )
+
+  # Test no metrics to compute - should return empty tibble
+  result_empty <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = w_test1,
+    include_observed = FALSE,
+    .metrics = character(0)
+  )
+  expect_equal(nrow(result_empty), 0)
+  expect_s3_class(result_empty, "data.frame")
+})
+
+# =============================================================================
+# EDGE CASES
+# =============================================================================
+
+test_that("check_balance handles binary variables correctly", {
+  data <- get_nhefs_test_data()
+
+  # Convert factors to numeric for binary testing
+  data$qsmk_num <- as.numeric(data$qsmk) - 1 # Convert to 0/1
+  data$sex_num <- as.numeric(data$sex) - 1 # Convert to 0/1
+
+  # Test with qsmk as covariate (binary)
+  result <- check_balance(
+    data,
+    qsmk_num,
+    sex_num,
+    .metrics = c("smd", "variance_ratio", "ks")
+  )
+
+  expect_equal(nrow(result), 3)
+  expect_true(all(is.finite(result$estimate)))
+
+  # For binary variables, KS should equal absolute difference in proportions
+  # Verify this matches the direct computation
+  ks_result <- result$estimate[result$metric == "ks"]
+  direct_ks <- compute_ks(data$qsmk_num, data$sex_num, reference_group = 0)
+  expect_equal(ks_result, direct_ks, tolerance = 1e-10)
+})
+
+test_that("check_balance handles extreme weights", {
+  data <- get_nhefs_test_data()
+
+  # Test with extreme weights
+  result <- check_balance(data, age, qsmk, .wts = w_extreme, .metrics = "smd")
+
+  expect_equal(nrow(result), 2) # observed + weighted
+  expect_true(all(is.finite(result$estimate)))
+
+  # Verify it matches direct computation
+  weighted_estimate <- result$estimate[result$method == "w_extreme"]
+  direct_smd <- compute_smd(
+    data$age,
+    data$qsmk,
+    weights = data$w_extreme,
+    reference_group = 1L
+  )
+  expect_equal(weighted_estimate, direct_smd, tolerance = 1e-10)
+})
+
+test_that("check_balance output is properly arranged", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance(
+    data,
+    c(age, wt71),
+    qsmk,
+    .wts = c(w_test1, w_test2),
+    .metrics = c("smd", "ks")
+  )
+
+  # Check that results are arranged by variable, metric, method
+  expect_true(all(result$variable[1:6] == "age"))
+  expect_true(all(result$variable[7:12] == "wt71"))
+
+  # Within each variable, should be arranged by metric
+  age_metrics <- result$metric[result$variable == "age"]
+  expect_true(all(age_metrics[1:3] == "ks"))
+  expect_true(all(age_metrics[4:6] == "smd"))
+})
+
+# =============================================================================
+# NHEFS-SPECIFIC TESTS
+# =============================================================================
+
+test_that("check_balance works with NHEFS factor variables", {
+  data <- get_nhefs_test_data()
+
+  # Convert factors to numeric for balance checking
+  data$sex_num <- as.numeric(data$sex) - 1 # Convert to 0/1
+  data$race_num <- as.numeric(data$race) - 1 # Convert to 0/1
+  data$education_num <- as.numeric(data$education) # Keep factor levels as numbers
+
+  # Test with converted factor covariates
+  result <- check_balance(
+    data,
+    c(sex_num, race_num, education_num),
+    qsmk,
+    .metrics = "smd"
+  )
+
+  expect_equal(nrow(result), 3) # 3 factor variables
+  expect_true(all(is.finite(result$estimate)))
+  expect_true(all(result$metric == "smd"))
+})
+
+test_that("check_balance works with mixed variable types from NHEFS", {
+  data <- get_nhefs_test_data()
+
+  # Convert factors to numeric for testing
+  data$sex_num <- as.numeric(data$sex) - 1
+  data$education_num <- as.numeric(data$education)
+
+  # Test with mix of continuous and converted factor variables
+  result <- check_balance(
+    data,
+    c(age, wt71, sex_num, education_num, smokeintensity),
+    qsmk,
+    .metrics = c("smd", "variance_ratio")
+  )
+
+  expect_equal(nrow(result), 10) # 5 variables × 2 metrics
+  expect_true(all(is.finite(result$estimate)))
+
+  # All variables should be present
+  expect_equal(length(unique(result$variable)), 5)
+  expect_true(all(
+    c("age", "wt71", "sex_num", "education_num", "smokeintensity") %in%
+      result$variable
+  ))
+})
+
+test_that("check_balance handles realistic smoking cessation balance assessment", {
+  data <- get_nhefs_test_data()
+
+  # Convert factor variables to numeric for balance checking
+  data$sex_num <- as.numeric(data$sex) - 1 # Convert to 0/1
+  data$race_num <- as.numeric(data$race) - 1 # Convert to 0/1
+  data$education_num <- as.numeric(data$education) # Keep factor levels as numbers
+
+  # Typical smoking cessation balance check with converted variables
+  covariates <- c(
+    "age",
+    "wt71",
+    "sex_num",
+    "race_num",
+    "education_num",
+    "smokeintensity",
+    "smokeyrs"
+  )
+  result <- check_balance(
+    data,
+    all_of(covariates),
+    qsmk,
+    .wts = c(w_test1, w_test2),
+    .metrics = c("smd", "ks")
+  )
+
+  # Should have: 7 variables × 3 methods × 2 metrics = 42 rows
+  expect_equal(nrow(result), 42)
+  expect_equal(length(unique(result$variable)), 7)
+  expect_equal(length(unique(result$method)), 3)
+  expect_equal(length(unique(result$metric)), 2)
+
+  # All estimates should be finite
+  expect_true(all(is.finite(result$estimate)))
+})
+
+# =============================================================================
+# PERFORMANCE AND STRESS TESTS
+# =============================================================================
+
+test_that("check_balance handles full NHEFS dataset efficiently", {
+  # Use full NHEFS data for stress testing
+  data(nhefs_weights, package = "halfmoon")
+
+  # Should complete without errors using existing weights
+  expect_no_error({
+    result <- check_balance(
+      nhefs_weights,
+      c(age, wt71, smokeintensity),
+      qsmk,
+      .wts = c(w_ate, w_att),
+      .metrics = c("smd", "variance_ratio", "ks")
+    )
+  })
+
+  # Should have expected dimensions: 3 vars × 3 methods × 3 metrics = 27 rows
+  expect_equal(nrow(result), 27)
+  expect_true(all(is.finite(result$estimate)))
+})
+
+# =============================================================================
+# TIDYSELECT FUNCTIONALITY TESTS
+# =============================================================================
+
+test_that("check_balance works with tidyselect helpers on NHEFS", {
+  data <- get_nhefs_test_data()
+
+  # Test with specific variables to avoid weight variable issues
+  result1 <- check_balance(
+    data,
+    c(age, wt71, smokeintensity, smokeyrs),
+    qsmk,
+    .metrics = "smd"
+  )
+
+  # Should include the specified numeric variables
+  expected_vars <- c("age", "wt71", "smokeintensity", "smokeyrs")
+  expect_equal(sort(unique(result1$variable)), sort(expected_vars))
+
+  # Test with specific selection
+  result2 <- check_balance(data, starts_with("smoke"), qsmk, .metrics = "smd")
+  expect_true(all(grepl("^smoke", unique(result2$variable))))
+})
+
+test_that("check_balance works with real propensity score weights", {
+  data <- get_nhefs_test_data()
+
+  # Test with actual propensity score weights from nhefs_weights
+  result <- check_balance(
+    data,
+    c(age, wt71, smokeintensity),
+    qsmk,
+    .wts = c(w_ate, w_att, w_atc),
+    .metrics = "smd"
+  )
+
+  # Should have: 3 variables × 4 methods (observed + 3 weights) × 1 metric = 12 rows
+  expect_equal(nrow(result), 12)
+  expect_equal(length(unique(result$variable)), 3)
+  expect_equal(length(unique(result$method)), 4)
+  expect_true(all(c("observed", "w_ate", "w_att", "w_atc") %in% result$method))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+# =============================================================================
+# CORRELATION METRIC TESTS
+# =============================================================================
+
+test_that("check_balance works with correlation metric for continuous exposures", {
+  data <- get_nhefs_test_data()
+
+  # Test with correlation metric using continuous exposure (age)
+  result <- check_balance(
+    data,
+    c(wt71, smokeintensity),
+    age,
+    .metrics = "correlation"
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 2)
+  expect_equal(ncol(result), 5)
+  expect_equal(result$metric, rep("correlation", 2))
+  expect_equal(result$group_level, rep("age", 2))
+  expect_equal(result$method, rep("observed", 2))
+  expect_true(all(result$estimate >= -1 & result$estimate <= 1))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+test_that("check_balance correlation works with weights", {
+  data <- get_nhefs_test_data()
+
+  # Test correlation with weights
+  result <- check_balance(
+    data,
+    c(wt71, smokeintensity),
+    age,
+    .wts = w_ate,
+    .metrics = "correlation"
+  )
+
+  expect_equal(nrow(result), 4) # 2 variables × 2 methods (observed + w_ate)
+  expect_true(all(c("observed", "w_ate") %in% result$method))
+  expect_true(all(result$estimate >= -1 & result$estimate <= 1))
+  expect_true(all(is.finite(result$estimate)))
+})
+
+test_that("check_balance correlation requires numeric group variable", {
+  data <- get_nhefs_test_data()
+
+  # Should error when using factor/binary variable with correlation
+  expect_error(
+    check_balance(data, age, qsmk, .metrics = "correlation"),
+    "Group variable must be numeric when using correlation metric"
+  )
+})
+
+test_that("check_balance handles mixed metrics with correlation", {
+  data <- get_nhefs_test_data()
+
+  # Should error when mixing correlation with other metrics using binary group
+  expect_error(
+    check_balance(
+      data,
+      age,
+      qsmk,
+      .metrics = c("smd", "correlation")
+    ),
+    "Group variable must be numeric when using correlation metric"
+  )
+
+  # But should work with continuous group when only using correlation
+  result <- check_balance(
+    data,
+    age,
+    wt71,
+    .metrics = "correlation"
+  )
+  expect_equal(nrow(result), 1)
+  expect_equal(result$metric, "correlation")
+})
+
+test_that("check_balance correlation handles missing values", {
+  data <- get_nhefs_test_data()
+
+  # Introduce missing values
+  data_na <- data
+  data_na$age[1:10] <- NA
+  data_na$wt71[5:15] <- NA
+
+  # Should return NA when na_rm = FALSE
+  result_na_false <- check_balance(
+    data_na,
+    age,
+    wt71,
+    .metrics = "correlation",
+    na_rm = FALSE
+  )
+  expect_true(is.na(result_na_false$estimate))
+
+  # Should work when na_rm = TRUE
+  result_na_true <- check_balance(
+    data_na,
+    age,
+    wt71,
+    .metrics = "correlation",
+    na_rm = TRUE
+  )
+  expect_true(is.finite(result_na_true$estimate))
+})
+
+test_that("check_balance supports both quoted and unquoted .wts", {
+  data <- get_nhefs_test_data()
+
+  # Test unquoted weight
+  result_unquoted <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = w_ate,
+    .metrics = "smd"
+  )
+
+  # Test quoted weight
+  result_quoted <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = "w_ate",
+    .metrics = "smd"
+  )
+
+  # Results should be identical
+  expect_equal(result_unquoted, result_quoted)
+})
+
+test_that("check_balance supports multiple weight selection with c()", {
+  data <- get_nhefs_test_data()
+
+  # Test unquoted multiple weights
+  result_unquoted <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = c(w_ate, w_att),
+    .metrics = "smd"
+  )
+
+  # Test quoted multiple weights
+  result_quoted <- check_balance(
+    data,
+    age,
+    qsmk,
+    .wts = c("w_ate", "w_att"),
+    .metrics = "smd"
+  )
+
+  # Results should be identical
+  expect_equal(result_unquoted, result_quoted)
+
+  # Check structure
+  expect_equal(nrow(result_unquoted), 3) # observed + 2 weights
+  expect_true(all(c("observed", "w_ate", "w_att") %in% result_unquoted$method))
+})
