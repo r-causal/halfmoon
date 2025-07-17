@@ -108,7 +108,7 @@ check_balance <- function(
     # Create dummy variables if requested
     if (make_dummy_vars) {
       # Identify categorical variables (factors and character variables)
-      categorical_vars <- sapply(
+      categorical_vars <- purrr::map_lgl(
         vars_data,
         function(x) is.factor(x) || is.character(x)
       )
@@ -137,7 +137,7 @@ check_balance <- function(
 
     # Add squared terms if requested
     if (squares) {
-      numeric_vars <- sapply(vars_data, is.numeric)
+      numeric_vars <- purrr::map_lgl(vars_data, is.numeric)
       if (any(numeric_vars)) {
         numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
         squared_data <- dplyr::mutate(
@@ -153,7 +153,7 @@ check_balance <- function(
 
     # Add cubed terms if requested
     if (cubes) {
-      numeric_vars <- sapply(vars_data, is.numeric)
+      numeric_vars <- purrr::map_lgl(vars_data, is.numeric)
       if (any(numeric_vars)) {
         numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
         # Only cube original variables, not squared ones
@@ -176,7 +176,7 @@ check_balance <- function(
 
     # Add interaction terms if requested
     if (interactions) {
-      numeric_vars <- sapply(vars_data, is.numeric)
+      numeric_vars <- purrr::map_lgl(vars_data, is.numeric)
       if (sum(numeric_vars) > 1) {
         numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
         # Only interact original variables, not squared/cubed ones

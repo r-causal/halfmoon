@@ -379,7 +379,7 @@ compute_ks <- function(
   x_o <- x_other[ord_other]
   c_o <- cumsum(w_other[ord_other])
   allv <- sort(unique(c(x_r, x_o)))
-  diff <- sapply(allv, function(v) {
+  diff <- purrr::map_dbl(allv, function(v) {
     F_r <- ifelse(any(x_r <= v), c_r[which.max(x_r[x_r <= v])], 0)
     F_o <- ifelse(any(x_o <= v), c_o[which.max(x_o[x_o <= v])], 0)
     abs(F_o - F_r)
