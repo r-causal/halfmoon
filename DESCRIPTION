@@ -18,15 +18,20 @@ Depends:
 Imports: 
     cardx (>= 0.2.3),
     cli,
+    dplyr,
     ggplot2,
     gtsummary (>= 2.1.0),
+    purrr,
     rlang,
+    smd,
+    tibble,
+    tidyr,
     tidyselect,
     tidysmd (>= 0.2.0)
 Suggests: 
     cards,
+    cobalt,
     covr,
-    dplyr,
     survey,
     testthat (>= 3.0.0),
     vdiffr

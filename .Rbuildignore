@@ -11,3 +11,5 @@
 ^rhub\.R$
 ^codecov\.yml$
 ^CRAN-SUBMISSION$
+^scratch$
+^\.claude$

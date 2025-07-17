@@ -58,7 +58,7 @@ add_ess_header <- function(x, header = "**{level}**  \nESS = {format(n, digits =
         ard_ess |>
           dplyr::mutate(
             column = paste0("stat_", seq_len(nrow(.env$ard_ess))),
-            modify_stat_level = lapply(.data$group1_level, FUN = as.character) |> unlist(),
+            modify_stat_level = purrr::map_chr(.data$group1_level, as.character),
             modify_stat_n = unlist(.data$stat),
             modify_stat_N = sum(.data$modify_stat_n),
             modify_stat_p = .data$modify_stat_n / .data$modify_stat_N
@@ -78,7 +78,7 @@ add_ess_header <- function(x, header = "**{level}**  \nESS = {format(n, digits =
         dplyr::bind_rows(ard_ess_overall, ard_ess) |>
           dplyr::mutate(
             column = paste0("stat_", dplyr::row_number() - 1L),
-            modify_stat_level = lapply(.data$group1_level, FUN = \(x) as.character(x %||% "Overall")) |> unlist(),
+            modify_stat_level = purrr::map_chr(.data$group1_level, \(x) as.character(x %||% "Overall")),
             modify_stat_n = unlist(.data$stat)
           ) |>
           dplyr::select("column", tidyselect::starts_with("modify_stat_")),
