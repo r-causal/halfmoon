@@ -13,10 +13,10 @@ check_balance(
   include_observed = TRUE,
   reference_group = 1L,
   na_rm = FALSE,
-  make_dummy_vars = FALSE,
-  squares = TRUE,
-  cubes = TRUE,
-  interactions = TRUE
+  make_dummy_vars = TRUE,
+  squares = FALSE,
+  cubes = FALSE,
+  interactions = FALSE
 )
 }
 \arguments{
@@ -25,8 +25,7 @@ check_balance(
 \item{.vars}{Variables for which to calculate balance metrics. Can be unquoted
 variable names, a character vector, or a tidyselect expression.}
 
-\item{.group}{Grouping variable. Can be unquoted or quoted. Must have exactly
-two unique levels.}
+\item{.group}{Grouping variable, e.g., treatment or exposure group.}
 
 \item{.wts}{Optional weighting variables. Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare
@@ -47,18 +46,19 @@ Defaults to 1 (first level).}
 before computation. Defaults to FALSE.}
 
 \item{make_dummy_vars}{Logical. Transform categorical variables to dummy
-variables using \code{model.matrix()}? Defaults to FALSE. When TRUE, categorical
+variables using \code{model.matrix()}? Defaults to TRUE. When TRUE, categorical
 variables are expanded into separate binary indicators for each level.}
 
 \item{squares}{Logical. Include squared terms for continuous variables?
-Defaults to TRUE. When TRUE, adds squared versions of numeric variables.}
+Defaults to FALSE. When TRUE, adds squared versions of numeric variables.}
 
 \item{cubes}{Logical. Include cubed terms for continuous variables?
-Defaults to TRUE. When TRUE, adds cubed versions of numeric variables.}
+Defaults to FALSE. When TRUE, adds cubed versions of numeric variables.}
 
 \item{interactions}{Logical. Include all pairwise interactions between
-variables? Defaults to TRUE. When TRUE, creates interaction terms for
-all variable pairs.}
+variables? Defaults to FALSE. When TRUE, creates interaction terms for
+all variable pairs, excluding interactions between levels of the same
+categorical variable and between squared/cubed terms.}
 }
 \value{
 A tibble with columns:
@@ -71,18 +71,15 @@ A tibble with columns:
 \description{
 Computes balance statistics for multiple variables across different groups and
 optional weighting schemes. This function generalizes balance checking by
-supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov) and
-returns results in a tidy, long-format tibble similar to \code{tidysmd::tidy_smd()}.
+supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov, weighted correlation) and
+returns results in a tidy format.
 }
 \examples{
 # Basic usage with all metrics
-check_balance(nhefs_weights, c(age, wt71, smokeintensity), qsmk)
+check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 
 # With specific metrics only
 check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
-
-# With multiple weights
-check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 
 # Exclude observed results
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
@@ -90,13 +87,9 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed 
 # Use correlation for continuous exposure
 check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
 
-# With dummy variables for categorical variables
-check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = TRUE)
+# With dummy variables for categorical variables (default behavior)
+check_balance(nhefs_weights, c(age, sex, race), qsmk)
 
-# With higher-order terms
-check_balance(nhefs_weights, c(age, wt71), qsmk, squares = TRUE, cubes = TRUE)
-
-# With interactions
-check_balance(nhefs_weights, c(age, wt71), qsmk, interactions = TRUE)
-
+# Without dummy variables for categorical variables
+check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = FALSE)
 }

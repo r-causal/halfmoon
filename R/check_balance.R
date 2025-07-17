@@ -23,15 +23,16 @@
 #' @param na_rm A logical value indicating whether to remove missing values
 #'   before computation. Defaults to FALSE.
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
-#'   variables using `model.matrix()`? Defaults to FALSE. When TRUE, categorical
+#'   variables using `model.matrix()`? Defaults to TRUE. When TRUE, categorical
 #'   variables are expanded into separate binary indicators for each level.
 #' @param squares Logical. Include squared terms for continuous variables?
-#'   Defaults to TRUE. When TRUE, adds squared versions of numeric variables.
+#'   Defaults to FALSE. When TRUE, adds squared versions of numeric variables.
 #' @param cubes Logical. Include cubed terms for continuous variables?
-#'   Defaults to TRUE. When TRUE, adds cubed versions of numeric variables.
+#'   Defaults to FALSE. When TRUE, adds cubed versions of numeric variables.
 #' @param interactions Logical. Include all pairwise interactions between
-#'   variables? Defaults to TRUE. When TRUE, creates interaction terms for
-#'   all variable pairs.
+#'   variables? Defaults to FALSE. When TRUE, creates interaction terms for
+#'   all variable pairs, excluding interactions between levels of the same
+#'   categorical variable and between squared/cubed terms.
 #'
 #' @return A tibble with columns:
 #'   \item{variable}{Character. The variable name being analyzed.}
@@ -53,8 +54,11 @@
 #' # Use correlation for continuous exposure
 #' check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
 #'
-#' # With dummy variables for categorical variables
-#' check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = TRUE)
+#' # With dummy variables for categorical variables (default behavior)
+#' check_balance(nhefs_weights, c(age, sex, race), qsmk)
+#' 
+#' # Without dummy variables for categorical variables
+#' check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = FALSE)
 #' @export
 check_balance <- function(
   .data,
@@ -65,10 +69,10 @@ check_balance <- function(
   include_observed = TRUE,
   reference_group = 1L,
   na_rm = FALSE,
-  make_dummy_vars = FALSE,
-  squares = TRUE,
-  cubes = TRUE,
-  interactions = TRUE
+  make_dummy_vars = TRUE,
+  squares = FALSE,
+  cubes = FALSE,
+  interactions = FALSE
 ) {
   if (!is.data.frame(.data)) {
     stop("Argument '.data' must be a data frame")
@@ -104,11 +108,25 @@ check_balance <- function(
           dplyr::where(function(x) is.factor(x) || is.character(x))
         )
 
-        # Use model.matrix to create dummy variables, remove intercept
+        # Create dummy variables using functional programming to ensure all levels are included
         if (ncol(categorical_data) > 0) {
-          dummy_matrix <- stats::model.matrix(~., data = categorical_data)
-          # Remove intercept
-          dummy_df <- dplyr::as_tibble(dummy_matrix[, -1, drop = FALSE]) 
+          # Create all dummy variables in a single pass
+          dummy_vars <- purrr::imap(categorical_data, function(col_data, col_name) {
+            # Get levels based on variable type
+            levels_to_use <- if (is.factor(col_data)) {
+              levels(col_data)
+            } else {
+              sort(unique(col_data))
+            }
+            
+            # Create dummy variables for all levels at once
+            dummy_names <- paste0(col_name, levels_to_use)
+            dummy_values <- purrr::map(levels_to_use, ~ as.numeric(col_data == .x))
+            stats::setNames(dummy_values, dummy_names)
+          })
+          
+          # Flatten and convert to tibble
+          dummy_df <- dplyr::as_tibble(purrr::flatten(dummy_vars)) 
 
           # Remove original categorical variables and add dummy variables
           vars_data <- dplyr::select(
@@ -179,8 +197,21 @@ check_balance <- function(
             simplify = FALSE
           )
 
+          # Filter out same-variable dummy interactions (e.g., sex0 x sex1)
+          valid_combinations <- purrr::keep(var_combinations, function(combo) {
+            var1 <- combo[1]
+            var2 <- combo[2]
+            
+            # Extract base variable names (before dummy suffixes)
+            base1 <- sub("^([^0-9]+).*", "\\1", var1)
+            base2 <- sub("^([^0-9]+).*", "\\1", var2)
+            
+            # Only keep interactions between different base variables
+            base1 != base2
+          })
+
           # Create interaction terms using functional programming
-          interaction_terms <- purrr::map(var_combinations, function(combo) {
+          interaction_terms <- purrr::map(valid_combinations, function(combo) {
             var1 <- combo[1]
             var2 <- combo[2]
             interaction_name <- paste(var1, var2, sep = "_x_")
