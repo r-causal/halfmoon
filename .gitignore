@@ -9,3 +9,4 @@ rhub.R
 CRAN-SUBMISSION
 scratch/
 .claude/
+*.Rcheck
