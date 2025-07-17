@@ -23,15 +23,15 @@
 #'   Defaults to 1 (first level).
 #' @param na_rm A logical value indicating whether to remove missing values
 #'   before computation. Defaults to FALSE.
-#' @param make_dummy_vars Logical. Transform categorical variables to dummy 
-#'   variables using `model.matrix()`? Defaults to FALSE. When TRUE, categorical 
+#' @param make_dummy_vars Logical. Transform categorical variables to dummy
+#'   variables using `model.matrix()`? Defaults to FALSE. When TRUE, categorical
 #'   variables are expanded into separate binary indicators for each level.
-#' @param squares Logical. Include squared terms for continuous variables? 
+#' @param squares Logical. Include squared terms for continuous variables?
 #'   Defaults to TRUE. When TRUE, adds squared versions of numeric variables.
-#' @param cubes Logical. Include cubed terms for continuous variables? 
+#' @param cubes Logical. Include cubed terms for continuous variables?
 #'   Defaults to TRUE. When TRUE, adds cubed versions of numeric variables.
-#' @param interactions Logical. Include all pairwise interactions between 
-#'   variables? Defaults to TRUE. When TRUE, creates interaction terms for 
+#' @param interactions Logical. Include all pairwise interactions between
+#'   variables? Defaults to TRUE. When TRUE, creates interaction terms for
 #'   all variable pairs.
 #'
 #' @return A tibble with columns:
@@ -43,35 +43,29 @@
 #'
 #' @examples
 #' # Basic usage with all metrics
-#' check_balance(mtcars, c(mpg, hp, wt), vs)
+#' check_balance(nhefs_weights, c(age, wt71, smokeintensity), qsmk)
 #'
 #' # With specific metrics only
-#' check_balance(mtcars, c(mpg, hp), vs, .metrics = c("smd", "ks"))
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
 #'
 #' # With multiple weights
-#' check_balance(mtcars, c(mpg, hp), vs, .wts = c(gear, carb))
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 #'
 #' # Exclude observed results
-#' check_balance(mtcars, c(mpg, hp), vs, .wts = gear, include_observed = FALSE)
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
 #'
 #' # Use correlation for continuous exposure
 #' check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
 #'
 #' # With dummy variables for categorical variables
-#' check_balance(mtcars, c(mpg, vs, am), cyl, make_dummy_vars = TRUE)
+#' check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = TRUE)
 #'
 #' # With higher-order terms
-#' check_balance(mtcars, c(mpg, hp), vs, squares = TRUE, cubes = TRUE)
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, squares = TRUE, cubes = TRUE)
 #'
 #' # With interactions
-#' check_balance(mtcars, c(mpg, hp), vs, interactions = TRUE)
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, interactions = TRUE)
 #'
-#' @importFrom dplyr select arrange mutate across where bind_cols as_tibble all_of ends_with
-#' @importFrom tidyr expand_grid
-#' @importFrom purrr pmap_dfr
-#' @importFrom tibble tibble
-#' @importFrom rlang as_name enquo
-#' @importFrom stats model.matrix
 #' @export
 check_balance <- function(
   .data,
@@ -102,86 +96,122 @@ check_balance <- function(
 
   # Transform data based on arguments
   transformed_data <- .data
-  
+
   # Store original variable names for later reference
   original_vars <- var_names
-  
+
   # Apply data transformations
   if (make_dummy_vars || squares || cubes || interactions) {
     # Extract just the variables we're working with
-    vars_data <- dplyr::select(.data, all_of(var_names))
-    
+    vars_data <- dplyr::select(.data, dplyr::all_of(var_names))
+
     # Create dummy variables if requested
     if (make_dummy_vars) {
       # Identify categorical variables (factors and character variables)
-      categorical_vars <- sapply(vars_data, function(x) is.factor(x) || is.character(x))
-      
+      categorical_vars <- sapply(
+        vars_data,
+        function(x) is.factor(x) || is.character(x)
+      )
+
       if (any(categorical_vars)) {
         # Create dummy variables for categorical variables
-        categorical_data <- dplyr::select(vars_data, where(function(x) is.factor(x) || is.character(x)))
-        
+        categorical_data <- dplyr::select(
+          vars_data,
+          dplyr::where(function(x) is.factor(x) || is.character(x))
+        )
+
         # Use model.matrix to create dummy variables, remove intercept
         if (ncol(categorical_data) > 0) {
-          dummy_matrix <- stats::model.matrix(~ ., data = categorical_data)
+          dummy_matrix <- stats::model.matrix(~., data = categorical_data)
           dummy_df <- dplyr::as_tibble(dummy_matrix[, -1, drop = FALSE]) # Remove intercept
-          
+
           # Remove original categorical variables and add dummy variables
-          vars_data <- dplyr::select(vars_data, -where(function(x) is.factor(x) || is.character(x)))
+          vars_data <- dplyr::select(
+            vars_data,
+            -dplyr::where(function(x) is.factor(x) || is.character(x))
+          )
           vars_data <- dplyr::bind_cols(vars_data, dummy_df)
         }
       }
     }
-    
+
     # Add squared terms if requested
     if (squares) {
       numeric_vars <- sapply(vars_data, is.numeric)
       if (any(numeric_vars)) {
-        numeric_data <- dplyr::select(vars_data, where(is.numeric))
-        squared_data <- dplyr::mutate(numeric_data, dplyr::across(everything(), ~ .x^2, .names = "{.col}_squared"))
-        vars_data <- dplyr::bind_cols(vars_data, dplyr::select(squared_data, ends_with("_squared")))
+        numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
+        squared_data <- dplyr::mutate(
+          numeric_data,
+          dplyr::across(everything(), ~ .x^2, .names = "{.col}_squared")
+        )
+        vars_data <- dplyr::bind_cols(
+          vars_data,
+          dplyr::select(squared_data, dplyr::ends_with("_squared"))
+        )
       }
     }
-    
+
     # Add cubed terms if requested
     if (cubes) {
       numeric_vars <- sapply(vars_data, is.numeric)
       if (any(numeric_vars)) {
-        numeric_data <- dplyr::select(vars_data, where(is.numeric))
+        numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
         # Only cube original variables, not squared ones
-        original_numeric <- dplyr::select(numeric_data, -ends_with("_squared"))
+        original_numeric <- dplyr::select(
+          numeric_data,
+          -dplyr::ends_with("_squared")
+        )
         if (ncol(original_numeric) > 0) {
-          cubed_data <- dplyr::mutate(original_numeric, dplyr::across(everything(), ~ .x^3, .names = "{.col}_cubed"))
-          vars_data <- dplyr::bind_cols(vars_data, dplyr::select(cubed_data, ends_with("_cubed")))
+          cubed_data <- dplyr::mutate(
+            original_numeric,
+            dplyr::across(everything(), ~ .x^3, .names = "{.col}_cubed")
+          )
+          vars_data <- dplyr::bind_cols(
+            vars_data,
+            dplyr::select(cubed_data, dplyr::ends_with("_cubed"))
+          )
         }
       }
     }
-    
+
     # Add interaction terms if requested
     if (interactions) {
       numeric_vars <- sapply(vars_data, is.numeric)
       if (sum(numeric_vars) > 1) {
-        numeric_data <- dplyr::select(vars_data, where(is.numeric))
+        numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
         # Only interact original variables, not squared/cubed ones
-        original_numeric <- dplyr::select(numeric_data, -ends_with("_squared"), -ends_with("_cubed"))
-        
+        original_numeric <- dplyr::select(
+          numeric_data,
+          -dplyr::ends_with("_squared"),
+          -dplyr::ends_with("_cubed")
+        )
+
         if (ncol(original_numeric) > 1) {
           # Create all pairwise interactions
-          var_combinations <- combn(names(original_numeric), 2, simplify = FALSE)
-          
+          var_combinations <- utils::combn(
+            names(original_numeric),
+            2,
+            simplify = FALSE
+          )
+
           for (combo in var_combinations) {
             var1 <- combo[1]
             var2 <- combo[2]
             interaction_name <- paste(var1, var2, sep = "_x_")
-            vars_data[[interaction_name]] <- original_numeric[[var1]] * original_numeric[[var2]]
+            vars_data[[interaction_name]] <- original_numeric[[var1]] *
+              original_numeric[[var2]]
           }
         }
       }
     }
-    
+
     # Replace the variables in the transformed data
-    transformed_data <- transformed_data[, !names(transformed_data) %in% original_vars, drop = FALSE]
+    transformed_data <- transformed_data[,
+      !names(transformed_data) %in% original_vars,
+      drop = FALSE
+    ]
     transformed_data <- dplyr::bind_cols(transformed_data, vars_data)
-    
+
     # Update var_names to include all transformed variables
     var_names <- names(vars_data)
   }

@@ -12,7 +12,11 @@ check_balance(
   .metrics = c("smd", "variance_ratio", "ks"),
   include_observed = TRUE,
   reference_group = 1L,
-  na_rm = FALSE
+  na_rm = FALSE,
+  make_dummy_vars = FALSE,
+  squares = TRUE,
+  cubes = TRUE,
+  interactions = TRUE
 )
 }
 \arguments{
@@ -41,6 +45,20 @@ Defaults to 1 (first level).}
 
 \item{na_rm}{A logical value indicating whether to remove missing values
 before computation. Defaults to FALSE.}
+
+\item{make_dummy_vars}{Logical. Transform categorical variables to dummy
+variables using \code{model.matrix()}? Defaults to FALSE. When TRUE, categorical
+variables are expanded into separate binary indicators for each level.}
+
+\item{squares}{Logical. Include squared terms for continuous variables?
+Defaults to TRUE. When TRUE, adds squared versions of numeric variables.}
+
+\item{cubes}{Logical. Include cubed terms for continuous variables?
+Defaults to TRUE. When TRUE, adds cubed versions of numeric variables.}
+
+\item{interactions}{Logical. Include all pairwise interactions between
+variables? Defaults to TRUE. When TRUE, creates interaction terms for
+all variable pairs.}
 }
 \value{
 A tibble with columns:
@@ -58,18 +76,27 @@ returns results in a tidy, long-format tibble similar to \code{tidysmd::tidy_smd
 }
 \examples{
 # Basic usage with all metrics
-check_balance(mtcars, c(mpg, hp, wt), vs)
+check_balance(nhefs_weights, c(age, wt71, smokeintensity), qsmk)
 
 # With specific metrics only
-check_balance(mtcars, c(mpg, hp), vs, .metrics = c("smd", "ks"))
+check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
 
 # With multiple weights
-check_balance(mtcars, c(mpg, hp), vs, .wts = c(gear, carb))
+check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 
 # Exclude observed results
-check_balance(mtcars, c(mpg, hp), vs, .wts = gear, include_observed = FALSE)
+check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
 
 # Use correlation for continuous exposure
 check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
+
+# With dummy variables for categorical variables
+check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = TRUE)
+
+# With higher-order terms
+check_balance(nhefs_weights, c(age, wt71), qsmk, squares = TRUE, cubes = TRUE)
+
+# With interactions
+check_balance(nhefs_weights, c(age, wt71), qsmk, interactions = TRUE)
 
 }

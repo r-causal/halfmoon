@@ -24,7 +24,6 @@
 #' # With weights
 #' compute_smd(c(1, 2, 3, 4, 5), c("A", "A", "B", "B", "B"),
 #'             weights = c(1, 1, 2, 2, 2))
-#' @importFrom smd smd
 #' @export
 compute_smd <- function(
   covariate,

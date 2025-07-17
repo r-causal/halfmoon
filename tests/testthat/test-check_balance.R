@@ -36,7 +36,13 @@ get_nhefs_test_data <- function() {
 
 # Helper function for backward compatibility in tests
 check_balance_basic <- function(...) {
-  check_balance(..., make_dummy_vars = FALSE, squares = FALSE, cubes = FALSE, interactions = FALSE)
+  check_balance(
+    ...,
+    make_dummy_vars = FALSE,
+    squares = FALSE,
+    cubes = FALSE,
+    interactions = FALSE
+  )
 }
 
 # =============================================================================
@@ -100,7 +106,13 @@ test_that("check_balance works with multiple variables", {
 test_that("check_balance works with single weight", {
   data <- get_nhefs_test_data()
 
-  result <- check_balance_basic(data, age, qsmk, .wts = w_test1, .metrics = "smd")
+  result <- check_balance_basic(
+    data,
+    age,
+    qsmk,
+    .wts = w_test1,
+    .metrics = "smd"
+  )
 
   expect_equal(nrow(result), 2) # observed + 1 weight
   expect_equal(sort(unique(result$method)), c("observed", "w_test1"))
@@ -237,7 +249,13 @@ test_that("check_balance weighted results match individual weighted functions", 
   data <- get_nhefs_test_data()
 
   # Test weighted SMD
-  result <- check_balance_basic(data, age, qsmk, .wts = w_test1, .metrics = "smd")
+  result <- check_balance_basic(
+    data,
+    age,
+    qsmk,
+    .wts = w_test1,
+    .metrics = "smd"
+  )
   balance_smd <- result$estimate[
     result$metric == "smd" & result$method == "w_test1"
   ]
@@ -386,7 +404,10 @@ test_that("check_balance validates inputs correctly", {
   )
 
   # Test invalid group variable
-  expect_error(check_balance_basic(data, age, nonexistent_group), "not found in data")
+  expect_error(
+    check_balance_basic(data, age, nonexistent_group),
+    "not found in data"
+  )
 
   # Test invalid metrics
   expect_error(
@@ -451,7 +472,13 @@ test_that("check_balance handles extreme weights", {
   data <- get_nhefs_test_data()
 
   # Test with extreme weights
-  result <- check_balance_basic(data, age, qsmk, .wts = w_extreme, .metrics = "smd")
+  result <- check_balance_basic(
+    data,
+    age,
+    qsmk,
+    .wts = w_extreme,
+    .metrics = "smd"
+  )
 
   expect_equal(nrow(result), 2) # observed + weighted
   expect_true(all(is.finite(result$estimate)))
@@ -619,7 +646,12 @@ test_that("check_balance works with tidyselect helpers on NHEFS", {
   expect_equal(sort(unique(result1$variable)), sort(expected_vars))
 
   # Test with specific selection
-  result2 <- check_balance_basic(data, starts_with("smoke"), qsmk, .metrics = "smd")
+  result2 <- check_balance_basic(
+    data,
+    starts_with("smoke"),
+    qsmk,
+    .metrics = "smd"
+  )
   expect_true(all(grepl("^smoke", unique(result2$variable))))
 })
 
@@ -810,28 +842,28 @@ test_that("check_balance supports multiple weight selection with c()", {
 
 test_that("make_dummy_vars works with categorical variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test with categorical variables
   result <- check_balance(
-    data, 
-    c(sex, race), 
-    qsmk, 
-    .metrics = "smd", 
+    data,
+    c(sex, race),
+    qsmk,
+    .metrics = "smd",
     make_dummy_vars = TRUE
   )
-  
+
   # Should have dummy variables for sex and race
   # sex has 2 levels, race has 3 levels (assuming typical NHEFS data)
   expected_vars <- c("sex", "race")
-  
+
   # Check that we have more variables than the original 2
   expect_true(nrow(result) > 2)
-  
+
   # All variables should be of the expected form
   var_names <- unique(result$variable)
   expect_true(any(grepl("sex", var_names)))
   expect_true(any(grepl("race", var_names)))
-  
+
   # Test with mixed variable types
   result_mixed <- check_balance(
     data,
@@ -840,29 +872,29 @@ test_that("make_dummy_vars works with categorical variables", {
     .metrics = "smd",
     make_dummy_vars = TRUE
   )
-  
+
   # Should have age as numeric plus dummy variables for sex and race
   var_names_mixed <- unique(result_mixed$variable)
   expect_true("age" %in% var_names_mixed)
   expect_true(any(grepl("sex", var_names_mixed)))
   expect_true(any(grepl("race", var_names_mixed)))
-  
+
   # Should have more variables than original 3
   expect_true(nrow(result_mixed) > 3)
 })
 
 test_that("make_dummy_vars = FALSE preserves original variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test with categorical variables but no dummy transformation
   result <- check_balance(
-    data, 
-    c(sex, race), 
-    qsmk, 
-    .metrics = "smd", 
+    data,
+    c(sex, race),
+    qsmk,
+    .metrics = "smd",
     make_dummy_vars = FALSE
   )
-  
+
   # Should have exactly the original variables
   expect_equal(nrow(result), 2)
   expect_equal(sort(unique(result$variable)), c("race", "sex"))
@@ -870,7 +902,7 @@ test_that("make_dummy_vars = FALSE preserves original variables", {
 
 test_that("squares argument works with numeric variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test with squares = TRUE (default)
   result_with_squares <- check_balance(
     data,
@@ -881,7 +913,7 @@ test_that("squares argument works with numeric variables", {
     cubes = FALSE,
     interactions = FALSE
   )
-  
+
   # Should have original variables plus squared versions
   var_names <- unique(result_with_squares$variable)
   expect_true("age" %in% var_names)
@@ -889,7 +921,7 @@ test_that("squares argument works with numeric variables", {
   expect_true("age_squared" %in% var_names)
   expect_true("wt71_squared" %in% var_names)
   expect_equal(nrow(result_with_squares), 4) # 2 original + 2 squared
-  
+
   # Test with squares = FALSE
   result_no_squares <- check_balance(
     data,
@@ -900,7 +932,7 @@ test_that("squares argument works with numeric variables", {
     cubes = FALSE,
     interactions = FALSE
   )
-  
+
   # Should have only original variables
   expect_equal(nrow(result_no_squares), 2)
   expect_equal(sort(unique(result_no_squares$variable)), c("age", "wt71"))
@@ -908,7 +940,7 @@ test_that("squares argument works with numeric variables", {
 
 test_that("cubes argument works with numeric variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test with cubes = TRUE (default)
   result_with_cubes <- check_balance(
     data,
@@ -919,7 +951,7 @@ test_that("cubes argument works with numeric variables", {
     cubes = TRUE,
     interactions = FALSE
   )
-  
+
   # Should have original variables plus cubed versions
   var_names <- unique(result_with_cubes$variable)
   expect_true("age" %in% var_names)
@@ -927,7 +959,7 @@ test_that("cubes argument works with numeric variables", {
   expect_true("age_cubed" %in% var_names)
   expect_true("wt71_cubed" %in% var_names)
   expect_equal(nrow(result_with_cubes), 4) # 2 original + 2 cubed
-  
+
   # Test with cubes = FALSE
   result_no_cubes <- check_balance(
     data,
@@ -938,7 +970,7 @@ test_that("cubes argument works with numeric variables", {
     cubes = FALSE,
     interactions = FALSE
   )
-  
+
   # Should have only original variables
   expect_equal(nrow(result_no_cubes), 2)
   expect_equal(sort(unique(result_no_cubes$variable)), c("age", "wt71"))
@@ -946,7 +978,7 @@ test_that("cubes argument works with numeric variables", {
 
 test_that("interactions argument works with numeric variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test with interactions = TRUE (default)
   result_with_interactions <- check_balance(
     data,
@@ -957,14 +989,14 @@ test_that("interactions argument works with numeric variables", {
     cubes = FALSE,
     interactions = TRUE
   )
-  
+
   # Should have original variables plus interaction
   var_names <- unique(result_with_interactions$variable)
   expect_true("age" %in% var_names)
   expect_true("wt71" %in% var_names)
   expect_true("age_x_wt71" %in% var_names)
   expect_equal(nrow(result_with_interactions), 3) # 2 original + 1 interaction
-  
+
   # Test with three variables
   result_three_vars <- check_balance(
     data,
@@ -975,10 +1007,10 @@ test_that("interactions argument works with numeric variables", {
     cubes = FALSE,
     interactions = TRUE
   )
-  
+
   # Should have 3 original + 3 interactions (age_x_wt71, age_x_smokeintensity, wt71_x_smokeintensity)
   expect_equal(nrow(result_three_vars), 6)
-  
+
   # Test with interactions = FALSE
   result_no_interactions <- check_balance(
     data,
@@ -989,7 +1021,7 @@ test_that("interactions argument works with numeric variables", {
     cubes = FALSE,
     interactions = FALSE
   )
-  
+
   # Should have only original variables
   expect_equal(nrow(result_no_interactions), 2)
   expect_equal(sort(unique(result_no_interactions$variable)), c("age", "wt71"))
@@ -997,7 +1029,7 @@ test_that("interactions argument works with numeric variables", {
 
 test_that("combined transformations work together", {
   data <- get_nhefs_test_data()
-  
+
   # Test with all transformations
   result_all <- check_balance(
     data,
@@ -1008,15 +1040,15 @@ test_that("combined transformations work together", {
     cubes = TRUE,
     interactions = TRUE
   )
-  
+
   # Should have:
   # - 2 original variables
   # - 2 squared variables
-  # - 2 cubed variables  
+  # - 2 cubed variables
   # - 1 interaction between original variables (age_x_wt71)
   # Total: 7 variables
   expect_equal(nrow(result_all), 7)
-  
+
   var_names <- unique(result_all$variable)
   expect_true("age" %in% var_names)
   expect_true("wt71" %in% var_names)
@@ -1029,7 +1061,7 @@ test_that("combined transformations work together", {
 
 test_that("transformations work with dummy variables", {
   data <- get_nhefs_test_data()
-  
+
   # Test combining dummy variables with squares/cubes/interactions
   result_mixed <- check_balance(
     data,
@@ -1041,27 +1073,27 @@ test_that("transformations work with dummy variables", {
     cubes = TRUE,
     interactions = TRUE
   )
-  
+
   # Should have:
   # - age (numeric)
   # - sex dummy variables (categorical -> dummies)
   # - age_squared, age_cubed
   # - interactions between age and sex dummies
-  
+
   var_names <- unique(result_mixed$variable)
   expect_true("age" %in% var_names)
   expect_true("age_squared" %in% var_names)
   expect_true("age_cubed" %in% var_names)
   expect_true(any(grepl("sex", var_names)))
   expect_true(any(grepl("age_x_sex", var_names)))
-  
+
   # Should have more variables than just age and sex
   expect_true(nrow(result_mixed) > 2)
 })
 
 test_that("transformations work with weights", {
   data <- get_nhefs_test_data()
-  
+
   # Test transformations with weights
   result_weighted <- check_balance(
     data,
@@ -1073,25 +1105,25 @@ test_that("transformations work with weights", {
     cubes = FALSE,
     interactions = FALSE
   )
-  
+
   # Should have transformed variables with both observed and weighted methods
   var_names <- unique(result_weighted$variable)
   expect_true("age" %in% var_names)
   expect_true("wt71" %in% var_names)
   expect_true("age_squared" %in% var_names)
   expect_true("wt71_squared" %in% var_names)
-  
+
   methods <- unique(result_weighted$method)
   expect_true("observed" %in% methods)
   expect_true("w_test1" %in% methods)
-  
+
   # Should have 4 variables × 2 methods = 8 rows
   expect_equal(nrow(result_weighted), 8)
 })
 
 test_that("transformations work with multiple metrics", {
   data <- get_nhefs_test_data()
-  
+
   # Test transformations with multiple metrics
   result_multi_metrics <- check_balance(
     data,
@@ -1102,17 +1134,17 @@ test_that("transformations work with multiple metrics", {
     cubes = FALSE,
     interactions = FALSE
   )
-  
+
   # Should have 4 variables × 2 metrics = 8 rows
   expect_equal(nrow(result_multi_metrics), 8)
-  
+
   metrics <- unique(result_multi_metrics$metric)
   expect_equal(sort(metrics), c("smd", "variance_ratio"))
 })
 
 test_that("edge cases handled correctly", {
   data <- get_nhefs_test_data()
-  
+
   # Test with single variable
   result_single <- check_balance(
     data,
@@ -1121,12 +1153,12 @@ test_that("edge cases handled correctly", {
     .metrics = "smd",
     squares = TRUE,
     cubes = TRUE,
-    interactions = TRUE  # Should be ignored with single variable
+    interactions = TRUE # Should be ignored with single variable
   )
-  
+
   # Should have age + age_squared + age_cubed (no interaction possible)
   expect_equal(nrow(result_single), 3)
-  
+
   # Test with only categorical variables
   result_categorical <- check_balance(
     data,
@@ -1134,14 +1166,14 @@ test_that("edge cases handled correctly", {
     qsmk,
     .metrics = "smd",
     make_dummy_vars = TRUE,
-    squares = TRUE,  # Should be ignored for categorical
-    cubes = TRUE,    # Should be ignored for categorical
-    interactions = TRUE  # Should work with dummy variables
+    squares = TRUE, # Should be ignored for categorical
+    cubes = TRUE, # Should be ignored for categorical
+    interactions = TRUE # Should work with dummy variables
   )
-  
+
   # Should have dummy variables and their interactions
   var_names <- unique(result_categorical$variable)
   expect_true(any(grepl("sex", var_names)))
   expect_true(any(grepl("race", var_names)))
-  expect_true(any(grepl("_x_", var_names)))  # Interaction indicator
+  expect_true(any(grepl("_x_", var_names))) # Interaction indicator
 })
