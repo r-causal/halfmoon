@@ -2,14 +2,13 @@
 #'
 #' Computes balance statistics for multiple variables across different groups and
 #' optional weighting schemes. This function generalizes balance checking by
-#' supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov) and
-#' returns results in a tidy, long-format tibble similar to `tidysmd::tidy_smd()`.
+#' supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov, weighted correlation) and
+#' returns results in a tidy format.
 #'
 #' @param .data A data frame containing the variables to analyze.
 #' @param .vars Variables for which to calculate balance metrics. Can be unquoted
 #'   variable names, a character vector, or a tidyselect expression.
-#' @param .group Grouping variable. Can be unquoted or quoted. Must have exactly
-#'   two unique levels.
+#' @param .group Grouping variable, e.g., treatment or exposure group.
 #' @param .wts Optional weighting variables. Can be unquoted variable names,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes.
@@ -43,13 +42,10 @@
 #'
 #' @examples
 #' # Basic usage with all metrics
-#' check_balance(nhefs_weights, c(age, wt71, smokeintensity), qsmk)
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 #'
 #' # With specific metrics only
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
-#'
-#' # With multiple weights
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 #'
 #' # Exclude observed results
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
@@ -59,13 +55,6 @@
 #'
 #' # With dummy variables for categorical variables
 #' check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = TRUE)
-#'
-#' # With higher-order terms
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, squares = TRUE, cubes = TRUE)
-#'
-#' # With interactions
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, interactions = TRUE)
-#'
 #' @export
 check_balance <- function(
   .data,
@@ -81,7 +70,6 @@ check_balance <- function(
   cubes = TRUE,
   interactions = TRUE
 ) {
-  # Input validation
   if (!is.data.frame(.data)) {
     stop("Argument '.data' must be a data frame")
   }
@@ -94,13 +82,9 @@ check_balance <- function(
     stop("No variables selected for '.vars'")
   }
 
-  # Transform data based on arguments
   transformed_data <- .data
-
-  # Store original variable names for later reference
   original_vars <- var_names
 
-  # Apply data transformations
   if (make_dummy_vars || squares || cubes || interactions) {
     # Extract just the variables we're working with
     vars_data <- dplyr::select(.data, dplyr::all_of(var_names))
@@ -123,7 +107,8 @@ check_balance <- function(
         # Use model.matrix to create dummy variables, remove intercept
         if (ncol(categorical_data) > 0) {
           dummy_matrix <- stats::model.matrix(~., data = categorical_data)
-          dummy_df <- dplyr::as_tibble(dummy_matrix[, -1, drop = FALSE]) # Remove intercept
+          # Remove intercept
+          dummy_df <- dplyr::as_tibble(dummy_matrix[, -1, drop = FALSE]) 
 
           # Remove original categorical variables and add dummy variables
           vars_data <- dplyr::select(
@@ -226,7 +211,7 @@ check_balance <- function(
   # Handle weights using proper NSE - capture quosure and check if null
   .wts <- rlang::enquo(.wts)
   if (!rlang::quo_is_null(.wts)) {
-    wts_names <- names(dplyr::select(.data, !!.wts))
+    wts_names <- names(dplyr::select(.data, {{ .wts }}))
   } else {
     wts_names <- NULL
   }

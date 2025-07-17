@@ -1177,3 +1177,45 @@ test_that("edge cases handled correctly", {
   expect_true(any(grepl("race", var_names)))
   expect_true(any(grepl("_x_", var_names))) # Interaction indicator
 })
+
+test_that("check_balance works with tidyselect helpers in .wts parameter", {
+  data <- get_nhefs_test_data()
+  
+  # Test with starts_with()
+  result1 <- check_balance_basic(
+    data, 
+    c(age, wt71), 
+    qsmk, 
+    .wts = starts_with("w_test")
+  )
+  
+  expect_s3_class(result1, "data.frame")
+  expect_gt(nrow(result1), 0)
+  
+  # Check that we got the correct weight methods
+  weight_methods <- setdiff(unique(result1$method), "observed")
+  expect_true(all(grepl("^w_test", weight_methods)))
+  expect_equal(length(weight_methods), 2) # w_test1, w_test2
+  
+  # Test with ends_with()
+  result2 <- check_balance_basic(
+    data, 
+    c(age, wt71), 
+    qsmk, 
+    .wts = ends_with("_test1")
+  )
+  
+  expect_s3_class(result2, "data.frame")
+  expect_true("w_test1" %in% unique(result2$method))
+  
+  # Test with contains()
+  result3 <- check_balance_basic(
+    data, 
+    c(age, wt71), 
+    qsmk, 
+    .wts = contains("extreme")
+  )
+  
+  expect_s3_class(result3, "data.frame")
+  expect_true("w_extreme" %in% unique(result3$method))
+})
