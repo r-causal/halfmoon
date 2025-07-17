@@ -12,7 +12,7 @@ check_balance(
   .metrics = c("smd", "variance_ratio", "ks"),
   include_observed = TRUE,
   reference_group = 1L,
-  na_rm = FALSE,
+  na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
   cubes = FALSE,
@@ -42,7 +42,7 @@ metrics? Defaults to TRUE.}
 \item{reference_group}{The reference group level to use for comparisons.
 Defaults to 1 (first level).}
 
-\item{na_rm}{A logical value indicating whether to remove missing values
+\item{na.rm}{A logical value indicating whether to remove missing values
 before computation. Defaults to FALSE.}
 
 \item{make_dummy_vars}{Logical. Transform categorical variables to dummy

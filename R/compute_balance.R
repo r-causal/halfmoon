@@ -11,7 +11,7 @@
 #'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the comparison
 #'   baseline. Can be either a group level or index. Defaults to the first level.
-#' @param na_rm A logical value indicating whether to remove missing values
+#' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   `NA` output.
 #' @return A numeric value representing the standardized mean difference.
@@ -30,7 +30,7 @@ compute_smd <- function(
   group,
   weights = NULL,
   reference_group = 1L,
-  na_rm = FALSE
+  na.rm = FALSE
 ) {
   # Input validation
   if (!is.numeric(covariate)) {
@@ -55,7 +55,7 @@ compute_smd <- function(
   }
 
   # Handle missing values first
-  if (!na_rm) {
+  if (!na.rm) {
     # Check for missing values
     if (is.null(weights)) {
       if (any(is.na(covariate) | is.na(group))) return(NA_real_)
@@ -87,7 +87,7 @@ compute_smd <- function(
     g = group,
     w = weights,
     gref = gref_index,
-    na.rm = na_rm
+    na.rm = na.rm
   )
   res$estimate
 }
@@ -110,7 +110,7 @@ is_binary <- function(x) {
 #'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the denominator.
 #'   If `NULL` (default), uses the first level.
-#' @param na_rm A logical value indicating whether to remove missing values
+#' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   `NA` output.
 #' @return A numeric value representing the variance ratio. Values greater than 1
@@ -128,7 +128,7 @@ compute_variance_ratio <- function(
   group,
   weights = NULL,
   reference_group = NULL,
-  na_rm = FALSE
+  na.rm = FALSE
 ) {
   # Input validation
   if (!is.numeric(covariate)) {
@@ -164,7 +164,7 @@ compute_variance_ratio <- function(
   idx_ref <- which(group == ref)
   idx_other <- which(group != ref)
   # Handle missing values
-  if (na_rm) {
+  if (na.rm) {
     if (is.null(weights)) {
       idx_ref <- idx_ref[!is.na(covariate[idx_ref])]
       idx_other <- idx_other[!is.na(covariate[idx_other])]
@@ -266,7 +266,7 @@ compute_variance_ratio <- function(
 #'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the comparison
 #'   baseline. If `NULL` (default), uses the first level.
-#' @param na_rm A logical value indicating whether to remove missing values
+#' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   `NA` output.
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,
@@ -285,7 +285,7 @@ compute_ks <- function(
   group,
   weights = NULL,
   reference_group = NULL,
-  na_rm = FALSE
+  na.rm = FALSE
 ) {
   # Input validation
   if (!is.numeric(covariate)) {
@@ -320,7 +320,7 @@ compute_ks <- function(
   idx_ref <- which(group == ref)
   idx_other <- which(group != ref)
   # Handle missing values
-  if (na_rm) {
+  if (na.rm) {
     if (is.null(weights)) {
       idx_ref <- idx_ref[!is.na(covariate[idx_ref])]
       idx_other <- idx_other[!is.na(covariate[idx_other])]
@@ -395,7 +395,7 @@ compute_ks <- function(
 #'   length as `x`.
 #' @param weights An optional numeric vector of case weights. If provided, must
 #'   have the same length as `x` and `y`. All weights must be non-negative.
-#' @param na_rm A logical value indicating whether to remove missing values
+#' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   `NA` output.
 #' @return A numeric value representing the correlation coefficient between -1 and 1.
@@ -408,7 +408,7 @@ compute_ks <- function(
 #' compute_correlation(nhefs_weights$age, nhefs_weights$smokeintensity,
 #'                     weights = nhefs_weights$w_ate)
 #' @export
-compute_correlation <- function(x, y, weights = NULL, na_rm = FALSE) {
+compute_correlation <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
   if (!is.numeric(x)) {
     stop("Argument 'x' must be numeric, got ", class(x)[1])
@@ -434,7 +434,7 @@ compute_correlation <- function(x, y, weights = NULL, na_rm = FALSE) {
     }
   }
 
-  if (na_rm) {
+  if (na.rm) {
     # Handle missing values carefully - avoid logical(0) issue
     if (is.null(weights)) {
       idx <- !(is.na(x) | is.na(y))

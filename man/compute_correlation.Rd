@@ -4,7 +4,7 @@
 \alias{compute_correlation}
 \title{Compute Weighted or Unweighted Pearson Correlation}
 \usage{
-compute_correlation(x, y, weights = NULL, na_rm = FALSE)
+compute_correlation(x, y, weights = NULL, na.rm = FALSE)
 }
 \arguments{
 \item{x}{A numeric vector containing the first variable.}
@@ -15,7 +15,7 @@ length as \code{x}.}
 \item{weights}{An optional numeric vector of case weights. If provided, must
 have the same length as \code{x} and \code{y}. All weights must be non-negative.}
 
-\item{na_rm}{A logical value indicating whether to remove missing values
+\item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values result in
 \code{NA} output.}
 }

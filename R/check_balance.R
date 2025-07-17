@@ -20,7 +20,7 @@
 #'   metrics? Defaults to TRUE.
 #' @param reference_group The reference group level to use for comparisons.
 #'   Defaults to 1 (first level).
-#' @param na_rm A logical value indicating whether to remove missing values
+#' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. Defaults to FALSE.
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
 #'   variables using `model.matrix()`? Defaults to TRUE. When TRUE, categorical
@@ -68,7 +68,7 @@ check_balance <- function(
   .metrics = c("smd", "variance_ratio", "ks"),
   include_observed = TRUE,
   reference_group = 1L,
-  na_rm = FALSE,
+  na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
   cubes = FALSE,
@@ -110,7 +110,7 @@ check_balance <- function(
 
         # Create dummy variables using functional programming to ensure all levels are included
         if (ncol(categorical_data) > 0) {
-          # Create all dummy variables in a single pass
+          # Create dummy variables, treating binary variables differently
           dummy_vars <- purrr::imap(categorical_data, function(col_data, col_name) {
             # Get levels based on variable type
             levels_to_use <- if (is.factor(col_data)) {
@@ -119,10 +119,19 @@ check_balance <- function(
               sort(unique(col_data))
             }
             
-            # Create dummy variables for all levels at once
-            dummy_names <- paste0(col_name, levels_to_use)
-            dummy_values <- purrr::map(levels_to_use, ~ as.numeric(col_data == .x))
-            stats::setNames(dummy_values, dummy_names)
+            # For binary variables (2 levels), keep as single variable (like cobalt)
+            # For multi-level variables (3+ levels), create dummy for each level
+            if (length(levels_to_use) == 2) {
+              # Binary variable: keep as single variable, convert to 0/1 numeric
+              # Use the factor levels directly, converting to numeric 0/1
+              dummy_values <- as.numeric(col_data) - 1  # Convert to 0/1 from 1/2
+              stats::setNames(list(dummy_values), col_name)
+            } else {
+              # Multi-level variable: create dummy for each level
+              dummy_names <- paste0(col_name, levels_to_use)
+              dummy_values <- purrr::map(levels_to_use, ~ as.numeric(col_data == .x))
+              stats::setNames(dummy_values, dummy_names)
+            }
           })
           
           # Flatten and convert to tibble
@@ -190,13 +199,50 @@ check_balance <- function(
         )
 
         if (ncol(original_numeric) > 1) {
-          # Create all pairwise interactions
+          # For interactions, we need to handle binary variables specially
+          # Binary variables need to be expanded to dummy variables for interactions
+          interaction_vars <- list()
+          
+          # Process each variable for interactions
+          for (var_name in names(original_numeric)) {
+            var_data <- original_numeric[[var_name]]
+            
+            # Check if this was originally a binary categorical variable
+            # (we can identify these by checking if they're in the original categorical data)
+            if (make_dummy_vars && exists("categorical_data") && var_name %in% names(categorical_data)) {
+              original_var_data <- categorical_data[[var_name]]
+              
+              # Get levels from original categorical data
+              levels_to_use <- if (is.factor(original_var_data)) {
+                levels(original_var_data)
+              } else {
+                sort(unique(original_var_data))
+              }
+              
+              # If binary (2 levels), expand to dummy variables for interactions
+              if (length(levels_to_use) == 2) {
+                for (level in levels_to_use) {
+                  dummy_name <- paste0(var_name, level)
+                  dummy_values <- as.numeric(original_var_data == level)
+                  interaction_vars[[dummy_name]] <- dummy_values
+                }
+              } else {
+                # Multi-level variables were already expanded, use as-is
+                interaction_vars[[var_name]] <- var_data
+              }
+            } else {
+              # Continuous variable, use as-is
+              interaction_vars[[var_name]] <- var_data
+            }
+          }
+          
+          # Now create interactions between all pairs
           var_combinations <- utils::combn(
-            names(original_numeric),
+            names(interaction_vars),
             2,
             simplify = FALSE
           )
-
+          
           # Filter out same-variable dummy interactions (e.g., sex0 x sex1)
           valid_combinations <- purrr::keep(var_combinations, function(combo) {
             var1 <- combo[1]
@@ -217,7 +263,7 @@ check_balance <- function(
             interaction_name <- paste(var1, var2, sep = "_x_")
             
             # Return a named list with the interaction term
-            interaction_value <- original_numeric[[var1]] * original_numeric[[var2]]
+            interaction_value <- interaction_vars[[var1]] * interaction_vars[[var2]]
             stats::setNames(list(interaction_value), interaction_name)
           })
           
@@ -346,7 +392,7 @@ check_balance <- function(
             x = var_data,
             y = group_data,
             weights = weights_data,
-            na_rm = na_rm
+            na.rm = na.rm
           )
         } else {
           # Handle reference group parameter based on the function
@@ -368,7 +414,7 @@ check_balance <- function(
             group = group_data,
             weights = weights_data,
             reference_group = ref_group_param,
-            na_rm = na_rm
+            na.rm = na.rm
           )
         }
 

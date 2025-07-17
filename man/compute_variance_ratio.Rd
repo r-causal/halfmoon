@@ -9,7 +9,7 @@ compute_variance_ratio(
   group,
   weights = NULL,
   reference_group = NULL,
-  na_rm = FALSE
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ have the same length as \code{covariate}. All weights must be non-negative.}
 \item{reference_group}{The reference group level to use as the denominator.
 If \code{NULL} (default), uses the first level.}
 
-\item{na_rm}{A logical value indicating whether to remove missing values
+\item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values result in
 \code{NA} output.}
 }

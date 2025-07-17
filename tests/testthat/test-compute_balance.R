@@ -114,11 +114,11 @@ test_that("compute_smd handles missing values", {
   w_na <- data$w_uniform
 
   # Should return NA when na.rm = FALSE
-  expect_true(is.na(compute_smd(covariate = x_na, group = g_na, na_rm = FALSE)))
+  expect_true(is.na(compute_smd(covariate = x_na, group = g_na, na.rm = FALSE)))
 
   # Should work when na.rm = TRUE
-  smd_na_rm <- compute_smd(covariate = x_na, group = g_na, na_rm = TRUE)
-  expect_true(is.finite(smd_na_rm))
+  smd_na.rm <- compute_smd(covariate = x_na, group = g_na, na.rm = TRUE)
+  expect_true(is.finite(smd_na.rm))
 })
 
 test_that("compute_smd error handling", {
@@ -232,18 +232,18 @@ test_that("compute_variance_ratio handles missing values", {
     compute_variance_ratio(
       covariate = x_na,
       group = data$g_balanced,
-      na_rm = FALSE
+      na.rm = FALSE
     ),
     NA_real_
   )
 
   # Should work when na.rm = TRUE if enough data remains
-  vr_na_rm <- compute_variance_ratio(
+  vr_na.rm <- compute_variance_ratio(
     covariate = x_na,
     group = data$g_balanced,
-    na_rm = TRUE
+    na.rm = TRUE
   )
-  expect_true(is.finite(vr_na_rm) || is.na(vr_na_rm))
+  expect_true(is.finite(vr_na.rm) || is.na(vr_na.rm))
 })
 
 test_that("compute_variance_ratio error handling", {
@@ -339,17 +339,17 @@ test_that("compute_ks handles missing values", {
 
   # Should return NA when na.rm = FALSE
   expect_equal(
-    compute_ks(covariate = x_na, group = data$g_balanced, na_rm = FALSE),
+    compute_ks(covariate = x_na, group = data$g_balanced, na.rm = FALSE),
     NA_real_
   )
 
   # Should work when na.rm = TRUE if enough data remains
-  ks_na_rm <- compute_ks(
+  ks_na.rm <- compute_ks(
     covariate = x_na,
     group = data$g_balanced,
-    na_rm = TRUE
+    na.rm = TRUE
   )
-  expect_true(is.finite(ks_na_rm) || is.na(ks_na_rm))
+  expect_true(is.finite(ks_na.rm) || is.na(ks_na.rm))
 })
 
 test_that("compute_ks error handling", {
@@ -438,13 +438,13 @@ test_that("compute_correlation handles missing values", {
 
   # Should return NA when na.rm = FALSE
   expect_equal(
-    compute_correlation(x_na, data$x_skewed, na_rm = FALSE),
+    compute_correlation(x_na, data$x_skewed, na.rm = FALSE),
     NA_real_
   )
 
   # Should work when na.rm = TRUE
-  cor_na_rm <- compute_correlation(x_na, data$x_skewed, na_rm = TRUE)
-  expect_true(is.finite(cor_na_rm))
+  cor_na.rm <- compute_correlation(x_na, data$x_skewed, na.rm = TRUE)
+  expect_true(is.finite(cor_na.rm))
 })
 
 test_that("compute_correlation handles edge cases", {
@@ -731,7 +731,7 @@ test_that("cobalt comparison with missing values", {
   our_vr_na <- compute_variance_ratio(
     covariate = x_na,
     group = data$g_balanced,
-    na_rm = TRUE
+    na.rm = TRUE
   )
   cobalt_vr_na <- cobalt::col_w_vr(
     matrix(x_na, ncol = 1),
@@ -750,7 +750,7 @@ test_that("cobalt comparison with missing values", {
   our_ks_na <- compute_ks(
     covariate = x_na,
     group = data$g_balanced,
-    na_rm = TRUE
+    na.rm = TRUE
   )
   cobalt_ks_na <- cobalt::col_w_ks(
     matrix(x_na, ncol = 1),
@@ -907,32 +907,32 @@ test_that("all functions handle NHEFS missing values correctly", {
   data_na <- data
   data_na$age[1:10] <- NA
 
-  # All functions should return NA with na_rm = FALSE
-  expect_true(is.na(compute_smd(data_na$age, data_na$qsmk, na_rm = FALSE)))
+  # All functions should return NA with na.rm = FALSE
+  expect_true(is.na(compute_smd(data_na$age, data_na$qsmk, na.rm = FALSE)))
   expect_true(is.na(compute_variance_ratio(
     data_na$age,
     data_na$qsmk,
-    na_rm = FALSE
+    na.rm = FALSE
   )))
-  expect_true(is.na(compute_ks(data_na$age, data_na$qsmk, na_rm = FALSE)))
+  expect_true(is.na(compute_ks(data_na$age, data_na$qsmk, na.rm = FALSE)))
   expect_true(is.na(compute_correlation(
     data_na$age,
     data_na$wt71,
-    na_rm = FALSE
+    na.rm = FALSE
   )))
 
-  # All functions should work with na_rm = TRUE
-  expect_true(is.finite(compute_smd(data_na$age, data_na$qsmk, na_rm = TRUE)))
+  # All functions should work with na.rm = TRUE
+  expect_true(is.finite(compute_smd(data_na$age, data_na$qsmk, na.rm = TRUE)))
   expect_true(is.finite(compute_variance_ratio(
     data_na$age,
     data_na$qsmk,
-    na_rm = TRUE
+    na.rm = TRUE
   )))
-  expect_true(is.finite(compute_ks(data_na$age, data_na$qsmk, na_rm = TRUE)))
+  expect_true(is.finite(compute_ks(data_na$age, data_na$qsmk, na.rm = TRUE)))
   expect_true(is.finite(compute_correlation(
     data_na$age,
     data_na$wt71,
-    na_rm = TRUE
+    na.rm = TRUE
   )))
 })
 
