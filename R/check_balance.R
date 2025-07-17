@@ -339,10 +339,10 @@ check_balance <- function(
 
   # Create metric function mapping
   metric_functions <- list(
-    smd = compute_smd,
-    variance_ratio = compute_variance_ratio,
-    ks = compute_ks,
-    correlation = compute_correlation
+    smd = bal_smd,
+    variance_ratio = bal_vr,
+    ks = bal_ks,
+    correlation = bal_corr
   )
 
   # Determine which methods to include
@@ -397,10 +397,10 @@ check_balance <- function(
         } else {
           # Handle reference group parameter based on the function
           ref_group_param <- if (metric == "smd") {
-            # compute_smd accepts both indices and group values
+            # bal_smd accepts both indices and group values
             reference_group
           } else {
-            # compute_variance_ratio and compute_ks expect actual group values
+            # bal_vr and bal_ks expect actual group values
             # Always treat numeric reference_group as index for consistency
             if (is.numeric(reference_group) && length(reference_group) == 1) {
               group_levels[reference_group]

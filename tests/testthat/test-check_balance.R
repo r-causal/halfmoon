@@ -187,7 +187,7 @@ test_that("check_balance produces expected structure with multiple vars, weights
 # CONSISTENCY TESTS - VERIFY AGAINST INDIVIDUAL FUNCTIONS
 # =============================================================================
 
-test_that("check_balance SMD matches compute_smd", {
+test_that("check_balance SMD matches bal_smd", {
   data <- get_nhefs_test_data()
 
   # Get result from check_balance
@@ -196,8 +196,8 @@ test_that("check_balance SMD matches compute_smd", {
     result$metric == "smd" & result$method == "observed"
   ]
 
-  # Get result from compute_smd directly
-  direct_smd <- compute_smd(
+  # Get result from bal_smd directly
+  direct_smd <- bal_smd(
     covariate = data$age,
     group = data$qsmk,
     reference_group = 1L
@@ -206,7 +206,7 @@ test_that("check_balance SMD matches compute_smd", {
   expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
 })
 
-test_that("check_balance variance_ratio matches compute_variance_ratio", {
+test_that("check_balance variance_ratio matches bal_vr", {
   data <- get_nhefs_test_data()
 
   # Get result from check_balance
@@ -215,9 +215,9 @@ test_that("check_balance variance_ratio matches compute_variance_ratio", {
     result$metric == "variance_ratio" & result$method == "observed"
   ]
 
-  # Get result from compute_variance_ratio directly
-  # check_balance uses reference_group=1L which maps to first level (0) for compute_variance_ratio
-  direct_vr <- compute_variance_ratio(
+  # Get result from bal_vr directly
+  # check_balance uses reference_group=1L which maps to first level (0) for bal_vr
+  direct_vr <- bal_vr(
     covariate = data$age,
     group = data$qsmk,
     reference_group = 0 # First level of qsmk (group_levels[1])
@@ -226,7 +226,7 @@ test_that("check_balance variance_ratio matches compute_variance_ratio", {
   expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
 })
 
-test_that("check_balance KS matches compute_ks", {
+test_that("check_balance KS matches bal_ks", {
   data <- get_nhefs_test_data()
 
   # Get result from check_balance
@@ -235,8 +235,8 @@ test_that("check_balance KS matches compute_ks", {
     result$metric == "ks" & result$method == "observed"
   ]
 
-  # Get result from compute_ks directly
-  direct_ks <- compute_ks(
+  # Get result from bal_ks directly
+  direct_ks <- bal_ks(
     covariate = data$age,
     group = data$qsmk,
     reference_group = 0 # First level of qsmk
@@ -260,7 +260,7 @@ test_that("check_balance weighted results match individual weighted functions", 
     result$metric == "smd" & result$method == "w_test1"
   ]
 
-  direct_smd <- compute_smd(
+  direct_smd <- bal_smd(
     covariate = data$age,
     group = data$qsmk,
     weights = data$w_test1,
@@ -281,7 +281,7 @@ test_that("check_balance weighted results match individual weighted functions", 
     result_vr$metric == "variance_ratio" & result_vr$method == "w_test1"
   ]
 
-  direct_vr <- compute_variance_ratio(
+  direct_vr <- bal_vr(
     covariate = data$age,
     group = data$qsmk,
     weights = data$w_test1,
@@ -381,7 +381,7 @@ test_that("check_balance handles missing values correctly", {
   expect_true(is.finite(result_na_true$estimate))
 
   # Verify the na.rm = TRUE result matches direct computation
-  direct_smd <- compute_smd(
+  direct_smd <- bal_smd(
     covariate = data_na$age,
     group = data_na$qsmk,
     reference_group = 1L,
@@ -464,7 +464,7 @@ test_that("check_balance handles binary variables correctly", {
   # For binary variables, KS should equal absolute difference in proportions
   # Verify this matches the direct computation
   ks_result <- result$estimate[result$metric == "ks"]
-  direct_ks <- compute_ks(data$qsmk_num, data$sex_num, reference_group = 0)
+  direct_ks <- bal_ks(data$qsmk_num, data$sex_num, reference_group = 0)
   expect_equal(ks_result, direct_ks, tolerance = 1e-10)
 })
 
@@ -485,7 +485,7 @@ test_that("check_balance handles extreme weights", {
 
   # Verify it matches direct computation
   weighted_estimate <- result$estimate[result$method == "w_extreme"]
-  direct_smd <- compute_smd(
+  direct_smd <- bal_smd(
     data$age,
     data$qsmk,
     weights = data$w_extreme,

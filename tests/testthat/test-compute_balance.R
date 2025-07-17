@@ -37,30 +37,30 @@ create_test_data <- function(n = 100, seed = 123) {
 }
 
 # =============================================================================
-# TESTS FOR compute_smd()
+# TESTS FOR bal_smd()
 # =============================================================================
 
-test_that("compute_smd matches smd::smd estimate", {
+test_that("bal_smd matches smd::smd estimate", {
   set.seed(1)
   x <- rnorm(100)
   g <- factor(sample(c(0, 1), 100, replace = TRUE))
 
-  out_pkg <- compute_smd(covariate = x, group = g, reference_group = 1)
+  out_pkg <- bal_smd(covariate = x, group = g, reference_group = 1)
   out_base <- smd::smd(x, g, gref = 1)$estimate
 
   expect_equal(out_pkg, out_base)
 })
 
-test_that("compute_smd handles different reference groups", {
+test_that("bal_smd handles different reference groups", {
   data <- create_test_data()
 
   # Test with numeric reference groups
-  smd_ref0 <- compute_smd(
+  smd_ref0 <- bal_smd(
     covariate = data$x_cont,
     group = data$g_balanced,
     reference_group = 0
   )
-  smd_ref1 <- compute_smd(
+  smd_ref1 <- bal_smd(
     covariate = data$x_cont,
     group = data$g_balanced,
     reference_group = 1
@@ -69,12 +69,12 @@ test_that("compute_smd handles different reference groups", {
   expect_equal(smd_ref0, -smd_ref1, tolerance = 1e-10)
 
   # Test with factor reference groups
-  smd_control <- compute_smd(
+  smd_control <- bal_smd(
     covariate = data$x_cont,
     group = data$g_factor,
     reference_group = "control"
   )
-  smd_treated <- compute_smd(
+  smd_treated <- bal_smd(
     covariate = data$x_cont,
     group = data$g_factor,
     reference_group = "treated"
@@ -83,15 +83,15 @@ test_that("compute_smd handles different reference groups", {
   expect_equal(smd_control, -smd_treated, tolerance = 1e-10)
 })
 
-test_that("compute_smd handles weights", {
+test_that("bal_smd handles weights", {
   data <- create_test_data()
 
   # Weighted vs unweighted should generally be different
-  smd_unweighted <- compute_smd(
+  smd_unweighted <- bal_smd(
     covariate = data$x_cont,
     group = data$g_balanced
   )
-  smd_weighted <- compute_smd(
+  smd_weighted <- bal_smd(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -104,7 +104,7 @@ test_that("compute_smd handles weights", {
   expect_true(is.finite(smd_weighted))
 })
 
-test_that("compute_smd handles missing values", {
+test_that("bal_smd handles missing values", {
   data <- create_test_data()
 
   # Introduce missing values
@@ -114,29 +114,29 @@ test_that("compute_smd handles missing values", {
   w_na <- data$w_uniform
 
   # Should return NA when na.rm = FALSE
-  expect_true(is.na(compute_smd(covariate = x_na, group = g_na, na.rm = FALSE)))
+  expect_true(is.na(bal_smd(covariate = x_na, group = g_na, na.rm = FALSE)))
 
   # Should work when na.rm = TRUE
-  smd_na.rm <- compute_smd(covariate = x_na, group = g_na, na.rm = TRUE)
+  smd_na.rm <- bal_smd(covariate = x_na, group = g_na, na.rm = TRUE)
   expect_true(is.finite(smd_na.rm))
 })
 
-test_that("compute_smd error handling", {
+test_that("bal_smd error handling", {
   data <- create_test_data()
 
   # Should error with wrong number of groups
-  expect_error(compute_smd(covariate = data$x_cont, group = rep(1, 100)))
-  expect_error(compute_smd(
+  expect_error(bal_smd(covariate = data$x_cont, group = rep(1, 100)))
+  expect_error(bal_smd(
     covariate = data$x_cont,
     group = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
 
   # Should error with mismatched lengths
-  expect_error(compute_smd(
+  expect_error(bal_smd(
     covariate = data$x_cont[1:50],
     group = data$g_balanced
   ))
-  expect_error(compute_smd(
+  expect_error(bal_smd(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform[1:50]
@@ -144,19 +144,19 @@ test_that("compute_smd error handling", {
 })
 
 # =============================================================================
-# TESTS FOR compute_variance_ratio()
+# TESTS FOR bal_vr()
 # =============================================================================
 
-test_that("compute_variance_ratio handles basic cases", {
+test_that("bal_vr handles basic cases", {
   data <- create_test_data()
 
   # Basic functionality
-  vr <- compute_variance_ratio(covariate = data$x_cont, group = data$g_balanced)
+  vr <- bal_vr(covariate = data$x_cont, group = data$g_balanced)
   expect_true(is.finite(vr))
   expect_true(vr > 0)
 
   # With weights
-  vr_weighted <- compute_variance_ratio(
+  vr_weighted <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -165,16 +165,16 @@ test_that("compute_variance_ratio handles basic cases", {
   expect_true(vr_weighted > 0)
 })
 
-test_that("compute_variance_ratio handles reference groups", {
+test_that("bal_vr handles reference groups", {
   data <- create_test_data()
 
   # Different reference groups should give reciprocal results
-  vr_ref0 <- compute_variance_ratio(
+  vr_ref0 <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     reference_group = 0
   )
-  vr_ref1 <- compute_variance_ratio(
+  vr_ref1 <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     reference_group = 1
@@ -183,11 +183,11 @@ test_that("compute_variance_ratio handles reference groups", {
   expect_equal(vr_ref0, 1 / vr_ref1, tolerance = 1e-10)
 })
 
-test_that("compute_variance_ratio handles binary variables", {
+test_that("bal_vr handles binary variables", {
   data <- create_test_data()
 
   # Binary variables should use p*(1-p) variance formula
-  vr_binary <- compute_variance_ratio(
+  vr_binary <- bal_vr(
     covariate = data$x_binary,
     group = data$g_balanced
   )
@@ -195,7 +195,7 @@ test_that("compute_variance_ratio handles binary variables", {
   expect_true(vr_binary > 0)
 
   # With weights
-  vr_binary_weighted <- compute_variance_ratio(
+  vr_binary_weighted <- bal_vr(
     covariate = data$x_binary,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -204,23 +204,23 @@ test_that("compute_variance_ratio handles binary variables", {
   expect_true(vr_binary_weighted > 0)
 })
 
-test_that("compute_variance_ratio handles edge cases", {
+test_that("bal_vr handles edge cases", {
   data <- create_test_data()
 
   # Zero variance scenarios
   x_zero <- c(rep(1, 50), rep(1, 50))
   g <- c(rep(0, 50), rep(1, 50))
 
-  vr_zero_both <- compute_variance_ratio(covariate = x_zero, group = g)
+  vr_zero_both <- bal_vr(covariate = x_zero, group = g)
   expect_equal(vr_zero_both, 1)
 
   # One group with zero variance
   x_mixed <- c(rep(1, 50), rnorm(50))
-  vr_zero_one <- compute_variance_ratio(covariate = x_mixed, group = g)
+  vr_zero_one <- bal_vr(covariate = x_mixed, group = g)
   expect_true(vr_zero_one == 0 || vr_zero_one == Inf)
 })
 
-test_that("compute_variance_ratio handles missing values", {
+test_that("bal_vr handles missing values", {
   data <- create_test_data()
 
   # Introduce missing values
@@ -229,7 +229,7 @@ test_that("compute_variance_ratio handles missing values", {
 
   # Should return NA when na.rm = FALSE
   expect_equal(
-    compute_variance_ratio(
+    bal_vr(
       covariate = x_na,
       group = data$g_balanced,
       na.rm = FALSE
@@ -238,7 +238,7 @@ test_that("compute_variance_ratio handles missing values", {
   )
 
   # Should work when na.rm = TRUE if enough data remains
-  vr_na.rm <- compute_variance_ratio(
+  vr_na.rm <- bal_vr(
     covariate = x_na,
     group = data$g_balanced,
     na.rm = TRUE
@@ -246,25 +246,25 @@ test_that("compute_variance_ratio handles missing values", {
   expect_true(is.finite(vr_na.rm) || is.na(vr_na.rm))
 })
 
-test_that("compute_variance_ratio error handling", {
+test_that("bal_vr error handling", {
   data <- create_test_data()
 
   # Should error with wrong number of groups
-  expect_error(compute_variance_ratio(
+  expect_error(bal_vr(
     covariate = data$x_cont,
     group = rep(1, 100)
   ))
-  expect_error(compute_variance_ratio(
+  expect_error(bal_vr(
     covariate = data$x_cont,
     group = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
 
   # Should error with mismatched lengths
-  expect_error(compute_variance_ratio(
+  expect_error(bal_vr(
     covariate = data$x_cont[1:50],
     group = data$g_balanced
   ))
-  expect_error(compute_variance_ratio(
+  expect_error(bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform[1:50]
@@ -272,20 +272,20 @@ test_that("compute_variance_ratio error handling", {
 })
 
 # =============================================================================
-# TESTS FOR compute_ks()
+# TESTS FOR bal_ks()
 # =============================================================================
 
-test_that("compute_ks handles basic cases", {
+test_that("bal_ks handles basic cases", {
   data <- create_test_data()
 
   # Basic functionality
-  ks <- compute_ks(covariate = data$x_cont, group = data$g_balanced)
+  ks <- bal_ks(covariate = data$x_cont, group = data$g_balanced)
   expect_true(is.finite(ks))
   expect_true(ks >= 0)
   expect_true(ks <= 1)
 
   # With weights
-  ks_weighted <- compute_ks(
+  ks_weighted <- bal_ks(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -295,29 +295,29 @@ test_that("compute_ks handles basic cases", {
   expect_true(ks_weighted <= 1)
 })
 
-test_that("compute_ks gives 0 for identical distributions", {
+test_that("bal_ks gives 0 for identical distributions", {
   # Identical distributions should give KS = 0
   x <- c(1, 2, 3, 1, 2, 3)
   g <- c(0, 0, 0, 1, 1, 1)
 
-  ks_identical <- compute_ks(covariate = x, group = g)
+  ks_identical <- bal_ks(covariate = x, group = g)
   expect_equal(ks_identical, 0)
 })
 
-test_that("compute_ks gives >0 for different distributions", {
+test_that("bal_ks gives >0 for different distributions", {
   # Different distributions should give KS > 0
   x <- c(1, 2, 3, 4, 5, 6)
   g <- c(0, 0, 0, 1, 1, 1)
 
-  ks_different <- compute_ks(covariate = x, group = g)
+  ks_different <- bal_ks(covariate = x, group = g)
   expect_true(ks_different > 0)
 })
 
-test_that("compute_ks handles binary variables", {
+test_that("bal_ks handles binary variables", {
   data <- create_test_data()
 
   # Binary variables should return difference in proportions
-  ks_binary <- compute_ks(covariate = data$x_binary, group = data$g_balanced)
+  ks_binary <- bal_ks(covariate = data$x_binary, group = data$g_balanced)
   expect_true(is.finite(ks_binary))
   expect_true(ks_binary >= 0)
   expect_true(ks_binary <= 1)
@@ -330,7 +330,7 @@ test_that("compute_ks handles binary variables", {
   expect_equal(ks_binary, expected_ks, tolerance = 1e-10)
 })
 
-test_that("compute_ks handles missing values", {
+test_that("bal_ks handles missing values", {
   data <- create_test_data()
 
   # Introduce missing values
@@ -339,12 +339,12 @@ test_that("compute_ks handles missing values", {
 
   # Should return NA when na.rm = FALSE
   expect_equal(
-    compute_ks(covariate = x_na, group = data$g_balanced, na.rm = FALSE),
+    bal_ks(covariate = x_na, group = data$g_balanced, na.rm = FALSE),
     NA_real_
   )
 
   # Should work when na.rm = TRUE if enough data remains
-  ks_na.rm <- compute_ks(
+  ks_na.rm <- bal_ks(
     covariate = x_na,
     group = data$g_balanced,
     na.rm = TRUE
@@ -352,22 +352,22 @@ test_that("compute_ks handles missing values", {
   expect_true(is.finite(ks_na.rm) || is.na(ks_na.rm))
 })
 
-test_that("compute_ks error handling", {
+test_that("bal_ks error handling", {
   data <- create_test_data()
 
   # Should error with wrong number of groups
-  expect_error(compute_ks(covariate = data$x_cont, group = rep(1, 100)))
-  expect_error(compute_ks(
+  expect_error(bal_ks(covariate = data$x_cont, group = rep(1, 100)))
+  expect_error(bal_ks(
     covariate = data$x_cont,
     group = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
 
   # Should error with mismatched lengths
-  expect_error(compute_ks(
+  expect_error(bal_ks(
     covariate = data$x_cont[1:50],
     group = data$g_balanced
   ))
-  expect_error(compute_ks(
+  expect_error(bal_ks(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform[1:50]
@@ -375,39 +375,39 @@ test_that("compute_ks error handling", {
 })
 
 # =============================================================================
-# TESTS FOR compute_correlation()
+# TESTS FOR bal_corr()
 # =============================================================================
 
-test_that("compute_correlation matches stats::cor when unweighted", {
+test_that("bal_corr matches stats::cor when unweighted", {
   x <- 1:10
   y <- 2 * x + rnorm(10, sd = 0.1)
 
-  cor_ours <- compute_correlation(x, y)
+  cor_ours <- bal_corr(x, y)
   cor_stats <- stats::cor(x, y)
 
   expect_equal(cor_ours, cor_stats)
 })
 
-test_that("compute_correlation handles weights correctly", {
+test_that("bal_corr handles weights correctly", {
   x <- c(0, 1, 0, 1)
   y <- c(0, 0, 1, 1)
   w <- c(1, 0, 0, 1)
 
   # Weighted on matching pairs (0,0) and (1,1) -> perfect correlation
-  cor_weighted <- compute_correlation(x, y, weights = w)
+  cor_weighted <- bal_corr(x, y, weights = w)
   expect_equal(cor_weighted, 1)
 })
 
-test_that("compute_correlation handles various scenarios", {
+test_that("bal_corr handles various scenarios", {
   data <- create_test_data()
 
   # Basic correlation
-  cor_basic <- compute_correlation(data$x_cont, data$x_skewed)
+  cor_basic <- bal_corr(data$x_cont, data$x_skewed)
   expect_true(is.finite(cor_basic))
   expect_true(cor_basic >= -1 && cor_basic <= 1)
 
   # Weighted correlation
-  cor_weighted <- compute_correlation(
+  cor_weighted <- bal_corr(
     data$x_cont,
     data$x_skewed,
     weights = data$w_uniform
@@ -418,18 +418,18 @@ test_that("compute_correlation handles various scenarios", {
   # Perfect correlation
   x_perfect <- 1:100
   y_perfect <- 2 * x_perfect + 5
-  cor_perfect <- compute_correlation(x_perfect, y_perfect)
+  cor_perfect <- bal_corr(x_perfect, y_perfect)
   expect_equal(cor_perfect, 1, tolerance = 1e-10)
 
   # No correlation
   set.seed(123)
   x_uncorr <- rnorm(100)
   y_uncorr <- rnorm(100)
-  cor_uncorr <- compute_correlation(x_uncorr, y_uncorr)
+  cor_uncorr <- bal_corr(x_uncorr, y_uncorr)
   expect_true(abs(cor_uncorr) < 0.5) # Should be close to 0
 })
 
-test_that("compute_correlation handles missing values", {
+test_that("bal_corr handles missing values", {
   data <- create_test_data()
 
   # Introduce missing values
@@ -438,23 +438,23 @@ test_that("compute_correlation handles missing values", {
 
   # Should return NA when na.rm = FALSE
   expect_equal(
-    compute_correlation(x_na, data$x_skewed, na.rm = FALSE),
+    bal_corr(x_na, data$x_skewed, na.rm = FALSE),
     NA_real_
   )
 
   # Should work when na.rm = TRUE
-  cor_na.rm <- compute_correlation(x_na, data$x_skewed, na.rm = TRUE)
+  cor_na.rm <- bal_corr(x_na, data$x_skewed, na.rm = TRUE)
   expect_true(is.finite(cor_na.rm))
 })
 
-test_that("compute_correlation handles edge cases", {
+test_that("bal_corr handles edge cases", {
   # Zero variance should return NA with warning
   x_zero <- rep(1, 100)
   y_normal <- rnorm(100)
 
   expect_warning(
     {
-      cor_zero <- compute_correlation(x_zero, y_normal)
+      cor_zero <- bal_corr(x_zero, y_normal)
       expect_true(is.na(cor_zero))
     },
     "the standard deviation is zero"
@@ -464,19 +464,19 @@ test_that("compute_correlation handles edge cases", {
   y_zero <- rep(2, 100)
   expect_warning(
     {
-      cor_both_zero <- compute_correlation(x_zero, y_zero)
+      cor_both_zero <- bal_corr(x_zero, y_zero)
       expect_true(is.na(cor_both_zero))
     },
     "the standard deviation is zero"
   )
 })
 
-test_that("compute_correlation error handling", {
+test_that("bal_corr error handling", {
   data <- create_test_data()
 
   # Should error with mismatched lengths
-  expect_error(compute_correlation(data$x_cont[1:50], data$x_skewed))
-  expect_error(compute_correlation(
+  expect_error(bal_corr(data$x_cont[1:50], data$x_skewed))
+  expect_error(bal_corr(
     data$x_cont,
     data$x_skewed,
     weights = data$w_uniform[1:50]
@@ -521,19 +521,19 @@ test_that("functions handle large datasets", {
 
   # Test all functions with large data
   expect_no_error({
-    smd_large <- compute_smd(
+    smd_large <- bal_smd(
       covariate = data_large$x_cont,
       group = data_large$g_balanced
     )
-    vr_large <- compute_variance_ratio(
+    vr_large <- bal_vr(
       covariate = data_large$x_cont,
       group = data_large$g_balanced
     )
-    ks_large <- compute_ks(
+    ks_large <- bal_ks(
       covariate = data_large$x_cont,
       group = data_large$g_balanced
     )
-    cor_large <- compute_correlation(data_large$x_cont, data_large$x_skewed)
+    cor_large <- bal_corr(data_large$x_cont, data_large$x_skewed)
   })
 })
 
@@ -542,22 +542,22 @@ test_that("functions handle extreme weights", {
 
   # Test with extreme weights
   expect_no_error({
-    smd_extreme <- compute_smd(
+    smd_extreme <- bal_smd(
       covariate = data$x_cont,
       group = data$g_balanced,
       weights = data$w_extreme
     )
-    vr_extreme <- compute_variance_ratio(
+    vr_extreme <- bal_vr(
       covariate = data$x_cont,
       group = data$g_balanced,
       weights = data$w_extreme
     )
-    ks_extreme <- compute_ks(
+    ks_extreme <- bal_ks(
       covariate = data$x_cont,
       group = data$g_balanced,
       weights = data$w_extreme
     )
-    cor_extreme <- compute_correlation(
+    cor_extreme <- bal_corr(
       data$x_cont,
       data$x_skewed,
       weights = data$w_extreme
@@ -576,12 +576,12 @@ test_that("functions handle unbalanced groups", {
 
   # Test with very unbalanced groups
   expect_no_error({
-    smd_unbal <- compute_smd(covariate = data$x_cont, group = data$g_unbalanced)
-    vr_unbal <- compute_variance_ratio(
+    smd_unbal <- bal_smd(covariate = data$x_cont, group = data$g_unbalanced)
+    vr_unbal <- bal_vr(
       covariate = data$x_cont,
       group = data$g_unbalanced
     )
-    ks_unbal <- compute_ks(covariate = data$x_cont, group = data$g_unbalanced)
+    ks_unbal <- bal_ks(covariate = data$x_cont, group = data$g_unbalanced)
   })
 
   # Results should be finite
@@ -591,15 +591,15 @@ test_that("functions handle unbalanced groups", {
 })
 
 # =============================================================================
-# COBALT COMPARISON TESTS (CONDITIONAL)
+# COBALT COMPARISON TESTS 
 # =============================================================================
 
-test_that("compute_variance_ratio matches cobalt::col_w_vr", {
+test_that("bal_vr matches cobalt::col_w_vr", {
   skip_if_not_installed("cobalt")
   data <- create_test_data(seed = 789)
 
   # Continuous variables
-  our_vr_cont <- compute_variance_ratio(
+  our_vr_cont <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -612,7 +612,7 @@ test_that("compute_variance_ratio matches cobalt::col_w_vr", {
   expect_equal(our_vr_cont, cobalt_vr_cont, tolerance = 1e-10)
 
   # Binary variables
-  our_vr_bin <- compute_variance_ratio(
+  our_vr_bin <- bal_vr(
     covariate = data$x_binary,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -626,7 +626,7 @@ test_that("compute_variance_ratio matches cobalt::col_w_vr", {
   expect_equal(our_vr_bin, cobalt_vr_bin, tolerance = 1e-10)
 
   # Unweighted
-  our_vr_unw <- compute_variance_ratio(
+  our_vr_unw <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced
   )
@@ -637,12 +637,12 @@ test_that("compute_variance_ratio matches cobalt::col_w_vr", {
   expect_equal(our_vr_unw, cobalt_vr_unw, tolerance = 1e-10)
 })
 
-test_that("compute_ks matches cobalt::col_w_ks", {
+test_that("bal_ks matches cobalt::col_w_ks", {
   skip_if_not_installed("cobalt")
   data <- create_test_data(seed = 789)
 
   # Continuous variables
-  our_ks_cont <- compute_ks(
+  our_ks_cont <- bal_ks(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -655,7 +655,7 @@ test_that("compute_ks matches cobalt::col_w_ks", {
   expect_equal(our_ks_cont, cobalt_ks_cont, tolerance = 1e-10)
 
   # Binary variables
-  our_ks_bin <- compute_ks(
+  our_ks_bin <- bal_ks(
     covariate = data$x_binary,
     group = data$g_balanced,
     weights = data$w_uniform
@@ -669,7 +669,7 @@ test_that("compute_ks matches cobalt::col_w_ks", {
   expect_equal(our_ks_bin, cobalt_ks_bin, tolerance = 1e-10)
 
   # Unweighted
-  our_ks_unw <- compute_ks(covariate = data$x_cont, group = data$g_balanced)
+  our_ks_unw <- bal_ks(covariate = data$x_cont, group = data$g_balanced)
   cobalt_ks_unw <- cobalt::col_w_ks(
     matrix(data$x_cont, ncol = 1),
     treat = data$g_balanced
@@ -677,14 +677,14 @@ test_that("compute_ks matches cobalt::col_w_ks", {
   expect_equal(our_ks_unw, cobalt_ks_unw, tolerance = 1e-10)
 })
 
-test_that("compute_smd matches cobalt::col_w_smd for binary variables", {
+test_that("bal_smd matches cobalt::col_w_smd for binary variables", {
   skip_if_not_installed("cobalt")
   data <- create_test_data(seed = 789)
 
   # Binary variables should match exactly
   # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
   # to match cobalt's behavior for this test
-  our_smd_bin <- compute_smd(
+  our_smd_bin <- bal_smd(
     covariate = data$x_binary,
     group = data$g_balanced,
     weights = data$w_uniform,
@@ -700,14 +700,14 @@ test_that("compute_smd matches cobalt::col_w_smd for binary variables", {
   expect_equal(our_smd_bin, cobalt_smd_bin, tolerance = 1e-10)
 })
 
-test_that("compute_smd is close to cobalt::col_w_smd for continuous variables", {
+test_that("bal_smd is close to cobalt::col_w_smd for continuous variables", {
   skip_if_not_installed("cobalt")
   data <- create_test_data(seed = 789)
 
   # Continuous variables should be close (different pooled variance approaches)
   # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
   # to match cobalt's behavior for this test
-  our_smd_cont <- compute_smd(
+  our_smd_cont <- bal_smd(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform,
@@ -734,7 +734,7 @@ test_that("cobalt comparison with missing values", {
   x_na[data$na_indices] <- NA
 
   # Both should handle missing values similarly
-  our_vr_na <- compute_variance_ratio(
+  our_vr_na <- bal_vr(
     covariate = x_na,
     group = data$g_balanced,
     na.rm = TRUE
@@ -746,14 +746,7 @@ test_that("cobalt comparison with missing values", {
   )[1]
   expect_equal(our_vr_na, cobalt_vr_na, tolerance = 1e-10)
 
-  # NOTE: There is a bug in cobalt's col_w_ks function when handling missing values.
-  # The bug occurs because cobalt applies na.rem to the data vector but not to the
-  # corresponding treatment and weight vectors, causing an indexing mismatch.
-  # This results in cobalt using the wrong weights for the wrong observations.
-  # Our implementation correctly handles missing values by removing them from all
-  # relevant vectors consistently. The correct KS statistic should be 0.1896466,
-  # but cobalt returns 0.1714976 due to this bug.
-  our_ks_na <- compute_ks(
+  our_ks_na <- bal_ks(
     covariate = x_na,
     group = data$g_balanced,
     na.rm = TRUE
@@ -772,10 +765,6 @@ test_that("cobalt comparison with missing values", {
     ks.test(x_complete[g_complete == 0], x_complete[g_complete == 1])$statistic
   )
   expect_equal(our_ks_na, base_ks, tolerance = 1e-10)
-
-  # Document the cobalt bug (our implementation is correct)
-  expect_equal(our_ks_na, 0.1896466, tolerance = 1e-6)
-  expect_equal(cobalt_ks_na, 0.1714976, tolerance = 1e-6)
 })
 
 test_that("cobalt comparison with different reference groups", {
@@ -783,12 +772,12 @@ test_that("cobalt comparison with different reference groups", {
   data <- create_test_data(seed = 789)
 
   # Test variance ratio with different reference groups
-  our_vr_ref0 <- compute_variance_ratio(
+  our_vr_ref0 <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     reference_group = 0
   )
-  our_vr_ref1 <- compute_variance_ratio(
+  our_vr_ref1 <- bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     reference_group = 1
@@ -810,46 +799,46 @@ test_that("cobalt comparison with different reference groups", {
 # NHEFS-SPECIFIC TESTS
 # =============================================================================
 
-test_that("compute_smd works with NHEFS continuous variables", {
+test_that("bal_smd works with NHEFS continuous variables", {
   data <- get_nhefs_compute_data()
 
   # Test with age and smoking cessation
-  smd_age <- compute_smd(data$age, data$qsmk)
+  smd_age <- bal_smd(data$age, data$qsmk)
   expect_true(is.finite(smd_age))
   expect_true(abs(smd_age) < 5) # Reasonable SMD range
 
   # Test with baseline weight
-  smd_wt <- compute_smd(data$wt71, data$qsmk)
+  smd_wt <- bal_smd(data$wt71, data$qsmk)
   expect_true(is.finite(smd_wt))
   expect_true(abs(smd_wt) < 5)
 })
 
-test_that("compute_smd works with NHEFS factor variables", {
+test_that("bal_smd works with NHEFS factor variables", {
   data <- get_nhefs_compute_data()
 
   # Test with sex (factor)
-  smd_sex <- compute_smd(as.numeric(data$sex), data$qsmk)
+  smd_sex <- bal_smd(as.numeric(data$sex), data$qsmk)
   expect_true(is.finite(smd_sex))
 
   # Test with race (factor)
-  smd_race <- compute_smd(as.numeric(data$race), data$qsmk)
+  smd_race <- bal_smd(as.numeric(data$race), data$qsmk)
   expect_true(is.finite(smd_race))
 })
 
-test_that("compute_variance_ratio works with NHEFS data", {
+test_that("bal_vr works with NHEFS data", {
   data <- get_nhefs_compute_data()
 
   # Test with continuous variables
-  vr_age <- compute_variance_ratio(data$age, data$qsmk)
+  vr_age <- bal_vr(data$age, data$qsmk)
   expect_true(is.finite(vr_age))
   expect_true(vr_age > 0)
 
-  vr_wt <- compute_variance_ratio(data$wt71, data$qsmk)
+  vr_wt <- bal_vr(data$wt71, data$qsmk)
   expect_true(is.finite(vr_wt))
   expect_true(vr_wt > 0)
 
   # Test with weights
-  vr_weighted <- compute_variance_ratio(
+  vr_weighted <- bal_vr(
     data$age,
     data$qsmk,
     weights = data$w_uniform
@@ -858,43 +847,43 @@ test_that("compute_variance_ratio works with NHEFS data", {
   expect_true(vr_weighted > 0)
 })
 
-test_that("compute_ks works with NHEFS data", {
+test_that("bal_ks works with NHEFS data", {
   data <- get_nhefs_compute_data()
 
   # Test with continuous variables
-  ks_age <- compute_ks(data$age, data$qsmk)
+  ks_age <- bal_ks(data$age, data$qsmk)
   expect_true(is.finite(ks_age))
   expect_true(ks_age >= 0 && ks_age <= 1)
 
-  ks_wt <- compute_ks(data$wt71, data$qsmk)
+  ks_wt <- bal_ks(data$wt71, data$qsmk)
   expect_true(is.finite(ks_wt))
   expect_true(ks_wt >= 0 && ks_wt <= 1)
 
   # Test with weights
-  ks_weighted <- compute_ks(data$age, data$qsmk, weights = data$w_uniform)
+  ks_weighted <- bal_ks(data$age, data$qsmk, weights = data$w_uniform)
   expect_true(is.finite(ks_weighted))
   expect_true(ks_weighted >= 0 && ks_weighted <= 1)
 
   # Test with real propensity score weights
-  ks_ps_weighted <- compute_ks(data$age, data$qsmk, weights = data$w_ate)
+  ks_ps_weighted <- bal_ks(data$age, data$qsmk, weights = data$w_ate)
   expect_true(is.finite(ks_ps_weighted))
   expect_true(ks_ps_weighted >= 0 && ks_ps_weighted <= 1)
 })
 
-test_that("compute_correlation works with NHEFS data", {
+test_that("bal_corr works with NHEFS data", {
   data <- get_nhefs_compute_data()
 
   # Test correlation between related variables
-  cor_age_smokeyrs <- compute_correlation(data$age, data$smokeyrs)
+  cor_age_smokeyrs <- bal_corr(data$age, data$smokeyrs)
   expect_true(is.finite(cor_age_smokeyrs))
   expect_true(cor_age_smokeyrs >= -1 && cor_age_smokeyrs <= 1)
 
-  cor_wt71_age <- compute_correlation(data$wt71, data$age)
+  cor_wt71_age <- bal_corr(data$wt71, data$age)
   expect_true(is.finite(cor_wt71_age))
   expect_true(cor_wt71_age >= -1 && cor_wt71_age <= 1)
 
   # Test with weights
-  cor_weighted <- compute_correlation(
+  cor_weighted <- bal_corr(
     data$age,
     data$wt71,
     weights = data$w_uniform
@@ -914,28 +903,28 @@ test_that("all functions handle NHEFS missing values correctly", {
   data_na$age[1:10] <- NA
 
   # All functions should return NA with na.rm = FALSE
-  expect_true(is.na(compute_smd(data_na$age, data_na$qsmk, na.rm = FALSE)))
-  expect_true(is.na(compute_variance_ratio(
+  expect_true(is.na(bal_smd(data_na$age, data_na$qsmk, na.rm = FALSE)))
+  expect_true(is.na(bal_vr(
     data_na$age,
     data_na$qsmk,
     na.rm = FALSE
   )))
-  expect_true(is.na(compute_ks(data_na$age, data_na$qsmk, na.rm = FALSE)))
-  expect_true(is.na(compute_correlation(
+  expect_true(is.na(bal_ks(data_na$age, data_na$qsmk, na.rm = FALSE)))
+  expect_true(is.na(bal_corr(
     data_na$age,
     data_na$wt71,
     na.rm = FALSE
   )))
 
   # All functions should work with na.rm = TRUE
-  expect_true(is.finite(compute_smd(data_na$age, data_na$qsmk, na.rm = TRUE)))
-  expect_true(is.finite(compute_variance_ratio(
+  expect_true(is.finite(bal_smd(data_na$age, data_na$qsmk, na.rm = TRUE)))
+  expect_true(is.finite(bal_vr(
     data_na$age,
     data_na$qsmk,
     na.rm = TRUE
   )))
-  expect_true(is.finite(compute_ks(data_na$age, data_na$qsmk, na.rm = TRUE)))
-  expect_true(is.finite(compute_correlation(
+  expect_true(is.finite(bal_ks(data_na$age, data_na$qsmk, na.rm = TRUE)))
+  expect_true(is.finite(bal_corr(
     data_na$age,
     data_na$wt71,
     na.rm = TRUE
@@ -952,18 +941,18 @@ test_that("compute functions handle realistic smoking cessation analysis", {
   for (var in covariates) {
     if (var %in% names(data)) {
       # SMD
-      smd_val <- compute_smd(data[[var]], data$qsmk)
+      smd_val <- bal_smd(data[[var]], data$qsmk)
       expect_true(is.finite(smd_val), info = paste("SMD failed for", var))
 
       # Variance ratio
-      vr_val <- compute_variance_ratio(data[[var]], data$qsmk)
+      vr_val <- bal_vr(data[[var]], data$qsmk)
       expect_true(
         is.finite(vr_val) && vr_val > 0,
         info = paste("VR failed for", var)
       )
 
       # KS statistic
-      ks_val <- compute_ks(data[[var]], data$qsmk)
+      ks_val <- bal_ks(data[[var]], data$qsmk)
       expect_true(
         is.finite(ks_val) && ks_val >= 0 && ks_val <= 1,
         info = paste("KS failed for", var)
@@ -976,17 +965,17 @@ test_that("compute functions work with NHEFS extreme cases", {
   data <- get_nhefs_compute_data()
 
   # Test with extreme weights
-  smd_extreme <- compute_smd(data$age, data$qsmk, weights = data$w_extreme)
+  smd_extreme <- bal_smd(data$age, data$qsmk, weights = data$w_extreme)
   expect_true(is.finite(smd_extreme))
 
-  vr_extreme <- compute_variance_ratio(
+  vr_extreme <- bal_vr(
     data$age,
     data$qsmk,
     weights = data$w_extreme
   )
   expect_true(is.finite(vr_extreme) && vr_extreme > 0)
 
-  ks_extreme <- compute_ks(data$age, data$qsmk, weights = data$w_extreme)
+  ks_extreme <- bal_ks(data$age, data$qsmk, weights = data$w_extreme)
   expect_true(is.finite(ks_extreme) && ks_extreme >= 0 && ks_extreme <= 1)
 })
 
@@ -999,13 +988,13 @@ test_that("compute functions are consistent across NHEFS subsets", {
 
   # Both subsets should produce finite results
   for (subset_data in list(subset1, subset2)) {
-    smd_val <- compute_smd(subset_data$age, subset_data$qsmk)
+    smd_val <- bal_smd(subset_data$age, subset_data$qsmk)
     expect_true(is.finite(smd_val))
 
-    vr_val <- compute_variance_ratio(subset_data$age, subset_data$qsmk)
+    vr_val <- bal_vr(subset_data$age, subset_data$qsmk)
     expect_true(is.finite(vr_val) && vr_val > 0)
 
-    ks_val <- compute_ks(subset_data$age, subset_data$qsmk)
+    ks_val <- bal_ks(subset_data$age, subset_data$qsmk)
     expect_true(is.finite(ks_val) && ks_val >= 0 && ks_val <= 1)
   }
 })
@@ -1014,23 +1003,23 @@ test_that("compute functions work with real propensity score weights from nhefs_
   data <- get_nhefs_compute_data()
 
   # Test all functions with ATE weights
-  smd_ate <- compute_smd(data$age, data$qsmk, weights = data$w_ate)
+  smd_ate <- bal_smd(data$age, data$qsmk, weights = data$w_ate)
   expect_true(is.finite(smd_ate))
 
-  vr_ate <- compute_variance_ratio(data$age, data$qsmk, weights = data$w_ate)
+  vr_ate <- bal_vr(data$age, data$qsmk, weights = data$w_ate)
   expect_true(is.finite(vr_ate) && vr_ate > 0)
 
-  ks_ate <- compute_ks(data$age, data$qsmk, weights = data$w_ate)
+  ks_ate <- bal_ks(data$age, data$qsmk, weights = data$w_ate)
   expect_true(is.finite(ks_ate) && ks_ate >= 0 && ks_ate <= 1)
 
   # Test all functions with ATT weights
-  smd_att <- compute_smd(data$age, data$qsmk, weights = data$w_att)
+  smd_att <- bal_smd(data$age, data$qsmk, weights = data$w_att)
   expect_true(is.finite(smd_att))
 
-  vr_att <- compute_variance_ratio(data$age, data$qsmk, weights = data$w_att)
+  vr_att <- bal_vr(data$age, data$qsmk, weights = data$w_att)
   expect_true(is.finite(vr_att) && vr_att > 0)
 
-  ks_att <- compute_ks(data$age, data$qsmk, weights = data$w_att)
+  ks_att <- bal_ks(data$age, data$qsmk, weights = data$w_att)
   expect_true(is.finite(ks_att) && ks_att >= 0 && ks_att <= 1)
 
   # ATE and ATT estimates should generally be different

@@ -1,4 +1,4 @@
-#' Compute Standardized Mean Difference (SMD)
+#' Balance Standardized Mean Difference (SMD)
 #'
 #' Calculates the standardized mean difference between two groups using the
 #' smd package. This is a common measure of effect size for comparing group
@@ -18,14 +18,14 @@
 #'   Positive values indicate the comparison group has a higher mean than
 #'   the reference group.
 #' @examples
-#' compute_smd(nhefs_weights$age, nhefs_weights$qsmk)
+#' bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
-#' compute_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
+#' bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'             weights = nhefs_weights$w_ate)
 #' 
 #' @export
-compute_smd <- function(
+bal_smd <- function(
   covariate,
   group,
   weights = NULL,
@@ -101,7 +101,7 @@ is_binary <- function(x) {
   length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
 }
 
-#' Compute Variance Ratio for Two Groups
+#' Balance Variance Ratio for Two Groups
 #'
 #' Calculates the ratio of variances between two groups: var(comparison) / var(reference).
 #' For binary variables, uses the p*(1-p) variance formula. For continuous variables,
@@ -120,13 +120,13 @@ is_binary <- function(x) {
 #' @return A numeric value representing the variance ratio. Values greater than 1
 #'   indicate the comparison group has higher variance than the reference group.
 #' @examples
-#' compute_variance_ratio(nhefs_weights$age, nhefs_weights$qsmk)
+#' bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
 #' # With weights
-#' compute_variance_ratio(nhefs_weights$wt71, nhefs_weights$qsmk,
+#' bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'                       weights = nhefs_weights$w_ate)
 #' 
 #' @export
-compute_variance_ratio <- function(
+bal_vr <- function(
   covariate,
   group,
   weights = NULL,
@@ -255,7 +255,7 @@ compute_variance_ratio <- function(
   var_other / var_ref
 }
 
-#' Compute Kolmogorov-Smirnov (KS) Statistic for Two Groups
+#' Balance Kolmogorov-Smirnov (KS) Statistic for Two Groups
 #'
 #' Computes the two-sample KS statistic comparing empirical cumulative distribution
 #' functions (CDFs) between two groups. For binary variables, returns the absolute
@@ -277,13 +277,13 @@ compute_variance_ratio <- function(
 #'   distributions.
 #' 
 #' @examples
-#' compute_ks(nhefs_weights$age, nhefs_weights$qsmk)
+#' bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
-#' compute_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
+#' bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'            weights = nhefs_weights$w_ate)
 #' @export
-compute_ks <- function(
+bal_ks <- function(
   covariate,
   group,
   weights = NULL,
@@ -387,7 +387,7 @@ compute_ks <- function(
   max(abs(F_o - F_r))
 }
 
-#' Compute Weighted or Unweighted Pearson Correlation
+#' Balance Weighted or Unweighted Pearson Correlation
 #'
 #' Calculates the Pearson correlation coefficient between two numeric vectors,
 #' with optional case weights. Uses the standard correlation formula for
@@ -405,10 +405,10 @@ compute_ks <- function(
 #'   Returns `NA` if either variable has zero variance.
 #' 
 #' @examples
-#' compute_correlation(nhefs_weights$age, nhefs_weights$wt71)
+#' bal_corr(nhefs_weights$age, nhefs_weights$wt71)
 #' 
 #' @export
-compute_correlation <- function(x, y, weights = NULL, na.rm = FALSE) {
+bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
   if (!is.numeric(x)) {
     stop("Argument 'x' must be numeric, got ", class(x)[1])
