@@ -15,8 +15,7 @@ abort <- function(.message) {
 }
 
 utils::globalVariables(c(
-  "method", 
-  "metric", 
+  "method",
+  "metric",
   "variable"
 ))
-

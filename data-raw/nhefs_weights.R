@@ -4,11 +4,20 @@ library(tidyverse)
 library(broom)
 library(causaldata)
 propensity_model <- glm(
-  qsmk ~ sex +
-    race + age + I(age^2) + education +
-    smokeintensity + I(smokeintensity^2) +
-    smokeyrs + I(smokeyrs^2) + exercise + active +
-    wt71 + I(wt71^2),
+  qsmk ~
+    sex +
+      race +
+      age +
+      I(age^2) +
+      education +
+      smokeintensity +
+      I(smokeintensity^2) +
+      smokeyrs +
+      I(smokeyrs^2) +
+      exercise +
+      active +
+      wt71 +
+      I(wt71^2),
   family = binomial(),
   data = nhefs_complete
 )
@@ -25,8 +34,7 @@ nhefs_weights <- propensity_model %>%
       (((1 - .fitted) * (1 - qsmk)) / (1 - .fitted)),
     w_atm = pmin(.fitted, 1 - .fitted) /
       (qsmk * .fitted + (1 - qsmk) * (1 - .fitted)),
-    w_ato = (1 - .fitted) * qsmk +
-      .fitted * (1 - qsmk)
+    w_ato = (1 - .fitted) * qsmk + .fitted * (1 - qsmk)
   ) %>%
   select(
     qsmk,

@@ -16,4 +16,3 @@ tidysmd::tidy_smd
 #' @importFrom tidysmd bind_matches
 #' @export
 tidysmd::bind_matches
-

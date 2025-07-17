@@ -16,7 +16,6 @@ BugReports: https://github.com/r-causal/halfmoon/issues
 Depends: 
     R (>= 2.10)
 Imports: 
-    cardx (>= 0.2.3),
     cli,
     dplyr,
     ggplot2,
@@ -30,6 +29,7 @@ Imports:
     tidysmd (>= 0.2.0)
 Suggests: 
     cards,
+    cardx (>= 0.2.3),
     cobalt,
     covr,
     survey,

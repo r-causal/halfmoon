@@ -591,7 +591,7 @@ test_that("functions handle unbalanced groups", {
 })
 
 # =============================================================================
-# COBALT COMPARISON TESTS 
+# COBALT COMPARISON TESTS
 # =============================================================================
 
 test_that("bal_vr matches cobalt::col_w_vr", {

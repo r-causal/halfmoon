@@ -23,7 +23,7 @@
 #' # With weights
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'             weights = nhefs_weights$w_ate)
-#' 
+#'
 #' @export
 bal_smd <- function(
   covariate,
@@ -124,7 +124,7 @@ is_binary <- function(x) {
 #' # With weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'                       weights = nhefs_weights$w_ate)
-#' 
+#'
 #' @export
 bal_vr <- function(
   covariate,
@@ -275,7 +275,7 @@ bal_vr <- function(
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,
 #'   with 0 indicating identical distributions and 1 indicating completely separate
 #'   distributions.
-#' 
+#'
 #' @examples
 #' bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
@@ -382,8 +382,24 @@ bal_ks <- function(
   x_o <- x_other[ord_other]
   c_o <- cumsum(w_other[ord_other])
   allv <- sort(unique(c(x_r, x_o)))
-  F_r <- stats::approx(x_r, c_r, xout = allv, method = "constant", yleft = 0, yright = 1, ties = "ordered")$y
-  F_o <- stats::approx(x_o, c_o, xout = allv, method = "constant", yleft = 0, yright = 1, ties = "ordered")$y
+  F_r <- stats::approx(
+    x_r,
+    c_r,
+    xout = allv,
+    method = "constant",
+    yleft = 0,
+    yright = 1,
+    ties = "ordered"
+  )$y
+  F_o <- stats::approx(
+    x_o,
+    c_o,
+    xout = allv,
+    method = "constant",
+    yleft = 0,
+    yright = 1,
+    ties = "ordered"
+  )$y
   max(abs(F_o - F_r))
 }
 
@@ -403,10 +419,10 @@ bal_ks <- function(
 #'   `NA` output.
 #' @return A numeric value representing the correlation coefficient between -1 and 1.
 #'   Returns `NA` if either variable has zero variance.
-#' 
+#'
 #' @examples
 #' bal_corr(nhefs_weights$age, nhefs_weights$wt71)
-#' 
+#'
 #' @export
 bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
