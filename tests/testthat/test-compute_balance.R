@@ -682,10 +682,13 @@ test_that("compute_smd matches cobalt::col_w_smd for binary variables", {
   data <- create_test_data(seed = 789)
 
   # Binary variables should match exactly
+  # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
+  # to match cobalt's behavior for this test
   our_smd_bin <- compute_smd(
     covariate = data$x_binary,
     group = data$g_balanced,
-    weights = data$w_uniform
+    weights = data$w_uniform,
+    reference_group = 1
   )
   cobalt_smd_bin <- cobalt::col_w_smd(
     matrix(data$x_binary, ncol = 1),
@@ -702,10 +705,13 @@ test_that("compute_smd is close to cobalt::col_w_smd for continuous variables", 
   data <- create_test_data(seed = 789)
 
   # Continuous variables should be close (different pooled variance approaches)
+  # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
+  # to match cobalt's behavior for this test
   our_smd_cont <- compute_smd(
     covariate = data$x_cont,
     group = data$g_balanced,
-    weights = data$w_uniform
+    weights = data$w_uniform,
+    reference_group = 1
   )
   cobalt_smd_cont <- cobalt::col_w_smd(
     matrix(data$x_cont, ncol = 1),

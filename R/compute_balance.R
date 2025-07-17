@@ -10,7 +10,7 @@
 #' @param weights An optional numeric vector of case weights. If provided, must
 #'   have the same length as `covariate`. All weights must be non-negative.
 #' @param reference_group The reference group level to use as the comparison
-#'   baseline. Can be either a group level or index. Defaults to the first level.
+#'   baseline. Can be either a group level or index. If `NULL` (default), uses the first level.
 #' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   `NA` output.
@@ -18,21 +18,20 @@
 #'   Positive values indicate the comparison group has a higher mean than
 #'   the reference group.
 #' @examples
-#' # Basic usage with nhefs data
 #' compute_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
 #' compute_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'             weights = nhefs_weights$w_ate)
+#' 
 #' @export
 compute_smd <- function(
   covariate,
   group,
   weights = NULL,
-  reference_group = 1L,
+  reference_group = NULL,
   na.rm = FALSE
 ) {
-  # Input validation
   if (!is.numeric(covariate)) {
     stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
   }
@@ -74,14 +73,18 @@ compute_smd <- function(
     )
   }
 
-  # If reference_group is a level value, convert to index
-  if (reference_group %in% levels_g) {
-    gref_index <- which(levels_g == reference_group)
+  # If reference_group is NULL, use the first level (like other functions)
+  if (is.null(reference_group)) {
+    gref_index <- 1L
   } else {
-    gref_index <- reference_group
+    # If reference_group is a level value, convert to index
+    if (reference_group %in% levels_g) {
+      gref_index <- which(levels_g == reference_group)
+    } else {
+      gref_index <- reference_group
+    }
   }
 
-  # Delegate to smd::smd and return the estimate
   res <- smd::smd(
     x = covariate,
     g = group,
@@ -89,6 +92,7 @@ compute_smd <- function(
     gref = gref_index,
     na.rm = na.rm
   )
+
   res$estimate
 }
 
@@ -116,12 +120,11 @@ is_binary <- function(x) {
 #' @return A numeric value representing the variance ratio. Values greater than 1
 #'   indicate the comparison group has higher variance than the reference group.
 #' @examples
-#' # Basic usage with nhefs data
 #' compute_variance_ratio(nhefs_weights$age, nhefs_weights$qsmk)
-#'
-#' # With reference group specified
+#' # With weights
 #' compute_variance_ratio(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'                        reference_group = 0)
+#'                       weights = nhefs_weights$w_ate)
+#' 
 #' @export
 compute_variance_ratio <- function(
   covariate,
@@ -192,7 +195,7 @@ compute_variance_ratio <- function(
   }
   # Compute variances
   if (is_binary(covariate)) {
-    # For binary variables, use p*(1-p) formula like cobalt
+    # For binary variables, use p*(1-p) formula
     var_ref <- if (is.null(weights)) {
       p <- mean(covariate[idx_ref])
       p * (1 - p)
@@ -272,8 +275,8 @@ compute_variance_ratio <- function(
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,
 #'   with 0 indicating identical distributions and 1 indicating completely separate
 #'   distributions.
+#' 
 #' @examples
-#' # Basic usage with nhefs data
 #' compute_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
@@ -400,13 +403,10 @@ compute_ks <- function(
 #'   `NA` output.
 #' @return A numeric value representing the correlation coefficient between -1 and 1.
 #'   Returns `NA` if either variable has zero variance.
+#' 
 #' @examples
-#' # Basic usage with nhefs data
 #' compute_correlation(nhefs_weights$age, nhefs_weights$wt71)
-#'
-#' # With weights
-#' compute_correlation(nhefs_weights$age, nhefs_weights$smokeintensity,
-#'                     weights = nhefs_weights$w_ate)
+#' 
 #' @export
 compute_correlation <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
