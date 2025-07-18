@@ -289,7 +289,8 @@ compute_calibration_breaks <- function(data, bins, conf_level) {
 # Helper function for logistic method
 compute_calibration_logistic <- function(data, smooth, conf_level) {
   # Fit model
-  if (smooth && requireNamespace("mgcv", quietly = TRUE)) {
+  if (smooth) {
+    rlang::check_installed("mgcv", "for GAM smoothing")
     model <- mgcv::gam(y ~ s(x, k = 10), data = data, family = binomial())
   } else {
     model <- glm(y ~ x, data = data, family = binomial())
