@@ -3,7 +3,7 @@ suppressPackageStartupMessages(library(gtsummary))
 suppressPackageStartupMessages(library(dplyr))
 
 # Create survey design and gtsummary tables.
-svy <- svydesign(~1, data = nhefs_weights, weights = ~ w_ate)
+svy <- svydesign(~1, data = nhefs_weights, weights = ~w_ate)
 tbl <- tbl_svysummary(svy, include = c(age, sex, smokeyrs))
 tbl_by <- tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs))
 
@@ -52,7 +52,10 @@ test_that("By case ESS values match ess() results", {
   expect_equal(by_rows$modify_stat_p, expected_prop)
 
   # The ESS results stored in cards may be a list-column; unlist before comparing.
-  expect_equal(unlist(res_by$cards$add_ess_header$stat), expected_by$expected_ess)
+  expect_equal(
+    unlist(res_by$cards$add_ess_header$stat),
+    expected_by$expected_ess
+  )
 })
 
 test_that("Error if `x` is not a tbl_svysummary", {
@@ -70,5 +73,3 @@ test_that("Error if `header` is not a string", {
     fixed = TRUE
   )
 })
-
-

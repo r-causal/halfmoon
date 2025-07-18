@@ -22,11 +22,13 @@ Imports:
     gtsummary (>= 2.1.0),
     rlang,
     tidyselect,
-    tidysmd (>= 0.2.0)
+    tidysmd (>= 0.2.0),
+    tibble
 Suggests: 
     cards,
     covr,
     dplyr,
+    mgcv,
     survey,
     testthat (>= 3.0.0),
     vdiffr

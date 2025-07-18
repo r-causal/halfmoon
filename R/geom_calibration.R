@@ -6,7 +6,7 @@
 #' @param data A data frame or tibble containing the data.
 #' @param x Unquoted column name or string of predicted probabilities (numeric between 0 and 1).
 #' @param y Unquoted column name or string of observed binary outcomes (0/1).
-#' @param bins Integer >1; number of bins.
+#' @param bins Integer >1; number of bins for the "breaks" method.
 #' @param binning_method "equal_width" or "quantile" for bin creation.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param na.rm Logical; if TRUE, drop NA x or y before summarizing.
@@ -18,12 +18,18 @@
 #'   - count: number of observations in bin
 #'   - lower: lower bound of CI for y_mean
 #'   - upper: upper bound of CI for y_mean
+#' @importFrom stats prop.test quantile aggregate
+#' @importFrom tibble as_tibble tibble
 #' @export
-check_calibration <- function(data, x, y,
-                              bins = 10,
-                              binning_method = c("equal_width", "quantile"),
-                              conf_level = 0.95,
-                              na.rm = FALSE) {
+check_calibration <- function(
+  data,
+  x,
+  y,
+  bins = 10,
+  binning_method = c("equal_width", "quantile"),
+  conf_level = 0.95,
+  na.rm = FALSE
+) {
   binning_method <- match.arg(binning_method)
   if (!is.numeric(bins) || bins < 2 || bins != round(bins)) {
     stop("`bins` must be an integer > 1.")
@@ -66,17 +72,30 @@ check_calibration <- function(data, x, y,
   # Determine breaks
   xs <- df$x_var
   if (binning_method == "equal_width") {
-    brks <- seq(min(xs, na.rm = TRUE), max(xs, na.rm = TRUE), length.out = bins + 1)
+    brks <- seq(
+      min(xs, na.rm = TRUE),
+      max(xs, na.rm = TRUE),
+      length.out = bins + 1
+    )
   } else {
     probs <- seq(0, 1, length.out = bins + 1)
     brks <- unique(stats::quantile(xs, probs = probs, na.rm = TRUE))
     if (length(brks) <= 2) {
-      brks <- seq(min(xs, na.rm = TRUE), max(xs, na.rm = TRUE), length.out = bins + 1)
+      brks <- seq(
+        min(xs, na.rm = TRUE),
+        max(xs, na.rm = TRUE),
+        length.out = bins + 1
+      )
     }
   }
 
   # Assign bins - make sure it's numeric
-  df$.bin <- as.integer(cut(xs, breaks = brks, include.lowest = TRUE, labels = FALSE))
+  df$.bin <- as.integer(cut(
+    xs,
+    breaks = brks,
+    include.lowest = TRUE,
+    labels = FALSE
+  ))
 
   # Use base R aggregation for more direct control
   bin_summary <- stats::aggregate(
@@ -112,17 +131,20 @@ check_calibration <- function(data, x, y,
       return(c(NA_real_, NA_real_))
     }
 
-    tryCatch({
-      ci <- stats::prop.test(
-        x = successes,
-        n = n,
-        conf.level = conf_level,
-        correct = FALSE
-      )$conf.int
-      return(ci)
-    }, error = function(e) {
-      return(c(NA_real_, NA_real_))
-    })
+    tryCatch(
+      {
+        ci <- stats::prop.test(
+          x = successes,
+          n = n,
+          conf.level = conf_level,
+          correct = FALSE
+        )$conf.int
+        return(ci)
+      },
+      error = function(e) {
+        return(c(NA_real_, NA_real_))
+      }
+    )
   })
 
   # Extract the CIs
@@ -133,139 +155,372 @@ check_calibration <- function(data, x, y,
   tibble::as_tibble(result)
 }
 
-#' Stat for calibration geom (bins and summarizes by panel/group)
-#' @noRd
+# Define NULL coalescing operator
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+# Stat for computing calibration statistics
 StatCalibration <- ggplot2::ggproto(
-  "StatCalibration", ggplot2::Stat,
+  "StatCalibration",
+  ggplot2::Stat,
   required_aes = c("x", "y"),
-  default_aes = ggplot2::aes(),
+  default_aes = ggplot2::aes(alpha = 0.3),
 
-  compute_panel = function(data, scales, bins = 10,
-                           binning_method = "equal_width",
-                           conf_level = 0.95, na.rm = FALSE) {
-    # Create a data frame for check_calibration
-    cal <- check_calibration(
-      data = data,
-      x = "x",
-      y = "y",
-      bins = bins,
-      binning_method = binning_method,
-      conf_level = conf_level,
-      na.rm = na.rm
-    )
+  setup_params = function(data, params) {
+    # Set default parameters
+    params$method <- params$method %||% "breaks"
+    params$bins <- params$bins %||% 10
+    params$smooth <- params$smooth %||% TRUE
+    params$conf_level <- params$conf_level %||% 0.95
+    params$window_size <- params$window_size %||% 0.1
+    params$step_size <- params$step_size %||% (params$window_size / 2)
+    params
+  },
 
-    # Make sure x and y are available for ggplot aesthetics
-    cal$x <- cal$x_mean
-    cal$y <- cal$y_mean
-
-    return(cal)
+  compute_group = function(
+    data,
+    scales,
+    method = "breaks",
+    bins = 10,
+    smooth = TRUE,
+    conf_level = 0.95,
+    window_size = 0.1,
+    step_size = window_size / 2
+  ) {
+    if (method == "breaks") {
+      compute_calibration_breaks(data, bins, conf_level)
+    } else if (method == "logistic") {
+      compute_calibration_logistic(data, smooth, conf_level)
+    } else if (method == "windowed") {
+      compute_calibration_windowed(data, window_size, step_size, conf_level)
+    } else {
+      stop("Method must be 'breaks', 'logistic', or 'windowed'")
+    }
   }
 )
 
-#' Geom for calibration plot with CIs
+# Helper function for breaks method
+compute_calibration_breaks <- function(data, bins, conf_level) {
+  # Create breaks from 0 to 1
+  breaks <- seq(0, 1, length.out = bins + 1)
+
+  # Assign each prediction to a bin
+  bin_assignments <- cut(data$x, breaks = breaks, include.lowest = TRUE)
+
+  # Calculate observed event rates for each bin using base R
+  bin_data <- data.frame(
+    x = data$x,
+    y = data$y,
+    bin = bin_assignments
+  )
+
+  # Remove rows with NA bins
+  bin_data <- bin_data[!is.na(bin_data$bin), ]
+
+  # Summarize by bin using base R
+  bin_levels <- levels(bin_assignments)
+  bin_summary <- data.frame(
+    bin = factor(bin_levels, levels = bin_levels),
+    n_events = numeric(length(bin_levels)),
+    n_total = numeric(length(bin_levels)),
+    event_rate = numeric(length(bin_levels)),
+    x = numeric(length(bin_levels)),
+    stringsAsFactors = FALSE
+  )
+
+  for (i in seq_along(bin_levels)) {
+    bin_subset <- bin_data[bin_data$bin == bin_levels[i], ]
+    if (nrow(bin_subset) > 0) {
+      bin_summary$n_events[i] <- sum(bin_subset$y)
+      bin_summary$n_total[i] <- nrow(bin_subset)
+      bin_summary$event_rate[i] <- bin_summary$n_events[i] /
+        bin_summary$n_total[i]
+      bin_summary$x[i] <- mean(bin_subset$x)
+    }
+  }
+
+  # Remove empty bins
+  bin_summary <- bin_summary[bin_summary$n_total > 0, ]
+
+  # Add confidence intervals using prop.test
+  alpha <- 1 - conf_level
+
+  bin_summary$ymin <- NA
+  bin_summary$ymax <- NA
+
+  for (i in seq_len(nrow(bin_summary))) {
+    if (
+      bin_summary$n_total[i] > 0 &&
+        bin_summary$n_events[i] > 0 &&
+        bin_summary$n_events[i] < bin_summary$n_total[i]
+    ) {
+      prop_test <- prop.test(
+        bin_summary$n_events[i],
+        bin_summary$n_total[i],
+        conf.level = conf_level
+      )
+      bin_summary$ymin[i] <- prop_test$conf.int[1]
+      bin_summary$ymax[i] <- prop_test$conf.int[2]
+    } else {
+      # For edge cases, use simple approximation
+      se <- sqrt(
+        bin_summary$event_rate[i] *
+          (1 - bin_summary$event_rate[i]) /
+          bin_summary$n_total[i]
+      )
+      bin_summary$ymin[i] <- max(
+        0,
+        bin_summary$event_rate[i] - qnorm(1 - alpha / 2) * se
+      )
+      bin_summary$ymax[i] <- min(
+        1,
+        bin_summary$event_rate[i] + qnorm(1 - alpha / 2) * se
+      )
+    }
+  }
+
+  data.frame(
+    x = bin_summary$x,
+    y = bin_summary$event_rate,
+    ymin = bin_summary$ymin,
+    ymax = bin_summary$ymax
+  )
+}
+
+# Helper function for logistic method
+compute_calibration_logistic <- function(data, smooth, conf_level) {
+  # Fit model
+  if (smooth && requireNamespace("mgcv", quietly = TRUE)) {
+    model <- mgcv::gam(y ~ s(x, k = 10), data = data, family = binomial())
+  } else {
+    model <- glm(y ~ x, data = data, family = binomial())
+  }
+
+  # Create prediction sequence
+  pred_seq <- seq(min(data$x), max(data$x), length.out = 100)
+  new_data <- data.frame(x = pred_seq)
+
+  # Get predictions with confidence intervals
+  preds <- predict(model, new_data, se.fit = TRUE)
+  pred_probs <- plogis(preds$fit)
+
+  # Calculate confidence intervals
+  alpha <- 1 - conf_level
+  z_score <- qnorm(1 - alpha / 2)
+  ymin <- plogis(preds$fit - z_score * preds$se.fit)
+  ymax <- plogis(preds$fit + z_score * preds$se.fit)
+
+  data.frame(
+    x = pred_seq,
+    y = pred_probs,
+    ymin = ymin,
+    ymax = ymax
+  )
+}
+
+# Helper function for windowed method
+compute_calibration_windowed <- function(
+  data,
+  window_size,
+  step_size,
+  conf_level
+) {
+  # Create window centers
+  steps <- seq(0, 1, by = step_size)
+
+  # Initialize results
+  window_results <- list()
+
+  for (i in seq_along(steps)) {
+    # Define window boundaries
+    lower_bound <- max(0, steps[i] - (window_size / 2))
+    upper_bound <- min(1, steps[i] + (window_size / 2))
+
+    # Find observations in this window
+    in_window <- data$x >= lower_bound & data$x <= upper_bound
+
+    if (sum(in_window) > 0) {
+      # Calculate statistics for this window
+      n_events <- sum(data$y[in_window])
+      n_total <- sum(in_window)
+      event_rate <- n_events / n_total
+
+      # Calculate confidence intervals
+      alpha <- 1 - conf_level
+      if (n_events > 0 && n_events < n_total) {
+        prop_test <- prop.test(n_events, n_total, conf.level = conf_level)
+        lower_ci <- prop_test$conf.int[1]
+        upper_ci <- prop_test$conf.int[2]
+      } else {
+        # For edge cases, use normal approximation
+        se <- sqrt(event_rate * (1 - event_rate) / n_total)
+        z_score <- qnorm(1 - alpha / 2)
+        lower_ci <- max(0, event_rate - z_score * se)
+        upper_ci <- min(1, event_rate + z_score * se)
+      }
+
+      # Store results
+      window_results[[i]] <- data.frame(
+        x = steps[i],
+        y = event_rate,
+        ymin = lower_ci,
+        ymax = upper_ci
+      )
+    }
+  }
+
+  # Combine all windows
+  do.call(rbind, window_results)
+}
+
+# Geom for calibration line
+GeomCalibrationLine <- ggplot2::ggproto(
+  "GeomCalibrationLine",
+  ggplot2::GeomLine,
+  default_aes = ggplot2::aes(
+    colour = "blue",
+    linewidth = 0.5,
+    linetype = 1,
+    alpha = NA
+  )
+)
+
+# Geom for calibration ribbon
+GeomCalibrationRibbon <- ggplot2::ggproto(
+  "GeomCalibrationRibbon",
+  ggplot2::GeomRibbon,
+  default_aes = ggplot2::aes(
+    colour = NA,
+    fill = "blue",
+    linewidth = 0.5,
+    linetype = 1,
+    alpha = 0.3
+  )
+)
+
+# Geom for calibration points
+GeomCalibrationPoint <- ggplot2::ggproto(
+  "GeomCalibrationPoint",
+  ggplot2::GeomPoint,
+  default_aes = ggplot2::aes(
+    colour = "blue",
+    size = 1.5,
+    alpha = NA,
+    shape = 19,
+    fill = NA,
+    stroke = 0.5
+  )
+)
+
+#' Geom for calibration plot with confidence intervals
 #'
-#' @inheritParams check_calibration
+#' This geom creates calibration plots to assess the agreement between predicted
+#' probabilities and observed binary outcomes. It supports three methods:
+#' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed").
+#'
 #' @param mapping Aesthetic mapping (must supply x and y if not inherited).
 #' @param data Data frame or tibble; if NULL, uses ggplot default.
+#' @param method Character; calibration method - "breaks", "logistic", or "windowed".
+#' @param bins Integer >1; number of bins for the "breaks" method.
+#' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
+#' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
+#' @param window_size Numeric; size of each window for "windowed" method.
+#' @param step_size Numeric; distance between window centers for "windowed" method.
+#' @param show_ribbon Logical; show confidence interval ribbon.
+#' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
 #' @param position Position adjustment.
-#' @param show_line Logical; draw line between points.
-#' @param show_points Logical; draw points at each bin.
-#' @param show_ci Logical; draw error bars for CIs.
-#' @param reference_line Logical; add y=x diagonal.
+#' @param na.rm Logical; if TRUE, drop NA values before computation.
 #' @param show.legend Logical; include in legend.
 #' @param inherit.aes Logical; inherit aesthetics from ggplot.
 #' @param ... Additional parameters passed to geoms.
 #' @return A ggplot2 layer or list of layers
+#' @importFrom stats glm binomial predict plogis qnorm
 #' @export
-geom_calibration <- function(mapping = NULL, data = NULL,
-                             position = "identity",
-                             bins = 10,
-                             binning_method = c("equal_width", "quantile"),
-                             conf_level = 0.95,
-                             show_line = TRUE,
-                             show_points = TRUE,
-                             show_ci = TRUE,
-                             reference_line = FALSE,
-                             na.rm = FALSE,
-                             show.legend = NA,
-                             inherit.aes = TRUE,
-                             ...) {
-  binning_method <- match.arg(binning_method)
-  if (!is.numeric(bins) || bins < 2 || bins != round(bins)) {
-    stop("`bins` must be an integer > 1.")
-  }
-
-  # Define NULL coalescing operator if not available
-  `%||%` <- function(x, y) if (is.null(x)) y else x
-
-  # Collection of layers to be returned
+geom_calibration <- function(
+  mapping = NULL,
+  data = NULL,
+  method = "breaks",
+  bins = 10,
+  smooth = TRUE,
+  conf_level = 0.95,
+  window_size = 0.1,
+  step_size = window_size / 2,
+  show_ribbon = TRUE,
+  show_points = TRUE,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE,
+  ...
+) {
   layers <- list()
 
-  # Add reference line if requested
-  if (reference_line) {
-    layers <- c(layers, list(ggplot2::geom_abline(
-      slope = 1, intercept = 0, linetype = "dashed", color = "gray50"
-    )))
+  # Add ribbon first (so it's behind the line)
+  if (show_ribbon) {
+    ribbon_layer <- ggplot2::layer(
+      data = data,
+      mapping = mapping,
+      stat = StatCalibration,
+      geom = GeomCalibrationRibbon,
+      position = position,
+      show.legend = FALSE,
+      inherit.aes = inherit.aes,
+      params = list(
+        method = method,
+        bins = bins,
+        smooth = smooth,
+        conf_level = conf_level,
+        window_size = window_size,
+        step_size = step_size,
+        na.rm = na.rm
+      )
+    )
+    layers <- c(layers, list(ribbon_layer))
   }
 
-  # Common layer parameters
-  common_params <- list(
-    stat = StatCalibration,
+  # Add the main line
+  cal_stat <- ggplot2::layer(
     data = data,
     mapping = mapping,
+    stat = StatCalibration,
+    geom = GeomCalibrationLine,
     position = position,
+    show.legend = show.legend,
     inherit.aes = inherit.aes,
     params = list(
+      method = method,
       bins = bins,
-      binning_method = binning_method,
+      smooth = smooth,
       conf_level = conf_level,
-      na.rm = na.rm
+      window_size = window_size,
+      step_size = step_size,
+      na.rm = na.rm,
+      ...
     )
   )
+  layers <- c(layers, list(cal_stat))
 
-  # Add error bars for confidence intervals
-  if (show_ci) {
-    errorbar_params <- common_params
-    errorbar_params$geom <- "errorbar"
-    errorbar_params$show.legend <- FALSE  # No need for error bars in legend
-    errorbar_params$params$width <- 0.1   # Default width for error bars
-
-    # Create the layer
-    ci_layer <- do.call(ggplot2::layer, errorbar_params)
-
-    # Add the error bar mapping
-    ci_layer$mapping <- utils::modifyList(
-      ci_layer$mapping %||% ggplot2::aes(),
-      ggplot2::aes(ymin = after_stat(lower), ymax = after_stat(upper))
+  # Add points if requested (only for breaks and windowed methods)
+  if (show_points && method %in% c("breaks", "windowed")) {
+    point_layer <- ggplot2::layer(
+      data = data,
+      mapping = mapping,
+      stat = StatCalibration,
+      geom = GeomCalibrationPoint,
+      position = position,
+      show.legend = FALSE,
+      inherit.aes = inherit.aes,
+      params = list(
+        method = method,
+        bins = bins,
+        smooth = smooth,
+        conf_level = conf_level,
+        window_size = window_size,
+        step_size = step_size,
+        na.rm = na.rm
+      )
     )
-
-    layers <- c(layers, list(ci_layer))
-  }
-
-  # Add the line connecting points
-  if (show_line) {
-    line_params <- common_params
-    line_params$geom <- "line"
-    line_params$show.legend <- show.legend
-
-    # Create the layer
-    line_layer <- do.call(ggplot2::layer, line_params)
-
-    layers <- c(layers, list(line_layer))
-  }
-
-  # Add the points at each bin
-  if (show_points) {
-    point_params <- common_params
-    point_params$geom <- "point"
-    point_params$show.legend <- show.legend
-
-    # Create the layer
-    point_layer <- do.call(ggplot2::layer, point_params)
-
     layers <- c(layers, list(point_layer))
   }
 
-  # Return a single layer or a list of layers
-  if (length(layers) == 1) layers[[1]] else layers
+  layers
 }

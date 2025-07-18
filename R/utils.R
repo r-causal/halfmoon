@@ -13,4 +13,3 @@
 abort <- function(.message) {
   cli::cli_abort(message = .message)
 }
-

@@ -19,16 +19,16 @@
 #'   ) +
 #'   scale_y_continuous(labels = abs)
 geom_mirror_histogram <- function(
-    mapping = NULL,
-    data = NULL,
-    position = "stack",
-    ...,
-    binwidth = NULL,
-    bins = NULL,
-    na.rm = FALSE,
-    orientation = NA,
-    show.legend = NA,
-    inherit.aes = TRUE
+  mapping = NULL,
+  data = NULL,
+  position = "stack",
+  ...,
+  binwidth = NULL,
+  bins = NULL,
+  na.rm = FALSE,
+  orientation = NA,
+  show.legend = NA,
+  inherit.aes = TRUE
 ) {
   ggplot2::geom_histogram(
     mapping = mapping,
@@ -48,17 +48,37 @@ geom_mirror_histogram <- function(
 StatMirrorCount <- ggplot2::ggproto(
   "StatMirrorCount",
   ggplot2::StatBin,
-  compute_group = function(data, scales, binwidth = NULL, bins = NULL,
-                           center = NULL, boundary = NULL,
-                           closed = c("right", "left"), pad = FALSE,
-                           breaks = NULL, flipped_aes = FALSE,
-                           origin = NULL, right = NULL, drop = NULL) {
+  compute_group = function(
+    data,
+    scales,
+    binwidth = NULL,
+    bins = NULL,
+    center = NULL,
+    boundary = NULL,
+    closed = c("right", "left"),
+    pad = FALSE,
+    breaks = NULL,
+    flipped_aes = FALSE,
+    origin = NULL,
+    right = NULL,
+    drop = NULL
+  ) {
     group <- unique(data$group)
-    data <- ggplot2::StatBin$compute_group(data = data, scales = scales, binwidth = binwidth, bins = bins,
-                                           center = center, boundary = boundary,
-                                           closed = closed, pad = pad,
-                                           breaks = breaks, flipped_aes = flipped_aes,
-                                           origin = origin, right = right, drop = drop)
+    data <- ggplot2::StatBin$compute_group(
+      data = data,
+      scales = scales,
+      binwidth = binwidth,
+      bins = bins,
+      center = center,
+      boundary = boundary,
+      closed = closed,
+      pad = pad,
+      breaks = breaks,
+      flipped_aes = flipped_aes,
+      origin = origin,
+      right = right,
+      drop = drop
+    )
     if (group == 1) {
       data$count <- -data$count
     } else if (group > 2) {

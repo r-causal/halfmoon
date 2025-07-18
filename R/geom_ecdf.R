@@ -24,12 +24,26 @@
 #'   xlab("Smoking Years") +
 #'   ylab("Proportion <= x")
 #'
-geom_ecdf <- function(mapping = NULL, data = NULL, geom = "step", position = "identity",
-                      ..., n = NULL, pad = TRUE, na.rm = FALSE, show.legend = NA,
-                      inherit.aes = TRUE) {
+geom_ecdf <- function(
+  mapping = NULL,
+  data = NULL,
+  geom = "step",
+  position = "identity",
+  ...,
+  n = NULL,
+  pad = TRUE,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+) {
   ggplot2::layer(
-    data = data, mapping = mapping, stat = StatWeightedECDF, geom = geom,
-    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    data = data,
+    mapping = mapping,
+    stat = StatWeightedECDF,
+    geom = geom,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
     params = list(n = n, pad = pad, na.rm = na.rm, ...)
   )
 }

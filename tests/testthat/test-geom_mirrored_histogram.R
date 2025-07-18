@@ -26,7 +26,7 @@ test_that("geom_mirrored_histogram errors/warns correctly", {
 
   # no group
   no_group <- ggplot(nhefs_weights, aes(.fitted)) +
-      geom_mirror_histogram(bins = 50)
+    geom_mirror_histogram(bins = 50)
 
   expect_snapshot_warning(print(no_group))
 })
