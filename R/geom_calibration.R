@@ -4,8 +4,10 @@
 #' computing mean prediction, observed rate, counts, and confidence intervals.
 #'
 #' @param data A data frame or tibble containing the data.
-#' @param x Unquoted column name or string of predicted probabilities (numeric between 0 and 1).
-#' @param y Unquoted column name or string of observed binary outcomes (0/1).
+#' @param x Column name of predicted probabilities (numeric between 0 and 1).
+#'   Can be unquoted (e.g., `pred`) or quoted (e.g., `"pred"`).
+#' @param y Column name of observed binary outcomes (0/1).
+#'   Can be unquoted (e.g., `obs`) or quoted (e.g., `"obs"`).
 #' @param bins Integer >1; number of bins for the "breaks" method.
 #' @param binning_method "equal_width" or "quantile" for bin creation.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
@@ -18,8 +20,21 @@
 #'   - count: number of observations in bin
 #'   - lower: lower bound of CI for y_mean
 #'   - upper: upper bound of CI for y_mean
-#' @importFrom stats prop.test quantile aggregate
-#' @importFrom tibble as_tibble tibble
+#' @examples
+#' # Create sample data
+#' set.seed(123)
+#' df <- data.frame(
+#'   predicted = runif(100),
+#'   observed = rbinom(100, 1, 0.5)
+#' )
+#'
+#' # Both quoted and unquoted column names work
+#' check_calibration(df, predicted, observed)
+#' check_calibration(df, "predicted", "observed")
+#'
+#' # Different binning methods
+#' check_calibration(df, predicted, observed, binning_method = "quantile")
+#' @importFrom stats prop.test quantile
 #' @export
 check_calibration <- function(
   data,
@@ -35,27 +50,68 @@ check_calibration <- function(
     stop("`bins` must be an integer > 1.")
   }
 
-  # Extract column names handling different input types
-  if (is.character(x)) {
-    x_name <- x
-  } else {
-    x_name <- rlang::as_name(rlang::enquo(x))
+  # Extract column names using rlang - handle both quoted and unquoted
+  x_quo <- rlang::enquo(x)
+  y_quo <- rlang::enquo(y)
+
+  # Function to extract column name from quosure
+  get_column_name <- function(quo, arg_name) {
+    # First try as_name (works for symbols and strings)
+    tryCatch(
+      {
+        rlang::as_name(quo)
+      },
+      error = function(e) {
+        # If as_name fails, try to evaluate the quosure
+        val <- tryCatch(
+          {
+            rlang::eval_tidy(quo)
+          },
+          error = function(e2) {
+            stop(paste0(
+              "`",
+              arg_name,
+              "` must be a column name (quoted or unquoted)"
+            ))
+          }
+        )
+
+        # Handle different types of evaluated values
+        if (is.character(val) && length(val) == 1) {
+          val
+        } else if (is.symbol(val)) {
+          as.character(val)
+        } else {
+          stop(paste0(
+            "`",
+            arg_name,
+            "` must be a column name (quoted or unquoted)"
+          ))
+        }
+      }
+    )
   }
 
-  if (is.character(y)) {
-    y_name <- y
-  } else {
-    y_name <- rlang::as_name(rlang::enquo(y))
+  x_name <- get_column_name(x_quo, "x")
+  y_name <- get_column_name(y_quo, "y")
+
+  # Validate that columns exist
+  if (!x_name %in% names(data)) {
+    stop(paste0("Column '", x_name, "' not found in data"))
+  }
+  if (!y_name %in% names(data)) {
+    stop(paste0("Column '", y_name, "' not found in data"))
   }
 
-  # Create a new data frame with only the needed columns and standardized names
-  df <- data.frame(
+  # Create a tibble with only the needed columns and standardized names
+  df <- tibble::tibble(
     x_var = data[[x_name]],
     y_var = data[[y_name]]
   )
 
   if (na.rm) {
-    df <- df[!is.na(df$x_var) & !is.na(df$y_var), ]
+    df <- df |>
+      dplyr::filter(!is.na(x_var) & !is.na(y_var))
   }
 
   if (nrow(df) == 0) {
@@ -97,29 +153,16 @@ check_calibration <- function(
     labels = FALSE
   ))
 
-  # Use base R aggregation for more direct control
-  bin_summary <- stats::aggregate(
-    cbind(x_var, y_var) ~ .bin,
-    data = df,
-    FUN = mean,
-    na.rm = TRUE
-  )
-  names(bin_summary)[names(bin_summary) == "x_var"] <- "x_mean"
-  names(bin_summary)[names(bin_summary) == "y_var"] <- "y_mean"
-
-  # Count observations per bin
-  bin_counts <- stats::aggregate(
-    y_var ~ .bin,
-    data = df,
-    FUN = length
-  )
-  names(bin_counts)[names(bin_counts) == "y_var"] <- "count"
-
-  # Merge summaries
-  result <- merge(bin_summary, bin_counts, by = ".bin")
-
-  # Sort by bin
-  result <- result[order(result$.bin), ]
+  # Use dplyr for aggregation
+  result <- df |>
+    dplyr::group_by(.bin) |>
+    dplyr::summarise(
+      x_mean = mean(x_var, na.rm = TRUE),
+      y_mean = mean(y_var, na.rm = TRUE),
+      count = dplyr::n(),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(.bin)
 
   # Compute CIs - optimized version
   n_rows <- nrow(result)
@@ -246,41 +289,22 @@ compute_calibration_breaks <- function(data, bins, conf_level) {
   # Assign each prediction to a bin
   bin_assignments <- cut(data$x, breaks = breaks, include.lowest = TRUE)
 
-  # Calculate observed event rates for each bin using base R
-  bin_data <- data.frame(
+  # Use dplyr for cleaner aggregation
+  bin_summary <- tibble::tibble(
     x = data$x,
     y = data$y,
     bin = bin_assignments
-  )
-
-  # Remove rows with NA bins
-  bin_data <- bin_data[!is.na(bin_data$bin), ]
-
-  # Summarize by bin using tapply for better performance
-  bin_indices <- as.integer(bin_data$bin)
-  unique_bins <- unique(bin_indices)
-  unique_bins <- unique_bins[!is.na(unique_bins)]
-
-  # Use purrr for vectorized computation
-  bin_list <- split(bin_data, bin_indices)
-  n_events <- purrr::map_dbl(bin_list, ~ sum(.x$y))
-  n_total <- purrr::map_int(bin_list, ~ nrow(.x))
-  x_mean <- purrr::map_dbl(bin_list, ~ mean(.x$x))
-
-  # Create summary data frame
-  bin_summary <- data.frame(
-    bin_idx = as.integer(names(bin_list)),
-    n_events = n_events,
-    n_total = n_total,
-    x = x_mean,
-    stringsAsFactors = FALSE
-  )
-
-  # Calculate event rates vectorized
-  bin_summary$event_rate <- bin_summary$n_events / bin_summary$n_total
-
-  # Filter out empty bins
-  bin_summary <- bin_summary[bin_summary$n_total > 0, ]
+  ) |>
+    dplyr::filter(!is.na(bin)) |>
+    dplyr::group_by(bin) |>
+    dplyr::summarise(
+      n_events = sum(y),
+      n_total = dplyr::n(),
+      x = mean(x),
+      .groups = "drop"
+    ) |>
+    dplyr::filter(n_total > 0) |>
+    dplyr::mutate(event_rate = n_events / n_total)
 
   # Add confidence intervals - optimized version
   alpha <- 1 - conf_level

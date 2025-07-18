@@ -63,6 +63,56 @@ test_that("check_calibration works with unquoted column names", {
   expect_true(nrow(result) > 0)
 })
 
+test_that("check_calibration handles both quoted and unquoted column names", {
+  # Create test data
+  set.seed(123)
+  n <- 200
+  predicted <- runif(n, 0, 1)
+  actual <- rbinom(n, 1, predicted)
+
+  test_data <- data.frame(
+    pred = predicted,
+    obs = actual
+  )
+
+  # Test with quoted column names
+  result_quoted <- check_calibration(test_data, "pred", "obs")
+
+  # Test with unquoted column names in a function context
+  test_unquoted <- function(data, x_col, y_col) {
+    check_calibration(data, {{ x_col }}, {{ y_col }})
+  }
+  result_unquoted <- test_unquoted(test_data, pred, obs)
+
+  # Results should be identical
+  expect_s3_class(result_quoted, "tbl_df")
+  expect_s3_class(result_unquoted, "tbl_df")
+  expect_equal(result_quoted, result_unquoted)
+  expect_true(nrow(result_quoted) > 0)
+  expect_true(nrow(result_unquoted) > 0)
+})
+
+test_that("check_calibration provides clear error messages for missing columns", {
+  # Create test data
+  set.seed(123)
+  test_data <- data.frame(
+    pred = runif(50, 0, 1),
+    obs = rbinom(50, 1, 0.5)
+  )
+
+  # Test with non-existent x column
+  expect_error(
+    check_calibration(test_data, "nonexistent", "obs"),
+    "Column 'nonexistent' not found in data"
+  )
+
+  # Test with non-existent y column
+  expect_error(
+    check_calibration(test_data, "pred", "nonexistent"),
+    "Column 'nonexistent' not found in data"
+  )
+})
+
 test_that("check_calibration handles different binning methods", {
   # Create test data
   set.seed(123)

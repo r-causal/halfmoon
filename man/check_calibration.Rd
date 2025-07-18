@@ -17,9 +17,11 @@ check_calibration(
 \arguments{
 \item{data}{A data frame or tibble containing the data.}
 
-\item{x}{Unquoted column name or string of predicted probabilities (numeric between 0 and 1).}
+\item{x}{Column name of predicted probabilities (numeric between 0 and 1).
+Can be unquoted (e.g., \code{pred}) or quoted (e.g., \code{"pred"}).}
 
-\item{y}{Unquoted column name or string of observed binary outcomes (0/1).}
+\item{y}{Column name of observed binary outcomes (0/1).
+Can be unquoted (e.g., \code{obs}) or quoted (e.g., \code{"obs"}).}
 
 \item{bins}{Integer >1; number of bins for the "breaks" method.}
 
@@ -43,4 +45,19 @@ A tibble with columns:
 \description{
 This function summarizes predicted probabilities and observed outcomes into bins,
 computing mean prediction, observed rate, counts, and confidence intervals.
+}
+\examples{
+# Create sample data
+set.seed(123)
+df <- data.frame(
+  predicted = runif(100),
+  observed = rbinom(100, 1, 0.5)
+)
+
+# Both quoted and unquoted column names work
+check_calibration(df, predicted, observed)
+check_calibration(df, "predicted", "observed")
+
+# Different binning methods
+check_calibration(df, predicted, observed, binning_method = "quantile")
 }
