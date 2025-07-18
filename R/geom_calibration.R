@@ -121,35 +121,75 @@ check_calibration <- function(
   # Sort by bin
   result <- result[order(result$.bin), ]
 
-  # Compute CIs
-  cis <- lapply(1:nrow(result), function(i) {
-    n <- result$count[i]
-    successes <- round(result$y_mean[i] * n)
+  # Compute CIs - optimized version
+  n_rows <- nrow(result)
+  result$lower <- numeric(n_rows)
+  result$upper <- numeric(n_rows)
 
-    # Handle edge cases where prop.test might fail
-    if (n == 0 || successes < 0 || successes > n) {
-      return(c(NA_real_, NA_real_))
-    }
+  # Vectorized computation where possible
+  n_total <- result$count
+  n_events <- round(result$y_mean * n_total)
 
-    tryCatch(
-      {
-        ci <- stats::prop.test(
-          x = successes,
-          n = n,
-          conf.level = conf_level,
-          correct = FALSE
-        )$conf.int
-        return(ci)
-      },
-      error = function(e) {
-        return(c(NA_real_, NA_real_))
+  # Handle edge cases up front
+  valid_mask <- n_total > 0 &
+    n_events >= 0 &
+    n_events <= n_total &
+    n_events > 0 &
+    n_events < n_total
+
+  # For valid cases, compute CIs using purrr
+  valid_indices <- which(valid_mask)
+  if (length(valid_indices) > 0) {
+    ci_results <- purrr::map(
+      valid_indices,
+      ~ {
+        tryCatch(
+          {
+            ci <- stats::prop.test(
+              x = n_events[.x],
+              n = n_total[.x],
+              conf.level = conf_level
+            )$conf.int
+            list(lower = ci[1], upper = ci[2])
+          },
+          error = function(e) {
+            list(lower = NA_real_, upper = NA_real_)
+          }
+        )
       }
     )
-  })
 
-  # Extract the CIs
-  result$lower <- sapply(cis, function(ci) ci[1])
-  result$upper <- sapply(cis, function(ci) ci[2])
+    # Extract results
+    result$lower[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$lower)
+    result$upper[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$upper)
+  }
+
+  # For edge cases, use normal approximation with purrr
+  edge_cases <- which(!valid_mask & n_total > 0)
+  if (length(edge_cases) > 0) {
+    alpha <- 1 - conf_level
+    z_score <- stats::qnorm(1 - alpha / 2)
+
+    edge_results <- purrr::map(
+      edge_cases,
+      ~ {
+        rate <- result$y_mean[.x]
+        se <- sqrt(rate * (1 - rate) / n_total[.x])
+        list(
+          lower = max(0, rate - z_score * se),
+          upper = min(1, rate + z_score * se)
+        )
+      }
+    )
+
+    result$lower[edge_cases] <- purrr::map_dbl(edge_results, ~ .x$lower)
+    result$upper[edge_cases] <- purrr::map_dbl(edge_results, ~ .x$upper)
+  }
+
+  # Set NA for completely invalid cases
+  invalid_mask <- n_total == 0
+  result$lower[invalid_mask] <- NA_real_
+  result$upper[invalid_mask] <- NA_real_
 
   # Convert to tibble for consistency with other functions
   tibble::as_tibble(result)
@@ -216,66 +256,87 @@ compute_calibration_breaks <- function(data, bins, conf_level) {
   # Remove rows with NA bins
   bin_data <- bin_data[!is.na(bin_data$bin), ]
 
-  # Summarize by bin using base R
-  bin_levels <- levels(bin_assignments)
+  # Summarize by bin using tapply for better performance
+  bin_indices <- as.integer(bin_data$bin)
+  unique_bins <- unique(bin_indices)
+  unique_bins <- unique_bins[!is.na(unique_bins)]
+
+  # Use purrr for vectorized computation
+  bin_list <- split(bin_data, bin_indices)
+  n_events <- purrr::map_dbl(bin_list, ~ sum(.x$y))
+  n_total <- purrr::map_int(bin_list, ~ nrow(.x))
+  x_mean <- purrr::map_dbl(bin_list, ~ mean(.x$x))
+
+  # Create summary data frame
   bin_summary <- data.frame(
-    bin = factor(bin_levels, levels = bin_levels),
-    n_events = numeric(length(bin_levels)),
-    n_total = numeric(length(bin_levels)),
-    event_rate = numeric(length(bin_levels)),
-    x = numeric(length(bin_levels)),
+    bin_idx = as.integer(names(bin_list)),
+    n_events = n_events,
+    n_total = n_total,
+    x = x_mean,
     stringsAsFactors = FALSE
   )
 
-  for (i in seq_along(bin_levels)) {
-    bin_subset <- bin_data[bin_data$bin == bin_levels[i], ]
-    if (nrow(bin_subset) > 0) {
-      bin_summary$n_events[i] <- sum(bin_subset$y)
-      bin_summary$n_total[i] <- nrow(bin_subset)
-      bin_summary$event_rate[i] <- bin_summary$n_events[i] /
-        bin_summary$n_total[i]
-      bin_summary$x[i] <- mean(bin_subset$x)
-    }
-  }
+  # Calculate event rates vectorized
+  bin_summary$event_rate <- bin_summary$n_events / bin_summary$n_total
 
-  # Remove empty bins
+  # Filter out empty bins
   bin_summary <- bin_summary[bin_summary$n_total > 0, ]
 
-  # Add confidence intervals using prop.test
+  # Add confidence intervals - optimized version
   alpha <- 1 - conf_level
+  z_score <- stats::qnorm(1 - alpha / 2)
 
-  bin_summary$ymin <- NA
-  bin_summary$ymax <- NA
+  # Pre-allocate vectors
+  bin_summary$ymin <- numeric(nrow(bin_summary))
+  bin_summary$ymax <- numeric(nrow(bin_summary))
 
-  for (i in seq_len(nrow(bin_summary))) {
-    if (
-      bin_summary$n_total[i] > 0 &&
-        bin_summary$n_events[i] > 0 &&
-        bin_summary$n_events[i] < bin_summary$n_total[i]
-    ) {
-      prop_test <- prop.test(
-        bin_summary$n_events[i],
-        bin_summary$n_total[i],
-        conf.level = conf_level
-      )
-      bin_summary$ymin[i] <- prop_test$conf.int[1]
-      bin_summary$ymax[i] <- prop_test$conf.int[2]
-    } else {
-      # For edge cases, use simple approximation
-      se <- sqrt(
-        bin_summary$event_rate[i] *
-          (1 - bin_summary$event_rate[i]) /
-          bin_summary$n_total[i]
-      )
-      bin_summary$ymin[i] <- max(
-        0,
-        bin_summary$event_rate[i] - qnorm(1 - alpha / 2) * se
-      )
-      bin_summary$ymax[i] <- min(
-        1,
-        bin_summary$event_rate[i] + qnorm(1 - alpha / 2) * se
-      )
-    }
+  # Identify valid cases for prop.test
+  valid_cases <- bin_summary$n_total > 0 &
+    bin_summary$n_events > 0 &
+    bin_summary$n_events < bin_summary$n_total
+
+  # For valid cases, use prop.test with purrr
+  valid_indices <- which(valid_cases)
+  if (length(valid_indices) > 0) {
+    ci_results <- purrr::map(
+      valid_indices,
+      ~ {
+        tryCatch(
+          {
+            prop_test <- stats::prop.test(
+              bin_summary$n_events[.x],
+              bin_summary$n_total[.x],
+              conf.level = conf_level
+            )
+            list(ymin = prop_test$conf.int[1], ymax = prop_test$conf.int[2])
+          },
+          error = function(e) {
+            # Fallback to normal approximation
+            se <- sqrt(
+              bin_summary$event_rate[.x] *
+                (1 - bin_summary$event_rate[.x]) /
+                bin_summary$n_total[.x]
+            )
+            list(
+              ymin = max(0, bin_summary$event_rate[.x] - z_score * se),
+              ymax = min(1, bin_summary$event_rate[.x] + z_score * se)
+            )
+          }
+        )
+      }
+    )
+
+    bin_summary$ymin[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$ymin)
+    bin_summary$ymax[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$ymax)
+  }
+
+  # For edge cases, use normal approximation vectorized
+  edge_cases <- which(!valid_cases & bin_summary$n_total > 0)
+  if (length(edge_cases) > 0) {
+    rates <- bin_summary$event_rate[edge_cases]
+    se <- sqrt(rates * (1 - rates) / bin_summary$n_total[edge_cases])
+    bin_summary$ymin[edge_cases] <- pmax(0, rates - z_score * se)
+    bin_summary$ymax[edge_cases] <- pmin(1, rates + z_score * se)
   }
 
   data.frame(
@@ -318,7 +379,7 @@ compute_calibration_logistic <- function(data, smooth, conf_level) {
   )
 }
 
-# Helper function for windowed method
+# Helper function for windowed method - optimized
 compute_calibration_windowed <- function(
   data,
   window_size,
@@ -327,50 +388,101 @@ compute_calibration_windowed <- function(
 ) {
   # Create window centers
   steps <- seq(0, 1, by = step_size)
+  n_steps <- length(steps)
 
-  # Initialize results
-  window_results <- list()
+  # Pre-calculate constants
+  alpha <- 1 - conf_level
+  z_score <- stats::qnorm(1 - alpha / 2)
+  half_window <- window_size / 2
 
-  for (i in seq_along(steps)) {
-    # Define window boundaries
-    lower_bound <- max(0, steps[i] - (window_size / 2))
-    upper_bound <- min(1, steps[i] + (window_size / 2))
+  # Sort data once for more efficient window lookups
+  data_x <- data$x
+  data_y <- data$y
 
-    # Find observations in this window
-    in_window <- data$x >= lower_bound & data$x <= upper_bound
+  # Process each window using purrr
+  window_results <- purrr::map(
+    steps,
+    ~ {
+      # Define window boundaries
+      lower_bound <- max(0, .x - half_window)
+      upper_bound <- min(1, .x + half_window)
 
-    if (sum(in_window) > 0) {
-      # Calculate statistics for this window
-      n_events <- sum(data$y[in_window])
+      # Find observations in this window
+      in_window <- data_x >= lower_bound & data_x <= upper_bound
       n_total <- sum(in_window)
-      event_rate <- n_events / n_total
 
-      # Calculate confidence intervals
-      alpha <- 1 - conf_level
-      if (n_events > 0 && n_events < n_total) {
-        prop_test <- prop.test(n_events, n_total, conf.level = conf_level)
-        lower_ci <- prop_test$conf.int[1]
-        upper_ci <- prop_test$conf.int[2]
+      if (n_total > 0) {
+        # Calculate statistics for this window
+        n_events <- sum(data_y[in_window])
+        event_rate <- n_events / n_total
+
+        # Calculate confidence intervals
+        if (n_events > 0 && n_events < n_total) {
+          tryCatch(
+            {
+              prop_test <- stats::prop.test(
+                n_events,
+                n_total,
+                conf.level = conf_level
+              )
+              list(
+                x = .x,
+                y = event_rate,
+                ymin = prop_test$conf.int[1],
+                ymax = prop_test$conf.int[2],
+                valid = TRUE
+              )
+            },
+            error = function(e) {
+              # Fallback to normal approximation
+              se <- sqrt(event_rate * (1 - event_rate) / n_total)
+              list(
+                x = .x,
+                y = event_rate,
+                ymin = max(0, event_rate - z_score * se),
+                ymax = min(1, event_rate + z_score * se),
+                valid = TRUE
+              )
+            }
+          )
+        } else {
+          # For edge cases, use normal approximation
+          se <- sqrt(event_rate * (1 - event_rate) / n_total)
+          list(
+            x = .x,
+            y = event_rate,
+            ymin = max(0, event_rate - z_score * se),
+            ymax = min(1, event_rate + z_score * se),
+            valid = TRUE
+          )
+        }
       } else {
-        # For edge cases, use normal approximation
-        se <- sqrt(event_rate * (1 - event_rate) / n_total)
-        z_score <- qnorm(1 - alpha / 2)
-        lower_ci <- max(0, event_rate - z_score * se)
-        upper_ci <- min(1, event_rate + z_score * se)
+        # Invalid window
+        list(valid = FALSE)
       }
-
-      # Store results
-      window_results[[i]] <- data.frame(
-        x = steps[i],
-        y = event_rate,
-        ymin = lower_ci,
-        ymax = upper_ci
-      )
     }
-  }
+  )
 
-  # Combine all windows
-  do.call(rbind, window_results)
+  # Filter to valid windows only
+  valid_results <- purrr::keep(window_results, ~ .x$valid)
+
+  # Return only valid windows
+  if (length(valid_results) > 0) {
+    data.frame(
+      x = purrr::map_dbl(valid_results, ~ .x$x),
+      y = purrr::map_dbl(valid_results, ~ .x$y),
+      ymin = purrr::map_dbl(valid_results, ~ .x$ymin),
+      ymax = purrr::map_dbl(valid_results, ~ .x$ymax)
+    )
+  } else {
+    # Return empty data frame with correct structure
+    data.frame(
+      x = numeric(0),
+      y = numeric(0),
+      ymin = numeric(0),
+      ymax = numeric(0)
+    )
+  }
 }
 
 # Geom for calibration line
