@@ -16,16 +16,22 @@ BugReports: https://github.com/r-causal/halfmoon/issues
 Depends: 
     R (>= 2.10)
 Imports: 
-    cardx (>= 0.2.3),
     cli,
+    dplyr,
     ggplot2,
     gtsummary (>= 2.1.0),
+    purrr,
     rlang,
+    smd,
+    tibble,
+    tidyr,
     tidyselect,
     tidysmd (>= 0.2.0),
     tibble
 Suggests: 
     cards,
+    cardx (>= 0.2.3),
+    cobalt,
     covr,
     dplyr,
     mgcv,

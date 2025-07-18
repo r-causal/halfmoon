@@ -13,3 +13,9 @@
 abort <- function(.message) {
   cli::cli_abort(message = .message)
 }
+
+utils::globalVariables(c(
+  "method",
+  "metric",
+  "variable"
+))

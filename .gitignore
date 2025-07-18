@@ -7,6 +7,6 @@ docs
 cran-comments.md
 rhub.R
 CRAN-SUBMISSION
-.claude/
 scratch/
-..Rcheck/
+.claude/
+*.Rcheck
