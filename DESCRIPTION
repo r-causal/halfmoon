@@ -26,8 +26,7 @@ Imports:
     tibble,
     tidyr,
     tidyselect,
-    tidysmd (>= 0.2.0),
-    tibble
+    tidysmd (>= 0.2.0)
 Suggests: 
     cards,
     cardx (>= 0.2.3),
