@@ -13,6 +13,7 @@ geom_calibration(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size/2,
+  treatment_level = NULL,
   show_ribbon = TRUE,
   show_points = TRUE,
   position = "identity",
@@ -23,7 +24,8 @@ geom_calibration(
 )
 }
 \arguments{
-\item{mapping}{Aesthetic mapping (must supply x and y if not inherited).}
+\item{mapping}{Aesthetic mapping (must supply x and y if not inherited).
+x should be propensity scores/predicted probabilities, y should be treatment variable.}
 
 \item{data}{Data frame or tibble; if NULL, uses ggplot default.}
 
@@ -38,6 +40,9 @@ geom_calibration(
 \item{window_size}{Numeric; size of each window for "windowed" method.}
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
+
+\item{treatment_level}{Value indicating which level of y represents treatment.
+If NULL (default), uses the last level for factors or max value for numeric.}
 
 \item{show_ribbon}{Logical; show confidence interval ribbon.}
 
@@ -60,4 +65,32 @@ A ggplot2 layer or list of layers
 This geom creates calibration plots to assess the agreement between predicted
 probabilities and observed binary outcomes. It supports three methods:
 binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed").
+}
+\examples{
+library(ggplot2)
+
+# Basic calibration plot using nhefs_weights dataset
+# .fitted contains propensity scores, qsmk is the treatment variable
+ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+  geom_calibration() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(x = "Propensity Score", y = "Observed Treatment Rate")
+
+# Using different methods
+ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+  geom_calibration(method = "logistic") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(x = "Propensity Score", y = "Observed Treatment Rate")
+
+# Specify treatment level explicitly
+ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+  geom_calibration(treatment_level = "1") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(x = "Propensity Score", y = "Observed Treatment Rate")
+
+# Windowed method with custom parameters
+ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+  geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(x = "Propensity Score", y = "Observed Treatment Rate")
 }

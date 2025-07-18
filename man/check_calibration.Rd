@@ -6,8 +6,9 @@
 \usage{
 check_calibration(
   data,
-  x,
-  y,
+  .fitted,
+  .group,
+  treatment_level = NULL,
   bins = 10,
   binning_method = c("equal_width", "quantile"),
   conf_level = 0.95,
@@ -17,11 +18,14 @@ check_calibration(
 \arguments{
 \item{data}{A data frame or tibble containing the data.}
 
-\item{x}{Column name of predicted probabilities (numeric between 0 and 1).
-Can be unquoted (e.g., \code{pred}) or quoted (e.g., \code{"pred"}).}
+\item{.fitted}{Column name of predicted probabilities (numeric between 0 and 1).
+Can be unquoted (e.g., \code{.fitted}) or quoted (e.g., \code{".fitted"}).}
 
-\item{y}{Column name of observed binary outcomes (0/1).
-Can be unquoted (e.g., \code{obs}) or quoted (e.g., \code{"obs"}).}
+\item{.group}{Column name of treatment/group variable.
+Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
+
+\item{treatment_level}{Value indicating which level of \code{.group} represents treatment.
+If NULL (default), uses the last level for factors or max value for numeric.}
 
 \item{bins}{Integer >1; number of bins for the "breaks" method.}
 
@@ -29,17 +33,17 @@ Can be unquoted (e.g., \code{obs}) or quoted (e.g., \code{"obs"}).}
 
 \item{conf_level}{Numeric in (0,1); confidence level for CIs (default = 0.95).}
 
-\item{na.rm}{Logical; if TRUE, drop NA x or y before summarizing.}
+\item{na.rm}{Logical; if TRUE, drop NA values before summarizing.}
 }
 \value{
 A tibble with columns:
 \itemize{
 \item .bin: integer bin index
-\item x_mean: mean predicted probability in bin
-\item y_mean: observed outcome rate in bin
+\item fitted_mean: mean predicted probability in bin
+\item group_mean: observed treatment rate in bin
 \item count: number of observations in bin
-\item lower: lower bound of CI for y_mean
-\item upper: upper bound of CI for y_mean
+\item lower: lower bound of CI for group_mean
+\item upper: upper bound of CI for group_mean
 }
 }
 \description{
@@ -47,17 +51,16 @@ This function summarizes predicted probabilities and observed outcomes into bins
 computing mean prediction, observed rate, counts, and confidence intervals.
 }
 \examples{
-# Create sample data
-set.seed(123)
-df <- data.frame(
-  predicted = runif(100),
-  observed = rbinom(100, 1, 0.5)
-)
+# Use the included nhefs_weights dataset
+# .fitted contains propensity scores, qsmk is the treatment variable
+check_calibration(nhefs_weights, .fitted, qsmk)
 
 # Both quoted and unquoted column names work
-check_calibration(df, predicted, observed)
-check_calibration(df, "predicted", "observed")
+check_calibration(nhefs_weights, ".fitted", "qsmk")
+
+# Specify treatment level explicitly (useful for multi-level factors)
+check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 
 # Different binning methods
-check_calibration(df, predicted, observed, binning_method = "quantile")
+check_calibration(nhefs_weights, .fitted, qsmk, binning_method = "quantile")
 }

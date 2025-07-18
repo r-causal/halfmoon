@@ -25,5 +25,7 @@ utils::globalVariables(c(
   "x",
   "x_var",
   "y",
-  "y_var"
+  "y_var",
+  "fitted_mean",
+  "group_mean"
 ))

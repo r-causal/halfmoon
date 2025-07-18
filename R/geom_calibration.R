@@ -4,42 +4,44 @@
 #' computing mean prediction, observed rate, counts, and confidence intervals.
 #'
 #' @param data A data frame or tibble containing the data.
-#' @param x Column name of predicted probabilities (numeric between 0 and 1).
-#'   Can be unquoted (e.g., `pred`) or quoted (e.g., `"pred"`).
-#' @param y Column name of observed binary outcomes (0/1).
-#'   Can be unquoted (e.g., `obs`) or quoted (e.g., `"obs"`).
+#' @param .fitted Column name of predicted probabilities (numeric between 0 and 1).
+#'   Can be unquoted (e.g., `.fitted`) or quoted (e.g., `".fitted"`).
+#' @param .group Column name of treatment/group variable.
+#'   Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
+#' @param treatment_level Value indicating which level of `.group` represents treatment.
+#'   If NULL (default), uses the last level for factors or max value for numeric.
 #' @param bins Integer >1; number of bins for the "breaks" method.
 #' @param binning_method "equal_width" or "quantile" for bin creation.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
-#' @param na.rm Logical; if TRUE, drop NA x or y before summarizing.
+#' @param na.rm Logical; if TRUE, drop NA values before summarizing.
 #'
 #' @return A tibble with columns:
 #'   - .bin: integer bin index
-#'   - x_mean: mean predicted probability in bin
-#'   - y_mean: observed outcome rate in bin
+#'   - fitted_mean: mean predicted probability in bin
+#'   - group_mean: observed treatment rate in bin
 #'   - count: number of observations in bin
-#'   - lower: lower bound of CI for y_mean
-#'   - upper: upper bound of CI for y_mean
+#'   - lower: lower bound of CI for group_mean
+#'   - upper: upper bound of CI for group_mean
 #' @examples
-#' # Create sample data
-#' set.seed(123)
-#' df <- data.frame(
-#'   predicted = runif(100),
-#'   observed = rbinom(100, 1, 0.5)
-#' )
+#' # Use the included nhefs_weights dataset
+#' # .fitted contains propensity scores, qsmk is the treatment variable
+#' check_calibration(nhefs_weights, .fitted, qsmk)
 #'
 #' # Both quoted and unquoted column names work
-#' check_calibration(df, predicted, observed)
-#' check_calibration(df, "predicted", "observed")
+#' check_calibration(nhefs_weights, ".fitted", "qsmk")
+#'
+#' # Specify treatment level explicitly (useful for multi-level factors)
+#' check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 #'
 #' # Different binning methods
-#' check_calibration(df, predicted, observed, binning_method = "quantile")
+#' check_calibration(nhefs_weights, .fitted, qsmk, binning_method = "quantile")
 #' @importFrom stats prop.test quantile
 #' @export
 check_calibration <- function(
   data,
-  x,
-  y,
+  .fitted,
+  .group,
+  treatment_level = NULL,
   bins = 10,
   binning_method = c("equal_width", "quantile"),
   conf_level = 0.95,
@@ -51,8 +53,8 @@ check_calibration <- function(
   }
 
   # Extract column names using rlang - handle both quoted and unquoted
-  x_quo <- rlang::enquo(x)
-  y_quo <- rlang::enquo(y)
+  fitted_quo <- rlang::enquo(.fitted)
+  group_quo <- rlang::enquo(.group)
 
   # Function to extract column name from quosure
   get_column_name <- function(quo, arg_name) {
@@ -92,21 +94,47 @@ check_calibration <- function(
     )
   }
 
-  x_name <- get_column_name(x_quo, "x")
-  y_name <- get_column_name(y_quo, "y")
+  fitted_name <- get_column_name(fitted_quo, ".fitted")
+  group_name <- get_column_name(group_quo, ".group")
 
   # Validate that columns exist
-  if (!x_name %in% names(data)) {
-    stop(paste0("Column '", x_name, "' not found in data"))
+  if (!fitted_name %in% names(data)) {
+    stop(paste0("Column '", fitted_name, "' not found in data"))
   }
-  if (!y_name %in% names(data)) {
-    stop(paste0("Column '", y_name, "' not found in data"))
+  if (!group_name %in% names(data)) {
+    stop(paste0("Column '", group_name, "' not found in data"))
   }
 
+  # Extract and validate treatment variable
+  group_var <- data[[group_name]]
+  unique_levels <- unique(group_var[!is.na(group_var)])
+  
+  # Determine treatment level
+  if (is.null(treatment_level)) {
+    # Default: use last level for factors, max value for numeric
+    if (is.factor(group_var)) {
+      treatment_level <- levels(group_var)[length(levels(group_var))]
+    } else {
+      if (length(unique_levels) == 0) {
+        treatment_level <- 1  # Default for empty data
+      } else {
+        treatment_level <- max(unique_levels, na.rm = TRUE)
+      }
+    }
+  }
+  
+  # Validate treatment level exists (skip for empty data)
+  if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
+    stop(paste0("treatment_level '", treatment_level, "' not found in .group variable"))
+  }
+  
+  # Create binary treatment indicator (1 = treatment, 0 = control)
+  treatment_indicator <- as.numeric(group_var == treatment_level)
+  
   # Create a tibble with only the needed columns and standardized names
   df <- tibble::tibble(
-    x_var = data[[x_name]],
-    y_var = data[[y_name]]
+    x_var = data[[fitted_name]],
+    y_var = treatment_indicator
   )
 
   if (na.rm) {
@@ -157,8 +185,8 @@ check_calibration <- function(
   result <- df |>
     dplyr::group_by(.bin) |>
     dplyr::summarise(
-      x_mean = mean(x_var, na.rm = TRUE),
-      y_mean = mean(y_var, na.rm = TRUE),
+      fitted_mean = mean(x_var, na.rm = TRUE),
+      group_mean = mean(y_var, na.rm = TRUE),
       count = dplyr::n(),
       .groups = "drop"
     ) |>
@@ -171,7 +199,7 @@ check_calibration <- function(
 
   # Vectorized computation where possible
   n_total <- result$count
-  n_events <- round(result$y_mean * n_total)
+  n_events <- round(result$group_mean * n_total)
 
   # Handle edge cases up front
   valid_mask <- n_total > 0 &
@@ -216,7 +244,7 @@ check_calibration <- function(
     edge_results <- purrr::map(
       edge_cases,
       ~ {
-        rate <- result$y_mean[.x]
+        rate <- result$group_mean[.x]
         se <- sqrt(rate * (1 - rate) / n_total[.x])
         list(
           lower = max(0, rate - z_score * se),
@@ -256,6 +284,7 @@ StatCalibration <- ggplot2::ggproto(
     params$conf_level <- params$conf_level %||% 0.95
     params$window_size <- params$window_size %||% 0.1
     params$step_size <- params$step_size %||% (params$window_size / 2)
+    params$treatment_level <- params$treatment_level %||% NULL
     params
   },
 
@@ -267,8 +296,30 @@ StatCalibration <- ggplot2::ggproto(
     smooth = TRUE,
     conf_level = 0.95,
     window_size = 0.1,
-    step_size = window_size / 2
+    step_size = window_size / 2,
+    treatment_level = NULL
   ) {
+    # Process treatment level to create binary indicator
+    if (!is.null(treatment_level)) {
+      unique_levels <- unique(data$y[!is.na(data$y)])
+      if (!treatment_level %in% unique_levels) {
+        stop(paste0("treatment_level '", treatment_level, "' not found in y variable"))
+      }
+      data$y <- as.numeric(data$y == treatment_level)
+    } else {
+      # Default behavior: assume y is already binary or use max value
+      if (is.factor(data$y)) {
+        # For factors, use the last level as treatment
+        treatment_level <- levels(data$y)[length(levels(data$y))]
+        data$y <- as.numeric(data$y == treatment_level)
+      } else {
+        # For numeric, use max value as treatment
+        unique_levels <- unique(data$y[!is.na(data$y)])
+        treatment_level <- max(unique_levels, na.rm = TRUE)
+        data$y <- as.numeric(data$y == treatment_level)
+      }
+    }
+    
     if (method == "breaks") {
       compute_calibration_breaks(data, bins, conf_level)
     } else if (method == "logistic") {
@@ -555,6 +606,7 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed").
 #'
 #' @param mapping Aesthetic mapping (must supply x and y if not inherited).
+#'   x should be propensity scores/predicted probabilities, y should be treatment variable.
 #' @param data Data frame or tibble; if NULL, uses ggplot default.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
@@ -562,6 +614,8 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
+#' @param treatment_level Value indicating which level of y represents treatment.
+#'   If NULL (default), uses the last level for factors or max value for numeric.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
 #' @param position Position adjustment.
@@ -570,6 +624,33 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @param inherit.aes Logical; inherit aesthetics from ggplot.
 #' @param ... Additional parameters passed to geoms.
 #' @return A ggplot2 layer or list of layers
+#' @examples
+#' library(ggplot2)
+#' 
+#' # Basic calibration plot using nhefs_weights dataset
+#' # .fitted contains propensity scores, qsmk is the treatment variable
+#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#'   geom_calibration() +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+#'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
+#'
+#' # Using different methods
+#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#'   geom_calibration(method = "logistic") +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+#'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
+#'
+#' # Specify treatment level explicitly
+#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#'   geom_calibration(treatment_level = "1") +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+#'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
+#'
+#' # Windowed method with custom parameters
+#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#'   geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+#'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #' @importFrom stats glm binomial predict plogis qnorm
 #' @export
 geom_calibration <- function(
@@ -581,6 +662,7 @@ geom_calibration <- function(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size / 2,
+  treatment_level = NULL,
   show_ribbon = TRUE,
   show_points = TRUE,
   position = "identity",
@@ -608,6 +690,7 @@ geom_calibration <- function(
         conf_level = conf_level,
         window_size = window_size,
         step_size = step_size,
+        treatment_level = treatment_level,
         na.rm = na.rm
       )
     )
@@ -653,6 +736,7 @@ geom_calibration <- function(
         conf_level = conf_level,
         window_size = window_size,
         step_size = step_size,
+        treatment_level = treatment_level,
         na.rm = na.rm
       )
     )

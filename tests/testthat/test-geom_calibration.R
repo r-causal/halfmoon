@@ -13,15 +13,15 @@ test_that("check_calibration works with basic input", {
   )
 
   # Test basic functionality
-  result <- check_calibration(test_data, "pred", "obs")
+  result <- check_calibration(test_data, pred, obs)
 
   expect_s3_class(result, "tbl_df")
   expect_true(all(
-    c(".bin", "x_mean", "y_mean", "count", "lower", "upper") %in% names(result)
+    c(".bin", "fitted_mean", "group_mean", "count", "lower", "upper") %in% names(result)
   ))
   expect_true(nrow(result) > 0)
-  expect_true(all(result$x_mean >= 0 & result$x_mean <= 1))
-  expect_true(all(result$y_mean >= 0 & result$y_mean <= 1))
+  expect_true(all(result$fitted_mean >= 0 & result$fitted_mean <= 1))
+  expect_true(all(result$group_mean >= 0 & result$group_mean <= 1))
   expect_true(all(result$count > 0))
 })
 
@@ -38,7 +38,7 @@ test_that("check_calibration works with quoted column names", {
   )
 
   # Test with quoted column names
-  result <- check_calibration(test_data, x = "pred", y = "obs")
+  result <- check_calibration(test_data, pred, obs)
 
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
@@ -76,7 +76,7 @@ test_that("check_calibration handles both quoted and unquoted column names", {
   )
 
   # Test with quoted column names
-  result_quoted <- check_calibration(test_data, "pred", "obs")
+  result_quoted <- check_calibration(test_data, pred, obs)
 
   # Test with unquoted column names in a function context
   test_unquoted <- function(data, x_col, y_col) {
@@ -100,13 +100,13 @@ test_that("check_calibration provides clear error messages for missing columns",
     obs = rbinom(50, 1, 0.5)
   )
 
-  # Test with non-existent x column
+  # Test with non-existent .fitted column
   expect_error(
     check_calibration(test_data, "nonexistent", "obs"),
     "Column 'nonexistent' not found in data"
   )
 
-  # Test with non-existent y column
+  # Test with non-existent .group column
   expect_error(
     check_calibration(test_data, "pred", "nonexistent"),
     "Column 'nonexistent' not found in data"
@@ -150,24 +150,24 @@ test_that("check_calibration handles different binning methods", {
 test_that("check_calibration handles edge cases", {
   # Test empty data
   empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
-  result_empty <- check_calibration(empty_data, "pred", "obs")
+  result_empty <- check_calibration(empty_data, pred, obs)
 
   expect_s3_class(result_empty, "tbl_df")
   expect_equal(nrow(result_empty), 0)
 
-  # Test all zeros
+  # Test all zeros (treatment level 0, so group_mean should be 1)
   all_zeros <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
-  result_zeros <- check_calibration(all_zeros, "pred", "obs")
+  result_zeros <- check_calibration(all_zeros, pred, obs)
 
   expect_s3_class(result_zeros, "tbl_df")
-  expect_true(all(result_zeros$y_mean == 0))
+  expect_true(all(result_zeros$group_mean == 1))  # All obs are 0, which becomes the treatment level
 
-  # Test all ones
+  # Test all ones (treatment level 1, so group_mean should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
-  result_ones <- check_calibration(all_ones, "pred", "obs")
+  result_ones <- check_calibration(all_ones, pred, obs)
 
   expect_s3_class(result_ones, "tbl_df")
-  expect_true(all(result_ones$y_mean == 1))
+  expect_true(all(result_ones$group_mean == 1))  # All obs are 1, which becomes the treatment level
 })
 
 test_that("check_calibration handles NA values", {
@@ -187,13 +187,13 @@ test_that("check_calibration handles NA values", {
   )
 
   # Test with na.rm = TRUE
-  result_na_rm <- check_calibration(test_data, "pred", "obs", na.rm = TRUE)
+  result_na_rm <- check_calibration(test_data, pred, obs, na.rm = TRUE)
 
   expect_s3_class(result_na_rm, "tbl_df")
   expect_true(nrow(result_na_rm) > 0)
 
   # Test with na.rm = FALSE (should have fewer complete cases)
-  result_na_keep <- check_calibration(test_data, "pred", "obs", na.rm = FALSE)
+  result_na_keep <- check_calibration(test_data, pred, obs, na.rm = FALSE)
 
   expect_s3_class(result_na_keep, "tbl_df")
 })
@@ -372,12 +372,12 @@ test_that("check_calibration errors with invalid bins", {
 
   # Test with invalid bins
   expect_error(
-    check_calibration(cal_data, "pred", "obs", bins = 1),
+    check_calibration(cal_data, pred, obs, bins = 1),
     "`bins` must be an integer > 1"
   )
 
   expect_error(
-    check_calibration(cal_data, "pred", "obs", bins = 2.5),
+    check_calibration(cal_data, pred, obs, bins = 2.5),
     "`bins` must be an integer > 1"
   )
 })
