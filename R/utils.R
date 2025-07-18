@@ -17,5 +17,15 @@ abort <- function(.message) {
 utils::globalVariables(c(
   "method",
   "metric",
-  "variable"
+  "variable",
+  ".bin",
+  "bin",
+  "n_events", 
+  "n_total",
+  "x",
+  "x_var",
+  "y",
+  "y_var",
+  "fitted_mean",
+  "group_mean"
 ))

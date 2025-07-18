@@ -32,6 +32,7 @@ Suggests:
     cardx (>= 0.2.3),
     cobalt,
     covr,
+    mgcv,
     survey,
     testthat (>= 3.0.0),
     vdiffr
