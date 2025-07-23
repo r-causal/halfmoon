@@ -644,6 +644,176 @@ test_that("check_calibration produces consistent results across methods", {
   expect_true(windowed_diff < 0.2)
 })
 
+test_that("check_calibration provides helpful warnings for small cell sizes", {
+  # Create test data with imbalanced distribution to create small cells
+  set.seed(123)
+  n <- 100
+  test_data <- data.frame(
+    pred = c(runif(90, 0, 0.5), runif(10, 0.9, 1)), # Most values in lower range
+    obs = rbinom(n, 1, 0.3)
+  )
+
+  # Test breaks method with small cells
+  expect_warning(
+    check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
+    "Small sample sizes or extreme proportions detected"
+  )
+
+  # Capture the specific warning message
+  warning_msg <- capture_warnings(
+    check_calibration(test_data, pred, obs, method = "breaks", bins = 10)
+  )
+
+  expect_match(warning_msg[1], "bins")
+  expect_match(warning_msg[1], "n =")
+  expect_match(warning_msg[1], "Consider using fewer bins")
+})
+
+test_that("check_calibration provides helpful warnings for extreme proportions", {
+  # Create data where some bins have all 0s or all 1s
+  set.seed(123)
+  test_data <- data.frame(
+    pred = c(runif(50, 0, 0.3), runif(50, 0.7, 1)),
+    obs = c(rep(0, 50), rep(1, 50)) # Perfect separation
+  )
+
+  expect_warning(
+    check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
+    "Small sample sizes or extreme proportions detected"
+  )
+})
+
+test_that("check_calibration windowed method provides helpful warnings", {
+  # Create sparse data
+  set.seed(123)
+  test_data <- data.frame(
+    pred = c(runif(20, 0.4, 0.6)), # Concentrated in middle
+    obs = rbinom(20, 1, 0.5)
+  )
+
+  # Small window size will create windows with few observations
+  expect_warning(
+    check_calibration(
+      test_data,
+      pred,
+      obs,
+      method = "windowed",
+      window_size = 0.05,
+      step_size = 0.1
+    ),
+    "Small sample sizes or extreme proportions detected in windows"
+  )
+
+  # Capture the specific warning message
+  warning_msg <- capture_warnings(
+    check_calibration(
+      test_data,
+      pred,
+      obs,
+      method = "windowed",
+      window_size = 0.05,
+      step_size = 0.1
+    )
+  )
+
+  expect_match(warning_msg[1], "windows centered at")
+  expect_match(warning_msg[1], "Consider using a larger window size")
+})
+
+test_that("check_calibration doesn't warn for adequate sample sizes", {
+  # Create well-distributed data
+  set.seed(123)
+  n <- 1000
+  test_data <- data.frame(
+    pred = runif(n, 0, 1),
+    obs = rbinom(n, 1, 0.5)
+  )
+
+  # Should not produce warnings
+  expect_no_warning(
+    check_calibration(test_data, pred, obs, method = "breaks", bins = 10)
+  )
+
+  expect_no_warning(
+    check_calibration(
+      test_data,
+      pred,
+      obs,
+      method = "windowed",
+      window_size = 0.2,
+      step_size = 0.1
+    )
+  )
+})
+
+test_that("plot_calibration shows helpful warnings", {
+  # Create test data with small cells
+  set.seed(123)
+  test_data <- data.frame(
+    .fitted = c(runif(90, 0, 0.5), runif(10, 0.9, 1)),
+    qsmk = rbinom(100, 1, 0.3)
+  )
+
+  # Should produce the helpful warning (may appear multiple times due to layers)
+  suppressWarnings({
+    expect_warning(
+      plot_calibration(test_data, .fitted, qsmk),
+      "Small sample sizes or extreme proportions detected"
+    )
+  })
+})
+
+test_that("warnings include specific bin/window information", {
+  # Create data that will have problems in specific bins
+  set.seed(123)
+  test_data <- data.frame(
+    pred = c(runif(95, 0, 0.8), runif(5, 0.9, 1)), # Very few in last bin
+    obs = rbinom(100, 1, 0.3)
+  )
+
+  warning_msg <- capture_warnings(
+    check_calibration(test_data, pred, obs, method = "breaks", bins = 10)
+  )
+
+  # Should mention specific bins
+  expect_match(warning_msg[1], "bins [0-9, ]+")
+
+  # For windowed method
+  test_data2 <- data.frame(
+    pred = runif(30, 0.4, 0.6),
+    obs = rbinom(30, 1, 0.5)
+  )
+
+  warning_msg2 <- capture_warnings(
+    check_calibration(
+      test_data2,
+      pred,
+      obs,
+      method = "windowed",
+      window_size = 0.1,
+      step_size = 0.1
+    )
+  )
+
+  # Should mention specific window centers
+  expect_match(warning_msg2[1], "windows centered at [0-9., ]+")
+})
+
+test_that("warnings handle edge case with no valid results gracefully", {
+  # Empty data
+  empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
+
+  # Should not produce warnings for empty data
+  expect_no_warning(
+    check_calibration(empty_data, pred, obs, method = "breaks")
+  )
+
+  expect_no_warning(
+    check_calibration(empty_data, pred, obs, method = "windowed")
+  )
+})
+
+
 test_that("geom_calibration works with breaks method", {
   # Create test data with known calibration pattern
   set.seed(123)
@@ -849,4 +1019,215 @@ test_that("geom_calibration logistic method works with smooth = TRUE", {
 
   expect_s3_class(p_smooth, "ggplot")
   expect_doppelganger("calibration logistic smooth", p_smooth)
+})
+
+test_that("k parameter works in check_calibration", {
+  # Create test data with non-linear relationship
+  set.seed(123)
+  n <- 500
+  x <- runif(n, 0, 1)
+  # Create a wavy pattern that would benefit from different k values
+  true_prob <- plogis(10 * sin(2 * pi * x))
+  actual <- rbinom(n, 1, true_prob)
+
+  test_data <- data.frame(
+    pred = x,
+    obs = actual
+  )
+
+  # Test with default k = 10
+  result_k10 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    smooth = TRUE,
+    k = 10
+  )
+
+  # Test with smaller k = 5
+  result_k5 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    smooth = TRUE,
+    k = 5
+  )
+
+  # Test with larger k = 20
+  result_k20 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    smooth = TRUE,
+    k = 20
+  )
+
+  # All should return valid results
+  expect_s3_class(result_k10, "tbl_df")
+  expect_s3_class(result_k5, "tbl_df")
+  expect_s3_class(result_k20, "tbl_df")
+
+  # All should have the same number of rows (100 prediction points)
+  expect_equal(nrow(result_k10), 100)
+  expect_equal(nrow(result_k5), 100)
+  expect_equal(nrow(result_k20), 100)
+
+  # Results should be different (different smoothness)
+  # Can't test exact values but can verify structure
+  expect_true(all(result_k5$group_mean >= 0 & result_k5$group_mean <= 1))
+  expect_true(all(result_k10$group_mean >= 0 & result_k10$group_mean <= 1))
+  expect_true(all(result_k20$group_mean >= 0 & result_k20$group_mean <= 1))
+})
+
+test_that("k parameter is ignored when smooth = FALSE", {
+  set.seed(123)
+  n <- 200
+  predicted <- runif(n, 0, 1)
+  actual <- rbinom(n, 1, predicted)
+
+  test_data <- data.frame(
+    pred = predicted,
+    obs = actual
+  )
+
+  # Results should be identical when smooth = FALSE
+  result1 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    smooth = FALSE,
+    k = 5
+  )
+
+  result2 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    smooth = FALSE,
+    k = 20
+  )
+
+  # Results should be identical
+  expect_equal(result1$group_mean, result2$group_mean)
+  expect_equal(result1$lower, result2$lower)
+  expect_equal(result1$upper, result2$upper)
+})
+
+test_that("k parameter is ignored for non-logistic methods", {
+  set.seed(123)
+  n <- 200
+  predicted <- runif(n, 0, 1)
+  actual <- rbinom(n, 1, predicted)
+
+  test_data <- data.frame(
+    pred = predicted,
+    obs = actual
+  )
+
+  # k should be ignored for breaks method
+  result1 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "breaks",
+    k = 5
+  )
+
+  result2 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "breaks",
+    k = 20
+  )
+
+  # Results should be identical
+  expect_equal(result1$group_mean, result2$group_mean)
+
+  # k should be ignored for windowed method
+  result3 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "windowed",
+    k = 5
+  )
+
+  result4 <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "windowed",
+    k = 20
+  )
+
+  # Results should be identical
+  expect_equal(result3$group_mean, result4$group_mean)
+})
+
+test_that("k parameter works in geom_calibration", {
+  # Create test data
+  set.seed(123)
+  n <- 500
+  x <- runif(n, 0, 1)
+  true_prob <- plogis(10 * sin(2 * pi * x))
+  actual <- rbinom(n, 1, true_prob)
+
+  test_data <- data.frame(
+    pred = x,
+    obs = actual
+  )
+
+  # Create plots with different k values
+  p_k5 <- ggplot(test_data, aes(x = pred, y = obs)) +
+    geom_calibration(method = "logistic", smooth = TRUE, k = 5) +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+    labs(x = "Predicted Probability", y = "Observed Rate") +
+    lims(x = c(0, 1), y = c(0, 1))
+
+  p_k10 <- ggplot(test_data, aes(x = pred, y = obs)) +
+    geom_calibration(method = "logistic", smooth = TRUE, k = 10) +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+    labs(x = "Predicted Probability", y = "Observed Rate") +
+    lims(x = c(0, 1), y = c(0, 1))
+
+  p_k20 <- ggplot(test_data, aes(x = pred, y = obs)) +
+    geom_calibration(method = "logistic", smooth = TRUE, k = 20) +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+    labs(x = "Predicted Probability", y = "Observed Rate") +
+    lims(x = c(0, 1), y = c(0, 1))
+
+  # Test with vdiffr
+  expect_doppelganger("calibration k=5", p_k5)
+  expect_doppelganger("calibration k=10", p_k10)
+  expect_doppelganger("calibration k=20", p_k20)
+})
+
+test_that("k parameter works in plot_calibration", {
+  # Create test data
+  set.seed(123)
+  n <- 500
+  x <- runif(n, 0, 1)
+  true_prob <- plogis(10 * sin(2 * pi * x))
+  actual <- rbinom(n, 1, true_prob)
+
+  test_data <- data.frame(
+    pred = x,
+    obs = actual
+  )
+
+  # Create plots with different k values
+  p_k5 <- plot_calibration(test_data, pred, obs, method = "logistic", k = 5)
+  p_k10 <- plot_calibration(test_data, pred, obs, method = "logistic", k = 10)
+  p_k20 <- plot_calibration(test_data, pred, obs, method = "logistic", k = 20)
+
+  # Test with vdiffr
+  expect_doppelganger("plot_calibration k=5", p_k5)
+  expect_doppelganger("plot_calibration k=10", p_k10)
+  expect_doppelganger("plot_calibration k=20", p_k20)
 })

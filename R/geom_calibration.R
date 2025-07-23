@@ -18,6 +18,7 @@
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
+#' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param na.rm Logical; if TRUE, drop NA values before summarizing.
 #'
 #' @return A tibble with columns:
@@ -65,14 +66,15 @@ check_calibration <- function(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size / 2,
+  k = 10,
   na.rm = FALSE
 ) {
   method <- match.arg(method)
   binning_method <- match.arg(binning_method)
-
-  if (
-    method == "breaks" && (!is.numeric(bins) || bins < 2 || bins != round(bins))
-  ) {
+  bins_are_not_correctly_specified <- (method == "breaks" && 
+    (!is.numeric(bins) || bins < 2 || !isTRUE(all.equal(bins, round(bins)))))
+  
+  if (bins_are_not_correctly_specified) {
     stop("`bins` must be an integer > 1.")
   }
 
@@ -202,7 +204,7 @@ check_calibration <- function(
   result <- if (method == "breaks") {
     compute_calibration_breaks_internal(df, bins, binning_method, conf_level)
   } else if (method == "logistic") {
-    compute_calibration_logistic_internal(df, smooth, conf_level)
+    compute_calibration_logistic_internal(df, smooth, conf_level, k = k)
   } else if (method == "windowed") {
     compute_calibration_windowed_internal(
       df,
@@ -282,14 +284,16 @@ compute_calibration_breaks_internal <- function(
   small_cells <- n_total < 10
   extreme_props <- (n_events <= 2) | (n_events >= n_total - 2)
   warning_mask <- small_cells | extreme_props
-  
+
   if (any(warning_mask, na.rm = TRUE)) {
     warning_bins <- result$.bin[warning_mask]
     warning_counts <- n_total[warning_mask]
     warning(
       "Small sample sizes or extreme proportions detected in bins ",
       paste(warning_bins, collapse = ", "),
-      " (n = ", paste(warning_counts, collapse = ", "), "). ",
+      " (n = ",
+      paste(warning_counts, collapse = ", "),
+      "). ",
       "Confidence intervals may be unreliable. ",
       "Consider using fewer bins or a different calibration method.",
       call. = FALSE
@@ -356,11 +360,16 @@ compute_calibration_breaks_internal <- function(
 }
 
 # Internal helper function for logistic method
-compute_calibration_logistic_internal <- function(df, smooth, conf_level) {
+compute_calibration_logistic_internal <- function(
+  df,
+  smooth,
+  conf_level,
+  k = 10
+) {
   # Fit model
   if (smooth) {
     rlang::check_installed("mgcv", "for GAM smoothing")
-    model <- mgcv::gam(y_var ~ s(x_var, k = 10), data = df, family = binomial())
+    model <- mgcv::gam(y_var ~ s(x_var, k = k), data = df, family = binomial())
   } else {
     model <- glm(y_var ~ x_var, data = df, family = binomial())
   }
@@ -481,24 +490,26 @@ compute_calibration_windowed_internal <- function(
 
   # Filter to valid windows only
   valid_results <- purrr::keep(window_results, ~ .x$valid)
-  
+
   # Check for small cell sizes that might cause unreliable estimates
   if (length(valid_results) > 0) {
     sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
     event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
     window_centers <- purrr::map_dbl(valid_results, ~ .x$fitted_mean)
-    
+
     small_cells <- sample_sizes < 10
     extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
     warning_mask <- small_cells | extreme_props
-    
+
     if (any(warning_mask, na.rm = TRUE)) {
       warning_windows <- window_centers[warning_mask]
       warning_counts <- sample_sizes[warning_mask]
       warning(
         "Small sample sizes or extreme proportions detected in windows centered at ",
         paste(round(warning_windows, 3), collapse = ", "),
-        " (n = ", paste(warning_counts, collapse = ", "), "). ",
+        " (n = ",
+        paste(warning_counts, collapse = ", "),
+        "). ",
         "Confidence intervals may be unreliable. ",
         "Consider using a larger window size or a different calibration method.",
         call. = FALSE
@@ -544,6 +555,7 @@ StatCalibration <- ggplot2::ggproto(
     params$window_size <- params$window_size %||% 0.1
     params$step_size <- params$step_size %||% (params$window_size / 2)
     params$treatment_level <- params$treatment_level %||% NULL
+    params$k <- params$k %||% 10
     params
   },
   compute_panel = function(
@@ -555,7 +567,8 @@ StatCalibration <- ggplot2::ggproto(
     conf_level = 0.95,
     window_size = 0.1,
     step_size = window_size / 2,
-    treatment_level = NULL
+    treatment_level = NULL,
+    k = 10
   ) {
     # Store original y values
     unique_y <- unique(data$y[!is.na(data$y)])
@@ -666,7 +679,12 @@ StatCalibration <- ggplot2::ggproto(
     result <- if (method == "breaks") {
       compute_calibration_breaks(data, bins, conf_level)
     } else if (method == "logistic") {
-      compute_calibration_logistic(data, smooth, conf_level)
+      compute_calibration_logistic(
+        data,
+        smooth = smooth,
+        conf_level = conf_level,
+        k = k
+      )
     } else if (method == "windowed") {
       compute_calibration_windowed(data, window_size, step_size, conf_level)
     } else {
@@ -722,7 +740,7 @@ compute_calibration_breaks <- function(data, bins, conf_level) {
 }
 
 # Helper function for logistic method
-compute_calibration_logistic <- function(data, smooth, conf_level) {
+compute_calibration_logistic <- function(data, smooth, conf_level, k = 10) {
   # Create a temporary data frame with the required columns
   temp_data <- data.frame(
     .fitted = data$x,
@@ -738,6 +756,7 @@ compute_calibration_logistic <- function(data, smooth, conf_level) {
     method = "logistic",
     smooth = smooth,
     conf_level = conf_level,
+    k = k,
     na.rm = FALSE
   )
 
@@ -849,6 +868,7 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'   "Treatment"), the function will attempt to use the higher level as treatment
 #'   but may not always correctly identify the intended level. In such cases,
 #'   consider converting the factor to numeric before plotting.
+#' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
 #' @param position Position adjustment.
@@ -896,6 +916,7 @@ geom_calibration <- function(
   window_size = 0.1,
   step_size = window_size / 2,
   treatment_level = NULL,
+  k = 10,
   show_ribbon = TRUE,
   show_points = TRUE,
   position = "identity",
@@ -924,6 +945,7 @@ geom_calibration <- function(
         window_size = window_size,
         step_size = step_size,
         treatment_level = treatment_level,
+        k = k,
         na.rm = na.rm
       )
     )
@@ -947,6 +969,7 @@ geom_calibration <- function(
       window_size = window_size,
       step_size = step_size,
       treatment_level = treatment_level,
+      k = k,
       na.rm = na.rm,
       ...
     )
@@ -971,6 +994,7 @@ geom_calibration <- function(
         window_size = window_size,
         step_size = step_size,
         treatment_level = treatment_level,
+        k = k,
         na.rm = na.rm
       )
     )

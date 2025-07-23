@@ -18,6 +18,7 @@
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
+#' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param include_rug Logical; add rug plot showing distribution of predicted probabilities.
 #' @param include_ribbon Logical; show confidence interval ribbon.
 #' @param include_points Logical; show points (only for "breaks" and "windowed" methods).
@@ -51,6 +52,7 @@ plot_calibration <- function(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size / 2,
+  k = 10,
   include_rug = FALSE,
   include_ribbon = TRUE,
   include_points = TRUE,
@@ -103,24 +105,28 @@ plot_calibration <- function(
   group_name <- get_column_name(group_quo, ".group")
 
   # Run check_calibration once to generate appropriate warnings
-  tryCatch({
-    check_calibration(
-      .data,
-      !!fitted_quo,
-      !!group_quo,
-      treatment_level = treatment_level,
-      method = method,
-      bins = bins,
-      smooth = smooth,
-      conf_level = conf_level,
-      window_size = window_size,
-      step_size = step_size,
-      na.rm = na.rm
-    )
-  }, error = function(e) {
-    # If there's an error, it will be caught later by geom_calibration
-    NULL
-  })
+  tryCatch(
+    {
+      check_calibration(
+        .data,
+        !!fitted_quo,
+        !!group_quo,
+        treatment_level = treatment_level,
+        method = method,
+        bins = bins,
+        smooth = smooth,
+        conf_level = conf_level,
+        window_size = window_size,
+        step_size = step_size,
+        k = k,
+        na.rm = na.rm
+      )
+    },
+    error = function(e) {
+      # If there's an error, it will be caught later by geom_calibration
+      NULL
+    }
+  )
 
   # Convert factor to numeric for proper y-axis scale
   # This ensures the y-axis shows calibration rates (0-1) not factor labels
@@ -163,6 +169,7 @@ plot_calibration <- function(
         window_size = window_size,
         step_size = step_size,
         treatment_level = treatment_level,
+        k = k,
         show_ribbon = include_ribbon,
         show_points = include_points,
         na.rm = na.rm,

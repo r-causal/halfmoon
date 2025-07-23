@@ -14,6 +14,7 @@ geom_calibration(
   window_size = 0.1,
   step_size = window_size/2,
   treatment_level = NULL,
+  k = 10,
   show_ribbon = TRUE,
   show_points = TRUE,
   position = "identity",
@@ -48,6 +49,8 @@ works as expected. For factors with non-numeric levels (e.g., "Control",
 "Treatment"), the function will attempt to use the higher level as treatment
 but may not always correctly identify the intended level. In such cases,
 consider converting the factor to numeric before plotting.}
+
+\item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
 
 \item{show_ribbon}{Logical; show confidence interval ribbon.}
 

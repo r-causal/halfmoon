@@ -15,6 +15,7 @@ plot_calibration(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size/2,
+  k = 10,
   include_rug = FALSE,
   include_ribbon = TRUE,
   include_points = TRUE,
@@ -45,6 +46,8 @@ If NULL (default), uses the last level for factors or max value for numeric.}
 \item{window_size}{Numeric; size of each window for "windowed" method.}
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
+
+\item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
 
 \item{include_rug}{Logical; add rug plot showing distribution of predicted probabilities.}
 
