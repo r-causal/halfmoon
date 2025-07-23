@@ -28,7 +28,7 @@ utils::globalVariables(c(
   "y_var",
   "fitted_mean",
   "group_mean",
-  ".fitted", 
+  ".fitted",
   ".group",
   "ymin",
   "ymax"

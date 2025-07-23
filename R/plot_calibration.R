@@ -60,7 +60,7 @@ plot_calibration <- function(
   # Handle both quoted and unquoted column names using the same logic as check_calibration
   fitted_quo <- rlang::enquo(.fitted)
   group_quo <- rlang::enquo(.group)
-  
+
   # Function to extract column name from quosure
   get_column_name <- function(quo, arg_name) {
     # First try as_name (works for symbols and strings)
@@ -82,7 +82,7 @@ plot_calibration <- function(
             ))
           }
         )
-        
+
         # Handle different types of evaluated values
         if (is.character(val) && length(val) == 1) {
           val
@@ -98,10 +98,10 @@ plot_calibration <- function(
       }
     )
   }
-  
+
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".group")
-  
+
   # Convert factor to numeric for proper y-axis scale
   # This ensures the y-axis shows calibration rates (0-1) not factor labels
   if (is.factor(.data[[group_name]])) {
@@ -117,7 +117,9 @@ plot_calibration <- function(
         .data$.y_numeric <- as.numeric(.data[[group_name]] == "1")
       } else {
         # Use last level as treatment
-        .data$.y_numeric <- as.numeric(.data[[group_name]] == levels[length(levels)])
+        .data$.y_numeric <- as.numeric(
+          .data[[group_name]] == levels[length(levels)]
+        )
       }
     }
     y_aes <- ggplot2::aes(y = .data$.y_numeric)
@@ -125,7 +127,7 @@ plot_calibration <- function(
     # Not a factor, use as-is
     y_aes <- ggplot2::aes(y = .data[[group_name]])
   }
-  
+
   # Create the base plot
   p <- ggplot2::ggplot(
     .data,

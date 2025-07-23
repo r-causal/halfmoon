@@ -205,45 +205,51 @@ test_that("check_calibration works with logistic method", {
   n <- 200
   predicted <- runif(n, 0, 1)
   actual <- rbinom(n, 1, predicted)
-  
+
   test_data <- data.frame(
     pred = predicted,
     obs = actual
   )
-  
+
   # Test logistic without smoothing
   result_logistic <- check_calibration(
-    test_data, 
-    pred, 
-    obs, 
-    method = "logistic", 
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
     smooth = FALSE
   )
-  
+
   expect_s3_class(result_logistic, "tbl_df")
-  expect_true(all(c("fitted_mean", "group_mean", "lower", "upper") %in% names(result_logistic)))
-  expect_equal(nrow(result_logistic), 100)  # Default 100 prediction points
-  expect_true(all(result_logistic$fitted_mean >= 0 & result_logistic$fitted_mean <= 1))
-  expect_true(all(result_logistic$group_mean >= 0 & result_logistic$group_mean <= 1))
+  expect_true(all(
+    c("fitted_mean", "group_mean", "lower", "upper") %in% names(result_logistic)
+  ))
+  expect_equal(nrow(result_logistic), 100) # Default 100 prediction points
+  expect_true(all(
+    result_logistic$fitted_mean >= 0 & result_logistic$fitted_mean <= 1
+  ))
+  expect_true(all(
+    result_logistic$group_mean >= 0 & result_logistic$group_mean <= 1
+  ))
   expect_true(all(result_logistic$lower >= 0 & result_logistic$lower <= 1))
   expect_true(all(result_logistic$upper >= 0 & result_logistic$upper <= 1))
   expect_true(all(result_logistic$lower <= result_logistic$group_mean))
   expect_true(all(result_logistic$upper >= result_logistic$group_mean))
-  
+
   # Test logistic with smoothing
   result_smooth <- check_calibration(
-    test_data, 
-    pred, 
-    obs, 
-    method = "logistic", 
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
     smooth = TRUE
   )
-  
+
   expect_s3_class(result_smooth, "tbl_df")
   expect_equal(nrow(result_smooth), 100)
   expect_true(all(result_smooth$lower <= result_smooth$group_mean))
   expect_true(all(result_smooth$upper >= result_smooth$group_mean))
-  
+
   # Test that predictions span the range of input data
   expect_equal(min(result_logistic$fitted_mean), min(test_data$pred))
   expect_equal(max(result_logistic$fitted_mean), max(test_data$pred))
@@ -255,24 +261,30 @@ test_that("check_calibration logistic method handles different confidence levels
     pred = runif(100, 0, 1),
     obs = rbinom(100, 1, 0.5)
   )
-  
+
   # Test with 90% confidence
   result_90 <- check_calibration(
-    test_data, pred, obs, 
-    method = "logistic", 
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
     conf_level = 0.90
   )
-  
+
   # Test with 99% confidence
   result_99 <- check_calibration(
-    test_data, pred, obs, 
-    method = "logistic", 
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
     conf_level = 0.99
   )
-  
+
   # 99% CI should be wider than 90% CI
-  expect_true(mean(result_99$upper - result_99$lower) > 
-              mean(result_90$upper - result_90$lower))
+  expect_true(
+    mean(result_99$upper - result_99$lower) >
+      mean(result_90$upper - result_90$lower)
+  )
 })
 
 test_that("check_calibration logistic method handles perfect separation", {
@@ -281,12 +293,14 @@ test_that("check_calibration logistic method handles perfect separation", {
     pred = c(rep(0.1, 50), rep(0.9, 50)),
     obs = c(rep(0, 50), rep(1, 50))
   )
-  
+
   # Should not error with perfect separation
   expect_no_error({
     result <- check_calibration(
-      test_data, pred, obs, 
-      method = "logistic", 
+      test_data,
+      pred,
+      obs,
+      method = "logistic",
       smooth = FALSE
     )
   })
@@ -298,44 +312,50 @@ test_that("check_calibration works with windowed method", {
   n <- 200
   predicted <- runif(n, 0, 1)
   actual <- rbinom(n, 1, predicted)
-  
+
   test_data <- data.frame(
     pred = predicted,
     obs = actual
   )
-  
+
   # Test windowed method
   result_windowed <- check_calibration(
-    test_data, 
-    pred, 
-    obs, 
+    test_data,
+    pred,
+    obs,
     method = "windowed",
     window_size = 0.2,
     step_size = 0.1
   )
-  
+
   expect_s3_class(result_windowed, "tbl_df")
-  expect_true(all(c("fitted_mean", "group_mean", "lower", "upper") %in% names(result_windowed)))
+  expect_true(all(
+    c("fitted_mean", "group_mean", "lower", "upper") %in% names(result_windowed)
+  ))
   expect_true(nrow(result_windowed) > 0)
-  expect_true(all(result_windowed$fitted_mean >= 0 & result_windowed$fitted_mean <= 1))
-  expect_true(all(result_windowed$group_mean >= 0 & result_windowed$group_mean <= 1))
+  expect_true(all(
+    result_windowed$fitted_mean >= 0 & result_windowed$fitted_mean <= 1
+  ))
+  expect_true(all(
+    result_windowed$group_mean >= 0 & result_windowed$group_mean <= 1
+  ))
   expect_true(all(result_windowed$lower >= 0 & result_windowed$lower <= 1))
   expect_true(all(result_windowed$upper >= 0 & result_windowed$upper <= 1))
   expect_true(all(result_windowed$lower <= result_windowed$group_mean))
   expect_true(all(result_windowed$upper >= result_windowed$group_mean))
-  
+
   # Test with different window sizes
   result_small_window <- check_calibration(
-    test_data, 
-    pred, 
-    obs, 
+    test_data,
+    pred,
+    obs,
     method = "windowed",
     window_size = 0.05,
     step_size = 0.025
   )
-  
+
   expect_true(nrow(result_small_window) > nrow(result_windowed))
-  
+
   # Test window centers
   expected_centers <- seq(0, 1, by = 0.1)
   expect_equal(result_windowed$fitted_mean, expected_centers)
@@ -343,31 +363,35 @@ test_that("check_calibration works with windowed method", {
 
 test_that("check_calibration windowed method handles edge cases", {
   set.seed(123)
-  
+
   # Test with data concentrated at edges
   test_data <- data.frame(
     pred = c(runif(50, 0, 0.1), runif(50, 0.9, 1)),
     obs = rbinom(100, 1, 0.5)
   )
-  
+
   result <- check_calibration(
-    test_data, pred, obs,
+    test_data,
+    pred,
+    obs,
     method = "windowed",
     window_size = 0.2,
     step_size = 0.1
   )
-  
+
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
-  
+
   # Test with very small window
   result_tiny <- check_calibration(
-    test_data, pred, obs,
+    test_data,
+    pred,
+    obs,
     method = "windowed",
     window_size = 0.01,
     step_size = 0.1
   )
-  
+
   # Some windows might be empty
   expect_true(nrow(result_tiny) <= length(seq(0, 1, by = 0.1)))
 })
@@ -378,14 +402,16 @@ test_that("check_calibration windowed method respects window boundaries", {
     pred = runif(100, 0.4, 0.6),
     obs = rbinom(100, 1, 0.5)
   )
-  
+
   result <- check_calibration(
-    test_data, pred, obs,
+    test_data,
+    pred,
+    obs,
     method = "windowed",
     window_size = 0.1,
     step_size = 0.1
   )
-  
+
   # Windows at 0 and 1 should have no data (depending on window size)
   # But windows around 0.5 should have data
   center_window <- result[result$fitted_mean == 0.5, ]
@@ -395,7 +421,7 @@ test_that("check_calibration windowed method respects window boundaries", {
 
 test_that("check_calibration method parameter validation", {
   test_data <- data.frame(pred = runif(50), obs = rbinom(50, 1, 0.5))
-  
+
   # Test invalid method
   expect_error(
     check_calibration(test_data, pred, obs, method = "invalid"),
@@ -406,18 +432,28 @@ test_that("check_calibration method parameter validation", {
 test_that("check_calibration handles edge cases with all methods", {
   # Empty data
   empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
-  
+
   result_breaks <- check_calibration(empty_data, pred, obs, method = "breaks")
   expect_equal(nrow(result_breaks), 0)
   expect_true("count" %in% names(result_breaks))
   expect_true(".bin" %in% names(result_breaks))
-  
-  result_logistic <- check_calibration(empty_data, pred, obs, method = "logistic")
+
+  result_logistic <- check_calibration(
+    empty_data,
+    pred,
+    obs,
+    method = "logistic"
+  )
   expect_equal(nrow(result_logistic), 0)
   expect_false("count" %in% names(result_logistic))
   expect_false(".bin" %in% names(result_logistic))
-  
-  result_windowed <- check_calibration(empty_data, pred, obs, method = "windowed")
+
+  result_windowed <- check_calibration(
+    empty_data,
+    pred,
+    obs,
+    method = "windowed"
+  )
   expect_equal(nrow(result_windowed), 0)
   expect_false("count" %in% names(result_windowed))
   expect_false(".bin" %in% names(result_windowed))
@@ -425,44 +461,70 @@ test_that("check_calibration handles edge cases with all methods", {
 
 test_that("check_calibration handles all zeros and all ones", {
   set.seed(123)
-  
+
   # All zeros - when treatment_level is not specified, 0 becomes the treatment level
   # so group_mean will be 1 (all observations match treatment level)
   zeros_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = rep(0, 50)
   )
-  
+
   # When all observations are 0, default treatment_level will be 0
   # Test the actual behavior
-  result_breaks_zeros_default <- check_calibration(zeros_data, pred, obs, method = "breaks")
+  result_breaks_zeros_default <- check_calibration(
+    zeros_data,
+    pred,
+    obs,
+    method = "breaks"
+  )
   # All values are 0 and treatment_level=0, so group_mean=1
   expect_true(all(result_breaks_zeros_default$group_mean == 1))
-  
+
   # Now test with mixed data where 1 is the treatment level
   mixed_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = c(rep(0, 25), rep(1, 25))
   )
-  
-  result_mixed <- check_calibration(mixed_data, pred, obs, method = "breaks", treatment_level = 1)
+
+  result_mixed <- check_calibration(
+    mixed_data,
+    pred,
+    obs,
+    method = "breaks",
+    treatment_level = 1
+  )
   # This should give us meaningful calibration metrics
   expect_true(all(result_mixed$group_mean >= 0 & result_mixed$group_mean <= 1))
-  
+
   # All ones - default treatment level will be 1, so group_mean = 1
   ones_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = rep(1, 50)
   )
-  
-  result_breaks_ones <- check_calibration(ones_data, pred, obs, method = "breaks")
+
+  result_breaks_ones <- check_calibration(
+    ones_data,
+    pred,
+    obs,
+    method = "breaks"
+  )
   expect_true(all(result_breaks_ones$group_mean == 1))
-  
-  result_windowed_ones <- check_calibration(ones_data, pred, obs, method = "windowed")
+
+  result_windowed_ones <- check_calibration(
+    ones_data,
+    pred,
+    obs,
+    method = "windowed"
+  )
   expect_true(all(result_windowed_ones$group_mean == 1))
-  
+
   # Test the default behavior with all zeros
-  result_default_zeros <- check_calibration(zeros_data, pred, obs, method = "breaks")
+  result_default_zeros <- check_calibration(
+    zeros_data,
+    pred,
+    obs,
+    method = "breaks"
+  )
   # With default treatment_level, all zeros means treatment_level=0, so group_mean=1
   expect_true(all(result_default_zeros$group_mean == 1))
 })
@@ -474,21 +536,25 @@ test_that("check_calibration handles NA values correctly", {
     pred = c(runif(45), rep(NA, 5)),
     obs = c(rbinom(45, 1, 0.5), rep(NA, 5))
   )
-  
+
   # Test with na.rm = FALSE (default)
   result_false <- check_calibration(
-    test_data, pred, obs, 
-    method = "breaks", 
+    test_data,
+    pred,
+    obs,
+    method = "breaks",
     na.rm = FALSE
   )
-  
+
   # Test with na.rm = TRUE
   result_true <- check_calibration(
-    test_data, pred, obs, 
-    method = "breaks", 
+    test_data,
+    pred,
+    obs,
+    method = "breaks",
     na.rm = TRUE
   )
-  
+
   # na.rm = TRUE should have data, na.rm = FALSE might have less
   expect_true(sum(result_true$count) == 45)
 })
@@ -499,33 +565,35 @@ test_that("check_calibration handles factor treatment variables", {
     pred = runif(100, 0, 1),
     obs = factor(rbinom(100, 1, 0.5), levels = c("0", "1"))
   )
-  
+
   # Should work with factor
   result <- check_calibration(
-    test_data, pred, obs,
+    test_data,
+    pred,
+    obs,
     method = "breaks",
     treatment_level = "1"
   )
-  
+
   expect_s3_class(result, "tbl_df")
   expect_true(all(result$group_mean >= 0 & result$group_mean <= 1))
 })
 
 test_that("check_calibration validates input parameters", {
   test_data <- data.frame(pred = runif(50), obs = rbinom(50, 1, 0.5))
-  
+
   # Invalid bins for breaks method
   expect_error(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 1),
     "bins.*must be an integer > 1"
   )
-  
+
   # Non-integer bins
   expect_error(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 2.5),
     "bins.*must be an integer > 1"
   )
-  
+
   # Missing column
   expect_error(
     check_calibration(test_data, nonexistent, obs),
@@ -538,22 +606,41 @@ test_that("check_calibration produces consistent results across methods", {
   set.seed(123)
   n <- 500
   pred <- runif(n, 0, 1)
-  obs <- rbinom(n, 1, pred)  # Perfect calibration on average
-  
+  obs <- rbinom(n, 1, pred) # Perfect calibration on average
+
   test_data <- data.frame(pred = pred, obs = obs)
-  
+
   # Get results from all methods
-  result_breaks <- check_calibration(test_data, pred, obs, method = "breaks", bins = 5)
-  result_logistic <- check_calibration(test_data, pred, obs, method = "logistic")
-  result_windowed <- check_calibration(test_data, pred, obs, method = "windowed", window_size = 0.2)
-  
+  result_breaks <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "breaks",
+    bins = 5
+  )
+  result_logistic <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic"
+  )
+  result_windowed <- check_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "windowed",
+    window_size = 0.2
+  )
+
   # All methods should show reasonable calibration (group_mean ≈ fitted_mean)
   # For breaks method
   breaks_diff <- mean(abs(result_breaks$group_mean - result_breaks$fitted_mean))
-  expect_true(breaks_diff < 0.2)  # Allow some deviation
-  
-  # For windowed method  
-  windowed_diff <- mean(abs(result_windowed$group_mean - result_windowed$fitted_mean))
+  expect_true(breaks_diff < 0.2) # Allow some deviation
+
+  # For windowed method
+  windowed_diff <- mean(abs(
+    result_windowed$group_mean - result_windowed$fitted_mean
+  ))
   expect_true(windowed_diff < 0.2)
 })
 
