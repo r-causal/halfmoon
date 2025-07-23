@@ -138,9 +138,8 @@ test_that("plot_calibration has correct labels and theme", {
   p <- plot_calibration(nhefs_weights, .fitted, qsmk)
 
   # Check labels
-  expect_equal(p$labels$x, "Predicted Probability")
-  expect_equal(p$labels$y, "Event Rate")
-  expect_equal(p$labels$title, "Calibration Plot")
+  expect_equal(p$labels$x, "predicted probability")
+  expect_equal(p$labels$y, "observed rate")
 
   # Check that it has coord_cartesian
   expect_true(any(

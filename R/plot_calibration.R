@@ -155,9 +155,8 @@ plot_calibration <- function(
     ) +
     # Add labels
     ggplot2::labs(
-      x = "Predicted Probability",
-      y = "Event Rate",
-      title = "Calibration Plot"
+      x = "predicted probability",
+      y = "observed rate"
     ) +
     # Set x limits
     ggplot2::xlim(0, 1) +
