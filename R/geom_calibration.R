@@ -278,6 +278,24 @@ compute_calibration_breaks_internal <- function(
     n_events > 0 &
     n_events < n_total
 
+  # Check for small cell sizes that might cause warnings
+  small_cells <- n_total < 10
+  extreme_props <- (n_events <= 2) | (n_events >= n_total - 2)
+  warning_mask <- small_cells | extreme_props
+  
+  if (any(warning_mask, na.rm = TRUE)) {
+    warning_bins <- result$.bin[warning_mask]
+    warning_counts <- n_total[warning_mask]
+    warning(
+      "Small sample sizes or extreme proportions detected in bins ",
+      paste(warning_bins, collapse = ", "),
+      " (n = ", paste(warning_counts, collapse = ", "), "). ",
+      "Confidence intervals may be unreliable. ",
+      "Consider using fewer bins or a different calibration method.",
+      call. = FALSE
+    )
+  }
+
   # For valid cases, compute CIs using purrr
   valid_indices <- which(valid_mask)
   if (length(valid_indices) > 0) {
@@ -286,11 +304,13 @@ compute_calibration_breaks_internal <- function(
       ~ {
         tryCatch(
           {
-            ci <- stats::prop.test(
-              x = n_events[.x],
-              n = n_total[.x],
-              conf.level = conf_level
-            )$conf.int
+            suppressWarnings({
+              ci <- stats::prop.test(
+                x = n_events[.x],
+                n = n_total[.x],
+                conf.level = conf_level
+              )$conf.int
+            })
             list(lower = ci[1], upper = ci[2])
           },
           error = function(e) {
@@ -408,17 +428,21 @@ compute_calibration_windowed_internal <- function(
         if (n_events > 0 && n_events < n_total) {
           tryCatch(
             {
-              prop_test <- stats::prop.test(
-                n_events,
-                n_total,
-                conf.level = conf_level
-              )
+              suppressWarnings({
+                prop_test <- stats::prop.test(
+                  n_events,
+                  n_total,
+                  conf.level = conf_level
+                )
+              })
               list(
                 fitted_mean = .x,
                 group_mean = event_rate,
                 lower = prop_test$conf.int[1],
                 upper = prop_test$conf.int[2],
-                valid = TRUE
+                valid = TRUE,
+                n_total = n_total,
+                n_events = n_events
               )
             },
             error = function(e) {
@@ -429,7 +453,9 @@ compute_calibration_windowed_internal <- function(
                 group_mean = event_rate,
                 lower = max(0, event_rate - z_score * se),
                 upper = min(1, event_rate + z_score * se),
-                valid = TRUE
+                valid = TRUE,
+                n_total = n_total,
+                n_events = n_events
               )
             }
           )
@@ -441,7 +467,9 @@ compute_calibration_windowed_internal <- function(
             group_mean = event_rate,
             lower = max(0, event_rate - z_score * se),
             upper = min(1, event_rate + z_score * se),
-            valid = TRUE
+            valid = TRUE,
+            n_total = n_total,
+            n_events = n_events
           )
         }
       } else {
@@ -453,6 +481,30 @@ compute_calibration_windowed_internal <- function(
 
   # Filter to valid windows only
   valid_results <- purrr::keep(window_results, ~ .x$valid)
+  
+  # Check for small cell sizes that might cause unreliable estimates
+  if (length(valid_results) > 0) {
+    sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
+    event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
+    window_centers <- purrr::map_dbl(valid_results, ~ .x$fitted_mean)
+    
+    small_cells <- sample_sizes < 10
+    extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
+    warning_mask <- small_cells | extreme_props
+    
+    if (any(warning_mask, na.rm = TRUE)) {
+      warning_windows <- window_centers[warning_mask]
+      warning_counts <- sample_sizes[warning_mask]
+      warning(
+        "Small sample sizes or extreme proportions detected in windows centered at ",
+        paste(round(warning_windows, 3), collapse = ", "),
+        " (n = ", paste(warning_counts, collapse = ", "), "). ",
+        "Confidence intervals may be unreliable. ",
+        "Consider using a larger window size or a different calibration method.",
+        call. = FALSE
+      )
+    }
+  }
 
   # Return only valid windows
   if (length(valid_results) > 0) {
@@ -646,16 +698,19 @@ compute_calibration_breaks <- function(data, bins, conf_level) {
   # Use check_calibration to compute the statistics
   # Note: check_calibration expects a binary outcome where 1 is the treatment
   # Our data$y has already been converted to 0/1 format in compute_panel
-  calibration_result <- check_calibration(
-    data = temp_data,
-    .fitted = .fitted,
-    .group = .group,
-    treatment_level = 1, # We've already converted to binary where 1 is treatment
-    bins = bins,
-    binning_method = "equal_width",
-    conf_level = conf_level,
-    na.rm = FALSE
-  )
+  # Suppress warnings here since they'll be shown by the internal function
+  suppressWarnings({
+    calibration_result <- check_calibration(
+      data = temp_data,
+      .fitted = .fitted,
+      .group = .group,
+      treatment_level = 1, # We've already converted to binary where 1 is treatment
+      bins = bins,
+      binning_method = "equal_width",
+      conf_level = conf_level,
+      na.rm = FALSE
+    )
+  })
 
   # Convert the output to match the expected format
   data.frame(
@@ -709,17 +764,20 @@ compute_calibration_windowed <- function(
   )
 
   # Use check_calibration to compute the statistics
-  calibration_result <- check_calibration(
-    data = temp_data,
-    .fitted = .fitted,
-    .group = .group,
-    treatment_level = 1, # We've already converted to binary where 1 is treatment
-    method = "windowed",
-    window_size = window_size,
-    step_size = step_size,
-    conf_level = conf_level,
-    na.rm = FALSE
-  )
+  # Suppress warnings here since they'll be shown by the internal function
+  suppressWarnings({
+    calibration_result <- check_calibration(
+      data = temp_data,
+      .fitted = .fitted,
+      .group = .group,
+      treatment_level = 1, # We've already converted to binary where 1 is treatment
+      method = "windowed",
+      window_size = window_size,
+      step_size = step_size,
+      conf_level = conf_level,
+      na.rm = FALSE
+    )
+  })
 
   # Convert the output to match the expected format
   data.frame(

@@ -102,6 +102,26 @@ plot_calibration <- function(
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".group")
 
+  # Run check_calibration once to generate appropriate warnings
+  tryCatch({
+    check_calibration(
+      .data,
+      !!fitted_quo,
+      !!group_quo,
+      treatment_level = treatment_level,
+      method = method,
+      bins = bins,
+      smooth = smooth,
+      conf_level = conf_level,
+      window_size = window_size,
+      step_size = step_size,
+      na.rm = na.rm
+    )
+  }, error = function(e) {
+    # If there's an error, it will be caught later by geom_calibration
+    NULL
+  })
+
   # Convert factor to numeric for proper y-axis scale
   # This ensures the y-axis shows calibration rates (0-1) not factor labels
   if (is.factor(.data[[group_name]])) {
@@ -133,20 +153,22 @@ plot_calibration <- function(
     .data,
     ggplot2::aes(x = .data[[fitted_name]])
   ) +
-    geom_calibration(
-      y_aes,
-      method = method,
-      bins = bins,
-      smooth = smooth,
-      conf_level = conf_level,
-      window_size = window_size,
-      step_size = step_size,
-      treatment_level = treatment_level,
-      show_ribbon = include_ribbon,
-      show_points = include_points,
-      na.rm = na.rm,
-      ...
-    ) +
+    suppressWarnings({
+      geom_calibration(
+        y_aes,
+        method = method,
+        bins = bins,
+        smooth = smooth,
+        conf_level = conf_level,
+        window_size = window_size,
+        step_size = step_size,
+        treatment_level = treatment_level,
+        show_ribbon = include_ribbon,
+        show_points = include_points,
+        na.rm = na.rm,
+        ...
+      )
+    }) +
     # Add perfect calibration line
     ggplot2::geom_abline(
       intercept = 0,
