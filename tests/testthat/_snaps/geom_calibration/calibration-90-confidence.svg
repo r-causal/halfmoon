@@ -27,20 +27,20 @@
 </defs>
 <g clip-path='url(#cpNDAuMTN8NzE0LjUyfDIyLjc4fDU0NS4xMQ==)'>
 <rect x='40.13' y='22.78' width='674.39' height='522.33' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<polygon points='103.45,521.37 158.38,354.94 220.66,244.92 283.49,244.92 343.41,236.31 411.85,158.01 470.26,171.03 534.13,87.29 600.17,48.25 653.36,46.53 653.36,46.53 600.17,160.56 534.13,256.68 470.26,342.24 411.85,345.49 343.41,396.96 283.49,414.01 220.66,414.01 158.38,499.01 103.45,521.37 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #0000FF; fill-opacity: 0.30;' />
-<polyline points='103.45,521.37 158.38,354.94 220.66,244.92 283.49,244.92 343.41,236.31 411.85,158.01 470.26,171.03 534.13,87.29 600.17,48.25 653.36,46.53 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
-<polyline points='653.36,46.53 600.17,160.56 534.13,256.68 470.26,342.24 411.85,345.49 343.41,396.96 283.49,414.01 220.66,414.01 158.38,499.01 103.45,521.37 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
-<polyline points='103.45,521.37 158.38,450.14 220.66,335.56 283.49,335.56 343.41,320.47 411.85,246.46 470.26,252.98 534.13,152.05 600.17,71.52 653.36,46.53 ' style='stroke-width: 1.07; stroke: #0000FF; stroke-linecap: butt;' />
+<polygon points='103.45,521.37 158.38,354.94 220.66,244.92 283.49,244.92 342.11,244.89 408.55,138.24 468.94,182.24 532.57,89.78 595.66,48.34 650.13,46.53 650.13,46.53 595.66,165.98 532.57,266.69 468.94,350.57 408.55,322.38 342.11,407.60 283.49,414.01 220.66,414.01 158.38,499.01 103.45,521.37 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #0000FF; fill-opacity: 0.30;' />
+<polyline points='103.45,521.37 158.38,354.94 220.66,244.92 283.49,244.92 342.11,244.89 408.55,138.24 468.94,182.24 532.57,89.78 595.66,48.34 650.13,46.53 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
+<polyline points='650.13,46.53 595.66,165.98 532.57,266.69 468.94,350.57 408.55,322.38 342.11,407.60 283.49,414.01 220.66,414.01 158.38,499.01 103.45,521.37 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
+<polyline points='103.45,521.37 158.38,450.14 220.66,335.56 283.49,335.56 342.11,331.43 408.55,221.47 468.94,264.16 532.57,158.25 595.66,72.91 650.13,46.53 ' style='stroke-width: 1.07; stroke: #0000FF; stroke-linecap: butt;' />
 <circle cx='103.45' cy='521.37' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
 <circle cx='158.38' cy='450.14' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
 <circle cx='220.66' cy='335.56' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
 <circle cx='283.49' cy='335.56' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
-<circle cx='343.41' cy='320.47' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
-<circle cx='411.85' cy='246.46' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
-<circle cx='470.26' cy='252.98' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
-<circle cx='534.13' cy='152.05' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
-<circle cx='600.17' cy='71.52' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
-<circle cx='653.36' cy='46.53' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
+<circle cx='342.11' cy='331.43' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
+<circle cx='408.55' cy='221.47' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
+<circle cx='468.94' cy='264.16' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
+<circle cx='532.57' cy='158.25' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
+<circle cx='595.66' cy='72.91' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
+<circle cx='650.13' cy='46.53' r='1.95' style='stroke-width: 0.71; stroke: #0000FF; fill: #0000FF;' />
 <line x1='-634.25' y1='1067.44' x2='1388.91' y2='-499.55' style='stroke-width: 1.07; stroke-dasharray: 5.69,5.69; stroke-linecap: butt;' />
 <rect x='40.13' y='22.78' width='674.39' height='522.33' style='stroke-width: 1.07; stroke: #333333;' />
 </g>

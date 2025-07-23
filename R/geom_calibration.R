@@ -1,7 +1,8 @@
 #' Compute calibration data for binary outcomes
 #'
-#' This function summarizes predicted probabilities and observed outcomes into bins,
+#' This function summarizes predicted probabilities and observed outcomes,
 #' computing mean prediction, observed rate, counts, and confidence intervals.
+#' Supports multiple methods for calibration assessment.
 #'
 #' @param data A data frame or tibble containing the data.
 #' @param .fitted Column name of predicted probabilities (numeric between 0 and 1).
@@ -10,42 +11,66 @@
 #'   Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
 #' @param treatment_level Value indicating which level of `.group` represents treatment.
 #'   If NULL (default), uses the last level for factors or max value for numeric.
+#' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
-#' @param binning_method "equal_width" or "quantile" for bin creation.
+#' @param binning_method "equal_width" or "quantile" for bin creation (breaks method only).
+#' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
+#' @param window_size Numeric; size of each window for "windowed" method.
+#' @param step_size Numeric; distance between window centers for "windowed" method.
 #' @param na.rm Logical; if TRUE, drop NA values before summarizing.
 #'
 #' @return A tibble with columns:
-#'   - .bin: integer bin index
-#'   - fitted_mean: mean predicted probability in bin
-#'   - group_mean: observed treatment rate in bin
-#'   - count: number of observations in bin
-#'   - lower: lower bound of CI for group_mean
-#'   - upper: upper bound of CI for group_mean
+#'   - For "breaks" method:
+#'     - .bin: integer bin index
+#'     - fitted_mean: mean predicted probability in bin
+#'     - group_mean: observed treatment rate in bin
+#'     - count: number of observations in bin
+#'     - lower: lower bound of CI for group_mean
+#'     - upper: upper bound of CI for group_mean
+#'   - For "logistic" and "windowed" methods:
+#'     - fitted_mean: predicted probability values
+#'     - group_mean: calibrated outcome rate
+#'     - lower: lower bound of CI
+#'     - upper: upper bound of CI
 #' @examples
 #' # Use the included nhefs_weights dataset
 #' # .fitted contains propensity scores, qsmk is the treatment variable
+#' 
+#' # Breaks method (default)
 #' check_calibration(nhefs_weights, .fitted, qsmk)
+#'
+#' # Logistic method with smoothing
+#' check_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
+#'
+#' # Windowed method
+#' check_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 #'
 #' # Specify treatment level explicitly (useful for multi-level factors)
 #' check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 #'
 #' # Different binning methods
 #' check_calibration(nhefs_weights, .fitted, qsmk, binning_method = "quantile")
-#' @importFrom stats prop.test quantile
+#' @importFrom stats prop.test quantile glm binomial predict plogis qnorm
 #' @export
 check_calibration <- function(
   data,
   .fitted,
   .group,
   treatment_level = NULL,
+  method = c("breaks", "logistic", "windowed"),
   bins = 10,
   binning_method = c("equal_width", "quantile"),
+  smooth = TRUE,
   conf_level = 0.95,
+  window_size = 0.1,
+  step_size = window_size / 2,
   na.rm = FALSE
 ) {
+  method <- match.arg(method)
   binning_method <- match.arg(binning_method)
-  if (!is.numeric(bins) || bins < 2 || bins != round(bins)) {
+  
+  if (method == "breaks" && (!is.numeric(bins) || bins < 2 || bins != round(bins))) {
     stop("`bins` must be an integer > 1.")
   }
 
@@ -150,16 +175,40 @@ check_calibration <- function(
   }
 
   if (nrow(df) == 0) {
-    return(tibble::tibble(
-      .bin = integer(0),
-      x_mean = numeric(0),
-      y_mean = numeric(0),
-      count = integer(0),
-      lower = numeric(0),
-      upper = numeric(0)
-    ))
+    if (method == "breaks") {
+      return(tibble::tibble(
+        .bin = integer(0),
+        fitted_mean = numeric(0),
+        group_mean = numeric(0),
+        count = integer(0),
+        lower = numeric(0),
+        upper = numeric(0)
+      ))
+    } else {
+      return(tibble::tibble(
+        fitted_mean = numeric(0),
+        group_mean = numeric(0),
+        lower = numeric(0),
+        upper = numeric(0)
+      ))
+    }
   }
 
+  # Dispatch to appropriate method
+  result <- if (method == "breaks") {
+    compute_calibration_breaks_internal(df, bins, binning_method, conf_level)
+  } else if (method == "logistic") {
+    compute_calibration_logistic_internal(df, smooth, conf_level)
+  } else if (method == "windowed") {
+    compute_calibration_windowed_internal(df, window_size, step_size, conf_level)
+  }
+
+  # Convert to tibble for consistency with other functions
+  tibble::as_tibble(result)
+}
+
+# Internal helper function for breaks method
+compute_calibration_breaks_internal <- function(df, bins, binning_method, conf_level) {
   # Determine breaks
   xs <- df$x_var
   if (binning_method == "equal_width") {
@@ -269,15 +318,144 @@ check_calibration <- function(
   result$lower[invalid_mask] <- NA_real_
   result$upper[invalid_mask] <- NA_real_
 
-  # Convert to tibble for consistency with other functions
-  tibble::as_tibble(result)
+  result
+}
+
+# Internal helper function for logistic method
+compute_calibration_logistic_internal <- function(df, smooth, conf_level) {
+  # Fit model
+  if (smooth) {
+    rlang::check_installed("mgcv", "for GAM smoothing")
+    model <- mgcv::gam(y_var ~ s(x_var, k = 10), data = df, family = binomial())
+  } else {
+    model <- glm(y_var ~ x_var, data = df, family = binomial())
+  }
+
+  # Create prediction sequence
+  pred_seq <- seq(min(df$x_var), max(df$x_var), length.out = 100)
+  new_data <- data.frame(x_var = pred_seq)
+
+  # Get predictions with confidence intervals
+  preds <- predict(model, new_data, se.fit = TRUE)
+  pred_probs <- plogis(preds$fit)
+
+  # Calculate confidence intervals
+  alpha <- 1 - conf_level
+  z_score <- qnorm(1 - alpha / 2)
+  lower <- plogis(preds$fit - z_score * preds$se.fit)
+  upper <- plogis(preds$fit + z_score * preds$se.fit)
+
+  data.frame(
+    fitted_mean = pred_seq,
+    group_mean = pred_probs,
+    lower = lower,
+    upper = upper
+  )
+}
+
+# Internal helper function for windowed method - optimized
+compute_calibration_windowed_internal <- function(df, window_size, step_size, conf_level) {
+  # Create window centers
+  steps <- seq(0, 1, by = step_size)
+  n_steps <- length(steps)
+
+  # Pre-calculate constants
+  alpha <- 1 - conf_level
+  z_score <- stats::qnorm(1 - alpha / 2)
+  half_window <- window_size / 2
+
+  # Sort data once for more efficient window lookups
+  data_x <- df$x_var
+  data_y <- df$y_var
+
+  # Process each window using purrr
+  window_results <- purrr::map(
+    steps,
+    ~ {
+      # Define window boundaries
+      lower_bound <- max(0, .x - half_window)
+      upper_bound <- min(1, .x + half_window)
+
+      # Find observations in this window
+      in_window <- data_x >= lower_bound & data_x <= upper_bound
+      n_total <- sum(in_window)
+
+      if (n_total > 0) {
+        # Calculate statistics for this window
+        n_events <- sum(data_y[in_window])
+        event_rate <- n_events / n_total
+
+        # Calculate confidence intervals
+        if (n_events > 0 && n_events < n_total) {
+          tryCatch(
+            {
+              prop_test <- stats::prop.test(
+                n_events,
+                n_total,
+                conf.level = conf_level
+              )
+              list(
+                fitted_mean = .x,
+                group_mean = event_rate,
+                lower = prop_test$conf.int[1],
+                upper = prop_test$conf.int[2],
+                valid = TRUE
+              )
+            },
+            error = function(e) {
+              # Fallback to normal approximation
+              se <- sqrt(event_rate * (1 - event_rate) / n_total)
+              list(
+                fitted_mean = .x,
+                group_mean = event_rate,
+                lower = max(0, event_rate - z_score * se),
+                upper = min(1, event_rate + z_score * se),
+                valid = TRUE
+              )
+            }
+          )
+        } else {
+          # For edge cases, use normal approximation
+          se <- sqrt(event_rate * (1 - event_rate) / n_total)
+          list(
+            fitted_mean = .x,
+            group_mean = event_rate,
+            lower = max(0, event_rate - z_score * se),
+            upper = min(1, event_rate + z_score * se),
+            valid = TRUE
+          )
+        }
+      } else {
+        # Invalid window
+        list(valid = FALSE)
+      }
+    }
+  )
+
+  # Filter to valid windows only
+  valid_results <- purrr::keep(window_results, ~ .x$valid)
+
+  # Return only valid windows
+  if (length(valid_results) > 0) {
+    data.frame(
+      fitted_mean = purrr::map_dbl(valid_results, ~ .x$fitted_mean),
+      group_mean = purrr::map_dbl(valid_results, ~ .x$group_mean),
+      lower = purrr::map_dbl(valid_results, ~ .x$lower),
+      upper = purrr::map_dbl(valid_results, ~ .x$upper)
+    )
+  } else {
+    # Return empty data frame with correct structure
+    data.frame(
+      fitted_mean = numeric(0),
+      group_mean = numeric(0),
+      lower = numeric(0),
+      upper = numeric(0)
+    )
+  }
 }
 
 # Define NULL coalescing operator
 `%||%` <- function(x, y) if (is.null(x)) y else x
-
-# Global variable declarations for R CMD check
-utils::globalVariables(c("ymin", "ymax"))
 
 # Stat for computing calibration statistics
 StatCalibration <- ggplot2::ggproto(
@@ -425,230 +603,97 @@ StatCalibration <- ggplot2::ggproto(
 
 # Helper function for breaks method
 compute_calibration_breaks <- function(data, bins, conf_level) {
-  # Create breaks from 0 to 1
-  breaks <- seq(0, 1, length.out = bins + 1)
-
-  # Assign each prediction to a bin
-  bin_assignments <- cut(data$x, breaks = breaks, include.lowest = TRUE)
-
-  # Use dplyr for cleaner aggregation
-  bin_summary <- tibble::tibble(
-    x = data$x,
-    y = data$y,
-    bin = bin_assignments
-  ) |>
-    dplyr::filter(!is.na(bin)) |>
-    dplyr::group_by(bin) |>
-    dplyr::summarise(
-      n_events = sum(y),
-      n_total = dplyr::n(),
-      x = mean(x),
-      .groups = "drop"
-    ) |>
-    dplyr::filter(n_total > 0) |>
-    dplyr::mutate(event_rate = n_events / n_total)
-
-  # Add confidence intervals - optimized version
-  alpha <- 1 - conf_level
-  z_score <- stats::qnorm(1 - alpha / 2)
-
-  # Pre-allocate vectors
-  bin_summary$ymin <- numeric(nrow(bin_summary))
-  bin_summary$ymax <- numeric(nrow(bin_summary))
-
-  # Identify valid cases for prop.test
-  valid_cases <- bin_summary$n_total > 0 &
-    bin_summary$n_events > 0 &
-    bin_summary$n_events < bin_summary$n_total
-
-  # For valid cases, use prop.test with purrr
-  valid_indices <- which(valid_cases)
-  if (length(valid_indices) > 0) {
-    ci_results <- purrr::map(
-      valid_indices,
-      ~ {
-        tryCatch(
-          {
-            prop_test <- stats::prop.test(
-              bin_summary$n_events[.x],
-              bin_summary$n_total[.x],
-              conf.level = conf_level
-            )
-            list(ymin = prop_test$conf.int[1], ymax = prop_test$conf.int[2])
-          },
-          error = function(e) {
-            # Fallback to normal approximation
-            se <- sqrt(
-              bin_summary$event_rate[.x] *
-                (1 - bin_summary$event_rate[.x]) /
-                bin_summary$n_total[.x]
-            )
-            list(
-              ymin = max(0, bin_summary$event_rate[.x] - z_score * se),
-              ymax = min(1, bin_summary$event_rate[.x] + z_score * se)
-            )
-          }
-        )
-      }
-    )
-
-    bin_summary$ymin[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$ymin)
-    bin_summary$ymax[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$ymax)
-  }
-
-  # For edge cases, use normal approximation vectorized
-  edge_cases <- which(!valid_cases & bin_summary$n_total > 0)
-  if (length(edge_cases) > 0) {
-    rates <- bin_summary$event_rate[edge_cases]
-    se <- sqrt(rates * (1 - rates) / bin_summary$n_total[edge_cases])
-    bin_summary$ymin[edge_cases] <- pmax(0, rates - z_score * se)
-    bin_summary$ymax[edge_cases] <- pmin(1, rates + z_score * se)
-  }
-
+  # Create a temporary data frame with the required columns
+  temp_data <- data.frame(
+    .fitted = data$x,
+    .group = data$y
+  )
+  
+  # Use check_calibration to compute the statistics
+  # Note: check_calibration expects a binary outcome where 1 is the treatment
+  # Our data$y has already been converted to 0/1 format in compute_panel
+  calibration_result <- check_calibration(
+    data = temp_data,
+    .fitted = .fitted,
+    .group = .group,
+    treatment_level = 1,  # We've already converted to binary where 1 is treatment
+    bins = bins,
+    binning_method = "equal_width",
+    conf_level = conf_level,
+    na.rm = FALSE
+  )
+  
+  # Convert the output to match the expected format
   data.frame(
-    x = bin_summary$x,
-    y = bin_summary$event_rate,
-    ymin = bin_summary$ymin,
-    ymax = bin_summary$ymax
+    x = calibration_result$fitted_mean,
+    y = calibration_result$group_mean,
+    ymin = calibration_result$lower,
+    ymax = calibration_result$upper
   )
 }
 
 # Helper function for logistic method
 compute_calibration_logistic <- function(data, smooth, conf_level) {
-  # Fit model
-  if (smooth) {
-    rlang::check_installed("mgcv", "for GAM smoothing")
-    model <- mgcv::gam(y ~ s(x, k = 10), data = data, family = binomial())
-  } else {
-    model <- glm(y ~ x, data = data, family = binomial())
-  }
-
-  # Create prediction sequence
-  pred_seq <- seq(min(data$x), max(data$x), length.out = 100)
-  new_data <- data.frame(x = pred_seq)
-
-  # Get predictions with confidence intervals
-  preds <- predict(model, new_data, se.fit = TRUE)
-  pred_probs <- plogis(preds$fit)
-
-  # Calculate confidence intervals
-  alpha <- 1 - conf_level
-  z_score <- qnorm(1 - alpha / 2)
-  ymin <- plogis(preds$fit - z_score * preds$se.fit)
-  ymax <- plogis(preds$fit + z_score * preds$se.fit)
-
+  # Create a temporary data frame with the required columns
+  temp_data <- data.frame(
+    .fitted = data$x,
+    .group = data$y
+  )
+  
+  # Use check_calibration to compute the statistics
+  calibration_result <- check_calibration(
+    data = temp_data,
+    .fitted = .fitted,
+    .group = .group,
+    treatment_level = 1,  # We've already converted to binary where 1 is treatment
+    method = "logistic",
+    smooth = smooth,
+    conf_level = conf_level,
+    na.rm = FALSE
+  )
+  
+  # Convert the output to match the expected format
   data.frame(
-    x = pred_seq,
-    y = pred_probs,
-    ymin = ymin,
-    ymax = ymax
+    x = calibration_result$fitted_mean,
+    y = calibration_result$group_mean,
+    ymin = calibration_result$lower,
+    ymax = calibration_result$upper
   )
 }
 
-# Helper function for windowed method - optimized
+# Helper function for windowed method
 compute_calibration_windowed <- function(
   data,
   window_size,
   step_size,
   conf_level
 ) {
-  # Create window centers
-  steps <- seq(0, 1, by = step_size)
-  n_steps <- length(steps)
-
-  # Pre-calculate constants
-  alpha <- 1 - conf_level
-  z_score <- stats::qnorm(1 - alpha / 2)
-  half_window <- window_size / 2
-
-  # Sort data once for more efficient window lookups
-  data_x <- data$x
-  data_y <- data$y
-
-  # Process each window using purrr
-  window_results <- purrr::map(
-    steps,
-    ~ {
-      # Define window boundaries
-      lower_bound <- max(0, .x - half_window)
-      upper_bound <- min(1, .x + half_window)
-
-      # Find observations in this window
-      in_window <- data_x >= lower_bound & data_x <= upper_bound
-      n_total <- sum(in_window)
-
-      if (n_total > 0) {
-        # Calculate statistics for this window
-        n_events <- sum(data_y[in_window])
-        event_rate <- n_events / n_total
-
-        # Calculate confidence intervals
-        if (n_events > 0 && n_events < n_total) {
-          tryCatch(
-            {
-              prop_test <- stats::prop.test(
-                n_events,
-                n_total,
-                conf.level = conf_level
-              )
-              list(
-                x = .x,
-                y = event_rate,
-                ymin = prop_test$conf.int[1],
-                ymax = prop_test$conf.int[2],
-                valid = TRUE
-              )
-            },
-            error = function(e) {
-              # Fallback to normal approximation
-              se <- sqrt(event_rate * (1 - event_rate) / n_total)
-              list(
-                x = .x,
-                y = event_rate,
-                ymin = max(0, event_rate - z_score * se),
-                ymax = min(1, event_rate + z_score * se),
-                valid = TRUE
-              )
-            }
-          )
-        } else {
-          # For edge cases, use normal approximation
-          se <- sqrt(event_rate * (1 - event_rate) / n_total)
-          list(
-            x = .x,
-            y = event_rate,
-            ymin = max(0, event_rate - z_score * se),
-            ymax = min(1, event_rate + z_score * se),
-            valid = TRUE
-          )
-        }
-      } else {
-        # Invalid window
-        list(valid = FALSE)
-      }
-    }
+  # Create a temporary data frame with the required columns
+  temp_data <- data.frame(
+    .fitted = data$x,
+    .group = data$y
   )
-
-  # Filter to valid windows only
-  valid_results <- purrr::keep(window_results, ~ .x$valid)
-
-  # Return only valid windows
-  if (length(valid_results) > 0) {
-    data.frame(
-      x = purrr::map_dbl(valid_results, ~ .x$x),
-      y = purrr::map_dbl(valid_results, ~ .x$y),
-      ymin = purrr::map_dbl(valid_results, ~ .x$ymin),
-      ymax = purrr::map_dbl(valid_results, ~ .x$ymax)
-    )
-  } else {
-    # Return empty data frame with correct structure
-    data.frame(
-      x = numeric(0),
-      y = numeric(0),
-      ymin = numeric(0),
-      ymax = numeric(0)
-    )
-  }
+  
+  # Use check_calibration to compute the statistics
+  calibration_result <- check_calibration(
+    data = temp_data,
+    .fitted = .fitted,
+    .group = .group,
+    treatment_level = 1,  # We've already converted to binary where 1 is treatment
+    method = "windowed",
+    window_size = window_size,
+    step_size = step_size,
+    conf_level = conf_level,
+    na.rm = FALSE
+  )
+  
+  # Convert the output to match the expected format
+  data.frame(
+    x = calibration_result$fitted_mean,
+    y = calibration_result$group_mean,
+    ymin = calibration_result$lower,
+    ymax = calibration_result$upper
+  )
 }
 
 # Geom for calibration line

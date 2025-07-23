@@ -9,9 +9,13 @@ check_calibration(
   .fitted,
   .group,
   treatment_level = NULL,
+  method = c("breaks", "logistic", "windowed"),
   bins = 10,
   binning_method = c("equal_width", "quantile"),
+  smooth = TRUE,
   conf_level = 0.95,
+  window_size = 0.1,
+  step_size = window_size/2,
   na.rm = FALSE
 )
 }
@@ -27,16 +31,26 @@ Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
 \item{treatment_level}{Value indicating which level of \code{.group} represents treatment.
 If NULL (default), uses the last level for factors or max value for numeric.}
 
+\item{method}{Character; calibration method - "breaks", "logistic", or "windowed".}
+
 \item{bins}{Integer >1; number of bins for the "breaks" method.}
 
-\item{binning_method}{"equal_width" or "quantile" for bin creation.}
+\item{binning_method}{"equal_width" or "quantile" for bin creation (breaks method only).}
+
+\item{smooth}{Logical; for "logistic" method, use GAM smoothing if available.}
 
 \item{conf_level}{Numeric in (0,1); confidence level for CIs (default = 0.95).}
+
+\item{window_size}{Numeric; size of each window for "windowed" method.}
+
+\item{step_size}{Numeric; distance between window centers for "windowed" method.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before summarizing.}
 }
 \value{
 A tibble with columns:
+\itemize{
+\item For "breaks" method:
 \itemize{
 \item .bin: integer bin index
 \item fitted_mean: mean predicted probability in bin
@@ -45,15 +59,32 @@ A tibble with columns:
 \item lower: lower bound of CI for group_mean
 \item upper: upper bound of CI for group_mean
 }
+\item For "logistic" and "windowed" methods:
+\itemize{
+\item fitted_mean: predicted probability values
+\item group_mean: calibrated outcome rate
+\item lower: lower bound of CI
+\item upper: upper bound of CI
+}
+}
 }
 \description{
-This function summarizes predicted probabilities and observed outcomes into bins,
+This function summarizes predicted probabilities and observed outcomes,
 computing mean prediction, observed rate, counts, and confidence intervals.
+Supports multiple methods for calibration assessment.
 }
 \examples{
 # Use the included nhefs_weights dataset
 # .fitted contains propensity scores, qsmk is the treatment variable
+
+# Breaks method (default)
 check_calibration(nhefs_weights, .fitted, qsmk)
+
+# Logistic method with smoothing
+check_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
+
+# Windowed method
+check_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 
 # Specify treatment level explicitly (useful for multi-level factors)
 check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
