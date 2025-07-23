@@ -212,7 +212,7 @@ test_that("geom_calibration works with breaks method", {
   )
 
   # Test breaks method
-  p_breaks <- ggplot(cal_data, aes(x = pred, y = as.factor(obs))) +
+  p_breaks <- ggplot(cal_data, aes(x = pred, y = obs)) +
     geom_calibration(method = "breaks", bins = 5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
