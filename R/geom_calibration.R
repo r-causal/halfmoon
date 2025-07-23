@@ -27,9 +27,6 @@
 #' # .fitted contains propensity scores, qsmk is the treatment variable
 #' check_calibration(nhefs_weights, .fitted, qsmk)
 #'
-#' # Both quoted and unquoted column names work
-#' check_calibration(nhefs_weights, ".fitted", "qsmk")
-#'
 #' # Specify treatment level explicitly (useful for multi-level factors)
 #' check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 #'
@@ -108,7 +105,7 @@ check_calibration <- function(
   # Extract and validate treatment variable
   group_var <- data[[group_name]]
   unique_levels <- unique(group_var[!is.na(group_var)])
-  
+
   # Determine treatment level
   if (is.null(treatment_level)) {
     # Default: use last level for factors, max value for numeric
@@ -116,21 +113,31 @@ check_calibration <- function(
       treatment_level <- levels(group_var)[length(levels(group_var))]
     } else {
       if (length(unique_levels) == 0) {
-        treatment_level <- 1  # Default for empty data
+        treatment_level <- 1 # Default for empty data
       } else {
         treatment_level <- max(unique_levels, na.rm = TRUE)
       }
     }
   }
-  
+
   # Validate treatment level exists (skip for empty data)
   if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
-    stop(paste0("treatment_level '", treatment_level, "' not found in .group variable"))
+    stop(paste0(
+      "treatment_level '",
+      treatment_level,
+      "' not found in .group variable"
+    ))
   }
-  
+
   # Create binary treatment indicator (1 = treatment, 0 = control)
-  treatment_indicator <- as.numeric(group_var == treatment_level)
-  
+  # Handle both factor and non-factor variables
+  if (is.factor(group_var)) {
+    # For factors, ensure we're comparing as character to handle numeric-looking levels
+    treatment_indicator <- as.numeric(as.character(group_var) == as.character(treatment_level))
+  } else {
+    treatment_indicator <- as.numeric(group_var == treatment_level)
+  }
+
   # Create a tibble with only the needed columns and standardized names
   df <- tibble::tibble(
     x_var = data[[fitted_name]],
@@ -269,13 +276,16 @@ check_calibration <- function(
 # Define NULL coalescing operator
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
+# Global variable declarations for R CMD check
+utils::globalVariables(c("ymin", "ymax"))
+
 # Stat for computing calibration statistics
 StatCalibration <- ggplot2::ggproto(
   "StatCalibration",
   ggplot2::Stat,
   required_aes = c("x", "y"),
   default_aes = ggplot2::aes(alpha = 0.3),
-
+  dropped_aes = c("y"),
   setup_params = function(data, params) {
     # Set default parameters
     params$method <- params$method %||% "breaks"
@@ -287,8 +297,7 @@ StatCalibration <- ggplot2::ggproto(
     params$treatment_level <- params$treatment_level %||% NULL
     params
   },
-
-  compute_group = function(
+  compute_panel = function(
     data,
     scales,
     method = "breaks",
@@ -299,28 +308,98 @@ StatCalibration <- ggplot2::ggproto(
     step_size = window_size / 2,
     treatment_level = NULL
   ) {
-    # Process treatment level to create binary indicator
+    # Store original y values
+    unique_y <- unique(data$y[!is.na(data$y)])
+    
+    # Convert y to binary 0/1 for calibration calculation
+    # This ensures we're always working with binary outcomes
     if (!is.null(treatment_level)) {
-      unique_levels <- unique(data$y[!is.na(data$y)])
-      if (!treatment_level %in% unique_levels) {
-        stop(paste0("treatment_level '", treatment_level, "' not found in y variable"))
+      # User specified which level is treatment
+      if (is.character(treatment_level)) {
+        # Check if y values are from ggplot2 factor conversion (integers starting at 1)
+        if (is.numeric(data$y) && all(unique_y == floor(unique_y)) && min(unique_y) == 1) {
+          # Handle factor levels like "0", "1" that become numeric 1, 2
+          numeric_treatment <- suppressWarnings(as.numeric(treatment_level))
+          if (!is.na(numeric_treatment)) {
+            # Map user's treatment level to ggplot2's numeric representation
+            # Factor "0" -> 1, Factor "1" -> 2, etc.
+            ggplot_value <- numeric_treatment + 1
+            if (ggplot_value %in% unique_y) {
+              data$y <- as.numeric(data$y == ggplot_value)
+            } else {
+              # Try to find which numeric value corresponds to treatment_level
+              # For binary factors, assume treatment_level matches the higher value
+              if (length(unique_y) == 2) {
+                data$y <- as.numeric(data$y == max(unique_y))
+                warning(paste0(
+                  "Could not match treatment_level '", treatment_level,
+                  "' to factor levels. Using maximum value as treatment."
+                ))
+              } else {
+                stop(paste0(
+                  "treatment_level '", treatment_level,
+                  "' not found. Available numeric values after factor conversion: ",
+                  paste(unique_y, collapse = ", ")
+                ))
+              }
+            }
+          } else {
+            # Non-numeric treatment_level with numeric y
+            # This happens when factor has non-numeric levels
+            if (length(unique_y) == 2) {
+              # For binary, assume higher value is treatment
+              data$y <- as.numeric(data$y == max(unique_y))
+              warning(paste0(
+                "Cannot match non-numeric treatment_level '", treatment_level,
+                "' to numeric y values. Using maximum value as treatment."
+              ))
+            } else {
+              stop(paste0(
+                "Cannot match treatment_level '", treatment_level,
+                "' to numeric y values."
+              ))
+            }
+          }
+        } else {
+          # Direct string comparison
+          data$y <- as.numeric(data$y == treatment_level)
+        }
+      } else if (is.numeric(treatment_level)) {
+        # Numeric treatment level
+        if (treatment_level %in% unique_y) {
+          data$y <- as.numeric(data$y == treatment_level)
+        } else {
+          stop(paste0(
+            "treatment_level ", treatment_level,
+            " not found in y variable. Available values: ",
+            paste(unique_y, collapse = ", ")
+          ))
+        }
       }
-      data$y <- as.numeric(data$y == treatment_level)
     } else {
-      # Default behavior: assume y is already binary or use max value
-      if (is.factor(data$y)) {
-        # For factors, use the last level as treatment
-        treatment_level <- levels(data$y)[length(levels(data$y))]
-        data$y <- as.numeric(data$y == treatment_level)
+      # No treatment_level specified - use default logic
+      if (all(unique_y %in% c(0, 1))) {
+        # Already binary 0/1
+        # No conversion needed
+      } else if (length(unique_y) == 2) {
+        # Binary but not 0/1
+        if (all(unique_y == floor(unique_y)) && min(unique_y) == 1 && max(unique_y) == 2) {
+          # Likely from factor with levels "0", "1"
+          # Use 2 (original "1") as treatment
+          data$y <- as.numeric(data$y == 2)
+        } else {
+          # Use max as treatment
+          data$y <- as.numeric(data$y == max(unique_y))
+        }
       } else {
-        # For numeric, use max value as treatment
-        unique_levels <- unique(data$y[!is.na(data$y)])
-        treatment_level <- max(unique_levels, na.rm = TRUE)
-        data$y <- as.numeric(data$y == treatment_level)
+        # Multi-level - use max as treatment
+        warning("y variable has more than 2 levels. Using maximum value as treatment.")
+        data$y <- as.numeric(data$y == max(unique_y, na.rm = TRUE))
       }
     }
-    
-    if (method == "breaks") {
+
+    # Compute calibration statistics
+    result <- if (method == "breaks") {
       compute_calibration_breaks(data, bins, conf_level)
     } else if (method == "logistic") {
       compute_calibration_logistic(data, smooth, conf_level)
@@ -329,6 +408,18 @@ StatCalibration <- ggplot2::ggproto(
     } else {
       stop("Method must be 'breaks', 'logistic', or 'windowed'")
     }
+    
+    # CRITICAL: Rename the computed 'event_rate' to 'y' for ggplot2
+    # This ensures the y-axis shows calibration rates (0-1) not factor levels
+    if ("event_rate" %in% names(result)) {
+      result$y <- result$event_rate
+    }
+    
+    # Preserve required ggplot2 columns
+    result$PANEL <- data$PANEL[1]
+    result$group <- data$group[1]
+    
+    result
   }
 )
 
@@ -616,6 +707,11 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @param step_size Numeric; distance between window centers for "windowed" method.
 #' @param treatment_level Value indicating which level of y represents treatment.
 #'   If NULL (default), uses the last level for factors or max value for numeric.
+#'   For factors with numeric-looking levels (e.g., "0", "1"), this parameter
+#'   works as expected. For factors with non-numeric levels (e.g., "Control", 
+#'   "Treatment"), the function will attempt to use the higher level as treatment
+#'   but may not always correctly identify the intended level. In such cases,
+#'   consider converting the factor to numeric before plotting.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
 #' @param position Position adjustment.
@@ -626,7 +722,7 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @return A ggplot2 layer or list of layers
 #' @examples
 #' library(ggplot2)
-#' 
+#'
 #' # Basic calibration plot using nhefs_weights dataset
 #' # .fitted contains propensity scores, qsmk is the treatment variable
 #' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
@@ -713,6 +809,7 @@ geom_calibration <- function(
       conf_level = conf_level,
       window_size = window_size,
       step_size = step_size,
+      treatment_level = treatment_level,
       na.rm = na.rm,
       ...
     )

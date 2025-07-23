@@ -55,9 +55,6 @@ computing mean prediction, observed rate, counts, and confidence intervals.
 # .fitted contains propensity scores, qsmk is the treatment variable
 check_calibration(nhefs_weights, .fitted, qsmk)
 
-# Both quoted and unquoted column names work
-check_calibration(nhefs_weights, ".fitted", "qsmk")
-
 # Specify treatment level explicitly (useful for multi-level factors)
 check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 

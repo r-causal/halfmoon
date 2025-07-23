@@ -20,7 +20,7 @@ utils::globalVariables(c(
   "variable",
   ".bin",
   "bin",
-  "n_events", 
+  "n_events",
   "n_total",
   "x",
   "x_var",

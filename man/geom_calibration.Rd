@@ -42,7 +42,12 @@ x should be propensity scores/predicted probabilities, y should be treatment var
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
 
 \item{treatment_level}{Value indicating which level of y represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.}
+If NULL (default), uses the last level for factors or max value for numeric.
+For factors with numeric-looking levels (e.g., "0", "1"), this parameter
+works as expected. For factors with non-numeric levels (e.g., "Control",
+"Treatment"), the function will attempt to use the higher level as treatment
+but may not always correctly identify the intended level. In such cases,
+consider converting the factor to numeric before plotting.}
 
 \item{show_ribbon}{Logical; show confidence interval ribbon.}
 

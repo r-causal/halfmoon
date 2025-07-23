@@ -17,7 +17,8 @@ test_that("check_calibration works with basic input", {
 
   expect_s3_class(result, "tbl_df")
   expect_true(all(
-    c(".bin", "fitted_mean", "group_mean", "count", "lower", "upper") %in% names(result)
+    c(".bin", "fitted_mean", "group_mean", "count", "lower", "upper") %in%
+      names(result)
   ))
   expect_true(nrow(result) > 0)
   expect_true(all(result$fitted_mean >= 0 & result$fitted_mean <= 1))
@@ -160,14 +161,14 @@ test_that("check_calibration handles edge cases", {
   result_zeros <- check_calibration(all_zeros, pred, obs)
 
   expect_s3_class(result_zeros, "tbl_df")
-  expect_true(all(result_zeros$group_mean == 1))  # All obs are 0, which becomes the treatment level
+  expect_true(all(result_zeros$group_mean == 1)) # All obs are 0, which becomes the treatment level
 
   # Test all ones (treatment level 1, so group_mean should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
   result_ones <- check_calibration(all_ones, pred, obs)
 
   expect_s3_class(result_ones, "tbl_df")
-  expect_true(all(result_ones$group_mean == 1))  # All obs are 1, which becomes the treatment level
+  expect_true(all(result_ones$group_mean == 1)) # All obs are 1, which becomes the treatment level
 })
 
 test_that("check_calibration handles NA values", {
@@ -211,7 +212,7 @@ test_that("geom_calibration works with breaks method", {
   )
 
   # Test breaks method
-  p_breaks <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_breaks <- ggplot(cal_data, aes(x = pred, y = as.factor(obs))) +
     geom_calibration(method = "breaks", bins = 5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
