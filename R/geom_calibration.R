@@ -71,9 +71,9 @@ check_calibration <- function(
 ) {
   method <- match.arg(method)
   binning_method <- match.arg(binning_method)
-  bins_are_not_correctly_specified <- (method == "breaks" && 
+  bins_are_not_correctly_specified <- (method == "breaks" &&
     (!is.numeric(bins) || bins < 2 || !isTRUE(all.equal(bins, round(bins)))))
-  
+
   if (bins_are_not_correctly_specified) {
     stop("`bins` must be an integer > 1.")
   }
@@ -535,9 +535,6 @@ compute_calibration_windowed_internal <- function(
     )
   }
 }
-
-# Define NULL coalescing operator
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
 # Stat for computing calibration statistics
 StatCalibration <- ggplot2::ggproto(

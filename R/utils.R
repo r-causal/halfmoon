@@ -10,6 +10,10 @@
 #   }
 # }
 
+# Import NULL coalescing operator from rlang
+#' @importFrom rlang %||%
+NULL
+
 abort <- function(.message) {
   cli::cli_abort(message = .message)
 }
