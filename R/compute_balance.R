@@ -534,7 +534,7 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' @details
 #' Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
 #' and implemented following Huling & Mak (2024). The calculation uses a quadratic
-#' form: $w^T P w + q^T w + k$, where the components depend on the estimand.
+#' form: \eqn{w^T P w + q^T w + k}, where the components depend on the estimand.
 #'
 #' For binary variables in the covariates, variance is calculated as p(1-p)
 #' rather than sample variance to prevent over-weighting.
