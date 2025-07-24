@@ -64,8 +64,9 @@ than univariate balance measures.
 }
 \details{
 Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
-and implemented following Huling & Mak (2024). The calculation uses a quadratic
-form: \eqn{w^T P w + q^T w + k}, where the components depend on the estimand.
+and implemented following Huling & Mak (2024) and Huling et al. (2024).
+The calculation uses a quadratic form: \eqn{w^T P w + q^T w + k},
+where the components depend on the estimand.
 
 For binary variables in the covariates, variance is calculated as p(1-p)
 rather than sample variance to prevent over-weighting.
@@ -98,7 +99,11 @@ bal_energy(
 }
 \references{
 Huling, J. D., & Mak, S. (2024). Energy Balancing of Covariate Distributions.
-Journal of Causal Inference, 12(1).
+Journal of Causal Inference, 12(1)
+.
+Huling, J. D., Greifer, N., & Chen, G. (2023). Independence weights for
+causal inference with continuous treatments. \emph{Journal of the American
+Statistical Association}, 0(ja), 1–25. \doi{10.1080/01621459.2023.2213485}
 
 Székely, G. J., & Rizzo, M. L. (2004). Testing for equal distributions in
 high dimension. InterStat, 5.
