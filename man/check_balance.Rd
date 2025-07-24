@@ -79,13 +79,13 @@ returns results in a tidy format.
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 
 # With specific metrics only
-check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
+check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 
 # Exclude observed results
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
 
 # Use correlation for continuous exposure
-check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
+check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
 
 # With dummy variables for categorical variables (default behavior)
 check_balance(nhefs_weights, c(age, sex, race), qsmk)
