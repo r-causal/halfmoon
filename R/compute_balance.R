@@ -594,7 +594,6 @@ bal_energy <- function(
   }
 
   if (is.data.frame(covariates)) {
-    # Convert categorical variables to dummy variables
     covariates <- create_dummy_variables(covariates, binary_as_single = TRUE)
     covariates <- as.matrix(covariates)
   }
@@ -623,7 +622,12 @@ bal_energy <- function(
     }
   }
 
-  # Handle missing values
+  if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
+    abort(
+      "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}"
+    )
+  }
+
   if (!na.rm && anyNA(covariates)) {
     abort(
       "Energy distance cannot be computed with missing values in {.arg covariates}. Set {.arg na.rm = TRUE} or remove missing values."
@@ -655,13 +659,6 @@ bal_energy <- function(
     if (nrow(covariates) == 0) {
       return(NA_real_)
     }
-  }
-
-  # Validate estimand
-  if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
-    abort(
-      "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}"
-    )
   }
 
   # Determine treatment type
@@ -712,7 +709,7 @@ bal_energy <- function(
   }
 
   # Identify binary variables (checking each column)
-  binary_vars <- apply(covariates, 2, function(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(covariates), function(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
@@ -773,6 +770,54 @@ bal_energy <- function(
 
 # Helper functions for bal_energy() - internal use only
 
+#' Calculate variance for a single covariate
+#' @noRd
+calculate_variance <- function(col, is_binary, weights_norm) {
+  if (is_binary) {
+    p <- sum(weights_norm * col)
+    p * (1 - p)
+  } else {
+    mean_x <- sum(weights_norm * col)
+    denom <- 1 - sum(weights_norm^2)
+    if (denom <= 0) {
+      sum(weights_norm * (col - mean_x)^2)
+    } else {
+      sum(weights_norm * (col - mean_x)^2) / denom
+    }
+  }
+}
+
+#' Calculate scaling factor for a single covariate
+#' @noRd
+calculate_scaling_factor <- function(col, is_binary, weights_norm = NULL) {
+  if (is.null(weights_norm)) {
+    # Unweighted case
+    if (is_binary) {
+      p <- mean(col)
+      sqrt(p * (1 - p))
+    } else {
+      sd(col)
+    }
+  } else {
+    # Weighted case
+    if (is_binary) {
+      weighted_mean <- sum(weights_norm * col)
+      sqrt(weighted_mean * (1 - weighted_mean))
+    } else {
+      weighted_mean <- sum(weights_norm * col)
+      # Use Bessel's correction for weighted variance
+      denom <- 1 - sum(weights_norm^2)
+      if (denom <= 0) {
+        # Fall back to biased estimator if correction fails
+        weighted_var <- sum(weights_norm * (col - weighted_mean)^2)
+      } else {
+        weighted_var <- sum(weights_norm * (col - weighted_mean)^2) / denom
+      }
+      sqrt(weighted_var)
+    }
+  }
+}
+
 #' Standardize covariates for energy distance calculation
 #' @noRd
 bal_energy_standardize <- function(
@@ -781,49 +826,24 @@ bal_energy_standardize <- function(
   binary_vars,
   use_weights = TRUE
 ) {
-  n_vars <- ncol(covariates)
-  scaling_factors <- numeric(n_vars)
-
   if (use_weights) {
     # Normalize weights
     weights_norm <- weights / sum(weights)
 
-    for (j in seq_len(n_vars)) {
-      if (binary_vars[j]) {
-        # For binary variables, use p(1-p) variance
-        weighted_mean <- sum(weights_norm * covariates[, j])
-        scaling_factors[j] <- sqrt(weighted_mean * (1 - weighted_mean))
-      } else {
-        # For continuous variables, use weighted sample variance
-        weighted_mean <- sum(weights_norm * covariates[, j])
-        # Use Bessel's correction for weighted variance
-        denom <- 1 - sum(weights_norm^2)
-        if (denom <= 0) {
-          # Fall back to biased estimator if correction fails
-          weighted_var <- sum(
-            weights_norm * (covariates[, j] - weighted_mean)^2
-          )
-        } else {
-          weighted_var <- sum(
-            weights_norm * (covariates[, j] - weighted_mean)^2
-          ) /
-            denom
-        }
-        scaling_factors[j] <- sqrt(weighted_var)
-      }
-    }
+    scaling_factors <- purrr::map2_dbl(
+      as.data.frame(covariates),
+      binary_vars,
+      calculate_scaling_factor,
+      weights_norm = weights_norm
+    )
   } else {
     # Use unweighted standardization (to match cobalt when weights are provided)
-    for (j in seq_len(n_vars)) {
-      if (binary_vars[j]) {
-        # For binary variables, use p(1-p) variance
-        p <- mean(covariates[, j])
-        scaling_factors[j] <- sqrt(p * (1 - p))
-      } else {
-        # For continuous variables, use unweighted sample standard deviation
-        scaling_factors[j] <- sd(covariates[, j])
-      }
-    }
+    scaling_factors <- purrr::map2_dbl(
+      as.data.frame(covariates),
+      binary_vars,
+      calculate_scaling_factor,
+      weights_norm = NULL
+    )
   }
 
   # Avoid division by zero
@@ -847,10 +867,12 @@ bal_energy_between_group <- function(
   group_sizes <- colSums(treatment_indicators)
 
   # Normalize indicators by group size
-  normalized_indicators <- treatment_indicators
-  for (i in seq_len(n_groups)) {
-    normalized_indicators[, i] <- treatment_indicators[, i] / group_sizes[i]
-  }
+  normalized_indicators <- purrr::map2_dfc(
+    as.data.frame(treatment_indicators),
+    group_sizes,
+    ~ .x / .y
+  ) |>
+    as.matrix()
 
   # Compute pairwise differences
   if (n_groups == 2) {
@@ -859,13 +881,15 @@ bal_energy_between_group <- function(
     nn_matrix <- tcrossprod(diff_vec)
   } else {
     # Multi-category case
-    nn_matrix <- matrix(0, nrow = n_obs, ncol = n_obs)
-    for (i in seq_len(n_groups - 1)) {
-      for (j in seq(i + 1, n_groups)) {
-        diff_vec <- normalized_indicators[, i] - normalized_indicators[, j]
-        nn_matrix <- nn_matrix + tcrossprod(diff_vec)
+    nn_matrix <- purrr::map(
+      utils::combn(seq_len(n_groups), 2, simplify = FALSE),
+      function(pair) {
+        diff_vec <- normalized_indicators[, pair[1]] -
+          normalized_indicators[, pair[2]]
+        tcrossprod(diff_vec)
       }
-    }
+    ) |>
+      purrr::reduce(`+`)
   }
 
   # Compute P matrix
@@ -891,22 +915,27 @@ bal_energy_ate <- function(
   group_sizes <- colSums(treatment_indicators)
 
   # Normalize indicators by group size
-  normalized_indicators <- treatment_indicators
-  for (i in seq_len(n_groups)) {
-    normalized_indicators[, i] <- treatment_indicators[, i] / group_sizes[i]
-  }
+  normalized_indicators <- purrr::map2_dfc(
+    as.data.frame(treatment_indicators),
+    group_sizes,
+    ~ .x / .y
+  ) |>
+    as.matrix()
 
   # Compute nn matrix
   nn_matrix <- tcrossprod(normalized_indicators)
 
   # Add pairwise differences if use_improved
   if (use_improved && n_groups > 1) {
-    for (i in seq_len(n_groups - 1)) {
-      for (j in seq(i + 1, n_groups)) {
-        diff_vec <- normalized_indicators[, i] - normalized_indicators[, j]
-        nn_matrix <- nn_matrix + tcrossprod(diff_vec)
+    pairwise_matrices <- purrr::map(
+      utils::combn(seq_len(n_groups), 2, simplify = FALSE),
+      function(pair) {
+        diff_vec <- normalized_indicators[, pair[1]] -
+          normalized_indicators[, pair[2]]
+        tcrossprod(diff_vec)
       }
-    }
+    )
+    nn_matrix <- nn_matrix + purrr::reduce(pairwise_matrices, `+`)
   }
 
   # Compute P matrix
@@ -956,10 +985,12 @@ bal_energy_att_atc <- function(
   group_sizes <- colSums(treatment_indicators)
 
   # Normalize indicators by group size
-  normalized_indicators <- treatment_indicators
-  for (i in seq_len(n_groups)) {
-    normalized_indicators[, i] <- treatment_indicators[, i] / group_sizes[i]
-  }
+  normalized_indicators <- purrr::map2_dfc(
+    as.data.frame(treatment_indicators),
+    group_sizes,
+    ~ .x / .y
+  ) |>
+    as.matrix()
 
   # Compute nn matrix
   nn_matrix <- tcrossprod(normalized_indicators)
@@ -1009,28 +1040,18 @@ bal_energy_continuous <- function(
   weights_norm <- weights / sum(weights)
 
   # Identify binary variables
-  binary_vars <- apply(covariates, 2, function(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(covariates), function(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
 
   # Compute weighted variances for scaling
-  covariate_vars <- numeric(ncol(covariates))
-  for (i in seq_len(ncol(covariates))) {
-    if (binary_vars[i]) {
-      p <- sum(weights_norm * covariates[, i])
-      covariate_vars[i] <- p * (1 - p)
-    } else {
-      mean_x <- sum(weights_norm * covariates[, i])
-      denom <- 1 - sum(weights_norm^2)
-      if (denom <= 0) {
-        covariate_vars[i] <- sum(weights_norm * (covariates[, i] - mean_x)^2)
-      } else {
-        covariate_vars[i] <- sum(weights_norm * (covariates[, i] - mean_x)^2) /
-          denom
-      }
-    }
-  }
+  covariate_vars <- purrr::map2_dbl(
+    as.data.frame(covariates),
+    binary_vars,
+    calculate_variance,
+    weights_norm = weights_norm
+  )
 
   # Treatment variance
   mean_t <- sum(weights_norm * treatment)

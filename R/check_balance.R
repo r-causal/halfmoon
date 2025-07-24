@@ -174,32 +174,33 @@ check_balance <- function(
           }
 
           # Prepare variables for interactions
-          interaction_vars <- list()
+          interaction_vars <- purrr::imap(
+            original_numeric,
+            function(var_data, var_name) {
+              # Check if this was originally a binary categorical
+              if (var_name %in% binary_categorical_names) {
+                # Need to expand binary to both levels for interactions
+                original_var <- original_vars_data[[var_name]]
+                levels_to_use <- if (is.factor(original_var)) {
+                  levels(original_var)
+                } else {
+                  sort(unique(original_var))
+                }
 
-          for (var_name in names(original_numeric)) {
-            var_data <- original_numeric[[var_name]]
-
-            # Check if this was originally a binary categorical
-            if (var_name %in% binary_categorical_names) {
-              # Need to expand binary to both levels for interactions
-              original_var <- original_vars_data[[var_name]]
-              levels_to_use <- if (is.factor(original_var)) {
-                levels(original_var)
+                # Create dummy for each level
+                purrr::map(levels_to_use, function(level) {
+                  dummy_name <- paste0(var_name, level)
+                  dummy_values <- as.numeric(original_var == level)
+                  stats::setNames(list(dummy_values), dummy_name)
+                }) |>
+                  purrr::flatten()
               } else {
-                sort(unique(original_var))
+                # Continuous or already expanded multi-level variable
+                stats::setNames(list(var_data), var_name)
               }
-
-              # Create dummy for each level
-              for (level in levels_to_use) {
-                dummy_name <- paste0(var_name, level)
-                dummy_values <- as.numeric(original_var == level)
-                interaction_vars[[dummy_name]] <- dummy_values
-              }
-            } else {
-              # Continuous or already expanded multi-level variable
-              interaction_vars[[var_name]] <- var_data
             }
-          }
+          ) |>
+            purrr::flatten()
 
           # Now create interactions between all pairs
           var_combinations <- utils::combn(

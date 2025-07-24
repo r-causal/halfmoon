@@ -1380,10 +1380,10 @@ test_that("bal_energy continuous treatment comparison with cobalt", {
 
 test_that("bal_energy handles categorical covariates", {
   testthat::skip_if_not_installed("cobalt", minimum_version = "4.5.2")
-  
+
   set.seed(789)
   n <- 100
-  
+
   # Create test data with mixed types
   covariates <- data.frame(
     numeric1 = rnorm(n),
@@ -1391,40 +1391,40 @@ test_that("bal_energy handles categorical covariates", {
     factor1 = factor(sample(c("A", "B", "C"), n, replace = TRUE)),
     character1 = sample(c("X", "Y"), n, replace = TRUE)
   )
-  
+
   treatment <- rbinom(n, 1, 0.5)
-  
+
   # Our implementation with categorical variables
   our_result <- bal_energy(
     covariates = covariates,
     group = treatment
   )
-  
+
   # Cobalt with same data
   cobalt_result <- cobalt::bal.compute(
     x = covariates,
     treat = treatment,
     stat = "energy.dist"
   )
-  
+
   # Should be very close (cobalt converts categoricals to dummies internally)
   expect_equal(our_result, cobalt_result, tolerance = 1e-4)
-  
+
   # Test with weights
   weights <- runif(n, 0.5, 1.5)
-  
+
   our_weighted <- bal_energy(
     covariates = covariates,
     group = treatment,
     weights = weights
   )
-  
+
   cobalt_weighted <- cobalt::bal.compute(
     x = covariates,
     treat = treatment,
     weights = weights,
     stat = "energy.dist"
   )
-  
+
   expect_equal(our_weighted, cobalt_weighted, tolerance = 1e-4)
 })
