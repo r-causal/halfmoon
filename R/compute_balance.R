@@ -867,12 +867,7 @@ bal_energy_between_group <- function(
   group_sizes <- colSums(treatment_indicators)
 
   # Normalize indicators by group size
-  normalized_indicators <- purrr::map2_dfc(
-    as.data.frame(treatment_indicators),
-    group_sizes,
-    ~ .x / .y
-  ) |>
-    as.matrix()
+  normalized_indicators <- sweep(treatment_indicators, 2, group_sizes, "/")
 
   # Compute pairwise differences
   if (n_groups == 2) {
@@ -915,12 +910,7 @@ bal_energy_ate <- function(
   group_sizes <- colSums(treatment_indicators)
 
   # Normalize indicators by group size
-  normalized_indicators <- purrr::map2_dfc(
-    as.data.frame(treatment_indicators),
-    group_sizes,
-    ~ .x / .y
-  ) |>
-    as.matrix()
+  normalized_indicators <- sweep(treatment_indicators, 2, group_sizes, "/")
 
   # Compute nn matrix
   nn_matrix <- tcrossprod(normalized_indicators)
@@ -985,12 +975,7 @@ bal_energy_att_atc <- function(
   group_sizes <- colSums(treatment_indicators)
 
   # Normalize indicators by group size
-  normalized_indicators <- purrr::map2_dfc(
-    as.data.frame(treatment_indicators),
-    group_sizes,
-    ~ .x / .y
-  ) |>
-    as.matrix()
+  normalized_indicators <- sweep(treatment_indicators, 2, group_sizes, "/")
 
   # Compute nn matrix
   nn_matrix <- tcrossprod(normalized_indicators)
