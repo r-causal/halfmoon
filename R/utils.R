@@ -35,5 +35,6 @@ utils::globalVariables(c(
   ".fitted",
   ".group",
   "ymin",
-  "ymax"
+  "ymax",
+  "conf_level"
 ))
