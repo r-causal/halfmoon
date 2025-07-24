@@ -65,8 +65,7 @@ A ggplot2 object.
 \description{
 Create a calibration plot to assess the agreement between predicted
 probabilities and observed treatment rates. This function wraps
-\code{geom_calibration()} to provide a convenient plotting interface
-in the style of the probably package.
+\code{geom_calibration()}.
 }
 \examples{
 library(ggplot2)

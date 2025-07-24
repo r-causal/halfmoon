@@ -70,9 +70,9 @@ consider converting the factor to numeric before plotting.}
 A ggplot2 layer or list of layers
 }
 \description{
-This geom creates calibration plots to assess the agreement between predicted
+\code{geom_calibration()} creates calibration plots to assess the agreement between predicted
 probabilities and observed binary outcomes. It supports three methods:
-binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed").
+binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with \code{\link[=check_calibration]{check_calibration()}}.
 }
 \examples{
 library(ggplot2)
