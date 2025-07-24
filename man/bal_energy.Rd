@@ -8,7 +8,7 @@ bal_energy(
   covariates,
   group,
   weights = NULL,
-  estimand = "ATE",
+  estimand = NULL,
   focal_group = NULL,
   improved = TRUE,
   standardized = TRUE,
@@ -28,10 +28,10 @@ have the same length as rows in \code{covariates}. All weights must be non-negat
 
 \item{estimand}{Character string specifying the estimand. Options are:
 \itemize{
-\item "ATE" (Average Treatment Effect, default): Balance across all groups
+\item NULL (default): Between-group energy distance only
+\item "ATE" (Average Treatment Effect): Balance across all groups
 \item "ATT" (Average Treatment Effect on Treated): Balance for treated group
 \item "ATC" (Average Treatment Effect on Controls): Balance for control group
-\item NULL: Between-group energy distance only
 For continuous treatments, only NULL is supported.
 }}
 

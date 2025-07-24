@@ -509,10 +509,10 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' @param weights An optional numeric vector of case weights. If provided, must
 #'   have the same length as rows in `covariates`. All weights must be non-negative.
 #' @param estimand Character string specifying the estimand. Options are:
-#'   - "ATE" (Average Treatment Effect, default): Balance across all groups
+#'   - NULL (default): Between-group energy distance only
+#'   - "ATE" (Average Treatment Effect): Balance across all groups
 #'   - "ATT" (Average Treatment Effect on Treated): Balance for treated group
 #'   - "ATC" (Average Treatment Effect on Controls): Balance for control group
-#'   - NULL: Between-group energy distance only
 #'   For continuous treatments, only NULL is supported.
 #' @param focal_group The focal group level for ATT/ATC. If `NULL` (default),
 #'   automatically determined based on estimand.
@@ -569,11 +569,12 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' )
 #'
 #' @export
+#' @importFrom stats dist model.matrix sd
 bal_energy <- function(
   covariates,
   group,
   weights = NULL,
-  estimand = "ATE",
+  estimand = NULL,
   focal_group = NULL,
   improved = TRUE,
   standardized = TRUE,
@@ -659,7 +660,7 @@ bal_energy <- function(
 
   # Special case: constant group (only one unique value)
   if (n_groups <= 1) {
-    return(0) # Perfect balance when there's only one group
+    stop("Group variable must have at least two levels")
   }
 
   # Determine if treatment is continuous
@@ -710,7 +711,8 @@ bal_energy <- function(
   standardized_covariates <- bal_energy_standardize(
     covariates = covariates,
     weights = weights_normalized,
-    binary_vars = binary_vars
+    binary_vars = binary_vars,
+    use_weights = is.null(weights) # Only use weights for standardization when no weights provided
   )
 
   # Compute distance matrix
@@ -763,33 +765,54 @@ bal_energy <- function(
 
 #' Standardize covariates for energy distance calculation
 #' @noRd
-bal_energy_standardize <- function(covariates, weights, binary_vars) {
+bal_energy_standardize <- function(
+  covariates,
+  weights,
+  binary_vars,
+  use_weights = TRUE
+) {
   n_vars <- ncol(covariates)
   scaling_factors <- numeric(n_vars)
 
-  # Normalize weights
-  weights_norm <- weights / sum(weights)
+  if (use_weights) {
+    # Normalize weights
+    weights_norm <- weights / sum(weights)
 
-  for (j in seq_len(n_vars)) {
-    if (binary_vars[j]) {
-      # For binary variables, use p(1-p) variance
-      weighted_mean <- sum(weights_norm * covariates[, j])
-      scaling_factors[j] <- sqrt(weighted_mean * (1 - weighted_mean))
-    } else {
-      # For continuous variables, use weighted sample variance
-      weighted_mean <- sum(weights_norm * covariates[, j])
-      # Use Bessel's correction for weighted variance
-      denom <- 1 - sum(weights_norm^2)
-      if (denom <= 0) {
-        # Fall back to biased estimator if correction fails
-        weighted_var <- sum(weights_norm * (covariates[, j] - weighted_mean)^2)
+    for (j in seq_len(n_vars)) {
+      if (binary_vars[j]) {
+        # For binary variables, use p(1-p) variance
+        weighted_mean <- sum(weights_norm * covariates[, j])
+        scaling_factors[j] <- sqrt(weighted_mean * (1 - weighted_mean))
       } else {
-        weighted_var <- sum(
-          weights_norm * (covariates[, j] - weighted_mean)^2
-        ) /
-          denom
+        # For continuous variables, use weighted sample variance
+        weighted_mean <- sum(weights_norm * covariates[, j])
+        # Use Bessel's correction for weighted variance
+        denom <- 1 - sum(weights_norm^2)
+        if (denom <= 0) {
+          # Fall back to biased estimator if correction fails
+          weighted_var <- sum(
+            weights_norm * (covariates[, j] - weighted_mean)^2
+          )
+        } else {
+          weighted_var <- sum(
+            weights_norm * (covariates[, j] - weighted_mean)^2
+          ) /
+            denom
+        }
+        scaling_factors[j] <- sqrt(weighted_var)
       }
-      scaling_factors[j] <- sqrt(weighted_var)
+    }
+  } else {
+    # Use unweighted standardization (to match cobalt when weights are provided)
+    for (j in seq_len(n_vars)) {
+      if (binary_vars[j]) {
+        # For binary variables, use p(1-p) variance
+        p <- mean(covariates[, j])
+        scaling_factors[j] <- sqrt(p * (1 - p))
+      } else {
+        # For continuous variables, use unweighted sample standard deviation
+        scaling_factors[j] <- sd(covariates[, j])
+      }
     }
   }
 
