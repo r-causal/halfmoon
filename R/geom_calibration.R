@@ -630,9 +630,9 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 
 #' Geom for calibration plot with confidence intervals
 #'
-#' This geom creates calibration plots to assess the agreement between predicted
+#' `geom_calibration()` creates calibration plots to assess the agreement between predicted
 #' probabilities and observed binary outcomes. It supports three methods:
-#' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed").
+#' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with [`check_calibration()`].
 #'
 #' @param mapping Aesthetic mapping (must supply x and y if not inherited).
 #'   x should be propensity scores/predicted probabilities, y should be treatment variable.
