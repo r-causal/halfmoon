@@ -43,13 +43,13 @@ bal_smd <- function(
   }
   if (!is.null(weights)) {
     if (!is.numeric(weights)) {
-      stop("Argument 'weights' must be numeric or NULL")
+      abort("Argument {.arg weights} must be numeric or {.code NULL}")
     }
     if (length(weights) != length(covariate)) {
       stop("Argument 'weights' must have the same length as 'covariate'")
     }
     if (any(weights < 0, na.rm = TRUE)) {
-      stop("Weights cannot be negative")
+      abort("Weights cannot be negative")
     }
   }
 
@@ -145,13 +145,13 @@ bal_vr <- function(
   }
   if (!is.null(weights)) {
     if (!is.numeric(weights)) {
-      stop("Argument 'weights' must be numeric or NULL")
+      abort("Argument {.arg weights} must be numeric or {.code NULL}")
     }
     if (length(weights) != length(covariate)) {
       stop("Argument 'weights' must have the same length as 'covariate'")
     }
     if (any(weights < 0, na.rm = TRUE)) {
-      stop("Weights cannot be negative")
+      abort("Weights cannot be negative")
     }
   }
 
@@ -302,13 +302,13 @@ bal_ks <- function(
   }
   if (!is.null(weights)) {
     if (!is.numeric(weights)) {
-      stop("Argument 'weights' must be numeric or NULL")
+      abort("Argument {.arg weights} must be numeric or {.code NULL}")
     }
     if (length(weights) != length(covariate)) {
       stop("Argument 'weights' must have the same length as 'covariate'")
     }
     if (any(weights < 0, na.rm = TRUE)) {
-      stop("Weights cannot be negative")
+      abort("Weights cannot be negative")
     }
   }
 
@@ -440,13 +440,13 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   }
   if (!is.null(weights)) {
     if (!is.numeric(weights)) {
-      stop("Argument 'weights' must be numeric or NULL")
+      abort("Argument {.arg weights} must be numeric or {.code NULL}")
     }
     if (length(weights) != length(x)) {
       stop("Argument 'weights' must have the same length as 'x' and 'y'")
     }
     if (any(weights < 0, na.rm = TRUE)) {
-      stop("Weights cannot be negative")
+      abort("Weights cannot be negative")
     }
   }
 
@@ -582,55 +582,55 @@ bal_energy <- function(
 ) {
   # Input validation
   if (!is.data.frame(covariates) && !is.matrix(covariates)) {
-    stop("Argument 'covariates' must be a data frame or matrix")
+    abort("Argument {.arg covariates} must be a data frame or matrix")
   }
 
   if (is.data.frame(covariates)) {
     # Check all variables are numeric
     if (!all(purrr::map_lgl(covariates, is.numeric))) {
-      stop("All variables in 'covariates' must be numeric")
+      abort("All variables in {.arg covariates} must be numeric")
     }
     covariates <- as.matrix(covariates)
   }
 
   if (nrow(covariates) == 0) {
-    stop("Argument 'covariates' cannot be empty")
+    abort("Argument {.arg covariates} cannot be empty")
   }
 
   if (length(group) != nrow(covariates)) {
-    stop("Arguments 'group' and 'covariates' must have the same length")
+    abort("Arguments {.arg group} and {.arg covariates} must have the same length")
   }
 
   if (!is.null(weights)) {
     if (!is.numeric(weights)) {
-      stop("Argument 'weights' must be numeric or NULL")
+      abort("Argument {.arg weights} must be numeric or {.code NULL}")
     }
     if (length(weights) != nrow(covariates)) {
-      stop(
-        "Argument 'weights' must have the same length as rows in 'covariates'"
+      abort(
+        "Argument {.arg weights} must have the same length as rows in {.arg covariates}"
       )
     }
     if (any(weights < 0, na.rm = TRUE)) {
-      stop("Weights cannot be negative")
+      abort("Weights cannot be negative")
     }
   }
 
   # Handle missing values
   if (!na.rm && anyNA(covariates)) {
-    stop(
-      "Energy distance cannot be computed with missing values in covariates. Set na.rm = TRUE or remove missing values."
+    abort(
+      "Energy distance cannot be computed with missing values in {.arg covariates}. Set {.arg na.rm = TRUE} or remove missing values."
     )
   }
 
   if (!na.rm && anyNA(group)) {
-    stop(
-      "Energy distance cannot be computed with missing values in group. Set na.rm = TRUE or remove missing values."
+    abort(
+      "Energy distance cannot be computed with missing values in {.arg group}. Set {.arg na.rm = TRUE} or remove missing values."
     )
   }
 
   if (!na.rm && !is.null(weights) && anyNA(weights)) {
-    stop(
-      "Energy distance cannot be computed with missing values in weights. Set na.rm = TRUE or remove missing values."
+    abort(
+      "Energy distance cannot be computed with missing values in {.arg weights}. Set {.arg na.rm = TRUE} or remove missing values."
     )
   }
 
@@ -651,7 +651,7 @@ bal_energy <- function(
 
   # Validate estimand
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
-    stop("estimand must be one of: 'ATE', 'ATT', 'ATC', or NULL")
+    abort("{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}")
   }
 
   # Determine treatment type
@@ -660,14 +660,14 @@ bal_energy <- function(
 
   # Special case: constant group (only one unique value)
   if (n_groups <= 1) {
-    stop("Group variable must have at least two levels")
+    abort("Group variable must have at least two levels")
   }
 
   # Determine if treatment is continuous
   is_continuous <- is.numeric(group) && n_groups > 10
 
   if (is_continuous && !is.null(estimand)) {
-    stop("For continuous treatments, estimand must be NULL")
+    abort("For continuous treatments, {.arg estimand} must be {.code NULL}")
   }
 
   # For continuous treatments, use distance correlation
