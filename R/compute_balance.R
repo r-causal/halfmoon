@@ -493,3 +493,570 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Return standard correlation
   cov / sqrt(vx * vy)
 }
+
+#' Balance Energy Distance
+#'
+#' Computes the energy distance as a multivariate measure of covariate balance
+#' between groups. Energy distance captures the similarity between distributions
+#' across the entire joint distribution of covariates, making it more comprehensive
+#' than univariate balance measures.
+#'
+#' @param covariates A data frame or matrix containing the covariates to compare.
+#'   All variables must be numeric. For categorical variables, use dummy coding.
+#' @param group A vector (factor or numeric) indicating group membership. For
+#'   binary and multi-category treatments, must have 2+ unique levels. For
+#'   continuous treatments, should be numeric.
+#' @param weights An optional numeric vector of case weights. If provided, must
+#'   have the same length as rows in `covariates`. All weights must be non-negative.
+#' @param estimand Character string specifying the estimand. Options are:
+#'   - "ATE" (Average Treatment Effect, default): Balance across all groups
+#'   - "ATT" (Average Treatment Effect on Treated): Balance for treated group
+#'   - "ATC" (Average Treatment Effect on Controls): Balance for control group
+#'   - NULL: Between-group energy distance only
+#'   For continuous treatments, only NULL is supported.
+#' @param focal_group The focal group level for ATT/ATC. If `NULL` (default),
+#'   automatically determined based on estimand.
+#' @param improved Logical. Use improved energy distance for ATE? Default is TRUE.
+#'   When TRUE, adds pairwise treatment comparisons for better group separation.
+#' @param standardized Logical. For continuous treatments, return standardized
+#'   distance correlation? Default is TRUE.
+#' @param na.rm A logical value indicating whether to remove missing values
+#'   before computation. If `FALSE` (default), missing values result in
+#'   an error (energy distance cannot be computed with missing data).
+#'
+#' @return A numeric value representing the energy distance. Lower values
+#'   indicate better balance, with 0 indicating perfect balance. For continuous
+#'   treatments, returns distance correlation (0 = independence).
+#'
+#' @details
+#' Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
+#' and implemented following Huling & Mak (2024). The calculation uses a quadratic
+#' form: w^T P w + q^T w + k, where the components depend on the estimand.
+#'
+#' For binary variables in the covariates, variance is calculated as p(1-p)
+#' rather than sample variance to prevent over-weighting.
+#'
+#' For continuous treatments, the function uses distance correlation instead of
+#' traditional energy distance, measuring independence between treatment and covariates.
+#'
+#' @references
+#' Huling, J. D., & Mak, S. (2024). Energy Balancing of Covariate Distributions.
+#' Journal of Causal Inference, 12(1).
+#'
+#' Székely, G. J., & Rizzo, M. L. (2004). Testing for equal distributions in
+#' high dimension. InterStat, 5.
+#'
+#' @examples
+#' # Binary treatment
+#' bal_energy(
+#'   covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
+#'   group = nhefs_weights$qsmk
+#' )
+#'
+#' # With weights
+#' bal_energy(
+#'   covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
+#'   group = nhefs_weights$qsmk,
+#'   weights = nhefs_weights$w_ate
+#' )
+#'
+#' # ATT estimand
+#' bal_energy(
+#'   covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
+#'   group = nhefs_weights$qsmk,
+#'   weights = nhefs_weights$w_att,
+#'   estimand = "ATT"
+#' )
+#'
+#' @export
+bal_energy <- function(
+  covariates,
+  group,
+  weights = NULL,
+  estimand = "ATE",
+  focal_group = NULL,
+  improved = TRUE,
+  standardized = TRUE,
+  na.rm = FALSE
+) {
+  # Input validation
+  if (!is.data.frame(covariates) && !is.matrix(covariates)) {
+    stop("Argument 'covariates' must be a data frame or matrix")
+  }
+
+  if (is.data.frame(covariates)) {
+    # Check all variables are numeric
+    if (!all(purrr::map_lgl(covariates, is.numeric))) {
+      stop("All variables in 'covariates' must be numeric")
+    }
+    covariates <- as.matrix(covariates)
+  }
+
+  if (nrow(covariates) == 0) {
+    stop("Argument 'covariates' cannot be empty")
+  }
+
+  if (length(group) != nrow(covariates)) {
+    stop("Arguments 'group' and 'covariates' must have the same length")
+  }
+
+  if (!is.null(weights)) {
+    if (!is.numeric(weights)) {
+      stop("Argument 'weights' must be numeric or NULL")
+    }
+    if (length(weights) != nrow(covariates)) {
+      stop(
+        "Argument 'weights' must have the same length as rows in 'covariates'"
+      )
+    }
+    if (any(weights < 0, na.rm = TRUE)) {
+      stop("Weights cannot be negative")
+    }
+  }
+
+  # Handle missing values
+  if (!na.rm && anyNA(covariates)) {
+    stop(
+      "Energy distance cannot be computed with missing values in covariates. Set na.rm = TRUE or remove missing values."
+    )
+  }
+
+  if (!na.rm && anyNA(group)) {
+    stop(
+      "Energy distance cannot be computed with missing values in group. Set na.rm = TRUE or remove missing values."
+    )
+  }
+
+  if (!na.rm && !is.null(weights) && anyNA(weights)) {
+    stop(
+      "Energy distance cannot be computed with missing values in weights. Set na.rm = TRUE or remove missing values."
+    )
+  }
+
+  # Remove missing values if requested
+  if (na.rm) {
+    complete_cases <- stats::complete.cases(covariates, group)
+    if (!is.null(weights)) {
+      complete_cases <- complete_cases & !is.na(weights)
+      weights <- weights[complete_cases]
+    }
+    covariates <- covariates[complete_cases, , drop = FALSE]
+    group <- group[complete_cases]
+
+    if (nrow(covariates) == 0) {
+      return(NA_real_)
+    }
+  }
+
+  # Validate estimand
+  if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
+    stop("estimand must be one of: 'ATE', 'ATT', 'ATC', or NULL")
+  }
+
+  # Determine treatment type
+  unique_groups <- unique(group)
+  n_groups <- length(unique_groups)
+
+  # Special case: constant group (only one unique value)
+  if (n_groups <= 1) {
+    return(0) # Perfect balance when there's only one group
+  }
+
+  # Determine if treatment is continuous
+  is_continuous <- is.numeric(group) && n_groups > 10
+
+  if (is_continuous && !is.null(estimand)) {
+    stop("For continuous treatments, estimand must be NULL")
+  }
+
+  # For continuous treatments, use distance correlation
+  if (is_continuous) {
+    return(bal_energy_continuous(
+      covariates = covariates,
+      treatment = group,
+      weights = weights,
+      standardized = standardized
+    ))
+  }
+
+  # For discrete treatments, proceed with energy distance
+  # Convert group to factor for consistent handling
+  group <- as.factor(group)
+  unique_groups <- levels(group)
+  n_groups <- length(unique_groups)
+
+  # Default weights
+  if (is.null(weights)) {
+    weights <- rep(1, nrow(covariates))
+  }
+
+  # Normalize weights by group
+  weights_normalized <- weights
+  for (g in unique_groups) {
+    group_mask <- group == g
+    if (any(group_mask)) {
+      group_weights <- weights[group_mask]
+      weights_normalized[group_mask] <- group_weights / mean(group_weights)
+    }
+  }
+
+  # Identify binary variables (checking each column)
+  binary_vars <- apply(covariates, 2, function(x) {
+    unique_vals <- unique(x)
+    length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
+  })
+
+  # Standardize covariates
+  standardized_covariates <- bal_energy_standardize(
+    covariates = covariates,
+    weights = weights_normalized,
+    binary_vars = binary_vars
+  )
+
+  # Compute distance matrix
+  distance_matrix <- as.matrix(dist(standardized_covariates))
+
+  # Create treatment indicators
+  treatment_indicators <- model.matrix(~ group - 1)
+
+  # Compute energy distance components based on estimand
+  if (is.null(estimand)) {
+    # Between-group energy distance only
+    components <- bal_energy_between_group(
+      distance_matrix = distance_matrix,
+      treatment_indicators = treatment_indicators,
+      unique_groups = unique_groups
+    )
+  } else if (estimand == "ATE") {
+    # Average treatment effect
+    components <- bal_energy_ate(
+      distance_matrix = distance_matrix,
+      treatment_indicators = treatment_indicators,
+      unique_groups = unique_groups,
+      weights_normalized = weights_normalized / sum(weights_normalized),
+      improved = improved
+    )
+  } else if (estimand %in% c("ATT", "ATC")) {
+    # Average treatment effect on treated/controls
+    components <- bal_energy_att_atc(
+      distance_matrix = distance_matrix,
+      treatment_indicators = treatment_indicators,
+      unique_groups = unique_groups,
+      weights = weights_normalized,
+      group = group,
+      focal_group = focal_group,
+      estimand = estimand
+    )
+  }
+
+  # Compute final energy distance using quadratic form
+  energy_distance <- as.numeric(
+    t(weights_normalized) %*% components$P %*% weights_normalized
+  ) +
+    sum(components$q * weights_normalized) +
+    components$k
+
+  return(energy_distance)
+}
+
+# Helper functions for bal_energy() - internal use only
+
+#' Standardize covariates for energy distance calculation
+#' @noRd
+bal_energy_standardize <- function(covariates, weights, binary_vars) {
+  n_vars <- ncol(covariates)
+  scaling_factors <- numeric(n_vars)
+
+  # Normalize weights
+  weights_norm <- weights / sum(weights)
+
+  for (j in seq_len(n_vars)) {
+    if (binary_vars[j]) {
+      # For binary variables, use p(1-p) variance
+      weighted_mean <- sum(weights_norm * covariates[, j])
+      scaling_factors[j] <- sqrt(weighted_mean * (1 - weighted_mean))
+    } else {
+      # For continuous variables, use weighted sample variance
+      weighted_mean <- sum(weights_norm * covariates[, j])
+      # Use Bessel's correction for weighted variance
+      denom <- 1 - sum(weights_norm^2)
+      if (denom <= 0) {
+        # Fall back to biased estimator if correction fails
+        weighted_var <- sum(weights_norm * (covariates[, j] - weighted_mean)^2)
+      } else {
+        weighted_var <- sum(
+          weights_norm * (covariates[, j] - weighted_mean)^2
+        ) /
+          denom
+      }
+      scaling_factors[j] <- sqrt(weighted_var)
+    }
+  }
+
+  # Avoid division by zero
+  scaling_factors[scaling_factors == 0] <- 1
+
+  # Standardize covariates
+  scale(covariates, center = TRUE, scale = scaling_factors)
+}
+
+#' Compute between-group energy distance components
+#' @noRd
+bal_energy_between_group <- function(
+  distance_matrix,
+  treatment_indicators,
+  unique_groups
+) {
+  n_obs <- nrow(distance_matrix)
+  n_groups <- length(unique_groups)
+
+  # Compute group sizes
+  group_sizes <- colSums(treatment_indicators)
+
+  # Normalize indicators by group size
+  normalized_indicators <- treatment_indicators
+  for (i in seq_len(n_groups)) {
+    normalized_indicators[, i] <- treatment_indicators[, i] / group_sizes[i]
+  }
+
+  # Compute pairwise differences
+  if (n_groups == 2) {
+    # Binary case
+    diff_vec <- normalized_indicators[, 1] - normalized_indicators[, 2]
+    nn_matrix <- tcrossprod(diff_vec)
+  } else {
+    # Multi-category case
+    nn_matrix <- matrix(0, nrow = n_obs, ncol = n_obs)
+    for (i in seq_len(n_groups - 1)) {
+      for (j in seq(i + 1, n_groups)) {
+        diff_vec <- normalized_indicators[, i] - normalized_indicators[, j]
+        nn_matrix <- nn_matrix + tcrossprod(diff_vec)
+      }
+    }
+  }
+
+  # Compute P matrix
+  P <- -distance_matrix * nn_matrix
+
+  # For between-group only, q and k are zero
+  list(P = P, q = rep(0, n_obs), k = 0)
+}
+
+#' Compute ATE energy distance components
+#' @noRd
+bal_energy_ate <- function(
+  distance_matrix,
+  treatment_indicators,
+  unique_groups,
+  weights_normalized,
+  improved
+) {
+  n_obs <- nrow(distance_matrix)
+  n_groups <- length(unique_groups)
+
+  # Compute group sizes
+  group_sizes <- colSums(treatment_indicators)
+
+  # Normalize indicators by group size
+  normalized_indicators <- treatment_indicators
+  for (i in seq_len(n_groups)) {
+    normalized_indicators[, i] <- treatment_indicators[, i] / group_sizes[i]
+  }
+
+  # Compute nn matrix
+  nn_matrix <- tcrossprod(normalized_indicators)
+
+  # Add pairwise differences if improved
+  if (improved && n_groups > 1) {
+    for (i in seq_len(n_groups - 1)) {
+      for (j in seq(i + 1, n_groups)) {
+        diff_vec <- normalized_indicators[, i] - normalized_indicators[, j]
+        nn_matrix <- nn_matrix + tcrossprod(diff_vec)
+      }
+    }
+  }
+
+  # Compute P matrix
+  P <- -distance_matrix * nn_matrix
+
+  # Compute q vector
+  q <- 2 *
+    as.vector(weights_normalized %*% distance_matrix) *
+    rowSums(normalized_indicators)
+
+  # Compute k constant
+  k <- -n_groups *
+    as.numeric(
+      weights_normalized %*% distance_matrix %*% weights_normalized
+    )
+
+  list(P = P, q = q, k = k)
+}
+
+#' Compute ATT/ATC energy distance components
+#' @noRd
+bal_energy_att_atc <- function(
+  distance_matrix,
+  treatment_indicators,
+  unique_groups,
+  weights,
+  group,
+  focal_group,
+  estimand
+) {
+  n_obs <- nrow(distance_matrix)
+  n_groups <- length(unique_groups)
+
+  # Determine focal group
+  if (is.null(focal_group)) {
+    if (estimand == "ATT") {
+      # For binary, use the "treatment" group (typically coded as 1)
+      focal_group <- unique_groups[which.max(as.numeric(unique_groups))]
+    } else {
+      # ATC
+      # Use the "control" group (typically coded as 0)
+      focal_group <- unique_groups[which.min(as.numeric(unique_groups))]
+    }
+  }
+
+  # Compute group sizes
+  group_sizes <- colSums(treatment_indicators)
+
+  # Normalize indicators by group size
+  normalized_indicators <- treatment_indicators
+  for (i in seq_len(n_groups)) {
+    normalized_indicators[, i] <- treatment_indicators[, i] / group_sizes[i]
+  }
+
+  # Compute nn matrix
+  nn_matrix <- tcrossprod(normalized_indicators)
+
+  # Identify focal group observations
+  focal_mask <- group == focal_group
+  focal_weights <- weights[focal_mask]
+  focal_weights_norm <- focal_weights / sum(focal_weights)
+
+  # Compute P matrix
+  P <- -distance_matrix * nn_matrix
+
+  # Compute q vector using focal group
+  q <- 2 *
+    as.vector(
+      focal_weights_norm %*% distance_matrix[focal_mask, , drop = FALSE]
+    ) *
+    rowSums(normalized_indicators)
+
+  # Compute k constant using focal group
+  k <- -n_groups *
+    as.numeric(
+      focal_weights_norm %*%
+        distance_matrix[focal_mask, focal_mask, drop = FALSE] %*%
+        focal_weights_norm
+    )
+
+  list(P = P, q = q, k = k)
+}
+
+#' Compute distance correlation for continuous treatments
+#' @noRd
+bal_energy_continuous <- function(
+  covariates,
+  treatment,
+  weights,
+  standardized
+) {
+  n_obs <- nrow(covariates)
+
+  # Default weights
+  if (is.null(weights)) {
+    weights <- rep(1, n_obs)
+  }
+
+  # Normalize weights
+  weights_norm <- weights / sum(weights)
+
+  # Identify binary variables
+  binary_vars <- apply(covariates, 2, function(x) {
+    unique_vals <- unique(x)
+    length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
+  })
+
+  # Compute weighted variances for scaling
+  covariate_vars <- numeric(ncol(covariates))
+  for (i in seq_len(ncol(covariates))) {
+    if (binary_vars[i]) {
+      p <- sum(weights_norm * covariates[, i])
+      covariate_vars[i] <- p * (1 - p)
+    } else {
+      mean_x <- sum(weights_norm * covariates[, i])
+      denom <- 1 - sum(weights_norm^2)
+      if (denom <= 0) {
+        covariate_vars[i] <- sum(weights_norm * (covariates[, i] - mean_x)^2)
+      } else {
+        covariate_vars[i] <- sum(weights_norm * (covariates[, i] - mean_x)^2) /
+          denom
+      }
+    }
+  }
+
+  # Treatment variance
+  mean_t <- sum(weights_norm * treatment)
+  denom <- 1 - sum(weights_norm^2)
+  if (denom <= 0) {
+    treatment_var <- sum(weights_norm * (treatment - mean_t)^2)
+  } else {
+    treatment_var <- sum(weights_norm * (treatment - mean_t)^2) / denom
+  }
+
+  # Avoid division by zero
+  covariate_vars[covariate_vars == 0] <- 1
+  if (treatment_var == 0) treatment_var <- 1
+
+  # Scale covariates and treatment
+  scaled_covariates <- scale(covariates, scale = sqrt(covariate_vars))
+  scaled_treatment <- treatment / sqrt(treatment_var)
+
+  # Compute distance matrices
+  cov_dist <- as.matrix(dist(scaled_covariates))
+  treat_dist <- as.matrix(dist(scaled_treatment))
+
+  # Double-center the distance matrices
+  cov_means <- colMeans(cov_dist)
+  cov_grand_mean <- mean(cov_means)
+  cov_centered <- cov_dist + cov_grand_mean - outer(cov_means, cov_means, "+")
+
+  treat_means <- colMeans(treat_dist)
+  treat_grand_mean <- mean(treat_means)
+  treat_centered <- treat_dist +
+    treat_grand_mean -
+    outer(treat_means, treat_means, "+")
+
+  # Compute P matrix
+  P <- cov_centered * treat_centered
+
+  # Compute distance covariance
+  dcov <- as.numeric(t(weights_norm) %*% P %*% weights_norm)
+
+  if (dcov <= 0) {
+    return(0)
+  }
+
+  if (standardized) {
+    # Compute denominators for standardization
+    treat_denom <- sqrt(as.numeric(
+      t(weights_norm) %*% (treat_centered^2) %*% weights_norm
+    ))
+    cov_denom <- sqrt(as.numeric(
+      t(weights_norm) %*% (cov_centered^2) %*% weights_norm
+    ))
+    denom <- treat_denom * cov_denom
+
+    if (denom <= 0) {
+      return(0)
+    }
+
+    return(sqrt(dcov / denom))
+  } else {
+    return(sqrt(dcov))
+  }
+}

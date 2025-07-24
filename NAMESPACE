@@ -2,6 +2,7 @@
 
 export(add_ess_header)
 export(bal_corr)
+export(bal_energy)
 export(bal_ks)
 export(bal_smd)
 export(bal_vr)
