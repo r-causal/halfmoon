@@ -395,23 +395,71 @@ compute_calibration_windowed_imp <- function(
   step_size,
   conf_level
 ) {
-  # Create window centers
   steps <- seq(0, 1, by = step_size)
   n_steps <- length(steps)
-
-  # Pre-calculate constants
   alpha <- 1 - conf_level
   z_score <- stats::qnorm(1 - alpha / 2)
   half_window <- window_size / 2
 
-  # Sort data once for more efficient window lookups
-  data_x <- df$x_var
-  data_y <- df$y_var
-
-  # Process each window using purrr
   window_results <- purrr::map(
     steps,
-    ~ {
+    calculate_window_statistics,
+    data_x = df$x_var,
+    data_y = df$y_var,
+    half_window = half_window,
+    z_score = z_score
+  )
+
+  # Filter to valid windows only
+  valid_results <- purrr::keep(window_results, ~ .x$valid)
+
+  # Check for small cell sizes that might cause unreliable estimates
+  if (length(valid_results) > 0) {
+    sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
+    event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
+    window_centers <- purrr::map_dbl(valid_results, ~ .x$fitted_mean)
+
+    small_cells <- sample_sizes < 10
+    extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
+    warning_mask <- small_cells | extreme_props
+
+    if (any(warning_mask, na.rm = TRUE)) {
+      warning_windows <- window_centers[warning_mask]
+      warning_counts <- sample_sizes[warning_mask]
+      warning(
+        "Small sample sizes or extreme proportions detected in windows centered at ",
+        paste(round(warning_windows, 3), collapse = ", "),
+        " (n = ",
+        paste(warning_counts, collapse = ", "),
+        "). ",
+        "Confidence intervals may be unreliable. ",
+        "Consider using a larger window size or a different calibration method.",
+        call. = FALSE
+      )
+    }
+  }
+
+  # Return only valid windows
+  if (length(valid_results) > 0) {
+    tibble::tibble(
+      fitted_mean = purrr::map_dbl(valid_results, ~ .x$fitted_mean),
+      group_mean = purrr::map_dbl(valid_results, ~ .x$group_mean),
+      lower = purrr::map_dbl(valid_results, ~ .x$lower),
+      upper = purrr::map_dbl(valid_results, ~ .x$upper)
+    )
+  } else {
+    # Return empty data frame with correct structure
+    tibble::tibble(
+      fitted_mean = numeric(0),
+      group_mean = numeric(0),
+      lower = numeric(0),
+      upper = numeric(0)
+    )
+  }
+}
+
+calculate_window_statistics <- function(.x, data_x, data_y, half_window, z_score) {
+  {
       # Define window boundaries
       lower_bound <- max(0, .x - half_window)
       upper_bound <- min(1, .x + half_window)
@@ -478,54 +526,6 @@ compute_calibration_windowed_imp <- function(
         list(valid = FALSE)
       }
     }
-  )
-
-  # Filter to valid windows only
-  valid_results <- purrr::keep(window_results, ~ .x$valid)
-
-  # Check for small cell sizes that might cause unreliable estimates
-  if (length(valid_results) > 0) {
-    sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
-    event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
-    window_centers <- purrr::map_dbl(valid_results, ~ .x$fitted_mean)
-
-    small_cells <- sample_sizes < 10
-    extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
-    warning_mask <- small_cells | extreme_props
-
-    if (any(warning_mask, na.rm = TRUE)) {
-      warning_windows <- window_centers[warning_mask]
-      warning_counts <- sample_sizes[warning_mask]
-      warning(
-        "Small sample sizes or extreme proportions detected in windows centered at ",
-        paste(round(warning_windows, 3), collapse = ", "),
-        " (n = ",
-        paste(warning_counts, collapse = ", "),
-        "). ",
-        "Confidence intervals may be unreliable. ",
-        "Consider using a larger window size or a different calibration method.",
-        call. = FALSE
-      )
-    }
-  }
-
-  # Return only valid windows
-  if (length(valid_results) > 0) {
-    tibble::tibble(
-      fitted_mean = purrr::map_dbl(valid_results, ~ .x$fitted_mean),
-      group_mean = purrr::map_dbl(valid_results, ~ .x$group_mean),
-      lower = purrr::map_dbl(valid_results, ~ .x$lower),
-      upper = purrr::map_dbl(valid_results, ~ .x$upper)
-    )
-  } else {
-    # Return empty data frame with correct structure
-    tibble::tibble(
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
-      lower = numeric(0),
-      upper = numeric(0)
-    )
-  }
 }
 
 # Stat for computing calibration statistics
