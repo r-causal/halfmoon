@@ -533,8 +533,8 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #'
 #' @details
 #' Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
-#' and implemented following Huling & Mak (2024) and Huling et al. (2024). 
-#' The calculation uses a quadratic form: \eqn{w^T P w + q^T w + k}, 
+#' and implemented following Huling & Mak (2024) and Huling et al. (2024).
+#' The calculation uses a quadratic form: \eqn{w^T P w + q^T w + k},
 #' where the components depend on the estimand.
 #'
 #' For binary variables in the covariates, variance is calculated as p(1-p)
@@ -553,7 +553,7 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #'
 #' Székely, G. J., & Rizzo, M. L. (2004). Testing for equal distributions in
 #' high dimension. InterStat, 5.
-#' 
+#'
 #' @examples
 #' # Binary treatment
 #' bal_energy(
@@ -594,10 +594,8 @@ bal_energy <- function(
   }
 
   if (is.data.frame(covariates)) {
-    # Check all variables are numeric
-    if (!all(purrr::map_lgl(covariates, is.numeric))) {
-      abort("All variables in {.arg covariates} must be numeric")
-    }
+    # Convert categorical variables to dummy variables
+    covariates <- create_dummy_variables(covariates, binary_as_single = TRUE)
     covariates <- as.matrix(covariates)
   }
 

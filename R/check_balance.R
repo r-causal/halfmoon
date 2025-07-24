@@ -95,62 +95,7 @@ check_balance <- function(
 
     # Create dummy variables if requested
     if (make_dummy_vars) {
-      # Identify categorical variables (factors and character variables)
-      categorical_vars <- purrr::map_lgl(
-        vars_data,
-        function(x) is.factor(x) || is.character(x)
-      )
-
-      if (any(categorical_vars)) {
-        # Create dummy variables for categorical variables
-        categorical_data <- dplyr::select(
-          vars_data,
-          dplyr::where(function(x) is.factor(x) || is.character(x))
-        )
-
-        # Create dummy variables using functional programming to ensure all levels are included
-        if (ncol(categorical_data) > 0) {
-          # Create dummy variables, treating binary variables differently
-          dummy_vars <- purrr::imap(
-            categorical_data,
-            function(col_data, col_name) {
-              # Get levels based on variable type
-              levels_to_use <- if (is.factor(col_data)) {
-                levels(col_data)
-              } else {
-                sort(unique(col_data))
-              }
-
-              # For binary variables (2 levels), keep as single variable (like cobalt)
-              # For multi-level variables (3+ levels), create dummy for each level
-              if (length(levels_to_use) == 2) {
-                # Binary variable: keep as single variable, convert to 0/1 numeric
-                # Use the factor levels directly, converting to numeric 0/1
-                dummy_values <- as.numeric(col_data) - 1 # Convert to 0/1 from 1/2
-                stats::setNames(list(dummy_values), col_name)
-              } else {
-                # Multi-level variable: create dummy for each level
-                dummy_names <- paste0(col_name, levels_to_use)
-                dummy_values <- purrr::map(
-                  levels_to_use,
-                  ~ as.numeric(col_data == .x)
-                )
-                stats::setNames(dummy_values, dummy_names)
-              }
-            }
-          )
-
-          # Flatten and convert to tibble
-          dummy_df <- dplyr::as_tibble(purrr::flatten(dummy_vars))
-
-          # Remove original categorical variables and add dummy variables
-          vars_data <- dplyr::select(
-            vars_data,
-            -dplyr::where(function(x) is.factor(x) || is.character(x))
-          )
-          vars_data <- dplyr::bind_cols(vars_data, dummy_df)
-        }
-      }
+      vars_data <- create_dummy_variables(vars_data, binary_as_single = TRUE)
     }
 
     # Add squared terms if requested
@@ -205,43 +150,53 @@ check_balance <- function(
         )
 
         if (ncol(original_numeric) > 1) {
-          # For interactions, we need to handle binary variables specially
-          # Binary variables need to be expanded to dummy variables for interactions
+          # For interactions with binary categorical variables, we need to expand them
+          # Get the original data to check for binary categoricals
+          original_vars_data <- dplyr::select(.data, dplyr::all_of(var_names))
+
+          # Identify which numeric variables were originally binary categoricals
+          binary_categorical_names <- character()
+          if (make_dummy_vars) {
+            categorical_check <- purrr::map_lgl(
+              original_vars_data,
+              function(x) is.factor(x) || is.character(x)
+            )
+
+            if (any(categorical_check)) {
+              categorical_cols <- original_vars_data[categorical_check]
+              binary_check <- purrr::map_lgl(categorical_cols, function(x) {
+                n_levels <- if (is.factor(x)) length(levels(x)) else
+                  length(unique(x))
+                n_levels == 2
+              })
+              binary_categorical_names <- names(categorical_cols)[binary_check]
+            }
+          }
+
+          # Prepare variables for interactions
           interaction_vars <- list()
 
-          # Process each variable for interactions
           for (var_name in names(original_numeric)) {
             var_data <- original_numeric[[var_name]]
 
-            # Check if this was originally a binary categorical variable
-            # (we can identify these by checking if they're in the original categorical data)
-            if (
-              make_dummy_vars &&
-                exists("categorical_data") &&
-                var_name %in% names(categorical_data)
-            ) {
-              original_var_data <- categorical_data[[var_name]]
-
-              # Get levels from original categorical data
-              levels_to_use <- if (is.factor(original_var_data)) {
-                levels(original_var_data)
+            # Check if this was originally a binary categorical
+            if (var_name %in% binary_categorical_names) {
+              # Need to expand binary to both levels for interactions
+              original_var <- original_vars_data[[var_name]]
+              levels_to_use <- if (is.factor(original_var)) {
+                levels(original_var)
               } else {
-                sort(unique(original_var_data))
+                sort(unique(original_var))
               }
 
-              # If binary (2 levels), expand to dummy variables for interactions
-              if (length(levels_to_use) == 2) {
-                for (level in levels_to_use) {
-                  dummy_name <- paste0(var_name, level)
-                  dummy_values <- as.numeric(original_var_data == level)
-                  interaction_vars[[dummy_name]] <- dummy_values
-                }
-              } else {
-                # Multi-level variables were already expanded, use as-is
-                interaction_vars[[var_name]] <- var_data
+              # Create dummy for each level
+              for (level in levels_to_use) {
+                dummy_name <- paste0(var_name, level)
+                dummy_values <- as.numeric(original_var == level)
+                interaction_vars[[dummy_name]] <- dummy_values
               }
             } else {
-              # Continuous variable, use as-is
+              # Continuous or already expanded multi-level variable
               interaction_vars[[var_name]] <- var_data
             }
           }
