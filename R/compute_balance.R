@@ -516,9 +516,9 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #'   - "ATC": Energy distance weighted to reflect balance for the control group,
 #'     measuring how well treated units match the control distribution
 #'   For continuous treatments, only NULL is supported.
-#' @param focal_group The focal group level for ATT/ATC. If `NULL` (default),
+#' @param treatment_level The treatment level for ATT/ATC. If `NULL` (default),
 #'   automatically determined based on estimand.
-#' @param improved Logical. Use improved energy distance for ATE? Default is TRUE.
+#' @param use_improved Logical. Use improved energy distance for ATE? Default is TRUE.
 #'   When TRUE, adds pairwise treatment comparisons for better group separation.
 #' @param standardized Logical. For continuous treatments, return standardized
 #'   distance correlation? Default is TRUE.
@@ -526,7 +526,7 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #'   before computation. If `FALSE` (default), missing values result in
 #'   an error (energy distance cannot be computed with missing data).
 #'
-#' @return A numeric value representing the energy distance between groups. Lower 
+#' @return A numeric value representing the energy distance between groups. Lower
 #'   values indicate better balance, with 0 indicating perfect balance (identical
 #'   distributions). For continuous treatments, returns the distance correlation
 #'   coefficient (0 = independence, 1 = perfect dependence).
@@ -534,7 +534,7 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' @details
 #' Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
 #' and implemented following Huling & Mak (2024). The calculation uses a quadratic
-#' form: w^T P w + q^T w + k, where the components depend on the estimand.
+#' form: $w^T P w + q^T w + k$, where the components depend on the estimand.
 #'
 #' For binary variables in the covariates, variance is calculated as p(1-p)
 #' rather than sample variance to prevent over-weighting.
@@ -578,8 +578,8 @@ bal_energy <- function(
   group,
   weights = NULL,
   estimand = NULL,
-  focal_group = NULL,
-  improved = TRUE,
+  treatment_level = NULL,
+  use_improved = TRUE,
   standardized = TRUE,
   na.rm = FALSE
 ) {
@@ -601,7 +601,9 @@ bal_energy <- function(
   }
 
   if (length(group) != nrow(covariates)) {
-    abort("Arguments {.arg group} and {.arg covariates} must have the same length")
+    abort(
+      "Arguments {.arg group} and {.arg covariates} must have the same length"
+    )
   }
 
   if (!is.null(weights)) {
@@ -654,7 +656,9 @@ bal_energy <- function(
 
   # Validate estimand
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
-    abort("{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}")
+    abort(
+      "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}"
+    )
   }
 
   # Determine treatment type
@@ -739,7 +743,7 @@ bal_energy <- function(
       treatment_indicators = treatment_indicators,
       unique_groups = unique_groups,
       weights_normalized = weights_normalized / sum(weights_normalized),
-      improved = improved
+      use_improved = use_improved
     )
   } else if (estimand %in% c("ATT", "ATC")) {
     # Average treatment effect on treated/controls
@@ -749,7 +753,7 @@ bal_energy <- function(
       unique_groups = unique_groups,
       weights = weights_normalized,
       group = group,
-      focal_group = focal_group,
+      treatment_level = treatment_level,
       estimand = estimand
     )
   }
@@ -875,7 +879,7 @@ bal_energy_ate <- function(
   treatment_indicators,
   unique_groups,
   weights_normalized,
-  improved
+  use_improved
 ) {
   n_obs <- nrow(distance_matrix)
   n_groups <- length(unique_groups)
@@ -892,8 +896,8 @@ bal_energy_ate <- function(
   # Compute nn matrix
   nn_matrix <- tcrossprod(normalized_indicators)
 
-  # Add pairwise differences if improved
-  if (improved && n_groups > 1) {
+  # Add pairwise differences if use_improved
+  if (use_improved && n_groups > 1) {
     for (i in seq_len(n_groups - 1)) {
       for (j in seq(i + 1, n_groups)) {
         diff_vec <- normalized_indicators[, i] - normalized_indicators[, j]
@@ -927,21 +931,21 @@ bal_energy_att_atc <- function(
   unique_groups,
   weights,
   group,
-  focal_group,
+  treatment_level,
   estimand
 ) {
   n_obs <- nrow(distance_matrix)
   n_groups <- length(unique_groups)
 
   # Determine focal group
-  if (is.null(focal_group)) {
+  if (is.null(treatment_level)) {
     if (estimand == "ATT") {
       # For binary, use the "treatment" group (typically coded as 1)
-      focal_group <- unique_groups[which.max(as.numeric(unique_groups))]
+      treatment_level <- unique_groups[which.max(as.numeric(unique_groups))]
     } else {
       # ATC
       # Use the "control" group (typically coded as 0)
-      focal_group <- unique_groups[which.min(as.numeric(unique_groups))]
+      treatment_level <- unique_groups[which.min(as.numeric(unique_groups))]
     }
   }
 
@@ -958,7 +962,7 @@ bal_energy_att_atc <- function(
   nn_matrix <- tcrossprod(normalized_indicators)
 
   # Identify focal group observations
-  focal_mask <- group == focal_group
+  focal_mask <- group == treatment_level
   focal_weights <- weights[focal_mask]
   focal_weights_norm <- focal_weights / sum(focal_weights)
 

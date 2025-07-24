@@ -1191,7 +1191,7 @@ test_that("bal_energy handles missing values", {
   expect_true(is.finite(energy_na.rm) || is.na(energy_na.rm))
 })
 
-test_that("bal_energy improved parameter works", {
+test_that("bal_energy use_improved parameter works", {
   data <- create_test_data()
   covs <- data.frame(x = data$x_cont, y = data$x_skewed)
 
@@ -1200,14 +1200,14 @@ test_that("bal_energy improved parameter works", {
     covariates = covs,
     group = data$g_balanced,
     estimand = "ATE",
-    improved = TRUE
+    use_improved = TRUE
   )
 
   energy_standard <- bal_energy(
     covariates = covs,
     group = data$g_balanced,
     estimand = "ATE",
-    improved = FALSE
+    use_improved = FALSE
   )
 
   # Both should be valid

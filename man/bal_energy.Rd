@@ -9,8 +9,8 @@ bal_energy(
   group,
   weights = NULL,
   estimand = NULL,
-  focal_group = NULL,
-  improved = TRUE,
+  treatment_level = NULL,
+  use_improved = TRUE,
   standardized = TRUE,
   na.rm = FALSE
 )
@@ -37,10 +37,10 @@ measuring how well treated units match the control distribution
 For continuous treatments, only NULL is supported.
 }}
 
-\item{focal_group}{The focal group level for ATT/ATC. If \code{NULL} (default),
+\item{treatment_level}{The treatment level for ATT/ATC. If \code{NULL} (default),
 automatically determined based on estimand.}
 
-\item{improved}{Logical. Use improved energy distance for ATE? Default is TRUE.
+\item{use_improved}{Logical. Use improved energy distance for ATE? Default is TRUE.
 When TRUE, adds pairwise treatment comparisons for better group separation.}
 
 \item{standardized}{Logical. For continuous treatments, return standardized
@@ -65,7 +65,7 @@ than univariate balance measures.
 \details{
 Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
 and implemented following Huling & Mak (2024). The calculation uses a quadratic
-form: w^T P w + q^T w + k, where the components depend on the estimand.
+form: $w^T P w + q^T w + k$, where the components depend on the estimand.
 
 For binary variables in the covariates, variance is calculated as p(1-p)
 rather than sample variance to prevent over-weighting.
