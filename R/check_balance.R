@@ -13,9 +13,9 @@
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes.
 #' @param .metrics Character vector specifying which metrics to compute.
-#'   Available options: "smd" (standardized mean difference), "vr",
-#'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures).
-#'   Defaults to the first three.
+#'   Available options: "smd" (standardized mean difference), "vr" (variance ratio),
+#'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
+#'   "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").
 #' @param include_observed Logical. If using `.wts`, also calculate observed
 #'   metrics? Defaults to TRUE.
 #' @param reference_group The reference group level to use for comparisons.
@@ -46,13 +46,13 @@
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 #'
 #' # With specific metrics only
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 #'
 #' # Exclude observed results
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
 #'
 #' # Use correlation for continuous exposure
-#' check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
+#' check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
 #'
 #' # With dummy variables for categorical variables (default behavior)
 #' check_balance(nhefs_weights, c(age, sex, race), qsmk)
@@ -65,7 +65,7 @@ check_balance <- function(
   .vars,
   .group,
   .wts = NULL,
-  .metrics = c("smd", "vr", "ks"),
+  .metrics = c("smd", "vr", "ks", "energy"),
   include_observed = TRUE,
   reference_group = 1L,
   na.rm = FALSE,
@@ -276,13 +276,16 @@ check_balance <- function(
   }
 
   # Check group variable requirements based on metrics
-  non_correlation_metrics <- setdiff(.metrics, "correlation")
-  only_correlation <- length(non_correlation_metrics) == 0
+  binary_only_metrics <- setdiff(.metrics, c("correlation", "energy"))
+  only_correlation <- length(setdiff(.metrics, "correlation")) == 0
 
-  if (length(non_correlation_metrics) > 0 && length(group_levels) != 2) {
+  if (length(binary_only_metrics) > 0 && length(group_levels) != 2) {
     stop(
-      "Group variable must have exactly two levels for non-correlation metrics, got ",
-      length(group_levels)
+      "Group variable must have exactly two levels for metrics: ",
+      paste(binary_only_metrics, collapse = ", "),
+      ". Got ",
+      length(group_levels),
+      " levels."
     )
   }
 
@@ -293,7 +296,7 @@ check_balance <- function(
   }
 
   # Validate metrics
-  available_metrics <- c("smd", "vr", "ks", "correlation")
+  available_metrics <- c("smd", "vr", "ks", "correlation", "energy")
   invalid_metrics <- setdiff(.metrics, available_metrics)
   if (length(invalid_metrics) > 0) {
     stop(
@@ -309,7 +312,8 @@ check_balance <- function(
     smd = bal_smd,
     vr = bal_vr,
     ks = bal_ks,
-    correlation = bal_corr
+    correlation = bal_corr,
+    energy = bal_energy
   )
 
   # Determine which methods to include
@@ -327,19 +331,37 @@ check_balance <- function(
     )
   }
 
-  # Create all combinations for computation
-  combinations <- tidyr::expand_grid(
-    variable = var_names,
-    method = methods,
-    metric = .metrics
-  )
+  # Separate energy metric from other metrics since it's multivariate
+  energy_metrics <- intersect(.metrics, "energy")
+  univariate_metrics <- setdiff(.metrics, "energy")
+
+  # Create combinations for univariate metrics
+  univariate_combinations <- if (length(univariate_metrics) > 0) {
+    tidyr::expand_grid(
+      variable = var_names,
+      method = methods,
+      metric = univariate_metrics
+    )
+  } else {
+    tibble::tibble()
+  }
+
+  # Create combinations for energy metric (one per method)
+  energy_combinations <- if (length(energy_metrics) > 0) {
+    tidyr::expand_grid(
+      variable = NA_character_,
+      method = methods,
+      metric = energy_metrics
+    )
+  } else {
+    tibble::tibble()
+  }
+
+  # Combine all combinations
+  combinations <- dplyr::bind_rows(univariate_combinations, energy_combinations)
 
   # Use purrr to compute all balance statistics
   results <- purrr::pmap_dfr(combinations, function(variable, method, metric) {
-    # Extract variable data
-    var_data <- transformed_data[[variable]]
-    group_data <- transformed_data[[group_var]]
-
     # Handle weights
     if (method == "observed") {
       weights_data <- NULL
@@ -353,8 +375,22 @@ check_balance <- function(
     # Compute the statistic
     tryCatch(
       {
-        if (metric == "correlation") {
+        if (metric == "energy") {
+          # For energy, use all variables
+          group_data <- transformed_data[[group_var]]
+          covariates_data <- transformed_data[var_names]
+
+          estimate <- compute_fn(
+            covariates = covariates_data,
+            group = group_data,
+            weights = weights_data,
+            na.rm = na.rm
+          )
+        } else if (metric == "correlation") {
           # For correlation, use the group variable as the second variable
+          var_data <- transformed_data[[variable]]
+          group_data <- transformed_data[[group_var]]
+
           estimate <- compute_fn(
             x = var_data,
             y = group_data,
@@ -362,6 +398,9 @@ check_balance <- function(
             na.rm = na.rm
           )
         } else {
+          # For other metrics (smd, vr, ks)
+          var_data <- transformed_data[[variable]]
+          group_data <- transformed_data[[group_var]]
           # Handle reference group parameter based on the function
           ref_group_param <- if (metric == "smd") {
             # bal_smd accepts both indices and group values
@@ -389,6 +428,9 @@ check_balance <- function(
         if (metric == "correlation") {
           # For correlation, report the group variable name since it's continuous
           group_level <- group_var
+        } else if (metric == "energy") {
+          # For energy, use NA since it's multivariate
+          group_level <- NA_character_
         } else {
           # For other metrics, determine the non-reference group level
           if (reference_group %in% group_levels) {
@@ -412,6 +454,8 @@ check_balance <- function(
         # Return NA for failed computations but preserve structure
         error_group_level <- if (metric == "correlation") {
           group_var
+        } else if (metric == "energy") {
+          NA_character_
         } else {
           setdiff(
             group_levels,
