@@ -96,21 +96,21 @@ plot_calibration <- function(
     .data,
     ggplot2::aes(x = .data[[fitted_name]])
   ) +
-      geom_calibration(
-        y_aes,
-        method = method,
-        bins = bins,
-        smooth = smooth,
-        conf_level = conf_level,
-        window_size = window_size,
-        step_size = step_size,
-        treatment_level = treatment_level,
-        k = k,
-        show_ribbon = include_ribbon,
-        show_points = include_points,
-        na.rm = na.rm,
-        ...
-      ) +
+    geom_calibration(
+      y_aes,
+      method = method,
+      bins = bins,
+      smooth = smooth,
+      conf_level = conf_level,
+      window_size = window_size,
+      step_size = step_size,
+      treatment_level = treatment_level,
+      k = k,
+      show_ribbon = include_ribbon,
+      show_points = include_points,
+      na.rm = na.rm,
+      ...
+    ) +
     # Add perfect calibration line
     ggplot2::geom_abline(
       intercept = 0,

@@ -79,7 +79,7 @@ check_calibration <- function(
   group_name <- get_column_name(group_quo, ".group")
 
   group_var <- data[[group_name]]
-  
+
   check_columns(data, fitted_name, group_name, treatment_level)
 
   treatment_indicator <- check_treatment_level(group_var, treatment_level)
@@ -156,7 +156,7 @@ check_treatment_level <- function(group_var, treatment_level) {
       "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
     )
   }
-  
+
   # Create binary treatment indicator (1 = treatment, 0 = control)
   # Handle both factor and non-factor variables
   if (is.factor(group_var)) {
@@ -241,12 +241,14 @@ compute_calibration_breaks_imp <- function(
   }
 
   result <- df |>
-    dplyr::mutate(.bin = as.integer(cut(
-    xs,
-    breaks = brks,
-    include.lowest = TRUE,
-    labels = FALSE
-  ))) |>
+    dplyr::mutate(
+      .bin = as.integer(cut(
+        xs,
+        breaks = brks,
+        include.lowest = TRUE,
+        labels = FALSE
+      ))
+    ) |>
     dplyr::group_by(.bin) |>
     dplyr::summarise(
       fitted_mean = mean(x_var, na.rm = TRUE),
@@ -262,7 +264,7 @@ compute_calibration_breaks_imp <- function(
   # Handle edge cases up front:
   # - total count must be positive
   # - number of events must be non-negative
-  # - events cannot exceed total count 
+  # - events cannot exceed total count
   # - events must be greater than 0 (no empty bins)
   # - events must be less than total (no full bins)
   valid_mask <- n_total > 0 &
@@ -459,74 +461,81 @@ compute_calibration_windowed_imp <- function(
   }
 }
 
-calculate_window_statistics <- function(.x, data_x, data_y, half_window, z_score, conf_level) {
+calculate_window_statistics <- function(
+  .x,
+  data_x,
+  data_y,
+  half_window,
+  z_score,
+  conf_level
+) {
   {
-      # Define window boundaries
-      lower_bound <- max(0, .x - half_window)
-      upper_bound <- min(1, .x + half_window)
+    # Define window boundaries
+    lower_bound <- max(0, .x - half_window)
+    upper_bound <- min(1, .x + half_window)
 
-      # Find observations in this window
-      in_window <- data_x >= lower_bound & data_x <= upper_bound
-      n_total <- sum(in_window)
+    # Find observations in this window
+    in_window <- data_x >= lower_bound & data_x <= upper_bound
+    n_total <- sum(in_window)
 
-      if (n_total > 0) {
-        # Calculate statistics for this window
-        n_events <- sum(data_y[in_window])
-        event_rate <- n_events / n_total
+    if (n_total > 0) {
+      # Calculate statistics for this window
+      n_events <- sum(data_y[in_window])
+      event_rate <- n_events / n_total
 
-        # Calculate confidence intervals
-        if (n_events > 0 && n_events < n_total) {
-          tryCatch(
-            {
-              suppressWarnings({
-                prop_test <- stats::prop.test(
-                  n_events,
-                  n_total,
-                  conf.level = conf_level
-                )
-              })
-              list(
-                fitted_mean = .x,
-                group_mean = event_rate,
-                lower = prop_test$conf.int[1],
-                upper = prop_test$conf.int[2],
-                valid = TRUE,
-                n_total = n_total,
-                n_events = n_events
+      # Calculate confidence intervals
+      if (n_events > 0 && n_events < n_total) {
+        tryCatch(
+          {
+            suppressWarnings({
+              prop_test <- stats::prop.test(
+                n_events,
+                n_total,
+                conf.level = conf_level
               )
-            },
-            error = function(e) {
-              # Fallback to normal approximation
-              se <- sqrt(event_rate * (1 - event_rate) / n_total)
-              list(
-                fitted_mean = .x,
-                group_mean = event_rate,
-                lower = max(0, event_rate - z_score * se),
-                upper = min(1, event_rate + z_score * se),
-                valid = TRUE,
-                n_total = n_total,
-                n_events = n_events
-              )
-            }
-          )
-        } else {
-          # For edge cases, use normal approximation
-          se <- sqrt(event_rate * (1 - event_rate) / n_total)
-          list(
-            fitted_mean = .x,
-            group_mean = event_rate,
-            lower = max(0, event_rate - z_score * se),
-            upper = min(1, event_rate + z_score * se),
-            valid = TRUE,
-            n_total = n_total,
-            n_events = n_events
-          )
-        }
+            })
+            list(
+              fitted_mean = .x,
+              group_mean = event_rate,
+              lower = prop_test$conf.int[1],
+              upper = prop_test$conf.int[2],
+              valid = TRUE,
+              n_total = n_total,
+              n_events = n_events
+            )
+          },
+          error = function(e) {
+            # Fallback to normal approximation
+            se <- sqrt(event_rate * (1 - event_rate) / n_total)
+            list(
+              fitted_mean = .x,
+              group_mean = event_rate,
+              lower = max(0, event_rate - z_score * se),
+              upper = min(1, event_rate + z_score * se),
+              valid = TRUE,
+              n_total = n_total,
+              n_events = n_events
+            )
+          }
+        )
       } else {
-        # Invalid window
-        list(valid = FALSE)
+        # For edge cases, use normal approximation
+        se <- sqrt(event_rate * (1 - event_rate) / n_total)
+        list(
+          fitted_mean = .x,
+          group_mean = event_rate,
+          lower = max(0, event_rate - z_score * se),
+          upper = min(1, event_rate + z_score * se),
+          valid = TRUE,
+          n_total = n_total,
+          n_events = n_events
+        )
       }
+    } else {
+      # Invalid window
+      list(valid = FALSE)
     }
+  }
 }
 
 # Stat for computing calibration statistics
@@ -560,7 +569,6 @@ StatCalibration <- ggplot2::ggproto(
     treatment_level = NULL,
     k = 10
   ) {
-
     calibration_result <- check_calibration(
       data = data,
       .fitted = x,
