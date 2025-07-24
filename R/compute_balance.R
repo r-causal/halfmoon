@@ -765,7 +765,7 @@ bal_energy <- function(
     sum(components$q * weights_normalized) +
     components$k
 
-  return(energy_distance)
+  energy_distance
 }
 
 # Helper functions for bal_energy() - internal use only
