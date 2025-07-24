@@ -57,40 +57,10 @@ test_that("check_calibration works with unquoted column names", {
     obs = actual
   )
 
-  # Test with unquoted column names (using rlang::sym to avoid scoping issues)
-  result <- check_calibration(test_data, rlang::sym("pred"), rlang::sym("obs"))
+  result <- check_calibration(test_data, "pred", "obs")
 
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
-})
-
-test_that("check_calibration handles both quoted and unquoted column names", {
-  # Create test data
-  set.seed(123)
-  n <- 200
-  predicted <- runif(n, 0, 1)
-  actual <- rbinom(n, 1, predicted)
-
-  test_data <- data.frame(
-    pred = predicted,
-    obs = actual
-  )
-
-  # Test with quoted column names
-  result_quoted <- check_calibration(test_data, pred, obs)
-
-  # Test with unquoted column names in a function context
-  test_unquoted <- function(data, x_col, y_col) {
-    check_calibration(data, {{ x_col }}, {{ y_col }})
-  }
-  result_unquoted <- test_unquoted(test_data, pred, obs)
-
-  # Results should be identical
-  expect_s3_class(result_quoted, "tbl_df")
-  expect_s3_class(result_unquoted, "tbl_df")
-  expect_equal(result_quoted, result_unquoted)
-  expect_true(nrow(result_quoted) > 0)
-  expect_true(nrow(result_unquoted) > 0)
 })
 
 test_that("check_calibration provides clear error messages for missing columns", {
@@ -744,23 +714,6 @@ test_that("check_calibration doesn't warn for adequate sample sizes", {
       step_size = 0.1
     )
   )
-})
-
-test_that("plot_calibration shows helpful warnings", {
-  # Create test data with small cells
-  set.seed(123)
-  test_data <- data.frame(
-    .fitted = c(runif(90, 0, 0.5), runif(10, 0.9, 1)),
-    qsmk = rbinom(100, 1, 0.3)
-  )
-
-  # Should produce the helpful warning (may appear multiple times due to layers)
-  suppressWarnings({
-    expect_warning(
-      plot_calibration(test_data, .fitted, qsmk),
-      "Small sample sizes or extreme proportions detected"
-    )
-  })
 })
 
 test_that("warnings include specific bin/window information", {

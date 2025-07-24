@@ -2,8 +2,7 @@
 #'
 #' Create a calibration plot to assess the agreement between predicted
 #' probabilities and observed treatment rates. This function wraps
-#' `geom_calibration()` to provide a convenient plotting interface
-#' in the style of the probably package.
+#' `geom_calibration()`.
 #'
 #' @param .data A data frame containing the variables.
 #' @param .fitted Column name of predicted probabilities (propensity scores).
@@ -63,70 +62,8 @@ plot_calibration <- function(
   fitted_quo <- rlang::enquo(.fitted)
   group_quo <- rlang::enquo(.group)
 
-  # Function to extract column name from quosure
-  get_column_name <- function(quo, arg_name) {
-    # First try as_name (works for symbols and strings)
-    tryCatch(
-      {
-        rlang::as_name(quo)
-      },
-      error = function(e) {
-        # If as_name fails, try to evaluate the quosure
-        val <- tryCatch(
-          {
-            rlang::eval_tidy(quo)
-          },
-          error = function(e2) {
-            stop(paste0(
-              "`",
-              arg_name,
-              "` must be a column name (quoted or unquoted)"
-            ))
-          }
-        )
-
-        # Handle different types of evaluated values
-        if (is.character(val) && length(val) == 1) {
-          val
-        } else if (is.symbol(val)) {
-          as.character(val)
-        } else {
-          stop(paste0(
-            "`",
-            arg_name,
-            "` must be a column name (quoted or unquoted)"
-          ))
-        }
-      }
-    )
-  }
-
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".group")
-
-  # Run check_calibration once to generate appropriate warnings
-  tryCatch(
-    {
-      check_calibration(
-        .data,
-        !!fitted_quo,
-        !!group_quo,
-        treatment_level = treatment_level,
-        method = method,
-        bins = bins,
-        smooth = smooth,
-        conf_level = conf_level,
-        window_size = window_size,
-        step_size = step_size,
-        k = k,
-        na.rm = na.rm
-      )
-    },
-    error = function(e) {
-      # If there's an error, it will be caught later by geom_calibration
-      NULL
-    }
-  )
 
   # Convert factor to numeric for proper y-axis scale
   # This ensures the y-axis shows calibration rates (0-1) not factor labels
@@ -159,7 +96,6 @@ plot_calibration <- function(
     .data,
     ggplot2::aes(x = .data[[fitted_name]])
   ) +
-    suppressWarnings({
       geom_calibration(
         y_aes,
         method = method,
@@ -174,8 +110,7 @@ plot_calibration <- function(
         show_points = include_points,
         na.rm = na.rm,
         ...
-      )
-    }) +
+      ) +
     # Add perfect calibration line
     ggplot2::geom_abline(
       intercept = 0,
