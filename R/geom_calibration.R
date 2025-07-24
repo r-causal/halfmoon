@@ -407,7 +407,8 @@ compute_calibration_windowed_imp <- function(
     data_x = df$x_var,
     data_y = df$y_var,
     half_window = half_window,
-    z_score = z_score
+    z_score = z_score,
+    conf_level = conf_level
   )
 
   # Filter to valid windows only
@@ -458,7 +459,7 @@ compute_calibration_windowed_imp <- function(
   }
 }
 
-calculate_window_statistics <- function(.x, data_x, data_y, half_window, z_score) {
+calculate_window_statistics <- function(.x, data_x, data_y, half_window, z_score, conf_level) {
   {
       # Define window boundaries
       lower_bound <- max(0, .x - half_window)
