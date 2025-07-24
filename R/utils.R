@@ -10,12 +10,30 @@
 #   }
 # }
 
-abort <- function(.message) {
-  cli::cli_abort(message = .message)
+# Import NULL coalescing operator from rlang
+#' @importFrom rlang %||%
+NULL
+
+abort <- function(.message, .envir = parent.frame()) {
+  cli::cli_abort(message = .message, .envir = .envir)
 }
 
 utils::globalVariables(c(
   "method",
   "metric",
-  "variable"
+  "variable",
+  ".bin",
+  "bin",
+  "n_events",
+  "n_total",
+  "x",
+  "x_var",
+  "y",
+  "y_var",
+  "fitted_mean",
+  "group_mean",
+  ".fitted",
+  ".group",
+  "ymin",
+  "ymax"
 ))
