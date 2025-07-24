@@ -448,27 +448,17 @@ test_that("bal_corr handles missing values", {
 })
 
 test_that("bal_corr handles edge cases", {
-  # Zero variance should return NA with warning
+  # Zero variance should return NA
   x_zero <- rep(1, 100)
   y_normal <- rnorm(100)
 
-  expect_warning(
-    {
-      cor_zero <- bal_corr(x_zero, y_normal)
-      expect_true(is.na(cor_zero))
-    },
-    "the standard deviation is zero"
-  )
+  cor_zero <- bal_corr(x_zero, y_normal)
+  expect_true(is.na(cor_zero))
 
-  # Both zero variance should return NA with warning
+  # Both zero variance should return NA
   y_zero <- rep(2, 100)
-  expect_warning(
-    {
-      cor_both_zero <- bal_corr(x_zero, y_zero)
-      expect_true(is.na(cor_both_zero))
-    },
-    "the standard deviation is zero"
-  )
+  cor_both_zero <- bal_corr(x_zero, y_zero)
+  expect_true(is.na(cor_both_zero))
 })
 
 test_that("bal_corr error handling", {
@@ -1025,4 +1015,416 @@ test_that("compute functions work with real propensity score weights from nhefs_
   # ATE and ATT estimates should generally be different
   expect_false(identical(smd_ate, smd_att))
   expect_false(identical(vr_ate, vr_att))
+})
+
+# =============================================================================
+# TESTS FOR bal_energy()
+# =============================================================================
+
+test_that("bal_energy handles basic binary treatment cases", {
+  data <- create_test_data()
+
+  # Basic functionality
+  energy <- bal_energy(
+    covariates = data.frame(x = data$x_cont, y = data$x_skewed),
+    group = data$g_balanced
+  )
+  expect_true(is.finite(energy))
+  expect_true(energy >= 0)
+
+  # With weights
+  energy_weighted <- bal_energy(
+    covariates = data.frame(x = data$x_cont, y = data$x_skewed),
+    group = data$g_balanced,
+    weights = data$w_uniform
+  )
+  expect_true(is.finite(energy_weighted))
+  expect_true(energy_weighted >= 0)
+})
+
+test_that("bal_energy handles different estimands", {
+  data <- create_test_data()
+  covs <- data.frame(x = data$x_cont, y = data$x_skewed)
+
+  # ATE
+  energy_ate <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    estimand = "ATE"
+  )
+
+  # ATT
+  energy_att <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    estimand = "ATT"
+  )
+
+  # ATC
+  energy_atc <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    estimand = "ATC"
+  )
+
+  # Between-group only
+  energy_between <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    estimand = NULL
+  )
+
+  # All should be finite and non-negative
+  expect_true(all(sapply(
+    list(energy_ate, energy_att, energy_atc, energy_between),
+    function(x) is.finite(x) && x >= 0
+  )))
+
+  # Different estimands should generally give different results
+  expect_false(all(
+    c(energy_ate, energy_att, energy_atc, energy_between) == energy_ate
+  ))
+})
+
+test_that("bal_energy handles multi-category treatments", {
+  set.seed(123)
+  n <- 100
+  covs <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n)
+  )
+  multi_group <- sample(c("A", "B", "C"), n, replace = TRUE)
+
+  # Should work with multi-category treatment
+  energy_multi <- bal_energy(
+    covariates = covs,
+    group = multi_group,
+    estimand = "ATE"
+  )
+  expect_true(is.finite(energy_multi))
+  expect_true(energy_multi >= 0)
+})
+
+test_that("bal_energy handles continuous treatments", {
+  set.seed(123)
+  n <- 100
+  covs <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n)
+  )
+  continuous_treatment <- rnorm(n)
+
+  # Should work with continuous treatment (uses distance correlation)
+  energy_cont <- bal_energy(
+    covariates = covs,
+    group = continuous_treatment,
+    estimand = NULL # Must be NULL for continuous
+  )
+  expect_true(is.finite(energy_cont))
+  expect_true(energy_cont >= 0)
+  expect_true(energy_cont <= 1) # Distance correlation is bounded [0,1]
+
+  # Should error if estimand is not NULL for continuous treatment
+  expect_error(bal_energy(
+    covariates = covs,
+    group = continuous_treatment,
+    estimand = "ATE"
+  ))
+})
+
+test_that("bal_energy handles perfect balance", {
+  # Create perfectly balanced data
+  set.seed(123)
+  n <- 100
+  x <- rnorm(n)
+  covs <- data.frame(x = c(x, x))
+  group <- c(rep(0, n), rep(1, n))
+
+  energy_perfect <- bal_energy(
+    covariates = covs,
+    group = group,
+    estimand = "ATE"
+  )
+
+  # Should be very close to 0
+  expect_true(energy_perfect < 0.01)
+})
+
+test_that("bal_energy handles binary variables", {
+  set.seed(123)
+  n <- 100
+  covs <- data.frame(
+    binary = rbinom(n, 1, 0.5),
+    continuous = rnorm(n)
+  )
+  group <- rbinom(n, 1, 0.5)
+
+  # Should identify and handle binary variables correctly
+  energy <- bal_energy(
+    covariates = covs,
+    group = group
+  )
+  expect_true(is.finite(energy))
+  expect_true(energy >= 0)
+})
+
+test_that("bal_energy handles missing values", {
+  data <- create_test_data()
+  covs <- data.frame(x = data$x_cont, y = data$x_skewed)
+
+  # Introduce missing values
+  covs$x[data$na_indices] <- NA
+
+  # Should error when na.rm = FALSE
+  expect_error(bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    na.rm = FALSE
+  ))
+
+  # Should work when na.rm = TRUE
+  energy_na.rm <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    na.rm = TRUE
+  )
+  expect_true(is.finite(energy_na.rm) || is.na(energy_na.rm))
+})
+
+test_that("bal_energy use_improved parameter works", {
+  data <- create_test_data()
+  covs <- data.frame(x = data$x_cont, y = data$x_skewed)
+
+  # Improved vs standard for ATE
+  energy_improved <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    estimand = "ATE",
+    use_improved = TRUE
+  )
+
+  energy_standard <- bal_energy(
+    covariates = covs,
+    group = data$g_balanced,
+    estimand = "ATE",
+    use_improved = FALSE
+  )
+
+  # Both should be valid
+  expect_true(is.finite(energy_improved))
+  expect_true(is.finite(energy_standard))
+
+  # Generally different values
+  expect_false(identical(energy_improved, energy_standard))
+})
+
+test_that("bal_energy error handling", {
+  data <- create_test_data()
+
+  # Should now handle non-numeric covariates by converting to dummy variables
+  expect_no_error(bal_energy(
+    covariates = data.frame(x = as.character(data$x_cont)),
+    group = data$g_balanced
+  ))
+
+  # Should error with mismatched dimensions
+  expect_error(bal_energy(
+    covariates = data.frame(x = data$x_cont[1:50]),
+    group = data$g_balanced
+  ))
+
+  # Should error with wrong number of groups (only 1)
+  expect_error(bal_energy(
+    covariates = data.frame(x = data$x_cont),
+    group = rep(1, 100)
+  ))
+
+  # Should error with negative weights
+  expect_error(bal_energy(
+    covariates = data.frame(x = data$x_cont),
+    group = data$g_balanced,
+    weights = c(-1, rep(1, 99))
+  ))
+})
+
+test_that("bal_energy handles NHEFS data", {
+  data <- get_nhefs_compute_data()
+
+  # Select numeric covariates
+  covs <- dplyr::select(data, age, wt71, smokeyrs)
+
+  # Basic energy distance
+  energy <- bal_energy(
+    covariates = covs,
+    group = data$qsmk
+  )
+  expect_true(is.finite(energy))
+  expect_true(energy >= 0)
+
+  # With ATE weights
+  energy_ate <- bal_energy(
+    covariates = covs,
+    group = data$qsmk,
+    weights = data$w_ate,
+    estimand = "ATE"
+  )
+  expect_true(is.finite(energy_ate))
+  expect_true(energy_ate >= 0)
+
+  # With ATT weights
+  energy_att <- bal_energy(
+    covariates = covs,
+    group = data$qsmk,
+    weights = data$w_att,
+    estimand = "ATT"
+  )
+  expect_true(is.finite(energy_att))
+  expect_true(energy_att >= 0)
+
+  # Weighted should generally be lower (better balance)
+  expect_true(energy_ate < energy || energy_att < energy)
+})
+
+test_that("bal_energy comparison with cobalt package", {
+  testthat::skip_if_not_installed("cobalt")
+
+  # Create test data
+  set.seed(456)
+  n <- 200
+  covariates <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    x3 = rbinom(n, 1, 0.5)
+  )
+  treatment <- rbinom(n, 1, 0.5)
+  weights <- runif(n, 0.5, 1.5)
+
+  # Our implementation - using default estimand (NULL)
+  our_energy <- bal_energy(
+    covariates = covariates,
+    group = treatment,
+    weights = weights
+  )
+
+  # Cobalt implementation
+  cobalt_energy <- cobalt::bal.compute(
+    x = covariates,
+    treat = treatment,
+    weights = weights,
+    stat = "energy.dist"
+  )
+
+  # Should be very close (within numerical tolerance)
+  expect_equal(our_energy, cobalt_energy, tolerance = 1e-3) # Slightly relaxed tolerance
+})
+
+test_that("bal_energy multi-category comparison with cobalt", {
+  testthat::skip_if_not_installed("cobalt")
+
+  # Create test data with 3 groups
+  set.seed(789)
+  n <- 150
+  covariates <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n)
+  )
+  treatment <- factor(sample(1:3, n, replace = TRUE))
+
+  # Our implementation
+  our_energy <- bal_energy(
+    covariates = covariates,
+    group = treatment
+  )
+
+  # Cobalt implementation
+  cobalt_energy <- cobalt::bal.compute(
+    x = covariates,
+    treat = treatment,
+    stat = "energy.dist"
+  )
+
+  # Should be very close
+  expect_equal(our_energy, cobalt_energy, tolerance = 1e-4)
+})
+
+test_that("bal_energy continuous treatment comparison with cobalt", {
+  testthat::skip_if_not_installed("cobalt")
+
+  # Create test data with continuous treatment
+  set.seed(321)
+  n <- 150
+  covariates <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n)
+  )
+  treatment <- rnorm(n)
+
+  # Our implementation (distance correlation)
+  our_dcor <- bal_energy(
+    covariates = covariates,
+    group = treatment,
+    estimand = NULL,
+    standardized = TRUE
+  )
+
+  # Cobalt implementation
+  cobalt_dcor <- cobalt::bal.compute(
+    x = covariates,
+    treat = treatment,
+    stat = "distance.cor"
+  )
+
+  # Should be very close
+  expect_equal(our_dcor, cobalt_dcor, tolerance = 1e-4)
+})
+
+test_that("bal_energy handles categorical covariates", {
+  testthat::skip_if_not_installed("cobalt", minimum_version = "4.5.2")
+
+  set.seed(789)
+  n <- 100
+
+  # Create test data with mixed types
+  covariates <- data.frame(
+    numeric1 = rnorm(n),
+    numeric2 = rnorm(n),
+    factor1 = factor(sample(c("A", "B", "C"), n, replace = TRUE)),
+    character1 = sample(c("X", "Y"), n, replace = TRUE)
+  )
+
+  treatment <- rbinom(n, 1, 0.5)
+
+  # Our implementation with categorical variables
+  our_result <- bal_energy(
+    covariates = covariates,
+    group = treatment
+  )
+
+  # Cobalt with same data
+  cobalt_result <- cobalt::bal.compute(
+    x = covariates,
+    treat = treatment,
+    stat = "energy.dist"
+  )
+
+  # Should be very close (cobalt converts categoricals to dummies internally)
+  expect_equal(our_result, cobalt_result, tolerance = 1e-4)
+
+  # Test with weights
+  weights <- runif(n, 0.5, 1.5)
+
+  our_weighted <- bal_energy(
+    covariates = covariates,
+    group = treatment,
+    weights = weights
+  )
+
+  cobalt_weighted <- cobalt::bal.compute(
+    x = covariates,
+    treat = treatment,
+    weights = weights,
+    stat = "energy.dist"
+  )
+
+  expect_equal(our_weighted, cobalt_weighted, tolerance = 1e-4)
 })

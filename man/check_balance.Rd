@@ -9,7 +9,7 @@ check_balance(
   .vars,
   .group,
   .wts = NULL,
-  .metrics = c("smd", "vr", "ks"),
+  .metrics = c("smd", "vr", "ks", "energy"),
   include_observed = TRUE,
   reference_group = 1L,
   na.rm = FALSE,
@@ -32,9 +32,9 @@ a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
 \item{.metrics}{Character vector specifying which metrics to compute.
-Available options: "smd" (standardized mean difference), "vr",
-"ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures).
-Defaults to the first three.}
+Available options: "smd" (standardized mean difference), "vr" (variance ratio),
+"ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
+"energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").}
 
 \item{include_observed}{Logical. If using \code{.wts}, also calculate observed
 metrics? Defaults to TRUE.}
@@ -79,13 +79,13 @@ returns results in a tidy format.
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 
 # With specific metrics only
-check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "ks"))
+check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 
 # Exclude observed results
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
 
 # Use correlation for continuous exposure
-check_balance(mtcars, c(mpg, hp), disp, .metrics = "correlation")
+check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
 
 # With dummy variables for categorical variables (default behavior)
 check_balance(nhefs_weights, c(age, sex, race), qsmk)

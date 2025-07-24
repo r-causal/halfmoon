@@ -1490,3 +1490,118 @@ test_that("no dummy variables when make_dummy_vars = FALSE", {
   # All should be NA because balance functions expect numeric variables
   expect_true(all(is.na(result_no_dummy$estimate)))
 })
+
+test_that("check_balance works with energy metric", {
+  data <- get_nhefs_test_data()
+
+  # Test with binary treatment
+  result_energy <- check_balance(
+    data,
+    c(age, wt71, smokeyrs),
+    qsmk,
+    .metrics = "energy"
+  )
+
+  # Should have one row per method (observed only)
+  expect_equal(nrow(result_energy), 1)
+  expect_equal(result_energy$metric[1], "energy")
+  expect_equal(result_energy$method[1], "observed")
+  expect_true(is.na(result_energy$variable[1])) # Energy is multivariate
+  expect_true(is.na(result_energy$group_level[1])) # No specific group level
+  expect_true(is.finite(result_energy$estimate[1]))
+  expect_true(result_energy$estimate[1] > 0) # Energy distance should be positive
+
+  # Test with weights
+  result_energy_weighted <- check_balance(
+    data,
+    c(age, wt71, smokeyrs),
+    qsmk,
+    .wts = c(w_ate, w_att),
+    .metrics = "energy"
+  )
+
+  # Should have 3 rows (observed + 2 weights)
+  expect_equal(nrow(result_energy_weighted), 3)
+  expect_true(all(result_energy_weighted$metric == "energy"))
+  expect_true(all(is.na(result_energy_weighted$variable)))
+  expect_true(all(is.finite(result_energy_weighted$estimate)))
+
+  # Weighted estimates should generally be smaller (better balance)
+  observed_estimate <- result_energy_weighted$estimate[
+    result_energy_weighted$method == "observed"
+  ]
+  weighted_estimates <- result_energy_weighted$estimate[
+    result_energy_weighted$method != "observed"
+  ]
+  expect_true(all(weighted_estimates < observed_estimate))
+})
+
+test_that("check_balance energy metric works with multi-category treatment", {
+  # Create multi-category data
+  set.seed(123)
+  n <- 300
+  data <- tibble::tibble(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    x3 = rnorm(n),
+    treatment = factor(sample(c("A", "B", "C"), n, replace = TRUE))
+  )
+
+  # Test energy with multi-category
+  result <- check_balance(
+    data,
+    c(x1, x2, x3),
+    treatment,
+    .metrics = "energy"
+  )
+
+  expect_equal(nrow(result), 1)
+  expect_equal(result$metric[1], "energy")
+  expect_true(is.na(result$variable[1]))
+  expect_true(is.finite(result$estimate[1]))
+  expect_true(result$estimate[1] > 0)
+})
+
+test_that("check_balance energy metric works with categorical covariates", {
+  data <- get_nhefs_test_data()
+
+  # Test with mixed numeric and categorical covariates
+  result <- check_balance(
+    data,
+    c(age, sex, race, education),
+    qsmk,
+    .metrics = "energy"
+  )
+
+  expect_equal(nrow(result), 1)
+  expect_equal(result$metric[1], "energy")
+  expect_true(is.na(result$variable[1]))
+  expect_true(is.finite(result$estimate[1]))
+  expect_true(result$estimate[1] > 0)
+})
+
+test_that("check_balance handles energy with other metrics", {
+  data <- get_nhefs_test_data()
+
+  # Test combining energy with other metrics
+  result <- check_balance(
+    data,
+    c(age, wt71),
+    qsmk,
+    .metrics = c("smd", "energy")
+  )
+
+  # Should have rows for both metrics
+  expect_true("smd" %in% result$metric)
+  expect_true("energy" %in% result$metric)
+
+  # SMD rows should have variable names
+  smd_rows <- result[result$metric == "smd", ]
+  expect_equal(sort(unique(smd_rows$variable)), c("age", "wt71"))
+  expect_true(all(!is.na(smd_rows$variable)))
+
+  # Energy row should have NA for variable
+  energy_rows <- result[result$metric == "energy", ]
+  expect_equal(nrow(energy_rows), 1)
+  expect_true(is.na(energy_rows$variable[1]))
+})
