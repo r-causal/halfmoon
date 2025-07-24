@@ -502,17 +502,19 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' than univariate balance measures.
 #'
 #' @param covariates A data frame or matrix containing the covariates to compare.
-#'   All variables must be numeric. For categorical variables, use dummy coding.
 #' @param group A vector (factor or numeric) indicating group membership. For
 #'   binary and multi-category treatments, must have 2+ unique levels. For
 #'   continuous treatments, should be numeric.
-#' @param weights An optional numeric vector of case weights. If provided, must
+#' @param weights An optional numeric vector of weights. If provided, must
 #'   have the same length as rows in `covariates`. All weights must be non-negative.
 #' @param estimand Character string specifying the estimand. Options are:
-#'   - NULL (default): Between-group energy distance only
-#'   - "ATE" (Average Treatment Effect): Balance across all groups
-#'   - "ATT" (Average Treatment Effect on Treated): Balance for treated group
-#'   - "ATC" (Average Treatment Effect on Controls): Balance for control group
+#'   - NULL (default): Pure between-group energy distance comparing distributions
+#'   - "ATE": Energy distance weighted to reflect balance for estimating average
+#'     treatment effects across the entire population
+#'   - "ATT": Energy distance weighted to reflect balance for the treated group,
+#'     measuring how well controls match the treated distribution
+#'   - "ATC": Energy distance weighted to reflect balance for the control group,
+#'     measuring how well treated units match the control distribution
 #'   For continuous treatments, only NULL is supported.
 #' @param focal_group The focal group level for ATT/ATC. If `NULL` (default),
 #'   automatically determined based on estimand.
@@ -524,9 +526,10 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #'   before computation. If `FALSE` (default), missing values result in
 #'   an error (energy distance cannot be computed with missing data).
 #'
-#' @return A numeric value representing the energy distance. Lower values
-#'   indicate better balance, with 0 indicating perfect balance. For continuous
-#'   treatments, returns distance correlation (0 = independence).
+#' @return A numeric value representing the energy distance between groups. Lower 
+#'   values indicate better balance, with 0 indicating perfect balance (identical
+#'   distributions). For continuous treatments, returns the distance correlation
+#'   coefficient (0 = independence, 1 = perfect dependence).
 #'
 #' @details
 #' Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)

@@ -16,22 +16,24 @@ bal_energy(
 )
 }
 \arguments{
-\item{covariates}{A data frame or matrix containing the covariates to compare.
-All variables must be numeric. For categorical variables, use dummy coding.}
+\item{covariates}{A data frame or matrix containing the covariates to compare.}
 
 \item{group}{A vector (factor or numeric) indicating group membership. For
 binary and multi-category treatments, must have 2+ unique levels. For
 continuous treatments, should be numeric.}
 
-\item{weights}{An optional numeric vector of case weights. If provided, must
+\item{weights}{An optional numeric vector of weights. If provided, must
 have the same length as rows in \code{covariates}. All weights must be non-negative.}
 
 \item{estimand}{Character string specifying the estimand. Options are:
 \itemize{
-\item NULL (default): Between-group energy distance only
-\item "ATE" (Average Treatment Effect): Balance across all groups
-\item "ATT" (Average Treatment Effect on Treated): Balance for treated group
-\item "ATC" (Average Treatment Effect on Controls): Balance for control group
+\item NULL (default): Pure between-group energy distance comparing distributions
+\item "ATE": Energy distance weighted to reflect balance for estimating average
+treatment effects across the entire population
+\item "ATT": Energy distance weighted to reflect balance for the treated group,
+measuring how well controls match the treated distribution
+\item "ATC": Energy distance weighted to reflect balance for the control group,
+measuring how well treated units match the control distribution
 For continuous treatments, only NULL is supported.
 }}
 
@@ -49,9 +51,10 @@ before computation. If \code{FALSE} (default), missing values result in
 an error (energy distance cannot be computed with missing data).}
 }
 \value{
-A numeric value representing the energy distance. Lower values
-indicate better balance, with 0 indicating perfect balance. For continuous
-treatments, returns distance correlation (0 = independence).
+A numeric value representing the energy distance between groups. Lower
+values indicate better balance, with 0 indicating perfect balance (identical
+distributions). For continuous treatments, returns the distance correlation
+coefficient (0 = independence, 1 = perfect dependence).
 }
 \description{
 Computes the energy distance as a multivariate measure of covariate balance
