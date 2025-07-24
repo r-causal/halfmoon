@@ -559,132 +559,27 @@ StatCalibration <- ggplot2::ggproto(
     treatment_level = NULL,
     k = 10
   ) {
-    # Store original y values
-    unique_y <- unique(data$y[!is.na(data$y)])
 
-    # Convert y to binary 0/1 for calibration calculation
-    # This ensures we're always working with binary outcomes
-    if (!is.null(treatment_level)) {
-      # User specified which level is treatment
-      if (is.character(treatment_level)) {
-        # Check if y values are from ggplot2 factor conversion (integers starting at 1)
-        if (
-          is.numeric(data$y) &&
-            all(unique_y == floor(unique_y)) &&
-            min(unique_y) == 1
-        ) {
-          # Handle factor levels like "0", "1" that become numeric 1, 2
-          numeric_treatment <- suppressWarnings(as.numeric(treatment_level))
-          if (!is.na(numeric_treatment)) {
-            # Map user's treatment level to ggplot2's numeric representation
-            # Factor "0" -> 1, Factor "1" -> 2, etc.
-            ggplot_value <- numeric_treatment + 1
-            if (ggplot_value %in% unique_y) {
-              data$y <- as.numeric(data$y == ggplot_value)
-            } else {
-              # Try to find which numeric value corresponds to treatment_level
-              # For binary factors, assume treatment_level matches the higher value
-              if (length(unique_y) == 2) {
-                data$y <- as.numeric(data$y == max(unique_y))
-                warning(paste0(
-                  "Could not match treatment_level '",
-                  treatment_level,
-                  "' to factor levels. Using maximum value as treatment."
-                ))
-              } else {
-                stop(paste0(
-                  "treatment_level '",
-                  treatment_level,
-                  "' not found. Available numeric values after factor conversion: ",
-                  paste(unique_y, collapse = ", ")
-                ))
-              }
-            }
-          } else {
-            # Non-numeric treatment_level with numeric y
-            # This happens when factor has non-numeric levels
-            if (length(unique_y) == 2) {
-              # For binary, assume higher value is treatment
-              data$y <- as.numeric(data$y == max(unique_y))
-              warning(paste0(
-                "Cannot match non-numeric treatment_level '",
-                treatment_level,
-                "' to numeric y values. Using maximum value as treatment."
-              ))
-            } else {
-              stop(paste0(
-                "Cannot match treatment_level '",
-                treatment_level,
-                "' to numeric y values."
-              ))
-            }
-          }
-        } else {
-          # Direct string comparison
-          data$y <- as.numeric(data$y == treatment_level)
-        }
-      } else if (is.numeric(treatment_level)) {
-        # Numeric treatment level
-        if (treatment_level %in% unique_y) {
-          data$y <- as.numeric(data$y == treatment_level)
-        } else {
-          stop(paste0(
-            "treatment_level ",
-            treatment_level,
-            " not found in y variable. Available values: ",
-            paste(unique_y, collapse = ", ")
-          ))
-        }
-      }
-    } else {
-      # No treatment_level specified - use default logic
-      if (all(unique_y %in% c(0, 1))) {
-        # Already binary 0/1
-        # No conversion needed
-      } else if (length(unique_y) == 2) {
-        # Binary but not 0/1
-        if (
-          all(unique_y == floor(unique_y)) &&
-            min(unique_y) == 1 &&
-            max(unique_y) == 2
-        ) {
-          # Likely from factor with levels "0", "1"
-          # Use 2 (original "1") as treatment
-          data$y <- as.numeric(data$y == 2)
-        } else {
-          # Use max as treatment
-          data$y <- as.numeric(data$y == max(unique_y))
-        }
-      } else {
-        # Multi-level - use max as treatment
-        warning(
-          "y variable has more than 2 levels. Using maximum value as treatment."
-        )
-        data$y <- as.numeric(data$y == max(unique_y, na.rm = TRUE))
-      }
-    }
+    calibration_result <- check_calibration(
+      data = data,
+      .fitted = x,
+      .group = y,
+      treatment_level = treatment_level,
+      method = method,
+      bins = bins,
+      smooth = smooth,
+      conf_level = conf_level,
+      window_size = window_size,
+      step_size = step_size,
+      k = k
+    )
 
-    # Compute calibration statistics
-    result <- if (method == "breaks") {
-      compute_calibration_breaks(data, bins, conf_level)
-    } else if (method == "logistic") {
-      compute_calibration_logistic(
-        data,
-        smooth = smooth,
-        conf_level = conf_level,
-        k = k
-      )
-    } else if (method == "windowed") {
-      compute_calibration_windowed(data, window_size, step_size, conf_level)
-    } else {
-      stop("Method must be 'breaks', 'logistic', or 'windowed'")
-    }
-
-    # CRITICAL: Rename the computed 'event_rate' to 'y' for ggplot2
-    # This ensures the y-axis shows calibration rates (0-1) not factor levels
-    if ("event_rate" %in% names(result)) {
-      result$y <- result$event_rate
-    }
+    result <- data.frame(
+      x = calibration_result$fitted_mean,
+      y = calibration_result$group_mean,
+      ymin = calibration_result$lower,
+      ymax = calibration_result$upper
+    )
 
     # Preserve required ggplot2 columns
     result$PANEL <- data$PANEL[1]
@@ -693,108 +588,6 @@ StatCalibration <- ggplot2::ggproto(
     result
   }
 )
-
-# Helper function for breaks method
-compute_calibration_breaks <- function(data, bins, conf_level) {
-  # Create a temporary data frame with the required columns
-  temp_data <- data.frame(
-    .fitted = data$x,
-    .group = data$y
-  )
-
-  # Use check_calibration to compute the statistics
-  # Note: check_calibration expects a binary outcome where 1 is the treatment
-  # Our data$y has already been converted to 0/1 format in compute_panel
-  # Suppress warnings here since they'll be shown by the internal function
-  suppressWarnings({
-    calibration_result <- check_calibration(
-      data = temp_data,
-      .fitted = .fitted,
-      .group = .group,
-      treatment_level = 1, # We've already converted to binary where 1 is treatment
-      bins = bins,
-      binning_method = "equal_width",
-      conf_level = conf_level,
-      na.rm = FALSE
-    )
-  })
-
-  # Convert the output to match the expected format
-  data.frame(
-    x = calibration_result$fitted_mean,
-    y = calibration_result$group_mean,
-    ymin = calibration_result$lower,
-    ymax = calibration_result$upper
-  )
-}
-
-# Helper function for logistic method
-compute_calibration_logistic <- function(data, smooth, conf_level, k = 10) {
-  # Create a temporary data frame with the required columns
-  temp_data <- data.frame(
-    .fitted = data$x,
-    .group = data$y
-  )
-
-  # Use check_calibration to compute the statistics
-  calibration_result <- check_calibration(
-    data = temp_data,
-    .fitted = .fitted,
-    .group = .group,
-    treatment_level = 1, # We've already converted to binary where 1 is treatment
-    method = "logistic",
-    smooth = smooth,
-    conf_level = conf_level,
-    k = k,
-    na.rm = FALSE
-  )
-
-  # Convert the output to match the expected format
-  data.frame(
-    x = calibration_result$fitted_mean,
-    y = calibration_result$group_mean,
-    ymin = calibration_result$lower,
-    ymax = calibration_result$upper
-  )
-}
-
-# Helper function for windowed method
-compute_calibration_windowed <- function(
-  data,
-  window_size,
-  step_size,
-  conf_level
-) {
-  # Create a temporary data frame with the required columns
-  temp_data <- data.frame(
-    .fitted = data$x,
-    .group = data$y
-  )
-
-  # Use check_calibration to compute the statistics
-  # Suppress warnings here since they'll be shown by the internal function
-  suppressWarnings({
-    calibration_result <- check_calibration(
-      data = temp_data,
-      .fitted = .fitted,
-      .group = .group,
-      treatment_level = 1, # We've already converted to binary where 1 is treatment
-      method = "windowed",
-      window_size = window_size,
-      step_size = step_size,
-      conf_level = conf_level,
-      na.rm = FALSE
-    )
-  })
-
-  # Convert the output to match the expected format
-  data.frame(
-    x = calibration_result$fitted_mean,
-    y = calibration_result$group_mean,
-    ymin = calibration_result$lower,
-    ymax = calibration_result$upper
-  )
-}
 
 # Geom for calibration line
 GeomCalibrationLine <- ggplot2::ggproto(

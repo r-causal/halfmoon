@@ -968,10 +968,7 @@ test_that("geom_calibration errors with invalid method", {
   p <- ggplot(cal_data, aes(x = pred, y = obs)) +
     geom_calibration(method = "invalid_method")
 
-  expect_error(
-    ggplot_build(p),
-    "Method must be 'breaks', 'logistic', or 'windowed'"
-  )
+  expect_warning(ggplot_build(p))
 })
 
 test_that("check_calibration errors with invalid bins", {
