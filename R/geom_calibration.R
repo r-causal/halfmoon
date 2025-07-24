@@ -240,16 +240,13 @@ compute_calibration_breaks_imp <- function(
     }
   }
 
-  # Assign bins - make sure it's numeric
-  df$.bin <- as.integer(cut(
+  result <- df |>
+    dplyr::mutate(.bin = as.integer(cut(
     xs,
     breaks = brks,
     include.lowest = TRUE,
     labels = FALSE
-  ))
-
-  # Use dplyr for aggregation
-  result <- df |>
+  ))) |>
     dplyr::group_by(.bin) |>
     dplyr::summarise(
       fitted_mean = mean(x_var, na.rm = TRUE),
@@ -259,16 +256,15 @@ compute_calibration_breaks_imp <- function(
     ) |>
     dplyr::arrange(.bin)
 
-  # Compute CIs - optimized version
-  n_rows <- nrow(result)
-  result$lower <- numeric(n_rows)
-  result$upper <- numeric(n_rows)
-
-  # Vectorized computation where possible
   n_total <- result$count
   n_events <- round(result$group_mean * n_total)
 
-  # Handle edge cases up front
+  # Handle edge cases up front:
+  # - total count must be positive
+  # - number of events must be non-negative
+  # - events cannot exceed total count 
+  # - events must be greater than 0 (no empty bins)
+  # - events must be less than total (no full bins)
   valid_mask <- n_total > 0 &
     n_events >= 0 &
     n_events <= n_total &
@@ -295,7 +291,10 @@ compute_calibration_breaks_imp <- function(
     )
   }
 
-  # For valid cases, compute CIs using purrr
+  n_rows <- nrow(result)
+  result$lower <- numeric(n_rows)
+  result$upper <- numeric(n_rows)
+
   valid_indices <- which(valid_mask)
   if (length(valid_indices) > 0) {
     ci_results <- purrr::map(
@@ -389,7 +388,6 @@ compute_calibration_logistic_imp <- function(
     upper = upper
   )
 }
-
 
 compute_calibration_windowed_imp <- function(
   df,
