@@ -21,24 +21,24 @@ check_calibration(
 )
 }
 \arguments{
-\item{data}{A data frame or tibble containing the data.}
+\item{data}{A data frame containing the data.}
 
 \item{.fitted}{Column name of predicted probabilities (numeric between 0 and 1).
-Can be unquoted (e.g., \code{.fitted}) or quoted (e.g., \code{".fitted"}).}
+Can be unquoted (e.g., \code{p}) or quoted (e.g., \code{"p"}).}
 
 \item{.group}{Column name of treatment/group variable.
-Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
+Can be unquoted (e.g., \code{g}) or quoted (e.g., \code{"g"}).}
 
 \item{treatment_level}{Value indicating which level of \code{.group} represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.}
+If \code{NULL} (default), uses the last level for factors or max value for numeric.}
 
-\item{method}{Character; calibration method - "breaks", "logistic", or "windowed".}
+\item{method}{Character; calibration method. One of: "breaks", "logistic", or "windowed".}
 
-\item{bins}{Integer >1; number of bins for the "breaks" method.}
+\item{bins}{Integer > 1; number of bins for the "breaks" method.}
 
 \item{binning_method}{"equal_width" or "quantile" for bin creation (breaks method only).}
 
-\item{smooth}{Logical; for "logistic" method, use GAM smoothing if available.}
+\item{smooth}{Logical; for "logistic" method, use GAM smoothing via the mgcv package.}
 
 \item{conf_level}{Numeric in (0,1); confidence level for CIs (default = 0.95).}
 
@@ -46,41 +46,40 @@ If NULL (default), uses the last level for factors or max value for numeric.}
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
 
-\item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
+\item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = \code{TRUE.} Default is 10.}
 
-\item{na.rm}{Logical; if TRUE, drop NA values before summarizing.}
+\item{na.rm}{Logical; if \code{TRUE}, drop \code{NA} values before summarizing.}
 }
 \value{
 A tibble with columns:
 \itemize{
 \item For "breaks" method:
 \itemize{
-\item .bin: integer bin index
-\item fitted_mean: mean predicted probability in bin
-\item group_mean: observed treatment rate in bin
-\item count: number of observations in bin
-\item lower: lower bound of CI for group_mean
-\item upper: upper bound of CI for group_mean
+\item \code{.bin}: integer bin index
+\item \code{fitted_mean}: mean predicted probability in bin
+\item \code{group_mean}: observed treatment rate in bin
+\item \code{count}: number of observations in bin
+\item \code{lower}: lower bound of CI for \code{group_mean}
+\item \code{upper}: upper bound of CI for \code{group_mean}
 }
 \item For "logistic" and "windowed" methods:
 \itemize{
-\item fitted_mean: predicted probability values
-\item group_mean: calibrated outcome rate
-\item lower: lower bound of CI
-\item upper: upper bound of CI
+\item \code{fitted_mean}: predicted probability values
+\item \code{group_mean}: calibrated outcome rate
+\item \code{lower}: lower bound of CI
+\item \code{upper}: upper bound of CI
 }
 }
 }
 \description{
-This function summarizes predicted probabilities and observed outcomes,
+\code{check_calibration()} summarizes predicted probabilities and observed outcomes,
 computing mean prediction, observed rate, counts, and confidence intervals.
+Calibration represents the agreement between predicted probabilities and observed outcomes.
 Supports multiple methods for calibration assessment.
 }
 \examples{
-# Use the included nhefs_weights dataset
-# .fitted contains propensity scores, qsmk is the treatment variable
-
-# Breaks method (default)
+# Using the included `nhefs_weights` dataset
+# `.fitted` contains propensity scores, and `qsmk` is the treatment variable
 check_calibration(nhefs_weights, .fitted, qsmk)
 
 # Logistic method with smoothing
@@ -89,9 +88,4 @@ check_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
 # Windowed method
 check_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 
-# Specify treatment level explicitly (useful for multi-level factors)
-check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
-
-# Different binning methods
-check_calibration(nhefs_weights, .fitted, qsmk, binning_method = "quantile")
 }

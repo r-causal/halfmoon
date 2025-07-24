@@ -1,44 +1,43 @@
 #' Compute calibration data for binary outcomes
 #'
-#' This function summarizes predicted probabilities and observed outcomes,
+#' `check_calibration()` summarizes predicted probabilities and observed outcomes,
 #' computing mean prediction, observed rate, counts, and confidence intervals.
+#' Calibration represents the agreement between predicted probabilities and observed outcomes.
 #' Supports multiple methods for calibration assessment.
 #'
-#' @param data A data frame or tibble containing the data.
+#' @param data A data frame containing the data.
 #' @param .fitted Column name of predicted probabilities (numeric between 0 and 1).
-#'   Can be unquoted (e.g., `.fitted`) or quoted (e.g., `".fitted"`).
+#'   Can be unquoted (e.g., `p`) or quoted (e.g., `"p"`).
 #' @param .group Column name of treatment/group variable.
-#'   Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
+#'   Can be unquoted (e.g., `g`) or quoted (e.g., `"g"`).
 #' @param treatment_level Value indicating which level of `.group` represents treatment.
-#'   If NULL (default), uses the last level for factors or max value for numeric.
-#' @param method Character; calibration method - "breaks", "logistic", or "windowed".
-#' @param bins Integer >1; number of bins for the "breaks" method.
+#'   If `NULL` (default), uses the last level for factors or max value for numeric.
+#' @param method Character; calibration method. One of: "breaks", "logistic", or "windowed".
+#' @param bins Integer > 1; number of bins for the "breaks" method.
 #' @param binning_method "equal_width" or "quantile" for bin creation (breaks method only).
-#' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
+#' @param smooth Logical; for "logistic" method, use GAM smoothing via the mgcv package.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
-#' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
-#' @param na.rm Logical; if TRUE, drop NA values before summarizing.
+#' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = `TRUE.` Default is 10.
+#' @param na.rm Logical; if `TRUE`, drop `NA` values before summarizing.
 #'
 #' @return A tibble with columns:
 #'   - For "breaks" method:
-#'     - .bin: integer bin index
-#'     - fitted_mean: mean predicted probability in bin
-#'     - group_mean: observed treatment rate in bin
-#'     - count: number of observations in bin
-#'     - lower: lower bound of CI for group_mean
-#'     - upper: upper bound of CI for group_mean
+#'     - `.bin`: integer bin index
+#'     - `fitted_mean`: mean predicted probability in bin
+#'     - `group_mean`: observed treatment rate in bin
+#'     - `count`: number of observations in bin
+#'     - `lower`: lower bound of CI for `group_mean`
+#'     - `upper`: upper bound of CI for `group_mean`
 #'   - For "logistic" and "windowed" methods:
-#'     - fitted_mean: predicted probability values
-#'     - group_mean: calibrated outcome rate
-#'     - lower: lower bound of CI
-#'     - upper: upper bound of CI
+#'     - `fitted_mean`: predicted probability values
+#'     - `group_mean`: calibrated outcome rate
+#'     - `lower`: lower bound of CI
+#'     - `upper`: upper bound of CI
 #' @examples
-#' # Use the included nhefs_weights dataset
-#' # .fitted contains propensity scores, qsmk is the treatment variable
-#'
-#' # Breaks method (default)
+#' # Using the included `nhefs_weights` dataset
+#' # `.fitted` contains propensity scores, and `qsmk` is the treatment variable
 #' check_calibration(nhefs_weights, .fitted, qsmk)
 #'
 #' # Logistic method with smoothing
@@ -47,11 +46,6 @@
 #' # Windowed method
 #' check_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 #'
-#' # Specify treatment level explicitly (useful for multi-level factors)
-#' check_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
-#'
-#' # Different binning methods
-#' check_calibration(nhefs_weights, .fitted, qsmk, binning_method = "quantile")
 #' @importFrom stats prop.test quantile glm binomial predict plogis qnorm
 #' @export
 check_calibration <- function(
@@ -69,80 +63,87 @@ check_calibration <- function(
   k = 10,
   na.rm = FALSE
 ) {
-  method <- match.arg(method)
-  binning_method <- match.arg(binning_method)
+  method <- rlang::arg_match(method)
+  binning_method <- rlang::arg_match(binning_method)
   bins_are_not_correctly_specified <- (method == "breaks" &&
     (!is.numeric(bins) || bins < 2 || !isTRUE(all.equal(bins, round(bins)))))
 
   if (bins_are_not_correctly_specified) {
-    stop("`bins` must be an integer > 1.")
+    abort("{.code bins} must be an integer > 1.")
   }
 
-  # Extract column names using rlang - handle both quoted and unquoted
   fitted_quo <- rlang::enquo(.fitted)
   group_quo <- rlang::enquo(.group)
-
-  # Function to extract column name from quosure
-  get_column_name <- function(quo, arg_name) {
-    # First try as_name (works for symbols and strings)
-    tryCatch(
-      {
-        rlang::as_name(quo)
-      },
-      error = function(e) {
-        # If as_name fails, try to evaluate the quosure
-        val <- tryCatch(
-          {
-            rlang::eval_tidy(quo)
-          },
-          error = function(e2) {
-            stop(paste0(
-              "`",
-              arg_name,
-              "` must be a column name (quoted or unquoted)"
-            ))
-          }
-        )
-
-        # Handle different types of evaluated values
-        if (is.character(val) && length(val) == 1) {
-          val
-        } else if (is.symbol(val)) {
-          as.character(val)
-        } else {
-          stop(paste0(
-            "`",
-            arg_name,
-            "` must be a column name (quoted or unquoted)"
-          ))
-        }
-      }
-    )
-  }
 
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".group")
 
-  # Validate that columns exist
-  if (!fitted_name %in% names(data)) {
-    stop(paste0("Column '", fitted_name, "' not found in data"))
-  }
-  if (!group_name %in% names(data)) {
-    stop(paste0("Column '", group_name, "' not found in data"))
-  }
-
-  # Extract and validate treatment variable
   group_var <- data[[group_name]]
-  unique_levels <- unique(group_var[!is.na(group_var)])
+  
+  check_columns(data, fitted_name, group_name, treatment_level)
 
-  # Determine treatment level
+  treatment_indicator <- check_treatment_level(group_var, treatment_level)
+
+  df <- tibble::tibble(
+    x_var = data[[fitted_name]],
+    y_var = treatment_indicator
+  )
+
+  if (isTRUE(na.rm)) {
+    df <- df |>
+      dplyr::filter(!is.na(x_var) & !is.na(y_var))
+  }
+
+  if (nrow(df) == 0) {
+    return(empty_calibration(method))
+  }
+
+  result <- if (method == "breaks") {
+    compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
+  } else if (method == "logistic") {
+    compute_calibration_logistic_imp(df, smooth, conf_level, k = k)
+  } else if (method == "windowed") {
+    compute_calibration_windowed_imp(
+      df,
+      window_size,
+      step_size,
+      conf_level
+    )
+  }
+
+  result
+}
+
+empty_calibration <- function(method = "breaks") {
+  if (method == "breaks") {
+    tibble::tibble(
+      .bin = integer(0),
+      fitted_mean = numeric(0),
+      group_mean = numeric(0),
+      count = integer(0),
+      lower = numeric(0),
+      upper = numeric(0)
+    )
+  } else {
+    tibble::tibble(
+      fitted_mean = numeric(0),
+      group_mean = numeric(0),
+      lower = numeric(0),
+      upper = numeric(0)
+    )
+  }
+}
+
+check_treatment_level <- function(group_var, treatment_level) {
+  unique_levels <- unique(group_var[!is.na(group_var)])
+  # Default: use last level for factors, max value for numeric
   if (is.null(treatment_level)) {
-    # Default: use last level for factors, max value for numeric
     if (is.factor(group_var)) {
       treatment_level <- levels(group_var)[length(levels(group_var))]
     } else {
       if (length(unique_levels) == 0) {
-        treatment_level <- 1 # Default for empty data
+        # Default for empty data
+        treatment_level <- 1
       } else {
         treatment_level <- max(unique_levels, na.rm = TRUE)
       }
@@ -151,13 +152,11 @@ check_calibration <- function(
 
   # Validate treatment level exists (skip for empty data)
   if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
-    stop(paste0(
-      "treatment_level '",
-      treatment_level,
-      "' not found in .group variable"
-    ))
+    abort(
+      "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
+    )
   }
-
+  
   # Create binary treatment indicator (1 = treatment, 0 = control)
   # Handle both factor and non-factor variables
   if (is.factor(group_var)) {
@@ -169,57 +168,53 @@ check_calibration <- function(
     treatment_indicator <- as.numeric(group_var == treatment_level)
   }
 
-  # Create a tibble with only the needed columns and standardized names
-  df <- tibble::tibble(
-    x_var = data[[fitted_name]],
-    y_var = treatment_indicator
-  )
+  treatment_indicator
+}
 
-  if (na.rm) {
-    df <- df |>
-      dplyr::filter(!is.na(x_var) & !is.na(y_var))
-  }
+check_columns <- function(data, fitted_name, group_name, treatment_level) {
+  if (is.null(treatment_level)) {
+    if (!fitted_name %in% names(data)) {
+      abort("Column {.code {fitted_name}} not found in data")
+    }
 
-  if (nrow(df) == 0) {
-    if (method == "breaks") {
-      return(tibble::tibble(
-        .bin = integer(0),
-        fitted_mean = numeric(0),
-        group_mean = numeric(0),
-        count = integer(0),
-        lower = numeric(0),
-        upper = numeric(0)
-      ))
-    } else {
-      return(tibble::tibble(
-        fitted_mean = numeric(0),
-        group_mean = numeric(0),
-        lower = numeric(0),
-        upper = numeric(0)
-      ))
+    if (!group_name %in% names(data)) {
+      abort("Column {.code {group_name}} not found in data")
     }
   }
+}
 
-  # Dispatch to appropriate method
-  result <- if (method == "breaks") {
-    compute_calibration_breaks_internal(df, bins, binning_method, conf_level)
-  } else if (method == "logistic") {
-    compute_calibration_logistic_internal(df, smooth, conf_level, k = k)
-  } else if (method == "windowed") {
-    compute_calibration_windowed_internal(
-      df,
-      window_size,
-      step_size,
-      conf_level
-    )
-  }
+# Function to extract column name from quosure
+get_column_name <- function(quo, arg_name) {
+  # First try as_name (works for symbols and strings)
+  tryCatch(
+    {
+      rlang::as_name(quo)
+    },
+    error = function(e) {
+      # If as_name fails, try to evaluate the quosure
+      val <- tryCatch(
+        {
+          rlang::eval_tidy(quo)
+        },
+        error = function(e2) {
+          abort("{.code arg_name} must be a column name (quoted or unquoted)")
+        }
+      )
 
-  # Convert to tibble for consistency with other functions
-  tibble::as_tibble(result)
+      # Handle different types of evaluated values
+      if (is.character(val) && length(val) == 1) {
+        val
+      } else if (is.symbol(val)) {
+        as.character(val)
+      } else {
+        abort("{.code arg_name} must be a column name (quoted or unquoted)")
+      }
+    }
+  )
 }
 
 # Internal helper function for breaks method
-compute_calibration_breaks_internal <- function(
+compute_calibration_breaks_imp <- function(
   df,
   bins,
   binning_method,
@@ -359,8 +354,7 @@ compute_calibration_breaks_internal <- function(
   result
 }
 
-# Internal helper function for logistic method
-compute_calibration_logistic_internal <- function(
+compute_calibration_logistic_imp <- function(
   df,
   smooth,
   conf_level,
@@ -388,7 +382,7 @@ compute_calibration_logistic_internal <- function(
   lower <- plogis(preds$fit - z_score * preds$se.fit)
   upper <- plogis(preds$fit + z_score * preds$se.fit)
 
-  data.frame(
+  tibble::tibble(
     fitted_mean = pred_seq,
     group_mean = pred_probs,
     lower = lower,
@@ -396,8 +390,8 @@ compute_calibration_logistic_internal <- function(
   )
 }
 
-# Internal helper function for windowed method - optimized
-compute_calibration_windowed_internal <- function(
+
+compute_calibration_windowed_imp <- function(
   df,
   window_size,
   step_size,
@@ -519,7 +513,7 @@ compute_calibration_windowed_internal <- function(
 
   # Return only valid windows
   if (length(valid_results) > 0) {
-    data.frame(
+    tibble::tibble(
       fitted_mean = purrr::map_dbl(valid_results, ~ .x$fitted_mean),
       group_mean = purrr::map_dbl(valid_results, ~ .x$group_mean),
       lower = purrr::map_dbl(valid_results, ~ .x$lower),
@@ -527,7 +521,7 @@ compute_calibration_windowed_internal <- function(
     )
   } else {
     # Return empty data frame with correct structure
-    data.frame(
+    tibble::tibble(
       fitted_mean = numeric(0),
       group_mean = numeric(0),
       lower = numeric(0),

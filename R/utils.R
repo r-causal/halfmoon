@@ -14,8 +14,8 @@
 #' @importFrom rlang %||%
 NULL
 
-abort <- function(.message) {
-  cli::cli_abort(message = .message)
+abort <- function(.message, .envir = parent.frame()) {
+  cli::cli_abort(message = .message, .envir = .envir)
 }
 
 utils::globalVariables(c(

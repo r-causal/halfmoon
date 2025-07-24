@@ -104,13 +104,13 @@ test_that("check_calibration provides clear error messages for missing columns",
   # Test with non-existent .fitted column
   expect_error(
     check_calibration(test_data, "nonexistent", "obs"),
-    "Column 'nonexistent' not found in data"
+    "Column `nonexistent` not found in data"
   )
 
   # Test with non-existent .group column
   expect_error(
     check_calibration(test_data, "pred", "nonexistent"),
-    "Column 'nonexistent' not found in data"
+    "Column `nonexistent` not found in data"
   )
 })
 
@@ -425,7 +425,7 @@ test_that("check_calibration method parameter validation", {
   # Test invalid method
   expect_error(
     check_calibration(test_data, pred, obs, method = "invalid"),
-    "'arg' should be one of"
+    "`method` must be one of"
   )
 })
 

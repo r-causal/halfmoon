@@ -54,7 +54,8 @@ add_ess_header <- function(
     x$table_styling$header$modify_stat_N <- ard_ess$stat[[1]]
     x$table_styling$header$modify_stat_n <- ard_ess$stat[[1]]
     x$table_styling$header$modify_stat_p <- 1
-  } else if (!"add_overall" %in% names(x$call_list)) { # with a `tbl_svysummary(by)` value but no overall column
+  } else if (!"add_overall" %in% names(x$call_list)) {
+    # with a `tbl_svysummary(by)` value but no overall column
     x$table_styling$header <-
       dplyr::rows_update(
         x$table_styling$header,
@@ -75,7 +76,8 @@ add_ess_header <- function(
       dplyr::mutate(
         modify_stat_N = sum(.data$modify_stat_n, na.rm = TRUE)
       )
-  } else { # with both a `tbl_svysummary(by)` value and an overall column
+  } else {
+    # with both a `tbl_svysummary(by)` value and an overall column
     x$table_styling$header <-
       dplyr::rows_update(
         x$table_styling$header,
