@@ -96,11 +96,6 @@ weighted_roc_auc <- function(
     x <- 1 - method_data$specificity # FPR
     y <- method_data$sensitivity # TPR
 
-    # Sort by x for integration
-    ord <- order(x)
-    x <- x[ord]
-    y <- y[ord]
-
     # Compute AUC
     auc_val <- compute_auc(x, y)
 
