@@ -13,7 +13,7 @@ plot_roc_auc(
 )
 }
 \arguments{
-\item{.data}{Output from \code{weighted_roc_auc()} or \code{check_roc_balance()}.}
+\item{.data}{Output from \code{weighted_roc_auc()} or \code{check_auc()}.}
 
 \item{ref_line}{Show reference line at AUC = 0.5? Default is TRUE.}
 

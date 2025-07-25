@@ -89,7 +89,7 @@ plot_roc_curve <- function(
 #' Creates a visualization of AUC values from weighted ROC analysis.
 #' Values near 0.5 indicate good balance.
 #'
-#' @param .data Output from `weighted_roc_auc()` or `check_roc_balance()`.
+#' @param .data Output from `weighted_roc_auc()` or `check_auc()`.
 #' @param ref_line Show reference line at AUC = 0.5? Default is TRUE.
 #' @param ref_color Color for reference line. Default is "red".
 #' @param point_size Size of the points. Default is 3.

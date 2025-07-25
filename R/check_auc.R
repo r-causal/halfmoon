@@ -1,15 +1,15 @@
 #' Check Balance Using Weighted ROC Curves
 #'
 #' Computes weighted ROC curves and AUC for evaluating propensity score balance.
-#' In causal inference, a weighted ROC curve near the diagonal (AUC ≈ 0.5)
+#' In causal inference, a weighted ROC curve near the diagonal (AUC around 0.5)
 #' indicates good balance between treatment groups.
 #'
 #' @param .data A data frame containing the variables.
-#' @param .truth The treatment/outcome variable (unquoted).
-#' @param .estimate The propensity score or fitted values (unquoted).
-#' @param .wts Weighting variables (unquoted, supports tidyselect).
-#' @param include_observed Include unweighted results? Default TRUE.
-#' @param na.rm Remove missing values? Default TRUE.
+#' @param .truth The treatment/outcome variable.
+#' @param .estimate The propensity score or fitted values.
+#' @param .wts Weighting variables (supports tidyselect).
+#' @param include_observed Include unweighted results? Default `TRUE`.
+#' @param na.rm Remove missing values? Default `TRUE`.
 #' @param treatment_level The level of `.truth` to consider as the treatment/event.
 #'   Default is NULL, which uses the second level.
 #'
@@ -19,13 +19,13 @@
 #'
 #' @examples
 #' # Check balance for propensity scores
-#' check_roc_balance(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))
+#' check_auc(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))
 #'
 #' # Without observed results
-#' check_roc_balance(nhefs_weights, qsmk, .fitted, w_ate, include_observed = FALSE)
+#' check_auc(nhefs_weights, qsmk, .fitted, w_ate, include_observed = FALSE)
 #'
 #' @export
-check_roc_balance <- function(
+check_auc <- function(
   .data,
   .truth,
   .estimate,

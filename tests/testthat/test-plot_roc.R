@@ -45,8 +45,8 @@ test_that("plot_roc_auc works with basic inputs", {
   p_no_ref <- plot_roc_auc(auc_data, ref_line = FALSE)
   expect_s3_class(p_no_ref, "gg")
 
-  # Test with check_roc_balance output
-  balance_data <- check_roc_balance(
+  # Test with check_auc output
+  balance_data <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,

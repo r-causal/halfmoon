@@ -90,9 +90,9 @@ test_that("weighted_roc_auc computes correct AUC values", {
   expect_equal(nrow(auc_weighted), 2) # observed + weight1
 })
 
-test_that("check_roc_balance returns correct structure", {
+test_that("check_auc returns correct structure", {
   # Test basic functionality
-  balance_check <- check_roc_balance(
+  balance_check <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -106,7 +106,7 @@ test_that("check_roc_balance returns correct structure", {
   expect_true(all(balance_check$auc >= 0 & balance_check$auc <= 1))
 
   # Test without observed
-  balance_no_obs <- check_roc_balance(
+  balance_no_obs <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -269,7 +269,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
     .metrics = "smd"
   )
 
-  balance_roc <- check_roc_balance(
+  balance_roc <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
