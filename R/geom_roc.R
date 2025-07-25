@@ -11,6 +11,8 @@
 #' @param show.legend Show legend? Default NA.
 #' @param inherit.aes Inherit aesthetics from plot? Default TRUE.
 #' @param linewidth Width of the ROC curve line. Default is 0.5.
+#' @param treatment_level The level of the outcome variable to consider as the treatment/event.
+#'   Default is NULL, which uses the second level.
 #' @param ... Additional arguments passed to the geom.
 #'
 #' @return A ggplot2 layer.
@@ -42,6 +44,7 @@ geom_roc <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   linewidth = 0.5,
+  treatment_level = NULL,
   ...
 ) {
   ggplot2::layer(
@@ -55,6 +58,7 @@ geom_roc <- function(
     params = list(
       na.rm = na.rm,
       linewidth = linewidth,
+      treatment_level = treatment_level,
       ...
     )
   )
@@ -71,6 +75,8 @@ geom_roc <- function(
 #' @param na.rm Remove missing values? Default TRUE.
 #' @param show.legend Show legend? Default NA.
 #' @param inherit.aes Inherit aesthetics? Default TRUE.
+#' @param treatment_level The level of the outcome variable to consider as the treatment/event.
+#'   Default is NULL, which uses the second level.
 #' @param ... Additional arguments.
 #'
 #' @return A ggplot2 layer.
@@ -83,6 +89,7 @@ stat_roc <- function(
   na.rm = TRUE,
   show.legend = NA,
   inherit.aes = TRUE,
+  treatment_level = NULL,
   ...
 ) {
   ggplot2::layer(
@@ -95,6 +102,7 @@ stat_roc <- function(
     inherit.aes = inherit.aes,
     params = list(
       na.rm = na.rm,
+      treatment_level = treatment_level,
       ...
     )
   )
@@ -110,7 +118,7 @@ StatRoc <- ggplot2::ggproto(
   required_aes = c("x", "y"),
   default_aes = ggplot2::aes(weight = 1),
 
-  compute_group = function(data, scales, na.rm = TRUE) {
+  compute_group = function(data, scales, na.rm = TRUE, treatment_level = NULL) {
     # Extract x (predictor) and y (truth)
     x <- data$x
     y <- data$y
@@ -144,18 +152,14 @@ StatRoc <- ggplot2::ggproto(
       if (length(unique_y) != 2) {
         abort("{.arg y} must have exactly 2 unique values for ROC curve")
       }
-      # Create a factor
       y <- factor(y, levels = unique_y)
     }
 
-    # Compute ROC curve using our internal function
-    # Note: StatRoc doesn't have access to treatment_level parameter,
-    # so it uses the default (second level)
     roc_data <- compute_roc_curve_internal(
       y,
       x,
       weights,
-      treatment_level = NULL
+      treatment_level = treatment_level
     )
 
     # Return data for ggplot2

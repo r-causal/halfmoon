@@ -14,6 +14,7 @@ stat_roc(
   na.rm = TRUE,
   show.legend = NA,
   inherit.aes = TRUE,
+  treatment_level = NULL,
   ...
 )
 }
@@ -31,6 +32,9 @@ stat_roc(
 \item{show.legend}{Show legend? Default NA.}
 
 \item{inherit.aes}{Inherit aesthetics? Default TRUE.}
+
+\item{treatment_level}{The level of the outcome variable to consider as the treatment/event.
+Default is NULL, which uses the second level.}
 
 \item{...}{Additional arguments.}
 }

@@ -13,6 +13,7 @@ geom_roc(
   show.legend = NA,
   inherit.aes = TRUE,
   linewidth = 0.5,
+  treatment_level = NULL,
   ...
 )
 }
@@ -33,6 +34,9 @@ geom_roc(
 
 \item{linewidth}{Width of the ROC curve line. Default is 0.5.}
 
+\item{treatment_level}{The level of the outcome variable to consider as the treatment/event.
+Default is NULL, which uses the second level.}
+
 \item{...}{Additional arguments passed to the geom.}
 }
 \value{
@@ -40,7 +44,7 @@ A ggplot2 layer.
 }
 \description{
 A ggplot2 geom for plotting ROC curves with optional weighting.
-Emphasizes the balance interpretation where AUC ≈ 0.5 indicates good balance.
+Emphasizes the balance interpretation where AUC around 0.5 indicates good balance.
 }
 \examples{
 # Basic usage
