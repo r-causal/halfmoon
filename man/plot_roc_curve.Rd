@@ -8,9 +8,7 @@ plot_roc_curve(
   .data,
   linewidth = 1,
   diagonal_color = "gray50",
-  diagonal_linetype = "dashed",
-  balance_region = TRUE,
-  balance_alpha = 0.1
+  diagonal_linetype = "dashed"
 )
 }
 \arguments{
@@ -21,10 +19,6 @@ plot_roc_curve(
 \item{diagonal_color}{Color for the diagonal reference line. Default is "gray50".}
 
 \item{diagonal_linetype}{Line type for the diagonal. Default is "dashed".}
-
-\item{balance_region}{Show shaded region indicating good balance? Default is TRUE.}
-
-\item{balance_alpha}{Alpha transparency for balance region. Default is 0.1.}
 }
 \value{
 A ggplot2 object.
@@ -45,7 +39,5 @@ roc_data <- weighted_roc_curve(
 # Create plot
 plot_roc_curve(roc_data)
 
-# Without balance region
-plot_roc_curve(roc_data, balance_region = FALSE)
 
 }

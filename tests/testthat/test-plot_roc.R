@@ -16,10 +16,6 @@ test_that("plot_roc_curve works with basic inputs", {
   # Check layers
   expect_true(length(p$layers) >= 2) # At least ROC curve and diagonal
 
-  # Test without balance region
-  p_no_region <- plot_roc_curve(roc_data, balance_region = FALSE)
-  expect_s3_class(p_no_region, "gg")
-
   # Test single method
   roc_single <- weighted_roc_curve(
     nhefs_weights,
@@ -127,8 +123,7 @@ test_that("plot_roc_curve customization works", {
     roc_data,
     linewidth = 2,
     diagonal_color = "blue",
-    diagonal_linetype = "solid",
-    balance_alpha = 0.3
+    diagonal_linetype = "solid"
   )
   expect_s3_class(p_custom, "gg")
 })
@@ -246,11 +241,6 @@ test_that("plot_roc_curve visual regression", {
     plot_roc_curve(roc_multi)
   )
 
-  expect_doppelganger(
-    "roc-curve-no-balance-region",
-    plot_roc_curve(roc_multi, balance_region = FALSE)
-  )
-
   # Single method
   roc_single <- weighted_roc_curve(
     nhefs_weights,
@@ -271,8 +261,7 @@ test_that("plot_roc_curve visual regression", {
       roc_multi,
       linewidth = 2,
       diagonal_color = "red",
-      diagonal_linetype = "dotted",
-      balance_alpha = 0.2
+      diagonal_linetype = "dotted"
     )
   )
 })

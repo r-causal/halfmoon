@@ -7,8 +7,6 @@
 #' @param linewidth Width of the ROC curve lines. Default is 1.
 #' @param diagonal_color Color for the diagonal reference line. Default is "gray50".
 #' @param diagonal_linetype Line type for the diagonal. Default is "dashed".
-#' @param balance_region Show shaded region indicating good balance? Default is TRUE.
-#' @param balance_alpha Alpha transparency for balance region. Default is 0.1.
 #'
 #' @return A ggplot2 object.
 #'
@@ -24,17 +22,13 @@
 #' # Create plot
 #' plot_roc_curve(roc_data)
 #'
-#' # Without balance region
-#' plot_roc_curve(roc_data, balance_region = FALSE)
 #'
 #' @export
 plot_roc_curve <- function(
   .data,
   linewidth = 1,
   diagonal_color = "gray50",
-  diagonal_linetype = "dashed",
-  balance_region = TRUE,
-  balance_alpha = 0.1
+  diagonal_linetype = "dashed"
 ) {
   if (!inherits(.data, "tbl_df") && !inherits(.data, "data.frame")) {
     abort(
@@ -79,20 +73,6 @@ plot_roc_curve <- function(
       linetype = diagonal_linetype,
       alpha = 0.7
     )
-
-  # Add balance region if requested
-  if (balance_region) {
-    p <- p +
-      ggplot2::annotate(
-        "rect",
-        xmin = 0.4,
-        xmax = 0.6,
-        ymin = 0.4,
-        ymax = 0.6,
-        alpha = balance_alpha,
-        fill = "green"
-      )
-  }
 
   # Formatting
   p <- p +
