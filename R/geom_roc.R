@@ -117,6 +117,7 @@ StatRoc <- ggplot2::ggproto(
   ggplot2::Stat,
   required_aes = c("x", "y"),
   default_aes = ggplot2::aes(weight = 1),
+  dropped_aes = "weight",  # Tell ggplot2 to drop weight after computation
 
   compute_group = function(data, scales, na.rm = TRUE, treatment_level = NULL) {
     # Extract x (predictor) and y (truth)
