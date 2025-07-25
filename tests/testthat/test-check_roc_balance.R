@@ -285,6 +285,51 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
   expect_true(all(c("method", "auc") %in% colnames(balance_roc)))
 })
 
+test_that("treatment_level parameter works correctly", {
+  # Test with default (second level)
+  roc_default <- weighted_roc_curve(
+    nhefs_weights,
+    qsmk,
+    .fitted,
+    include_observed = TRUE
+  )
+
+  # Test with explicit treatment_level = "1" (same as default)
+  roc_explicit <- weighted_roc_curve(
+    nhefs_weights,
+    qsmk,
+    .fitted,
+    include_observed = TRUE,
+    treatment_level = "1"
+  )
+
+  # Should be identical
+  expect_equal(roc_default, roc_explicit)
+
+  # Test with treatment_level = "0" (opposite)
+  roc_opposite <- weighted_roc_curve(
+    nhefs_weights,
+    qsmk,
+    .fitted,
+    include_observed = TRUE,
+    treatment_level = "0"
+  )
+
+  # ROC curves should be different
+  expect_false(identical(roc_default, roc_opposite))
+
+  # Test with invalid treatment_level
+  expect_error(
+    weighted_roc_curve(
+      nhefs_weights,
+      qsmk,
+      .fitted,
+      treatment_level = "invalid"
+    ),
+    "not found in"
+  )
+})
+
 test_that("compute_auc handles edge cases", {
   # Empty vectors
   expect_equal(compute_auc(numeric(0), numeric(0)), NA_real_)

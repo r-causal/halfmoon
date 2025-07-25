@@ -10,7 +10,8 @@ weighted_roc_curve(
   .estimate,
   .wts = NULL,
   include_observed = TRUE,
-  na_rm = TRUE
+  na_rm = TRUE,
+  treatment_level = NULL
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ weighted_roc_curve(
 \item{include_observed}{Include unweighted results? Default TRUE.}
 
 \item{na_rm}{Remove missing values? Default TRUE.}
+
+\item{treatment_level}{The level of \code{.truth} to consider as the treatment/event.
+Default is NULL, which uses the second level.}
 }
 \value{
 A tibble with ROC curve data.

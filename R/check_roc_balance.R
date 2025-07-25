@@ -10,6 +10,8 @@
 #' @param .wts Weighting variables (unquoted, supports tidyselect).
 #' @param include_observed Include unweighted results? Default TRUE.
 #' @param na_rm Remove missing values? Default TRUE.
+#' @param treatment_level The level of `.truth` to consider as the treatment/event.
+#'   Default is NULL, which uses the second level.
 #'
 #' @return A tibble with columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
@@ -29,7 +31,8 @@ check_roc_balance <- function(
   .estimate,
   .wts,
   include_observed = TRUE,
-  na_rm = TRUE
+  na_rm = TRUE,
+  treatment_level = NULL
 ) {
   # Validate inputs
   if (!is.data.frame(.data)) {
@@ -43,7 +46,8 @@ check_roc_balance <- function(
     {{ .estimate }},
     {{ .wts }},
     include_observed,
-    na_rm
+    na_rm,
+    treatment_level
   )
 }
 
@@ -58,6 +62,8 @@ check_roc_balance <- function(
 #' @param .wts Optional weighting variables (unquoted, can be multiple).
 #' @param include_observed Include unweighted results? Default TRUE.
 #' @param na_rm Remove missing values? Default TRUE.
+#' @param treatment_level The level of `.truth` to consider as the treatment/event.
+#'   Default is NULL, which uses the second level.
 #'
 #' @return A tibble with AUC values.
 #' @export
@@ -67,7 +73,8 @@ weighted_roc_auc <- function(
   .estimate,
   .wts = NULL,
   include_observed = TRUE,
-  na_rm = TRUE
+  na_rm = TRUE,
+  treatment_level = NULL
 ) {
   # Get ROC curve data
   roc_data <- weighted_roc_curve(
@@ -76,7 +83,8 @@ weighted_roc_auc <- function(
     {{ .estimate }},
     {{ .wts }},
     include_observed,
-    na_rm
+    na_rm,
+    treatment_level
   )
 
   # Calculate AUC for each method
@@ -117,6 +125,8 @@ weighted_roc_auc <- function(
 #' @param .wts Optional weighting variables (unquoted, can be multiple).
 #' @param include_observed Include unweighted results? Default TRUE.
 #' @param na_rm Remove missing values? Default TRUE.
+#' @param treatment_level The level of `.truth` to consider as the treatment/event.
+#'   Default is NULL, which uses the second level.
 #'
 #' @return A tibble with ROC curve data.
 #' @export
@@ -126,7 +136,8 @@ weighted_roc_curve <- function(
   .estimate,
   .wts = NULL,
   include_observed = TRUE,
-  na_rm = TRUE
+  na_rm = TRUE,
+  treatment_level = NULL
 ) {
   # Capture arguments
   truth_quo <- rlang::enquo(.truth)
@@ -211,7 +222,8 @@ weighted_roc_curve <- function(
     observed_curve <- compute_roc_curve_internal(
       truth,
       estimate,
-      weights = NULL
+      weights = NULL,
+      treatment_level = treatment_level
     )
     observed_curve$method <- "observed"
     results$observed <- observed_curve
@@ -247,7 +259,8 @@ weighted_roc_curve <- function(
     weighted_curve <- compute_roc_curve_internal(
       truth_wt,
       estimate_wt,
-      weights = weights_wt
+      weights = weights_wt,
+      treatment_level = treatment_level
     )
     weighted_curve$method <- wt_name
     results[[wt_name]] <- weighted_curve
@@ -266,9 +279,15 @@ weighted_roc_curve <- function(
 #' @param truth Factor with 2 levels.
 #' @param estimate Numeric vector of predictions.
 #' @param weights Optional numeric vector of weights.
+#' @param treatment_level The level to consider as treatment/event.
 #' @return Data frame with threshold, sensitivity, specificity.
 #' @noRd
-compute_roc_curve_internal <- function(truth, estimate, weights = NULL) {
+compute_roc_curve_internal <- function(
+  truth,
+  estimate,
+  weights = NULL,
+  treatment_level = NULL
+) {
   # Handle edge cases
   if (length(truth) == 0) {
     return(tibble::tibble(
@@ -294,9 +313,38 @@ compute_roc_curve_internal <- function(truth, estimate, weights = NULL) {
   }
 
   # Convert to binary (1 = event, 0 = non-event)
-  # Use first level as event
-  event_level <- levels(truth)[1]
-  truth_binary <- as.integer(truth == event_level)
+  # Determine which level is the treatment/event
+  if (is.factor(truth)) {
+    truth_levels <- levels(truth)
+    if (!is.null(treatment_level)) {
+      # User specified treatment level
+      if (!treatment_level %in% truth_levels) {
+        abort(
+          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} levels: {.val {truth_levels}}"
+        )
+      }
+      event_level <- treatment_level
+    } else {
+      # Default: use second level as event
+      event_level <- truth_levels[2]
+    }
+    truth_binary <- as.integer(truth == event_level)
+  } else {
+    # For non-factors, determine event level
+    unique_vals <- sort(unique(truth))
+    if (!is.null(treatment_level)) {
+      if (!treatment_level %in% unique_vals) {
+        abort(
+          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} values: {.val {unique_vals}}"
+        )
+      }
+      event_level <- treatment_level
+    } else {
+      # Default: use second unique value as event
+      event_level <- unique_vals[2]
+    }
+    truth_binary <- as.integer(truth == event_level)
+  }
 
   # Sort by decreasing estimate
   order_idx <- order(estimate, decreasing = TRUE)
@@ -317,18 +365,18 @@ compute_roc_curve_internal <- function(truth, estimate, weights = NULL) {
   fp <- cumsum(weights_non_events)[unique_idx]
 
   # Calculate totals
-  total_tp <- sum(weights_events)
-  total_fp <- sum(weights_non_events)
+  total_tp <- sum(weights_events, na.rm = TRUE)
+  total_fp <- sum(weights_non_events, na.rm = TRUE)
 
   # Handle edge cases
-  if (total_tp == 0) {
+  if (is.na(total_tp) || total_tp == 0) {
     cli::cli_warn("No events found in truth variable")
     sensitivity <- rep(0, length(tp))
   } else {
     sensitivity <- tp / total_tp
   }
 
-  if (total_fp == 0) {
+  if (is.na(total_fp) || total_fp == 0) {
     cli::cli_warn("No non-events found in truth variable")
     specificity <- rep(1, length(fp))
   } else {
