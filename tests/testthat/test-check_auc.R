@@ -51,7 +51,7 @@ test_that("weighted_roc_curve works with basic inputs", {
   expect_equal(unique(roc_no_obs$method), "weight1")
 })
 
-test_that("weighted_roc_auc computes correct AUC values", {
+test_that("check_auc computes correct AUC values", {
   # Create test data with known separation
   set.seed(123)
   test_data <- tibble::tibble(
@@ -64,7 +64,7 @@ test_that("weighted_roc_auc computes correct AUC values", {
   )
 
   # Test good separation
-  auc_good <- weighted_roc_auc(
+  auc_good <- check_auc(
     test_data,
     truth,
     estimate_good,
@@ -77,7 +77,7 @@ test_that("weighted_roc_auc computes correct AUC values", {
   expect_true(abs(auc_good$auc[auc_good$method == "observed"] - 0.5) > 0.4)
 
   # Test random separation
-  auc_random <- weighted_roc_auc(
+  auc_random <- check_auc(
     test_data,
     truth,
     estimate_random,
@@ -86,7 +86,7 @@ test_that("weighted_roc_auc computes correct AUC values", {
   expect_true(abs(auc_random$auc[auc_random$method == "observed"] - 0.5) < 0.1)
 
   # Test with weights
-  auc_weighted <- weighted_roc_auc(test_data, truth, estimate_good, weight1)
+  auc_weighted <- check_auc(test_data, truth, estimate_good, weight1)
   expect_equal(nrow(auc_weighted), 2) # observed + weight1
 })
 

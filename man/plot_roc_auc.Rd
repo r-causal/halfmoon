@@ -13,7 +13,7 @@ plot_roc_auc(
 )
 }
 \arguments{
-\item{.data}{Output from \code{weighted_roc_auc()} or \code{check_auc()}.}
+\item{.data}{Output from \code{check_auc()}.}
 
 \item{ref_line}{Show reference line at AUC = 0.5? Default is TRUE.}
 
@@ -32,7 +32,7 @@ Values near 0.5 indicate good balance.
 }
 \examples{
 # Compute AUC values
-auc_data <- weighted_roc_auc(
+auc_data <- check_auc(
   nhefs_weights,
   qsmk,
   .fitted,

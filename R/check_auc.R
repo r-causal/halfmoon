@@ -39,43 +39,6 @@ check_auc <- function(
     abort("{.arg .data} must be a data frame")
   }
 
-  # Get AUC results
-  weighted_roc_auc(
-    .data,
-    {{ .truth }},
-    {{ .estimate }},
-    {{ .wts }},
-    include_observed,
-    na.rm,
-    treatment_level
-  )
-}
-
-#' Weighted ROC AUC for Causal Inference
-#'
-#' Computes weighted AUC for evaluating propensity score balance.
-#' Values near 0.5 indicate good balance.
-#'
-#' @param .data A data frame containing the variables.
-#' @param .truth The treatment/outcome variable (unquoted).
-#' @param .estimate The propensity score or covariate (unquoted).
-#' @param .wts Optional weighting variables (unquoted, can be multiple).
-#' @param include_observed Include unweighted results? Default TRUE.
-#' @param na.rm Remove missing values? Default TRUE.
-#' @param treatment_level The level of `.truth` to consider as the treatment/event.
-#'   Default is NULL, which uses the second level.
-#'
-#' @return A tibble with AUC values.
-#' @export
-weighted_roc_auc <- function(
-  .data,
-  .truth,
-  .estimate,
-  .wts = NULL,
-  include_observed = TRUE,
-  na.rm = TRUE,
-  treatment_level = NULL
-) {
   # Get ROC curve data
   roc_data <- weighted_roc_curve(
     .data,
@@ -107,6 +70,7 @@ weighted_roc_auc <- function(
 
   auc_results
 }
+
 
 #' Weighted ROC Curve for Causal Inference
 #'

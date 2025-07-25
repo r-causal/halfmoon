@@ -29,7 +29,7 @@ test_that("plot_roc_curve works with basic inputs", {
 
 test_that("plot_roc_auc works with basic inputs", {
   # Create test AUC data
-  auc_data <- weighted_roc_auc(
+  auc_data <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -101,7 +101,7 @@ test_that("plot_roc_curve customization works", {
 })
 
 test_that("plot_roc_auc customization works", {
-  auc_data <- weighted_roc_auc(
+  auc_data <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -153,7 +153,7 @@ test_that("plot functions produce expected output structure", {
     .fitted,
     c(w_ate, w_att)
   )
-  auc_data <- weighted_roc_auc(
+  auc_data <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -221,7 +221,7 @@ test_that("plot_roc_auc visual regression", {
   skip_on_ci()
 
   # Multiple methods
-  auc_multi <- weighted_roc_auc(
+  auc_multi <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -239,7 +239,7 @@ test_that("plot_roc_auc visual regression", {
   )
 
   # Single method
-  auc_single <- weighted_roc_auc(
+  auc_single <- check_auc(
     nhefs_weights,
     qsmk,
     .fitted,

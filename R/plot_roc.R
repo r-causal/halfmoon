@@ -89,7 +89,7 @@ plot_roc_curve <- function(
 #' Creates a visualization of AUC values from weighted ROC analysis.
 #' Values near 0.5 indicate good balance.
 #'
-#' @param .data Output from `weighted_roc_auc()` or `check_auc()`.
+#' @param .data Output from `check_auc()`.
 #' @param ref_line Show reference line at AUC = 0.5? Default is TRUE.
 #' @param ref_color Color for reference line. Default is "red".
 #' @param point_size Size of the points. Default is 3.
@@ -99,7 +99,7 @@ plot_roc_curve <- function(
 #'
 #' @examples
 #' # Compute AUC values
-#' auc_data <- weighted_roc_auc(
+#' auc_data <- check_auc(
 #'   nhefs_weights,
 #'   qsmk,
 #'   .fitted,
@@ -119,7 +119,7 @@ plot_roc_auc <- function(
 ) {
   if (!inherits(.data, "tbl_df") && !inherits(.data, "data.frame")) {
     abort(
-      "{.arg .data} must be a data frame or tibble from {.fn weighted_roc_auc}"
+      "{.arg .data} must be a data frame or tibble from {.fn check_auc}"
     )
   }
 
