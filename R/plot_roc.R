@@ -100,8 +100,8 @@ plot_roc_curve <- function(
 #' @param .data Output from `weighted_roc_auc()` or `check_roc_balance()`.
 #' @param ref_line Show reference line at AUC = 0.5? Default is TRUE.
 #' @param ref_color Color for reference line. Default is "red".
-#' @param bar_width Width of bars. Default is 0.6.
-#' @param bar_alpha Alpha transparency for bars. Default is 0.7.
+#' @param point_size Size of the points. Default is 3.
+#' @param point_shape Shape of the points. Default is 19 (filled circle).
 #'
 #' @return A ggplot2 object.
 #'
@@ -122,8 +122,8 @@ plot_roc_auc <- function(
   .data,
   ref_line = TRUE,
   ref_color = "red",
-  bar_width = 0.6,
-  bar_alpha = 0.7
+  point_size = 3,
+  point_shape = 19
 ) {
   if (!inherits(.data, "tbl_df") && !inherits(.data, "data.frame")) {
     abort(
@@ -139,29 +139,18 @@ plot_roc_auc <- function(
     )
   }
 
-  # Create balance interpretation based on AUC values
-  .data <- dplyr::mutate(
-    .data,
-    balance_quality = dplyr::case_when(
-      abs(.data$auc - 0.5) < 0.05 ~ "Good",
-      abs(.data$auc - 0.5) < 0.1 ~ "Acceptable",
-      TRUE ~ "Poor"
-    )
-  )
-
-  # Create horizontal bar chart
+  # Create dot plot
   p <- ggplot2::ggplot(.data, ggplot2::aes(x = .data$auc, y = .data$method))
 
-  # Add bars colored by balance quality
+  # Add points
   p <- p +
-    ggplot2::geom_col(
-      ggplot2::aes(fill = .data$balance_quality),
-      alpha = bar_alpha,
-      width = bar_width
+    ggplot2::geom_point(
+      size = point_size,
+      shape = point_shape
     ) +
     ggplot2::geom_text(
       ggplot2::aes(label = round(.data$auc, 3)),
-      hjust = -0.1,
+      vjust = -1,
       size = 3
     )
 
@@ -180,24 +169,13 @@ plot_roc_auc <- function(
   p <- p +
     ggplot2::labs(
       x = "AUC",
-      y = "Weighting Method",
-      fill = "Balance Quality"
-    ) +
-    ggplot2::scale_fill_manual(
-      values = c(
-        "Good" = "green",
-        "Acceptable" = "yellow",
-        "Poor" = "red"
-      )
+      y = "Weighting Method"
     ) +
     ggplot2::scale_x_continuous(
-      limits = c(0, max(1, max(.data$auc) * 1.1)),
-      expand = c(0, 0)
+      limits = c(0, 1),
+      expand = c(0.02, 0.02)
     ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      legend.position = "bottom"
-    )
+    ggplot2::theme_minimal()
 
   p
 }

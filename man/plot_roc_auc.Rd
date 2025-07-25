@@ -8,8 +8,8 @@ plot_roc_auc(
   .data,
   ref_line = TRUE,
   ref_color = "red",
-  bar_width = 0.6,
-  bar_alpha = 0.7
+  point_size = 3,
+  point_shape = 19
 )
 }
 \arguments{
@@ -19,9 +19,9 @@ plot_roc_auc(
 
 \item{ref_color}{Color for reference line. Default is "red".}
 
-\item{bar_width}{Width of bars. Default is 0.6.}
+\item{point_size}{Size of the points. Default is 3.}
 
-\item{bar_alpha}{Alpha transparency for bars. Default is 0.7.}
+\item{point_shape}{Shape of the points. Default is 19 (filled circle).}
 }
 \value{
 A ggplot2 object.

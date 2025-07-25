@@ -43,9 +43,6 @@ test_that("plot_roc_auc works with basic inputs", {
   expect_s3_class(p, "gg")
   expect_s3_class(p, "ggplot")
 
-  # Check that balance_quality was added
-  expect_true("balance_quality" %in% names(p$data))
-
   # Test without reference line
   p_no_ref <- plot_roc_auc(auc_data, ref_line = FALSE)
   expect_s3_class(p_no_ref, "gg")
@@ -136,32 +133,16 @@ test_that("plot_roc_auc customization works", {
     w_ate
   )
 
-  # Test custom bar settings
+  # Test custom point settings
   p_custom <- plot_roc_auc(
     auc_data,
     ref_color = "blue",
-    bar_width = 0.8,
-    bar_alpha = 0.5
+    point_size = 5,
+    point_shape = 21
   )
   expect_s3_class(p_custom, "gg")
 })
 
-test_that("balance quality categorization works correctly", {
-  # Create data with known AUC values
-  test_auc <- tibble::tibble(
-    method = c("perfect", "good", "acceptable", "poor"),
-    auc = c(0.5, 0.52, 0.58, 0.7)
-  )
-
-  p <- plot_roc_auc(test_auc)
-
-  # Check balance quality assignments
-  plot_data <- p$data
-  expect_equal(plot_data$balance_quality[plot_data$auc == 0.5], "Good")
-  expect_equal(plot_data$balance_quality[plot_data$auc == 0.52], "Good")
-  expect_equal(plot_data$balance_quality[plot_data$auc == 0.58], "Acceptable")
-  expect_equal(plot_data$balance_quality[plot_data$auc == 0.7], "Poor")
-})
 
 test_that("StatRoc handles edge cases", {
   # Test with non-binary outcome
@@ -214,7 +195,6 @@ test_that("plot functions produce expected output structure", {
 
   expect_equal(p_auc$labels$x, "AUC")
   expect_equal(p_auc$labels$y, "Weighting Method")
-  expect_equal(p_auc$labels$fill, "Balance Quality")
 
   # Check coordinate system for ROC plot
   expect_s3_class(p_roc$coordinates, "CoordFixed")
@@ -306,12 +286,12 @@ test_that("plot_roc_auc visual regression", {
     plot_roc_auc(
       auc_multi,
       ref_color = "blue",
-      bar_width = 0.8,
-      bar_alpha = 0.3
+      point_size = 5,
+      point_shape = 21
     )
   )
 
-  # Test with varied AUC values for balance quality colors
+  # Test with varied AUC values
   test_auc <- tibble::tibble(
     method = c("Good", "Acceptable", "Poor"),
     auc = c(0.51, 0.57, 0.75)
