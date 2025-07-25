@@ -156,7 +156,7 @@ StatRoc <- ggplot2::ggproto(
       y <- factor(y, levels = unique_y)
     }
 
-    roc_data <- compute_roc_curve_internal(
+    roc_data <- compute_roc_curve_imp(
       y,
       x,
       weights,

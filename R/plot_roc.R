@@ -3,7 +3,7 @@
 #' Creates a ggplot2 visualization of ROC curves for evaluating propensity score balance.
 #' In causal inference, weighted curves near the diagonal (AUC around 0.5) indicate good balance.
 #'
-#' @param .data Output from [`weighted_roc_curve()`].
+#' @param .data Output from [`roc_curve()`].
 #' @param linewidth Width of the ROC curve lines. Default is 1.
 #' @param diagonal_color Color for the diagonal reference line. Default is "gray50".
 #' @param diagonal_linetype Line type for the diagonal. Default is "dashed".
@@ -11,7 +11,7 @@
 #' @return A ggplot2 object.
 #'
 #' @examples
-#' roc_data <- weighted_roc_curve(
+#' roc_data <- roc_curve(
 #'   nhefs_weights,
 #'   qsmk,
 #'   .fitted,
@@ -30,7 +30,7 @@ plot_roc_curve <- function(
 ) {
   if (!inherits(.data, "tbl_df") && !inherits(.data, "data.frame")) {
     abort(
-      "{.arg .data} must be a data frame or tibble from {.fn weighted_roc_curve}"
+      "{.arg .data} must be a data frame or tibble from {.fn roc_curve}"
     )
   }
 

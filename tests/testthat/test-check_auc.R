@@ -1,4 +1,4 @@
-test_that("weighted_roc_curve works with basic inputs", {
+test_that("roc_curve works with basic inputs", {
   # Create simple test data
   set.seed(42)
   test_data <- tibble::tibble(
@@ -9,7 +9,7 @@ test_that("weighted_roc_curve works with basic inputs", {
   )
 
   # Test unweighted ROC curve
-  roc_basic <- weighted_roc_curve(
+  roc_basic <- roc_curve(
     test_data,
     truth,
     estimate,
@@ -25,11 +25,11 @@ test_that("weighted_roc_curve works with basic inputs", {
   expect_true(all(roc_basic$specificity >= 0 & roc_basic$specificity <= 1))
 
   # Test with single weight
-  roc_weighted <- weighted_roc_curve(test_data, truth, estimate, weight1)
+  roc_weighted <- roc_curve(test_data, truth, estimate, weight1)
   expect_equal(sort(unique(roc_weighted$method)), c("observed", "weight1"))
 
   # Test with multiple weights
-  roc_multi <- weighted_roc_curve(
+  roc_multi <- roc_curve(
     test_data,
     truth,
     estimate,
@@ -41,7 +41,7 @@ test_that("weighted_roc_curve works with basic inputs", {
   )
 
   # Test without observed
-  roc_no_obs <- weighted_roc_curve(
+  roc_no_obs <- roc_curve(
     test_data,
     truth,
     estimate,
@@ -126,7 +126,7 @@ test_that("functions handle edge cases correctly", {
   )
 
   # With na.rm = TRUE
-  roc_na_rm <- weighted_roc_curve(
+  roc_na_rm <- roc_curve(
     test_data_na,
     truth,
     estimate,
@@ -137,7 +137,7 @@ test_that("functions handle edge cases correctly", {
 
   # With na.rm = FALSE should error
   expect_error(
-    weighted_roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
+    roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
     "Missing values found and `na.rm = FALSE`"
   )
 
@@ -149,7 +149,7 @@ test_that("functions handle edge cases correctly", {
   )
 
   expect_warning(
-    roc_const <- weighted_roc_curve(test_data_const, truth, estimate),
+    roc_const <- roc_curve(test_data_const, truth, estimate),
     "Estimate variable is constant"
   )
   expect_equal(nrow(roc_const), 3) # Should have 3 points for degenerate curve
@@ -161,7 +161,7 @@ test_that("functions handle edge cases correctly", {
     weight_zero = c(rep(0, 5), runif(15))
   )
 
-  roc_zero <- weighted_roc_curve(test_data_zero, truth, estimate, weight_zero)
+  roc_zero <- roc_curve(test_data_zero, truth, estimate, weight_zero)
   expect_s3_class(roc_zero, "tbl_df")
 
   # Test with negative weights
@@ -171,7 +171,7 @@ test_that("functions handle edge cases correctly", {
     weight_neg = c(rep(-1, 5), runif(15))
   )
 
-  roc_neg <- weighted_roc_curve(test_data_neg, truth, estimate, weight_neg)
+  roc_neg <- roc_curve(test_data_neg, truth, estimate, weight_neg)
   expect_s3_class(roc_neg, "tbl_df")
 })
 
@@ -184,23 +184,23 @@ test_that("functions handle different truth variable types", {
 
   # Test with character
   test_char <- dplyr::mutate(base_data, truth = rep(c("Yes", "No"), 50))
-  roc_char <- weighted_roc_curve(test_char, truth, estimate)
+  roc_char <- roc_curve(test_char, truth, estimate)
   expect_s3_class(roc_char, "tbl_df")
 
   # Test with logical
   test_logical <- dplyr::mutate(base_data, truth = rep(c(TRUE, FALSE), 50))
-  roc_logical <- weighted_roc_curve(test_logical, truth, estimate)
+  roc_logical <- roc_curve(test_logical, truth, estimate)
   expect_s3_class(roc_logical, "tbl_df")
 
   # Test with binary numeric
   test_numeric <- dplyr::mutate(base_data, truth = rep(c(0, 1), 50))
-  roc_numeric <- weighted_roc_curve(test_numeric, truth, estimate)
+  roc_numeric <- roc_curve(test_numeric, truth, estimate)
   expect_s3_class(roc_numeric, "tbl_df")
 
   # Test with non-binary numeric (should error)
   test_multi <- dplyr::mutate(base_data, truth = rep(1:3, length.out = 100))
   expect_error(
-    weighted_roc_curve(test_multi, truth, estimate),
+    roc_curve(test_multi, truth, estimate),
     "must have exactly 2 unique values"
   )
 })
@@ -213,21 +213,21 @@ test_that("error messages use proper cli formatting", {
 
   # Test .data not a data frame
   expect_error(
-    weighted_roc_curve("not a data frame", truth, estimate),
+    roc_curve("not a data frame", truth, estimate),
     "`.data` must be a data frame"
   )
 
   # Test non-numeric estimate
   test_data$estimate_char <- as.character(test_data$estimate)
   expect_error(
-    weighted_roc_curve(test_data, truth, estimate_char),
+    roc_curve(test_data, truth, estimate_char),
     "`.estimate` must be numeric"
   )
 
   # Test multi-level truth
   test_data$truth_multi <- factor(rep(c("A", "B", "C"), length.out = 20))
   expect_error(
-    weighted_roc_curve(test_data, truth_multi, estimate),
+    roc_curve(test_data, truth_multi, estimate),
     "`.truth` must have exactly 2 levels"
   )
 })
@@ -243,7 +243,7 @@ test_that("tidyselect works for weight selection", {
   )
 
   # Test starts_with
-  roc_starts <- weighted_roc_curve(
+  roc_starts <- roc_curve(
     test_data,
     truth,
     estimate,
@@ -255,7 +255,7 @@ test_that("tidyselect works for weight selection", {
   )
 
   # Test specific selection
-  roc_specific <- weighted_roc_curve(test_data, truth, estimate, c(w_1, w_3))
+  roc_specific <- roc_curve(test_data, truth, estimate, c(w_1, w_3))
   expect_equal(sort(unique(roc_specific$method)), c("observed", "w_1", "w_3"))
 })
 
@@ -287,7 +287,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
 
 test_that("treatment_level parameter works correctly", {
   # Test with default (second level)
-  roc_default <- weighted_roc_curve(
+  roc_default <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -295,7 +295,7 @@ test_that("treatment_level parameter works correctly", {
   )
 
   # Test with explicit treatment_level = "1" (same as default)
-  roc_explicit <- weighted_roc_curve(
+  roc_explicit <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -307,7 +307,7 @@ test_that("treatment_level parameter works correctly", {
   expect_equal(roc_default, roc_explicit)
 
   # Test with treatment_level = "0" (opposite)
-  roc_opposite <- weighted_roc_curve(
+  roc_opposite <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -320,7 +320,7 @@ test_that("treatment_level parameter works correctly", {
 
   # Test with invalid treatment_level
   expect_error(
-    weighted_roc_curve(
+    roc_curve(
       nhefs_weights,
       qsmk,
       .fitted,

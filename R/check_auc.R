@@ -34,13 +34,11 @@ check_auc <- function(
   na.rm = TRUE,
   treatment_level = NULL
 ) {
-  # Validate inputs
   if (!is.data.frame(.data)) {
     abort("{.arg .data} must be a data frame")
   }
 
-  # Get ROC curve data
-  roc_data <- weighted_roc_curve(
+  roc_data <- roc_curve(
     .data,
     {{ .truth }},
     {{ .estimate }},
@@ -56,11 +54,9 @@ check_auc <- function(
     method_data <- dplyr::filter(roc_data, .data$method == !!method)
 
     # Calculate AUC using trapezoidal rule
-    x <- 1 - method_data$specificity # FPR
-    y <- method_data$sensitivity # TPR
-
-    # Compute AUC
-    auc_val <- compute_auc(x, y)
+    fpr <- 1 - method_data$specificity 
+    tpr <- method_data$sensitivity 
+    auc_val <- compute_auc(fpr, tpr)
 
     tibble::tibble(
       method = method,
@@ -72,10 +68,10 @@ check_auc <- function(
 }
 
 
-#' Weighted ROC Curve for Causal Inference
+#' ROC Curve for Causal Inference
 #'
-#' Computes weighted ROC curves for evaluating propensity score balance.
-#' In causal inference, a weighted ROC curve near the diagonal (AUC ≈ 0.5)
+#' Computes ROC curves (weighted or unweighted) for evaluating propensity score balance.
+#' In causal inference, an ROC curve near the diagonal (AUC around 0.5)
 #' indicates good balance between treatment groups.
 #'
 #' @param .data A data frame containing the variables.
@@ -89,7 +85,7 @@ check_auc <- function(
 #'
 #' @return A tibble with ROC curve data.
 #' @export
-weighted_roc_curve <- function(
+roc_curve <- function(
   .data,
   .truth,
   .estimate,
@@ -98,12 +94,10 @@ weighted_roc_curve <- function(
   na.rm = TRUE,
   treatment_level = NULL
 ) {
-  # Capture arguments
   truth_quo <- rlang::enquo(.truth)
   estimate_quo <- rlang::enquo(.estimate)
   wts_quo <- rlang::enquo(.wts)
 
-  # Validate data
   if (!is.data.frame(.data)) {
     abort("{.arg .data} must be a data frame")
   }
@@ -152,12 +146,10 @@ weighted_roc_curve <- function(
     abort("{.arg .truth} must have exactly 2 levels")
   }
 
-  # Validate estimate
   if (!is.numeric(estimate)) {
     abort("{.arg .estimate} must be numeric")
   }
 
-  # Handle missing values
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)
     if (!all(complete_cases)) {
@@ -178,7 +170,7 @@ weighted_roc_curve <- function(
 
   # Add observed (unweighted) results
   if (include_observed) {
-    observed_curve <- compute_roc_curve_internal(
+    observed_curve <- compute_roc_curve_imp(
       truth,
       estimate,
       weights = NULL,
@@ -215,7 +207,7 @@ weighted_roc_curve <- function(
       weights_wt <- weights
     }
 
-    weighted_curve <- compute_roc_curve_internal(
+    weighted_curve <- compute_roc_curve_imp(
       truth_wt,
       estimate_wt,
       weights = weights_wt,
@@ -233,21 +225,12 @@ weighted_roc_curve <- function(
   dplyr::bind_rows(results)
 }
 
-#' Compute ROC Curve (Internal Function)
-#'
-#' @param truth Factor with 2 levels.
-#' @param estimate Numeric vector of predictions.
-#' @param weights Optional numeric vector of weights.
-#' @param treatment_level The level to consider as treatment/event.
-#' @return Data frame with threshold, sensitivity, specificity.
-#' @noRd
-compute_roc_curve_internal <- function(
+compute_roc_curve_imp <- function(
   truth,
   estimate,
   weights = NULL,
   treatment_level = NULL
 ) {
-  # Handle edge cases
   if (length(truth) == 0) {
     return(tibble::tibble(
       threshold = numeric(0),
@@ -258,7 +241,7 @@ compute_roc_curve_internal <- function(
 
   # Check for constant estimates
   if (length(unique(estimate)) == 1) {
-    cli::cli_warn("Estimate variable is constant, ROC curve will be degenerate")
+    cli::cli_warn("Estimate variable is constant; ROC curve will be degenerate")
     return(tibble::tibble(
       threshold = c(-Inf, unique(estimate), Inf),
       sensitivity = c(1, 0.5, 0),
@@ -285,7 +268,7 @@ compute_roc_curve_internal <- function(
       event_level <- treatment_level
     } else {
       # Default: use second level as event
-      event_level <- truth_levels[2]
+      event_level <- truth_levels[[2]]
     }
     truth_binary <- as.integer(truth == event_level)
   } else {
@@ -300,7 +283,7 @@ compute_roc_curve_internal <- function(
       event_level <- treatment_level
     } else {
       # Default: use second unique value as event
-      event_level <- unique_vals[2]
+      event_level <- unique_vals[[2]]
     }
     truth_binary <- as.integer(truth == event_level)
   }
@@ -354,12 +337,6 @@ compute_roc_curve_internal <- function(
   )
 }
 
-#' Compute AUC using trapezoidal rule
-#'
-#' @param x Numeric vector (x-axis values).
-#' @param y Numeric vector (y-axis values).
-#' @return Numeric AUC value.
-#' @noRd
 compute_auc <- function(x, y) {
   # Handle edge cases
   if (length(x) != length(y)) {

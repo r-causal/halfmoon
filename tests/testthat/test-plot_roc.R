@@ -1,7 +1,7 @@
 library(ggplot2)
 test_that("plot_roc_curve works with basic inputs", {
   # Create test ROC data
-  roc_data <- weighted_roc_curve(
+  roc_data <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -17,7 +17,7 @@ test_that("plot_roc_curve works with basic inputs", {
   expect_true(length(p$layers) >= 2) # At least ROC curve and diagonal
 
   # Test single method
-  roc_single <- weighted_roc_curve(
+  roc_single <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -83,7 +83,7 @@ test_that("plot functions handle invalid inputs", {
 })
 
 test_that("plot_roc_curve customization works", {
-  roc_data <- weighted_roc_curve(
+  roc_data <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -147,7 +147,7 @@ test_that("StatRoc handles edge cases", {
 
 test_that("plot functions produce expected output structure", {
   # Generate plots
-  roc_data <- weighted_roc_curve(
+  roc_data <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -180,7 +180,7 @@ test_that("plot_roc_curve visual regression", {
   skip_on_ci()
 
   # Multiple methods
-  roc_multi <- weighted_roc_curve(
+  roc_multi <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -193,7 +193,7 @@ test_that("plot_roc_curve visual regression", {
   )
 
   # Single method
-  roc_single <- weighted_roc_curve(
+  roc_single <- roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,

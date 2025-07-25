@@ -12,7 +12,7 @@ plot_roc_curve(
 )
 }
 \arguments{
-\item{.data}{Output from \code{\link[=weighted_roc_curve]{weighted_roc_curve()}}.}
+\item{.data}{Output from \code{\link[=roc_curve]{roc_curve()}}.}
 
 \item{linewidth}{Width of the ROC curve lines. Default is 1.}
 
@@ -28,7 +28,7 @@ Creates a ggplot2 visualization of ROC curves for evaluating propensity score ba
 In causal inference, weighted curves near the diagonal (AUC around 0.5) indicate good balance.
 }
 \examples{
-roc_data <- weighted_roc_curve(
+roc_data <- roc_curve(
   nhefs_weights,
   qsmk,
   .fitted,
