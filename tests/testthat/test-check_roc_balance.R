@@ -125,20 +125,20 @@ test_that("functions handle edge cases correctly", {
     weight1 = runif(22)
   )
 
-  # With na_rm = TRUE
+  # With na.rm = TRUE
   roc_na_rm <- weighted_roc_curve(
     test_data_na,
     truth,
     estimate,
     weight1,
-    na_rm = TRUE
+    na.rm = TRUE
   )
   expect_s3_class(roc_na_rm, "tbl_df")
 
-  # With na_rm = FALSE should error
+  # With na.rm = FALSE should error
   expect_error(
-    weighted_roc_curve(test_data_na, truth, estimate, weight1, na_rm = FALSE),
-    "Missing values found and `na_rm = FALSE`"
+    weighted_roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
+    "Missing values found and `na.rm = FALSE`"
   )
 
   # Test with constant estimates

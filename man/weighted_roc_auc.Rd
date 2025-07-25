@@ -10,7 +10,7 @@ weighted_roc_auc(
   .estimate,
   .wts = NULL,
   include_observed = TRUE,
-  na_rm = TRUE,
+  na.rm = TRUE,
   treatment_level = NULL
 )
 }
@@ -25,7 +25,7 @@ weighted_roc_auc(
 
 \item{include_observed}{Include unweighted results? Default TRUE.}
 
-\item{na_rm}{Remove missing values? Default TRUE.}
+\item{na.rm}{Remove missing values? Default TRUE.}
 
 \item{treatment_level}{The level of \code{.truth} to consider as the treatment/event.
 Default is NULL, which uses the second level.}

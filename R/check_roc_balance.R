@@ -9,7 +9,7 @@
 #' @param .estimate The propensity score or fitted values (unquoted).
 #' @param .wts Weighting variables (unquoted, supports tidyselect).
 #' @param include_observed Include unweighted results? Default TRUE.
-#' @param na_rm Remove missing values? Default TRUE.
+#' @param na.rm Remove missing values? Default TRUE.
 #' @param treatment_level The level of `.truth` to consider as the treatment/event.
 #'   Default is NULL, which uses the second level.
 #'
@@ -31,7 +31,7 @@ check_roc_balance <- function(
   .estimate,
   .wts,
   include_observed = TRUE,
-  na_rm = TRUE,
+  na.rm = TRUE,
   treatment_level = NULL
 ) {
   # Validate inputs
@@ -46,7 +46,7 @@ check_roc_balance <- function(
     {{ .estimate }},
     {{ .wts }},
     include_observed,
-    na_rm,
+    na.rm,
     treatment_level
   )
 }
@@ -61,7 +61,7 @@ check_roc_balance <- function(
 #' @param .estimate The propensity score or covariate (unquoted).
 #' @param .wts Optional weighting variables (unquoted, can be multiple).
 #' @param include_observed Include unweighted results? Default TRUE.
-#' @param na_rm Remove missing values? Default TRUE.
+#' @param na.rm Remove missing values? Default TRUE.
 #' @param treatment_level The level of `.truth` to consider as the treatment/event.
 #'   Default is NULL, which uses the second level.
 #'
@@ -73,7 +73,7 @@ weighted_roc_auc <- function(
   .estimate,
   .wts = NULL,
   include_observed = TRUE,
-  na_rm = TRUE,
+  na.rm = TRUE,
   treatment_level = NULL
 ) {
   # Get ROC curve data
@@ -83,7 +83,7 @@ weighted_roc_auc <- function(
     {{ .estimate }},
     {{ .wts }},
     include_observed,
-    na_rm,
+    na.rm,
     treatment_level
   )
 
@@ -124,7 +124,7 @@ weighted_roc_auc <- function(
 #' @param .estimate The propensity score or covariate (unquoted).
 #' @param .wts Optional weighting variables (unquoted, can be multiple).
 #' @param include_observed Include unweighted results? Default TRUE.
-#' @param na_rm Remove missing values? Default TRUE.
+#' @param na.rm Remove missing values? Default TRUE.
 #' @param treatment_level The level of `.truth` to consider as the treatment/event.
 #'   Default is NULL, which uses the second level.
 #'
@@ -136,7 +136,7 @@ weighted_roc_curve <- function(
   .estimate,
   .wts = NULL,
   include_observed = TRUE,
-  na_rm = TRUE,
+  na.rm = TRUE,
   treatment_level = NULL
 ) {
   # Capture arguments
@@ -199,7 +199,7 @@ weighted_roc_curve <- function(
   }
 
   # Handle missing values
-  if (na_rm) {
+  if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)
     if (!all(complete_cases)) {
       n_missing <- sum(!complete_cases)
@@ -210,7 +210,7 @@ weighted_roc_curve <- function(
     .data <- .data[complete_cases, , drop = FALSE]
   } else {
     if (any(is.na(truth)) || any(is.na(estimate))) {
-      abort("Missing values found and {.code na_rm = FALSE}")
+      abort("Missing values found and {.code na.rm = FALSE}")
     }
   }
 
