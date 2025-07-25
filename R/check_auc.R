@@ -103,8 +103,8 @@ roc_curve <- function(
   }
 
   # Extract column names
-  truth_name <- names(dplyr::select(.data, {{ .truth }}))
-  estimate_name <- names(dplyr::select(.data, {{ .estimate }}))
+  truth_name <- names(tidyselect::eval_select(truth_quo, .data))
+  estimate_name <- names(tidyselect::eval_select(estimate_quo, .data))
 
   if (length(truth_name) != 1) {
     abort("{.arg .truth} must select exactly one variable")
@@ -115,7 +115,7 @@ roc_curve <- function(
 
   # Handle weights
   if (!rlang::quo_is_null(wts_quo)) {
-    weight_vars <- names(dplyr::select(.data, {{ .wts }}))
+    weight_vars <- names(tidyselect::eval_select(wts_quo, .data))
   } else {
     weight_vars <- character(0)
   }

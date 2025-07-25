@@ -35,6 +35,6 @@ A tibble with ROC curve data.
 }
 \description{
 Computes ROC curves (weighted or unweighted) for evaluating propensity score balance.
-In causal inference, an ROC curve near the diagonal (AUC ≈ 0.5)
+In causal inference, an ROC curve near the diagonal (AUC around 0.5)
 indicates good balance between treatment groups.
 }
