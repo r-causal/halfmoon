@@ -1,9 +1,9 @@
-#' Plot ROC Curves for Balance Assessment
+#' Plot weighted ROC Curves for Balance Assessment
 #'
 #' Creates a ggplot2 visualization of ROC curves for evaluating propensity score balance.
-#' In causal inference, curves near the diagonal (AUC ≈ 0.5) indicate good balance.
+#' In causal inference, weighted curves near the diagonal (AUC around 0.5) indicate good balance.
 #'
-#' @param .data Output from `weighted_roc_curve()`.
+#' @param .data Output from [`weighted_roc_curve()`].
 #' @param linewidth Width of the ROC curve lines. Default is 1.
 #' @param diagonal_color Color for the diagonal reference line. Default is "gray50".
 #' @param diagonal_linetype Line type for the diagonal. Default is "dashed".
@@ -11,7 +11,6 @@
 #' @return A ggplot2 object.
 #'
 #' @examples
-#' # Compute ROC curves
 #' roc_data <- weighted_roc_curve(
 #'   nhefs_weights,
 #'   qsmk,
@@ -19,7 +18,6 @@
 #'   c(w_ate, w_att)
 #' )
 #'
-#' # Create plot
 #' plot_roc_curve(roc_data)
 #'
 #'
@@ -44,10 +42,8 @@ plot_roc_curve <- function(
     )
   }
 
-  # Check if we have multiple methods
   has_multiple_methods <- length(unique(.data$method)) > 1
 
-  # Base plot
   p <- ggplot2::ggplot(
     .data,
     ggplot2::aes(x = 1 - .data$specificity, y = .data$sensitivity)
@@ -77,15 +73,11 @@ plot_roc_curve <- function(
   # Formatting
   p <- p +
     ggplot2::labs(
-      x = "1 - Specificity (False Positive Rate)",
-      y = "Sensitivity (True Positive Rate)",
-      color = "Method"
+      x = "1 - specificity",
+      y = "sensitivity",
+      color = "method"
     ) +
     ggplot2::coord_equal() +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      legend.position = if (has_multiple_methods) "bottom" else "none"
-    ) +
     ggplot2::scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
     ggplot2::scale_y_continuous(limits = c(0, 1), expand = c(0, 0))
 
@@ -168,14 +160,13 @@ plot_roc_auc <- function(
   # Formatting
   p <- p +
     ggplot2::labs(
-      x = "AUC",
-      y = "Weighting Method"
+      x = "auc",
+      y = "method"
     ) +
     ggplot2::scale_x_continuous(
       limits = c(0, 1),
       expand = c(0.02, 0.02)
-    ) +
-    ggplot2::theme_minimal()
+    )
 
   p
 }

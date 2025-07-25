@@ -25,8 +25,6 @@ test_that("plot_roc_curve works with basic inputs", {
   )
   p_single <- plot_roc_curve(roc_single)
   expect_s3_class(p_single, "gg")
-  # Single method should have no legend
-  expect_equal(p_single$theme$legend.position, "none")
 })
 
 test_that("plot_roc_auc works with basic inputs", {
@@ -166,19 +164,15 @@ test_that("plot functions produce expected output structure", {
   p_auc <- plot_roc_auc(auc_data)
 
   # Check axis labels
-  expect_equal(p_roc$labels$x, "1 - Specificity (False Positive Rate)")
-  expect_equal(p_roc$labels$y, "Sensitivity (True Positive Rate)")
-  expect_equal(p_roc$labels$colour, "Method")
+  expect_equal(p_roc$labels$x, "1 - specificity")
+  expect_equal(p_roc$labels$y, "sensitivity")
+  expect_equal(p_roc$labels$colour, "method")
 
-  expect_equal(p_auc$labels$x, "AUC")
-  expect_equal(p_auc$labels$y, "Weighting Method")
+  expect_equal(p_auc$labels$x, "auc")
+  expect_equal(p_auc$labels$y, "method")
 
   # Check coordinate system for ROC plot
   expect_s3_class(p_roc$coordinates, "CoordFixed")
-
-  # Check theme
-  expect_s3_class(p_roc$theme, "theme")
-  expect_s3_class(p_auc$theme, "theme")
 })
 
 # vdiffr tests

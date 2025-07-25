@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_roc.R
 \name{plot_roc_curve}
 \alias{plot_roc_curve}
-\title{Plot ROC Curves for Balance Assessment}
+\title{Plot weighted ROC Curves for Balance Assessment}
 \usage{
 plot_roc_curve(
   .data,
@@ -12,7 +12,7 @@ plot_roc_curve(
 )
 }
 \arguments{
-\item{.data}{Output from \code{weighted_roc_curve()}.}
+\item{.data}{Output from \code{\link[=weighted_roc_curve]{weighted_roc_curve()}}.}
 
 \item{linewidth}{Width of the ROC curve lines. Default is 1.}
 
@@ -25,10 +25,9 @@ A ggplot2 object.
 }
 \description{
 Creates a ggplot2 visualization of ROC curves for evaluating propensity score balance.
-In causal inference, curves near the diagonal (AUC ≈ 0.5) indicate good balance.
+In causal inference, weighted curves near the diagonal (AUC around 0.5) indicate good balance.
 }
 \examples{
-# Compute ROC curves
 roc_data <- weighted_roc_curve(
   nhefs_weights,
   qsmk,
@@ -36,7 +35,6 @@ roc_data <- weighted_roc_curve(
   c(w_ate, w_att)
 )
 
-# Create plot
 plot_roc_curve(roc_data)
 
 
