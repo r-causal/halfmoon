@@ -30,7 +30,7 @@ test_that("geom_roc and stat_roc work", {
     geom_roc(treatment_level = 1)
   expect_s3_class(p_treatment, "gg")
   expect_no_error(ggplot_build(p_treatment))
-  
+
   # Test stat_roc with treatment_level
   p_stat_treatment <- ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
     stat_roc(treatment_level = 0)

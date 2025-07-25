@@ -170,4 +170,3 @@ plot_roc_auc <- function(
 
   p
 }
-

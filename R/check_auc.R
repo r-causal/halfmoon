@@ -54,8 +54,8 @@ check_auc <- function(
     method_data <- dplyr::filter(roc_data, .data$method == !!method)
 
     # Calculate AUC using trapezoidal rule
-    fpr <- 1 - method_data$specificity 
-    tpr <- method_data$sensitivity 
+    fpr <- 1 - method_data$specificity
+    tpr <- method_data$sensitivity
     auc_val <- compute_auc(fpr, tpr)
 
     tibble::tibble(
