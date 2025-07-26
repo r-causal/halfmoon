@@ -35,7 +35,9 @@ utils::globalVariables(c(
   ".fitted",
   ".group",
   "ymin",
-  "ymax"
+  "ymax",
+  "reference_quantile",
+  "comparison_quantile"
 ))
 
 #' Create dummy variables from categorical data
