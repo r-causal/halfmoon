@@ -186,8 +186,8 @@ StatQq2 <- ggplot2::ggproto(
         
         # Build result data frame preserving aesthetics
         result_df <- data.frame(
-          x = qq_result$reference_quantile,
-          y = qq_result$comparison_quantile,
+          x = qq_result$x_quantiles,
+          y = qq_result$y_quantiles,
           group = as.numeric(g),
           PANEL = group_data$PANEL[1]
         )
@@ -234,8 +234,8 @@ StatQq2 <- ggplot2::ggproto(
       
       # Return data frame with x and y for plotting
       data.frame(
-        x = qq_result$reference_quantile,
-        y = qq_result$comparison_quantile,
+        x = qq_result$x_quantiles,
+        y = qq_result$y_quantiles,
         PANEL = data$PANEL[1],
         group = 1
       )

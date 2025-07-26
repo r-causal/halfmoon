@@ -36,8 +36,8 @@ utils::globalVariables(c(
   ".group",
   "ymin",
   "ymax",
-  "reference_quantile",
-  "comparison_quantile",
+  "x_quantiles",
+  "y_quantiles",
   "weight"
 ))
 

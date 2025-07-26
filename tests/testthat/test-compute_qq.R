@@ -5,7 +5,7 @@ test_that("qq computes basic quantiles", {
   expect_equal(nrow(result), 99) # 99 quantiles for observed only
   expect_equal(
     colnames(result),
-    c("method", "quantile", "reference_quantile", "comparison_quantile")
+    c("method", "quantile", "x_quantiles", "y_quantiles")
   )
   expect_equal(unique(result$method), factor("observed"))
 })
@@ -74,8 +74,8 @@ test_that("qq handles NA values correctly", {
 
   # Should work with na.rm = TRUE
   result <- qq(df, age, qsmk, na.rm = TRUE)
-  expect_false(any(is.na(result$reference_quantile)))
-  expect_false(any(is.na(result$comparison_quantile)))
+  expect_false(any(is.na(result$x_quantiles)))
+  expect_false(any(is.na(result$y_quantiles)))
 
   # Should have NAs with na.rm = FALSE
   expect_error(qq(df, age, qsmk), "missing values")
@@ -95,5 +95,5 @@ test_that("qq returns expected quantile values", {
   expect_equal(nrow(result), 3)
 
   # Reference group (A) should have lower values than comparison group (B)
-  expect_true(all(result$reference_quantile < result$comparison_quantile))
+  expect_true(all(result$x_quantiles < result$y_quantiles))
 })

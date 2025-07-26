@@ -43,8 +43,8 @@ Defaults to 1 (first level).}
 A tibble with columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{reference_quantile}{Numeric. The quantile value for the reference group.}
-\item{comparison_quantile}{Numeric. The quantile value for the comparison group.}
+\item{x_quantiles}{Numeric. The quantile value for the reference group.}
+\item{y_quantiles}{Numeric. The quantile value for the comparison group.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable
