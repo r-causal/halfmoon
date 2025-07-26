@@ -4,9 +4,8 @@
 #' weighted comparisons.
 #'
 #' @param mapping Set of aesthetic mappings. Required aesthetics are `sample` (variable)
-#'   and `treatment` (group). The `treatment` aesthetic must be numeric or converted to numeric
-#'   using `as.numeric()` if it's a factor. Optional aesthetics include `weight`
-#'   for weighting.
+#'   and `treatment` (group). The `treatment` aesthetic can be a factor, character, or numeric.
+#'   Optional aesthetics include `weight` for weighting.
 #' @param data Data frame to use. If not specified, inherits from the plot.
 #' @param stat Statistical transformation to use. Default is "qq2".
 #' @param position Position adjustment. Default is "identity".
@@ -15,7 +14,7 @@
 #' @param inherit.aes Inherit aesthetics from plot? Default TRUE.
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @param reference_group The reference group level to use for comparisons.
+#' @param treatment_level The reference treatment level to use for comparisons.
 #'   Defaults to 1 (first level).
 #' @param ... Additional arguments passed to the geom.
 #'
@@ -24,12 +23,12 @@
 #' @examples
 #' library(ggplot2)
 #'
-#' # Basic QQ plot (note: treatment must be numeric)
-#' ggplot(nhefs_weights, aes(sample = age, treatment = as.numeric(qsmk))) +
+#' # Basic QQ plot
+#' ggplot(nhefs_weights, aes(sample = age, treatment = qsmk)) +
 #'   geom_qq2()
 #'
 #' # With weighting
-#' ggplot(nhefs_weights, aes(sample = age, treatment = as.numeric(qsmk), weight = w_ate)) +
+#' ggplot(nhefs_weights, aes(sample = age, treatment = qsmk, weight = w_ate)) +
 #'   geom_qq2()
 #'
 #' # Compare multiple weights using long format
@@ -40,7 +39,7 @@
 #'   values_to = "weight"
 #' )
 #'
-#' ggplot(long_data, aes(sample = age, treatment = as.numeric(qsmk), weight = weight)) +
+#' ggplot(long_data, aes(sample = age, treatment = qsmk, weight = weight)) +
 #'   geom_qq2(aes(color = weight_type)) +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
@@ -54,7 +53,7 @@ geom_qq2 <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  reference_group = 1L,
+  treatment_level = 1L,
   ...
 ) {
   ggplot2::layer(
@@ -68,7 +67,7 @@ geom_qq2 <- function(
     params = list(
       na.rm = na.rm,
       quantiles = quantiles,
-      reference_group = reference_group,
+      treatment_level = treatment_level,
       ...
     )
   )
@@ -86,7 +85,7 @@ geom_qq2 <- function(
 #' @param show.legend Show legend? Default NA.
 #' @param inherit.aes Inherit aesthetics? Default TRUE.
 #' @param quantiles Numeric vector of quantiles to compute.
-#' @param reference_group The reference group level to use for comparisons.
+#' @param treatment_level The reference treatment level to use for comparisons.
 #' @param include_observed For compatibility with qq(). When weights are present,
 #'   this determines if an additional "observed" group is added. Default FALSE
 #'   for stat_qq2 to avoid duplication when using facets/colors.
@@ -103,7 +102,7 @@ stat_qq2 <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  reference_group = 1L,
+  treatment_level = 1L,
   include_observed = FALSE,
   ...
 ) {
@@ -118,7 +117,7 @@ stat_qq2 <- function(
     params = list(
       na.rm = na.rm,
       quantiles = quantiles,
-      reference_group = reference_group,
+      treatment_level = treatment_level,
       include_observed = include_observed,
       ...
     )
@@ -145,12 +144,24 @@ StatQq2 <- ggplot2::ggproto(
     data,
     scales,
     quantiles = seq(0.01, 0.99, 0.01),
-    reference_group = 1L,
+    treatment_level = 1L,
     na.rm = TRUE,
     include_observed = FALSE
   ) {
     # For QQ plots, we need all the data to compute quantiles properly
     # So we work at the panel level, not the group level
+    
+    # Handle factors/characters in treatment aesthetic
+    if (is.factor(data$treatment) || is.character(data$treatment)) {
+      # Store original factor levels for later reference
+      treatment_levels <- if (is.factor(data$treatment)) {
+        levels(data$treatment)
+      } else {
+        sort(unique(data$treatment))
+      }
+      # Convert to numeric for internal processing
+      data$treatment <- as.numeric(factor(data$treatment, levels = treatment_levels))
+    }
 
     # Split by any grouping aesthetics (like color)
     if ("group" %in% names(data) && length(unique(data$group)) > 1) {
@@ -183,7 +194,7 @@ StatQq2 <- ggplot2::ggproto(
           .group = .group,
           .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
           quantiles = quantiles,
-          reference_group = reference_group,
+          treatment_level = treatment_level,
           na.rm = na.rm,
           include_observed = FALSE
         )
@@ -235,7 +246,7 @@ StatQq2 <- ggplot2::ggproto(
         .group = .group,
         .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
         quantiles = quantiles,
-        reference_group = reference_group,
+        treatment_level = treatment_level,
         na.rm = na.rm,
         include_observed = FALSE
       )

@@ -15,7 +15,7 @@
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
 #' @param include_observed Logical. If using `.wts`, also show observed
 #'   (unweighted) QQ plot? Defaults to TRUE.
-#' @param reference_group The reference group level to use for comparisons.
+#' @param treatment_level The reference treatment level to use for comparisons.
 #'   Defaults to 1 (first level).
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
@@ -47,7 +47,7 @@ plot_qq <- function(
   .wts = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  reference_group = 1L,
+  treatment_level = 1L,
   na.rm = FALSE
 ) {
   # Basic validation
@@ -80,8 +80,8 @@ plot_qq <- function(
     abort("Group variable must have exactly 2 levels")
   }
 
-  ref_group <- group_levels[reference_group]
-  comp_group <- group_levels[-reference_group]
+  ref_group <- group_levels[treatment_level]
+  comp_group <- group_levels[-treatment_level]
 
   # Get variable name for labels
   var_name <- get_column_name(var_quo, ".var")
@@ -120,25 +120,25 @@ plot_qq <- function(
       plot_data,
       ggplot2::aes(
         sample = {{ .var }},
-        treatment = as.numeric({{ .group }}),
+        treatment = {{ .group }},
         weight = weight
       )
     ) +
       geom_qq2(
         ggplot2::aes(color = method),
         quantiles = quantiles,
-        reference_group = reference_group,
+        treatment_level = treatment_level,
         na.rm = na.rm
       )
   } else {
     # No weights - just use geom_qq2 directly
     p <- ggplot2::ggplot(
       .data,
-      ggplot2::aes(sample = {{ .var }}, treatment = as.numeric({{ .group }}))
+      ggplot2::aes(sample = {{ .var }}, treatment = {{ .group }})
     ) +
       geom_qq2(
         quantiles = quantiles,
-        reference_group = reference_group,
+        treatment_level = treatment_level,
         na.rm = na.rm
       )
   }

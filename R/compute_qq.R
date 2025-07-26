@@ -16,7 +16,7 @@
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
 #' @param include_observed Logical. If using `.wts`, also compute observed
 #'   (unweighted) quantiles? Defaults to TRUE.
-#' @param reference_group The reference group level to use for comparisons.
+#' @param treatment_level The reference treatment level to use for comparisons.
 #'   Defaults to 1 (first level).
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
@@ -49,7 +49,7 @@ qq <- function(
   .wts = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  reference_group = 1L,
+  treatment_level = 1L,
   na.rm = FALSE
 ) {
   # Handle both quoted and unquoted column names
@@ -88,8 +88,8 @@ qq <- function(
   }
 
   # Determine reference and comparison groups
-  ref_group <- group_levels[reference_group]
-  comp_group <- group_levels[-reference_group]
+  ref_group <- group_levels[treatment_level]
+  comp_group <- group_levels[-treatment_level]
 
   # Create list of methods to compute
   methods <- character(0)
