@@ -11,7 +11,7 @@ qq(
   .wts = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  reference_group = 1L,
+  treatment_level = 1L,
   na.rm = FALSE
 )
 }
@@ -34,7 +34,7 @@ different weighting schemes. Default is NULL (unweighted).}
 \item{include_observed}{Logical. If using \code{.wts}, also compute observed
 (unweighted) quantiles? Defaults to TRUE.}
 
-\item{reference_group}{The reference group level to use for comparisons.
+\item{treatment_level}{The reference treatment level to use for comparisons.
 Defaults to 1 (first level).}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before computation.}

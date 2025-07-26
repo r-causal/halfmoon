@@ -151,37 +151,46 @@ StatQq2 <- ggplot2::ggproto(
     # For QQ plots, we need all the data to compute quantiles properly
     # So we work at the panel level, not the group level
     
-    # Handle factors/characters in treatment aesthetic
-    if (is.factor(data$treatment) || is.character(data$treatment)) {
-      # Store original factor levels for later reference
-      treatment_levels <- if (is.factor(data$treatment)) {
-        levels(data$treatment)
-      } else {
-        sort(unique(data$treatment))
-      }
-      # Convert to numeric for internal processing
-      data$treatment <- as.numeric(factor(data$treatment, levels = treatment_levels))
-    }
-
-    # Split by any grouping aesthetics (like color)
+    # If we have multiple groups, identify which ones should be merged
+    # Groups that differ only by treatment level should be processed together
     if ("group" %in% names(data) && length(unique(data$group)) > 1) {
-      # We have groups (e.g., from color aesthetic)
-      # Process each group separately
+      # Split by group
       groups <- split(data, data$group)
-
-      results <- purrr::map_df(names(groups), function(g) {
-        group_data <- groups[[g]]
-
-        # Create temporary data frame
+      
+      # Identify aesthetic columns (exclude data and panel columns)
+      aes_cols <- setdiff(
+        names(data),
+        c("sample", "treatment", "weight", "PANEL", "group", "x", "y")
+      )
+      
+      # Create signatures for each group based on aesthetic values
+      # Groups with the same signature should be merged
+      group_signatures <- purrr::map_chr(groups, function(g) {
+        if (length(aes_cols) > 0) {
+          # Create signature from aesthetic values
+          paste(g[1, aes_cols, drop = FALSE], collapse = "_")
+        } else {
+          "no_aes"
+        }
+      })
+      
+      # Process each unique signature
+      unique_signatures <- unique(group_signatures)
+      results <- purrr::map_df(unique_signatures, function(sig) {
+        # Combine all groups with this signature
+        matching_groups <- names(groups)[group_signatures == sig]
+        combined_data <- do.call(rbind, groups[matching_groups])
+        
+        # Create temporary data frame with binary treatment
         temp_data <- data.frame(
-          .var = group_data$sample,
-          .group = group_data$treatment,
+          .var = combined_data$sample,
+          .group = as.integer(combined_data$treatment == treatment_level),
           stringsAsFactors = FALSE
         )
 
         # Add weight if present
-        if (!is.null(group_data$weight) && all(!is.na(group_data$weight))) {
-          temp_data$.wts <- group_data$weight
+        if (!is.null(combined_data$weight) && all(!is.na(combined_data$weight))) {
+          temp_data$.wts <- combined_data$weight
           wts_arg <- ".wts"
         } else {
           wts_arg <- NULL
@@ -194,28 +203,23 @@ StatQq2 <- ggplot2::ggproto(
           .group = .group,
           .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
           quantiles = quantiles,
-          treatment_level = treatment_level,
+          treatment_level = 1L,  # We already converted to 0/1
           na.rm = na.rm,
           include_observed = FALSE
         )
 
         # Build result data frame preserving aesthetics
-        # Don't include x and y - let after_stat handle that
         result_df <- data.frame(
           x_quantiles = qq_result$x_quantiles,
           y_quantiles = qq_result$y_quantiles,
-          group = as.numeric(g),
-          PANEL = group_data$PANEL[1]
+          group = which(unique_signatures == sig),
+          PANEL = combined_data$PANEL[1]
         )
 
-        # Preserve any aesthetic mappings (like color)
-        aes_cols <- setdiff(
-          names(group_data),
-          c("sample", "treatment", "weight", "PANEL", "group")
-        )
+        # Preserve aesthetic mappings
         for (col in aes_cols) {
-          if (length(unique(group_data[[col]])) == 1) {
-            result_df[[col]] <- group_data[[col]][1]
+          if (col %in% names(combined_data)) {
+            result_df[[col]] <- combined_data[[col]][1]
           }
         }
 
@@ -227,7 +231,7 @@ StatQq2 <- ggplot2::ggproto(
       # No groups, process all data together
       temp_data <- data.frame(
         .var = data$sample,
-        .group = data$treatment,
+        .group = as.integer(data$treatment == treatment_level),
         stringsAsFactors = FALSE
       )
 
@@ -246,7 +250,7 @@ StatQq2 <- ggplot2::ggproto(
         .group = .group,
         .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
         quantiles = quantiles,
-        treatment_level = treatment_level,
+        treatment_level = 1L,  # We already converted to 0/1
         na.rm = na.rm,
         include_observed = FALSE
       )

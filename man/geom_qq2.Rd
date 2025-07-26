@@ -13,15 +13,14 @@ geom_qq2(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  reference_group = 1L,
+  treatment_level = 1L,
   ...
 )
 }
 \arguments{
 \item{mapping}{Set of aesthetic mappings. Required aesthetics are \code{sample} (variable)
-and \code{treatment} (group). The \code{treatment} aesthetic must be numeric or converted to numeric
-using \code{as.numeric()} if it's a factor. Optional aesthetics include \code{weight}
-for weighting.}
+and \code{treatment} (group). The \code{treatment} aesthetic can be a factor, character, or numeric.
+Optional aesthetics include \code{weight} for weighting.}
 
 \item{data}{Data frame to use. If not specified, inherits from the plot.}
 
@@ -38,7 +37,7 @@ for weighting.}
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{reference_group}{The reference group level to use for comparisons.
+\item{treatment_level}{The reference treatment level to use for comparisons.
 Defaults to 1 (first level).}
 
 \item{...}{Additional arguments passed to the geom.}
@@ -53,12 +52,12 @@ weighted comparisons.
 \examples{
 library(ggplot2)
 
-# Basic QQ plot (note: treatment must be numeric)
-ggplot(nhefs_weights, aes(sample = age, treatment = as.numeric(qsmk))) +
+# Basic QQ plot
+ggplot(nhefs_weights, aes(sample = age, treatment = qsmk)) +
   geom_qq2()
 
 # With weighting
-ggplot(nhefs_weights, aes(sample = age, treatment = as.numeric(qsmk), weight = w_ate)) +
+ggplot(nhefs_weights, aes(sample = age, treatment = qsmk, weight = w_ate)) +
   geom_qq2()
 
 # Compare multiple weights using long format
@@ -69,7 +68,7 @@ long_data <- tidyr::pivot_longer(
   values_to = "weight"
 )
 
-ggplot(long_data, aes(sample = age, treatment = as.numeric(qsmk), weight = weight)) +
+ggplot(long_data, aes(sample = age, treatment = qsmk, weight = weight)) +
   geom_qq2(aes(color = weight_type)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
