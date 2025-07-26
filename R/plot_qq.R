@@ -53,14 +53,14 @@ plot_qq <- function(
   # Basic validation
   var_quo <- rlang::enquo(.var)
   group_quo <- rlang::enquo(.group)
-  
+
   var_name <- get_column_name(var_quo, ".var")
   group_name <- get_column_name(group_quo, ".group")
-  
+
   if (!var_name %in% names(.data)) {
     abort("Column {.code {var_name}} not found in data")
   }
-  
+
   if (!group_name %in% names(.data)) {
     abort("Column {.code {group_name}} not found in data")
   }
@@ -75,46 +75,54 @@ plot_qq <- function(
   } else {
     sort(unique(.data[[group_name]]))
   }
-  
+
   if (length(group_levels) != 2) {
     abort("Group variable must have exactly 2 levels")
   }
 
   ref_group <- group_levels[reference_group]
   comp_group <- group_levels[-reference_group]
-  
+
   # Get variable name for labels
   var_name <- get_column_name(var_quo, ".var")
 
   # Prepare data in long format
   wts_quo <- rlang::enquo(.wts)
-  
+
   if (!rlang::quo_is_null(wts_quo)) {
     # Get weight columns
     wts_cols <- tidyselect::eval_select(wts_quo, .data)
     wts_names <- names(wts_cols)
-    
+
     # Create long format data
     if (include_observed) {
       # Add observed as a weight column with value 1
       .data$.observed <- 1
       wts_names <- c(".observed", wts_names)
     }
-    
+
     plot_data <- tidyr::pivot_longer(
       .data,
       cols = dplyr::all_of(wts_names),
       names_to = "method",
       values_to = "weight"
     )
-    
+
     # Clean up method names
-    plot_data$method <- ifelse(plot_data$method == ".observed", "observed", plot_data$method)
-    
+    plot_data$method <- ifelse(
+      plot_data$method == ".observed",
+      "observed",
+      plot_data$method
+    )
+
     # Create plot with color aesthetic
     p <- ggplot2::ggplot(
       plot_data,
-      ggplot2::aes(x = {{ .var }}, y = as.numeric({{ .group }}), weight = weight)
+      ggplot2::aes(
+        sample = {{ .var }},
+        treatment = as.numeric({{ .group }}),
+        weight = weight
+      )
     ) +
       geom_qq2(
         ggplot2::aes(color = method),
@@ -126,7 +134,7 @@ plot_qq <- function(
     # No weights - just use geom_qq2 directly
     p <- ggplot2::ggplot(
       .data,
-      ggplot2::aes(x = {{ .var }}, y = as.numeric({{ .group }}))
+      ggplot2::aes(sample = {{ .var }}, treatment = as.numeric({{ .group }}))
     ) +
       geom_qq2(
         quantiles = quantiles,

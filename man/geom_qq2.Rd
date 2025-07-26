@@ -18,8 +18,8 @@ geom_qq2(
 )
 }
 \arguments{
-\item{mapping}{Set of aesthetic mappings. Required aesthetics are \code{x} (variable)
-and \code{y} (group). The \code{y} aesthetic must be numeric or converted to numeric
+\item{mapping}{Set of aesthetic mappings. Required aesthetics are \code{sample} (variable)
+and \code{treatment} (group). The \code{treatment} aesthetic must be numeric or converted to numeric
 using \code{as.numeric()} if it's a factor. Optional aesthetics include \code{weight}
 for weighting.}
 
@@ -53,12 +53,12 @@ weighted comparisons.
 \examples{
 library(ggplot2)
 
-# Basic QQ plot (note: y must be numeric)
-ggplot(nhefs_weights, aes(x = age, y = as.numeric(qsmk))) +
+# Basic QQ plot (note: treatment must be numeric)
+ggplot(nhefs_weights, aes(sample = age, treatment = as.numeric(qsmk))) +
   geom_qq2()
 
 # With weighting
-ggplot(nhefs_weights, aes(x = age, y = as.numeric(qsmk), weight = w_ate)) +
+ggplot(nhefs_weights, aes(sample = age, treatment = as.numeric(qsmk), weight = w_ate)) +
   geom_qq2()
 
 # Compare multiple weights using long format
@@ -69,7 +69,7 @@ long_data <- tidyr::pivot_longer(
   values_to = "weight"
 )
 
-ggplot(long_data, aes(x = age, y = as.numeric(qsmk), weight = weight)) +
+ggplot(long_data, aes(sample = age, treatment = as.numeric(qsmk), weight = weight)) +
   geom_qq2(aes(color = weight_type)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
