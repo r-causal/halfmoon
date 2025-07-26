@@ -82,6 +82,9 @@ plot_qq <- function(
 
   ref_group <- group_levels[reference_group]
   comp_group <- group_levels[-reference_group]
+  
+  # Get variable name for labels
+  var_name <- get_column_name(var_quo, ".var")
 
   # Prepare data in long format
   wts_quo <- rlang::enquo(.wts)
@@ -142,8 +145,8 @@ plot_qq <- function(
       alpha = 0.8
     ) +
     ggplot2::labs(
-      x = paste0(ref_group, " quantiles"),
-      y = paste0(comp_group, " quantiles")
+      x = paste0(var_name, " (", group_name, " = ", ref_group, ")"),
+      y = paste0(var_name, " (", group_name, " = ", comp_group, ")")
     )
 }
 

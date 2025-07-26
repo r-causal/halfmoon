@@ -3,8 +3,8 @@ test_that("plot_qq creates basic QQ plot", {
 
   expect_s3_class(p, "ggplot")
   expect_equal(length(p$layers), 2) # points + abline
-  expect_equal(p$labels$x, "0 quantiles")
-  expect_equal(p$labels$y, "1 quantiles")
+  expect_equal(p$labels$x, "age (qsmk = 0)")
+  expect_equal(p$labels$y, "age (qsmk = 1)")
 })
 
 test_that("plot_qq works with weights", {
