@@ -184,17 +184,23 @@ StatQq2 <- ggplot2::ggproto(
           include_observed = FALSE
         )
         
-        # Add group info back
-        qq_result$group <- as.numeric(g)
-        qq_result$PANEL <- group_data$PANEL[1]
-        
-        # Return x, y coordinates
-        data.frame(
+        # Build result data frame preserving aesthetics
+        result_df <- data.frame(
           x = qq_result$reference_quantile,
           y = qq_result$comparison_quantile,
-          group = qq_result$group,
-          PANEL = qq_result$PANEL
+          group = as.numeric(g),
+          PANEL = group_data$PANEL[1]
         )
+        
+        # Preserve any aesthetic mappings (like color)
+        aes_cols <- setdiff(names(group_data), c("x", "y", "weight", "PANEL", "group"))
+        for (col in aes_cols) {
+          if (length(unique(group_data[[col]])) == 1) {
+            result_df[[col]] <- group_data[[col]][1]
+          }
+        }
+        
+        result_df
       })
       
       return(results)
