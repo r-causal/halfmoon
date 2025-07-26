@@ -50,69 +50,29 @@ plot_qq <- function(
   reference_group = 1L,
   na.rm = FALSE
 ) {
-  # Handle both quoted and unquoted column names
-  var_quo <- rlang::enquo(.var)
-  group_quo <- rlang::enquo(.group)
-  wts_quo <- rlang::enquo(.wts)
+  qq_data <- qq(
+    .data = .data,
+    .var = {{ .var }},
+    .group = {{ .group }},
+    .wts = {{ .wts }},
+    quantiles = quantiles,
+    include_observed = include_observed,
+    reference_group = reference_group,
+    na.rm = na.rm
+  )
 
-  var_name <- get_column_name(var_quo, ".var")
+  # Extract group levels for axis labels
+  group_quo <- rlang::enquo(.group)
   group_name <- get_column_name(group_quo, ".group")
 
-  # Validate inputs
-  if (!var_name %in% names(.data)) {
-    abort("Column {.code {var_name}} not found in data")
-  }
-
-  if (!group_name %in% names(.data)) {
-    abort("Column {.code {group_name}} not found in data")
-  }
-
-  # Get weight column names using tidyselect
-  wt_names <- if (!rlang::quo_is_null(wts_quo)) {
-    names(tidyselect::eval_select(wts_quo, .data))
-  } else {
-    character(0)
-  }
-
-  # Get group levels
   group_levels <- if (is.factor(.data[[group_name]])) {
     levels(.data[[group_name]])
   } else {
     sort(unique(.data[[group_name]]))
   }
 
-  if (length(group_levels) != 2) {
-    abort("Group variable must have exactly 2 levels")
-  }
-
-  # Determine reference and comparison groups
   ref_group <- group_levels[reference_group]
   comp_group <- group_levels[-reference_group]
-
-  # Create list of methods to compute
-  methods <- character(0)
-  if (include_observed || length(wt_names) == 0) {
-    methods <- c(methods, "observed")
-  }
-  if (length(wt_names) > 0) {
-    methods <- c(methods, wt_names)
-  }
-
-  # Compute quantiles for each method
-  qq_data <- purrr::map_df(
-    methods,
-    compute_method_quantiles,
-    .data = .data,
-    var_name = var_name,
-    group_name = group_name,
-    ref_group = ref_group,
-    comp_group = comp_group,
-    quantiles = quantiles,
-    na.rm = na.rm
-  )
-
-  # Format method labels
-  qq_data$method <- factor(qq_data$method, levels = methods)
 
   # Create plot
   p <- ggplot2::ggplot(
