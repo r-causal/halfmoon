@@ -50,50 +50,90 @@ plot_qq <- function(
   reference_group = 1L,
   na.rm = FALSE
 ) {
-  qq_data <- qq(
-    .data = .data,
-    .var = {{ .var }},
-    .group = {{ .group }},
-    .wts = {{ .wts }},
-    quantiles = quantiles,
-    include_observed = include_observed,
-    reference_group = reference_group,
-    na.rm = na.rm
-  )
-
-  # Extract group levels for axis labels
+  # Basic validation
+  var_quo <- rlang::enquo(.var)
   group_quo <- rlang::enquo(.group)
+  
+  var_name <- get_column_name(var_quo, ".var")
   group_name <- get_column_name(group_quo, ".group")
+  
+  if (!var_name %in% names(.data)) {
+    abort("Column {.code {var_name}} not found in data")
+  }
+  
+  if (!group_name %in% names(.data)) {
+    abort("Column {.code {group_name}} not found in data")
+  }
+
+  # Check for NA values
+  if (!na.rm && any(is.na(.data[[var_name]]))) {
+    abort("Variable contains missing values. Use `na.rm = TRUE` to drop them.")
+  }
 
   group_levels <- if (is.factor(.data[[group_name]])) {
     levels(.data[[group_name]])
   } else {
     sort(unique(.data[[group_name]]))
   }
+  
+  if (length(group_levels) != 2) {
+    abort("Group variable must have exactly 2 levels")
+  }
 
   ref_group <- group_levels[reference_group]
   comp_group <- group_levels[-reference_group]
 
-  # Create plot
-  p <- ggplot2::ggplot(
-    qq_data,
-    ggplot2::aes(x = reference_quantile, y = comparison_quantile)
-  )
-
-  # Use color aesthetic for multiple methods
-  if (length(unique(qq_data$method)) > 1) {
-    p <- p +
-      ggplot2::geom_point(
+  # Prepare data in long format
+  wts_quo <- rlang::enquo(.wts)
+  
+  if (!rlang::quo_is_null(wts_quo)) {
+    # Get weight columns
+    wts_cols <- tidyselect::eval_select(wts_quo, .data)
+    wts_names <- names(wts_cols)
+    
+    # Create long format data
+    if (include_observed) {
+      # Add observed as a weight column with value 1
+      .data$.observed <- 1
+      wts_names <- c(".observed", wts_names)
+    }
+    
+    plot_data <- tidyr::pivot_longer(
+      .data,
+      cols = dplyr::all_of(wts_names),
+      names_to = "method",
+      values_to = "weight"
+    )
+    
+    # Clean up method names
+    plot_data$method <- ifelse(plot_data$method == ".observed", "observed", plot_data$method)
+    
+    # Create plot with color aesthetic
+    p <- ggplot2::ggplot(
+      plot_data,
+      ggplot2::aes(x = {{ .var }}, y = as.numeric({{ .group }}), weight = weight)
+    ) +
+      geom_qq2(
         ggplot2::aes(color = method),
-        alpha = 0.7,
-        size = 1.5
-      ) +
-      ggplot2::scale_color_discrete(name = "method")
+        quantiles = quantiles,
+        reference_group = reference_group,
+        na.rm = na.rm
+      )
   } else {
-    p <- p + ggplot2::geom_point(alpha = 0.7, size = 1.5)
+    # No weights - just use geom_qq2 directly
+    p <- ggplot2::ggplot(
+      .data,
+      ggplot2::aes(x = {{ .var }}, y = as.numeric({{ .group }}))
+    ) +
+      geom_qq2(
+        quantiles = quantiles,
+        reference_group = reference_group,
+        na.rm = na.rm
+      )
   }
 
-  p <- p +
+  # Add reference line and labels
+  p +
     ggplot2::geom_abline(
       intercept = 0,
       slope = 1,
@@ -105,8 +145,6 @@ plot_qq <- function(
       x = paste0(ref_group, " quantiles"),
       y = paste0(comp_group, " quantiles")
     )
-
-  p
 }
 
 #' Compute quantiles for a single method
