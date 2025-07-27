@@ -154,10 +154,6 @@ roc_curve <- function(
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)
-    if (!all(complete_cases)) {
-      n_missing <- sum(!complete_cases)
-      cli::cli_inform("Removed {n_missing} rows with missing values")
-    }
     truth <- truth[complete_cases]
     estimate <- estimate[complete_cases]
     .data <- .data[complete_cases, , drop = FALSE]
@@ -195,7 +191,7 @@ roc_curve <- function(
     # Handle zero and negative weights
     if (any(weights <= 0, na.rm = TRUE)) {
       n_zero_neg <- sum(weights <= 0, na.rm = TRUE)
-      cli::cli_inform(
+      warn(
         "Removing {n_zero_neg} observations with zero or negative weights from {wt_name}"
       )
 

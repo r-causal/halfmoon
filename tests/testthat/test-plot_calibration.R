@@ -8,7 +8,7 @@ test_that("plot_calibration works with basic input", {
   expect_gte(length(p$layers), 3) # calibration layers + abline
 
   # Check that the plot can be built
-  expect_no_error(ggplot_build(p))
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
 })
 
 test_that("plot_calibration works with quoted column names", {
@@ -16,7 +16,7 @@ test_that("plot_calibration works with quoted column names", {
   p <- plot_calibration(nhefs_weights, ".fitted", "qsmk")
 
   expect_s3_class(p, "ggplot")
-  expect_no_error(ggplot_build(p))
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
 })
 
 test_that("plot_calibration works with different methods", {
@@ -48,7 +48,7 @@ test_that("plot_calibration works with treatment level specification", {
   p <- plot_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 
   expect_s3_class(p, "ggplot")
-  expect_no_error(ggplot_build(p))
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
 })
 
 test_that("plot_calibration works with rug option", {
@@ -126,12 +126,12 @@ test_that("plot_calibration handles NA values", {
   # Test with na.rm = TRUE
   p_na_rm <- plot_calibration(test_data, .fitted, qsmk, na.rm = TRUE)
   expect_s3_class(p_na_rm, "ggplot")
-  expect_no_error(ggplot_build(p_na_rm))
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p_na_rm)))
 
   # Test with na.rm = FALSE
-  p_na_keep <- plot_calibration(test_data, .fitted, qsmk, na.rm = FALSE)
+  p_na_keep <- suppress_calibration_warnings(plot_calibration(test_data, .fitted, qsmk, na.rm = FALSE))
   expect_s3_class(p_na_keep, "ggplot")
-  expect_no_error(ggplot_build(p_na_keep))
+  expect_no_error(suppressWarnings(ggplot_build(p_na_keep)))
 })
 
 test_that("plot_calibration has correct labels and theme", {
