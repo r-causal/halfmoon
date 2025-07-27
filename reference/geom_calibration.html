@@ -114,8 +114,9 @@ binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"),
 
 
 <dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
-<dd><p>Value indicating which level of truth represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.</p></dd>
+<dd><p>The level of the outcome variable to consider as the
+treatment/event. If <code>NULL</code> (default), uses the last level for factors or
+the maximum value for numeric variables.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
@@ -135,24 +136,36 @@ If NULL (default), uses the last level for factors or max value for numeric.</p>
 
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
-<dd><p>Logical; if TRUE, drop NA values before computation.</p></dd>
+<dd><p>If <code>FALSE</code>, the default, missing values are removed with a warning.
+If <code>TRUE</code>, missing values are silently removed.</p></dd>
 
 
 <dt id="arg-show-legend">show.legend<a class="anchor" aria-label="anchor" href="#arg-show-legend"></a></dt>
-<dd><p>Logical; include in legend.</p></dd>
+<dd><p>Logical. Should this layer be included in the legends?
+<code>NA</code>, the default, includes if any aesthetics are mapped.</p></dd>
 
 
 <dt id="arg-inherit-aes">inherit.aes<a class="anchor" aria-label="anchor" href="#arg-inherit-aes"></a></dt>
-<dd><p>Logical; inherit aesthetics from ggplot.</p></dd>
+<dd><p>If <code>FALSE</code>, overrides the default aesthetics, rather than
+combining with them.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional parameters passed to geoms.</p></dd>
+<dd><p>Other arguments passed on to layer().</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot2 layer or list of layers</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="check_calibration.html">check_calibration()</a></code> for computing calibration statistics</p>
+<p>Other ggplot2 functions:
+<code><a href="geom_ecdf.html">geom_ecdf</a>()</code>,
+<code><a href="geom_mirror_histogram.html">geom_mirror_histogram</a>()</code>,
+<code><a href="geom_qq2.html">geom_qq2</a>()</code>,
+<code><a href="geom_roc.html">geom_roc</a>()</code></p></div>
     </div>
 
     <div class="section level2">

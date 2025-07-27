@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://r-causal.github.io/halfmoon/404.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/CONTRIBUTING.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/LICENSE-text.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/LICENSE.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/authors.html</loc></url>
@@ -11,15 +12,21 @@
 <url><loc>https://r-causal.github.io/halfmoon/reference/bal_ks.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/bal_smd.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/bal_vr.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/balance_params.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/calculate_normal_ci.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/calculate_prop_ci.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/check_auc.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/check_balance.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/check_calibration.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/check_params.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/ess.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_calibration.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_ecdf.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_mirror_histogram.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_qq2.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_roc.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/get_z_score.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/ggplot2_params.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/index.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/nhefs_weights.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/plot_calibration.html</loc></url>
@@ -31,6 +38,7 @@
 <url><loc>https://r-causal.github.io/halfmoon/reference/roc_curve.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/stat_qq2.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/stat_roc.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/treatment_param.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/weighted_quantile.html</loc></url>
 </urlset>
 

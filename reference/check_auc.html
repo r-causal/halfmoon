@@ -82,16 +82,20 @@ indicates good balance between treatment groups.</p>
 
 
 <dt id="arg-include-observed">include_observed<a class="anchor" aria-label="anchor" href="#arg-include-observed"></a></dt>
-<dd><p>Include unweighted results? Default <code>TRUE</code>.</p></dd>
+<dd><p>Logical. If using <code>.wts</code>, also calculate observed
+(unweighted) metrics? Defaults to TRUE.</p></dd>
 
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
-<dd><p>Remove missing values? Default <code>TRUE</code>.</p></dd>
+<dd><p>A logical value indicating whether to remove missing values
+before computation. If <code>FALSE</code> (default), missing values in the input
+will produce <code>NA</code> in the output.</p></dd>
 
 
 <dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
-<dd><p>The level of <code>.truth</code> to consider as the treatment/event.
-Default is NULL, which uses the second level.</p></dd>
+<dd><p>The level of the outcome variable to consider as the
+treatment/event. If <code>NULL</code> (default), uses the last level for factors or
+the maximum value for numeric variables.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -104,6 +108,16 @@ Default is NULL, which uses the second level.</p></dd>
 <dd><p>Numeric. The ROC AUC value.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="check_balance.html">check_balance()</a></code> for other balance metrics, <code><a href="geom_roc.html">geom_roc()</a></code> for plotting ROC curves</p>
+<p>Other balance functions:
+<code><a href="bal_corr.html">bal_corr</a>()</code>,
+<code><a href="bal_ks.html">bal_ks</a>()</code>,
+<code><a href="bal_smd.html">bal_smd</a>()</code>,
+<code><a href="bal_vr.html">bal_vr</a>()</code>,
+<code><a href="check_balance.html">check_balance</a>()</code></p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

@@ -78,7 +78,7 @@ returns results in a tidy format.</p>
 
 
 <dt id="arg--vars">.vars<a class="anchor" aria-label="anchor" href="#arg--vars"></a></dt>
-<dd><p>Variables for which to calculate balance metrics. Can be unquoted
+<dd><p>Variables for which to calculate metrics. Can be unquoted
 variable names, a character vector, or a tidyselect expression.</p></dd>
 
 
@@ -101,7 +101,7 @@ Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 
 <dt id="arg-include-observed">include_observed<a class="anchor" aria-label="anchor" href="#arg-include-observed"></a></dt>
 <dd><p>Logical. If using <code>.wts</code>, also calculate observed
-metrics? Defaults to TRUE.</p></dd>
+(unweighted) metrics? Defaults to TRUE.</p></dd>
 
 
 <dt id="arg-reference-group">reference_group<a class="anchor" aria-label="anchor" href="#arg-reference-group"></a></dt>
@@ -111,7 +111,8 @@ Defaults to 1 (first level).</p></dd>
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
 <dd><p>A logical value indicating whether to remove missing values
-before computation. Defaults to FALSE.</p></dd>
+before computation. If <code>FALSE</code> (default), missing values in the input
+will produce <code>NA</code> in the output.</p></dd>
 
 
 <dt id="arg-make-dummy-vars">make_dummy_vars<a class="anchor" aria-label="anchor" href="#arg-make-dummy-vars"></a></dt>
@@ -156,6 +157,16 @@ categorical variable and between squared/cubed terms.</p></dd>
 <dd><p>Numeric. The computed balance statistic.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="bal_smd.html">bal_smd()</a></code>, <code><a href="bal_vr.html">bal_vr()</a></code>, <code><a href="bal_ks.html">bal_ks()</a></code>, <code><a href="bal_corr.html">bal_corr()</a></code>, <code><a href="bal_energy.html">bal_energy()</a></code> for individual metric functions</p>
+<p>Other balance functions:
+<code><a href="bal_corr.html">bal_corr</a>()</code>,
+<code><a href="bal_ks.html">bal_ks</a>()</code>,
+<code><a href="bal_smd.html">bal_smd</a>()</code>,
+<code><a href="bal_vr.html">bal_vr</a>()</code>,
+<code><a href="check_auc.html">check_auc</a>()</code></p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

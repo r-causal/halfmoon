@@ -71,18 +71,18 @@ have exactly two unique levels.</p></dd>
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>An optional numeric vector of case weights. If provided, must
-have the same length as <code>covariate</code>. All weights must be non-negative.</p></dd>
+have the same length as other input vectors. All weights must be non-negative.</p></dd>
 
 
 <dt id="arg-reference-group">reference_group<a class="anchor" aria-label="anchor" href="#arg-reference-group"></a></dt>
-<dd><p>The reference group level to use as the comparison
-baseline. If <code>NULL</code> (default), uses the first level.</p></dd>
+<dd><p>The reference group level for comparisons. Can be either
+a group level value or a numeric index. If <code>NULL</code> (default), uses the first level.</p></dd>
 
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
 <dd><p>A logical value indicating whether to remove missing values
-before computation. If <code>FALSE</code> (default), missing values result in
-<code>NA</code> output.</p></dd>
+before computation. If <code>FALSE</code> (default), missing values in the input
+will produce <code>NA</code> in the output.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -90,6 +90,16 @@ before computation. If <code>FALSE</code> (default), missing values result in
     <p>A numeric value representing the KS statistic. Values range from 0 to 1,
 with 0 indicating identical distributions and 1 indicating completely separate
 distributions.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="check_balance.html">check_balance()</a></code> for computing multiple balance metrics at once</p>
+<p>Other balance functions:
+<code><a href="bal_corr.html">bal_corr</a>()</code>,
+<code><a href="bal_smd.html">bal_smd</a>()</code>,
+<code><a href="bal_vr.html">bal_vr</a>()</code>,
+<code><a href="check_auc.html">check_auc</a>()</code>,
+<code><a href="check_balance.html">check_balance</a>()</code></p></div>
     </div>
 
     <div class="section level2">
