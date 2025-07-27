@@ -79,6 +79,18 @@ In causal inference, weighted curves near the diagonal (AUC around 0.5) indicate
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot2 object.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>ROC curves for balance assessment plot the true positive rate (sensitivity) against
+the false positive rate (1 - specificity) when using propensity scores to classify
+treatment assignment. When weights achieve perfect balance, the propensity score
+distributions become identical between groups, yielding an ROC curve along the
+diagonal (chance performance).</p>
+<p>Curves that deviate substantially from the diagonal indicate that propensity
+scores can still discriminate between treatment groups after weighting, suggesting
+residual imbalance. The closer the curve is to the diagonal, the better the
+balance achieved by the weighting scheme.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

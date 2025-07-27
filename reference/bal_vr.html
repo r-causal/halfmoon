@@ -88,6 +88,18 @@ will produce <code>NA</code> in the output.</p></dd>
 indicate the comparison group has higher variance than the reference group.</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The variance ratio compares the variability of a covariate between treatment groups.
+It is calculated as:
+$$VR = \frac{s_1^2}{s_0^2}$$
+where \(s_1^2\) and \(s_0^2\) are the variances of the treatment and control groups.</p>
+<p>For binary variables (0/1), variance is computed as \(p(1-p)\) where \(p\) is the
+proportion of 1s in each group. For continuous variables, the weighted sample variance
+is used with Bessel's correction when weights are provided.</p>
+<p>Values close to 1.0 indicate similar variability between groups, which is desirable
+for balance. Values substantially different from 1.0 suggest imbalanced variance.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="check_balance.html">check_balance()</a></code> for computing multiple balance metrics at once</p>
 <p>Other balance functions:

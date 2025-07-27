@@ -158,6 +158,26 @@ categorical variable and between squared/cubed terms.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This function serves as a comprehensive balance assessment tool by computing multiple
+balance metrics simultaneously. It automatically handles different variable types and
+can optionally transform variables (dummy coding, polynomial terms, interactions)
+before computing balance statistics.</p>
+<p>The function supports several balance metrics:</p><ul><li><p><strong>SMD (Standardized Mean Difference)</strong>: Measures effect size between groups,
+with values around 0.1 or smaller generally indicating good balance</p></li>
+<li><p><strong>Variance Ratio</strong>: Compares group variances, with values near 1.0 indicating
+similar variability between groups</p></li>
+<li><p><strong>Kolmogorov-Smirnov</strong>: Tests distributional differences between groups,
+with smaller values indicating better balance</p></li>
+<li><p><strong>Correlation</strong>: For continuous exposures, measures linear association
+between covariate and exposure</p></li>
+<li><p><strong>Energy Distance</strong>: Multivariate test comparing entire distributions</p></li>
+</ul><p>When multiple weighting schemes are provided, the function computes balance
+for each method, enabling comparison of different approaches (e.g., ATE vs ATT weights).
+The <code>include_observed</code> parameter controls whether unweighted ("observed") balance
+is included in the results.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="bal_smd.html">bal_smd()</a></code>, <code><a href="bal_vr.html">bal_vr()</a></code>, <code><a href="bal_ks.html">bal_ks()</a></code>, <code><a href="bal_corr.html">bal_corr()</a></code>, <code><a href="bal_energy.html">bal_energy()</a></code> for individual metric functions</p>
 <p>Other balance functions:

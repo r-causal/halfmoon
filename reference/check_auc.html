@@ -109,6 +109,19 @@ the maximum value for numeric variables.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The Area Under the ROC Curve (AUC) provides a single metric for assessing
+propensity score balance. When propensity scores achieve perfect balance,
+the weighted distribution of scores should be identical between treatment
+groups, resulting in an AUC of 0.5 (chance performance).</p>
+<p>AUC values significantly different from 0.5 indicate systematic differences
+in propensity score distributions between groups, suggesting inadequate
+balance. Values closer to 0.5 indicate better balance achieved by the
+weighting scheme.</p>
+<p>This approach complements traditional balance diagnostics by focusing
+specifically on the propensity score overlap and balance.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="check_balance.html">check_balance()</a></code> for other balance metrics, <code><a href="geom_roc.html">geom_roc()</a></code> for plotting ROC curves</p>
 <p>Other balance functions:

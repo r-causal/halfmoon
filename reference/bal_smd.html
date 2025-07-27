@@ -95,6 +95,15 @@ Positive values indicate the comparison group has a higher mean than
 the reference group.</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The standardized mean difference (SMD) is calculated as:
+$$SMD = \frac{\bar{x}_1 - \bar{x}_0}{\sqrt{(s_1^2 + s_0^2)/2}}$$
+where \(\bar{x}_1\) and \(\bar{x}_0\) are the means of the treatment and control
+groups, and \(s_1^2\) and \(s_0^2\) are their variances.</p>
+<p>In causal inference, SMD values of 0.1 or smaller are often considered
+indicative of good balance between treatment groups.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="check_balance.html">check_balance()</a></code> for computing multiple balance metrics at once</p>
 <p>Other balance functions:

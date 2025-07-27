@@ -145,6 +145,22 @@ If NULL (default), uses the last level for factors or max value for numeric.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot2 object.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Calibration plots visualize how well predicted probabilities match observed
+outcome rates. Since outcomes are binary (0/1), the "observed rate" represents
+the proportion of units with outcome = 1 within each prediction group. For
+example, among all units with predicted probability around 0.3, we expect
+approximately 30% to actually have the outcome. Perfect calibration occurs
+when predicted probabilities equal observed rates (points fall on the 45-degree
+line).</p>
+<p>The plot supports three calibration assessment methods:</p><ul><li><p><strong>"breaks"</strong>: Bins predictions into groups and compares mean prediction
+vs observed rate within each bin</p></li>
+<li><p><strong>"logistic"</strong>: Fits a logistic regression of outcomes on predictions;
+perfect calibration yields slope=1, intercept=0</p></li>
+<li><p><strong>"windowed"</strong>: Uses sliding windows across the prediction range for
+smooth calibration curves</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

@@ -159,6 +159,19 @@ combining with them.</p></dd>
     <p>A ggplot2 layer or list of layers</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This geom provides a ggplot2 layer for creating calibration plots with confidence
+intervals. The geom automatically computes calibration statistics using the
+specified method and renders appropriate geometric elements (points, lines, ribbons)
+to visualize the relationship between predicted and observed rates.</p>
+<p>The three methods offer different approaches to calibration assessment:</p><ul><li><p><strong>"breaks"</strong>: Discrete binning approach, useful for understanding calibration
+across prediction ranges with sufficient sample sizes</p></li>
+<li><p><strong>"logistic"</strong>: Regression-based approach that can include smoothing for
+continuous calibration curves</p></li>
+<li><p><strong>"windowed"</strong>: Sliding window approach providing smooth curves without
+requiring additional packages</p></li>
+</ul></div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="check_calibration.html">check_calibration()</a></code> for computing calibration statistics</p>
 <p>Other ggplot2 functions:
