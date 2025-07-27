@@ -48,21 +48,24 @@ check_auc <- function(
 
   # Calculate AUC for each method
   methods <- unique(roc_data$method)
-  auc_results <- purrr::map_dfr(methods, function(method) {
-    method_data <- dplyr::filter(roc_data, .data$method == !!method)
-
-    # Calculate AUC using trapezoidal rule
-    fpr <- 1 - method_data$specificity
-    tpr <- method_data$sensitivity
-    auc_val <- compute_auc(fpr, tpr)
-
-    tibble::tibble(
-      method = method,
-      auc = auc_val
-    )
-  })
+  auc_results <- purrr::map_dfr(methods, compute_method_auc, roc_data = roc_data)
 
   auc_results
+}
+
+# Compute AUC for a single method
+compute_method_auc <- function(method, roc_data) {
+  method_data <- dplyr::filter(roc_data, .data$method == !!method)
+
+  # Calculate AUC using trapezoidal rule
+  fpr <- 1 - method_data$specificity
+  tpr <- method_data$sensitivity
+  auc_val <- compute_auc(fpr, tpr)
+
+  tibble::tibble(
+    method = method,
+    auc = auc_val
+  )
 }
 
 

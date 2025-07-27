@@ -556,13 +556,8 @@ StatCalibration <- ggplot2::ggproto(
         c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
       )
 
-      group_signatures <- purrr::map_chr(groups, function(g) {
-        if (length(aes_cols) > 0) {
-          paste(g[1, aes_cols, drop = FALSE], collapse = "_")
-        } else {
-          "no_aes"
-        }
-      })
+      group_signatures <- purrr::map_chr(groups, create_group_signature,
+                                        aes_cols = aes_cols)
 
       # Process groups with the same signature together
       unique_signatures <- unique(group_signatures)
