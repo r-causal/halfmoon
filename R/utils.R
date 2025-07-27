@@ -38,7 +38,8 @@ utils::globalVariables(c(
   "ymax",
   "x_quantiles",
   "y_quantiles",
-  "weight"
+  "weight",
+  ".var"
 ))
 
 #' Create dummy variables from categorical data

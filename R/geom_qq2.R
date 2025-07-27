@@ -124,6 +124,81 @@ stat_qq2 <- function(
   )
 }
 
+#' Process groups with matching aesthetic signatures
+#'
+#' Internal function to compute QQ data for groups that share the same
+#' aesthetic values (e.g., same color).
+#'
+#' @param sig The aesthetic signature identifying which groups to process
+#' @param groups List of data frames, one per group
+#' @param group_signatures Character vector mapping groups to signatures
+#' @param unique_signatures Character vector of all unique signatures
+#' @param aes_cols Character vector of aesthetic column names
+#' @param treatment_level The treatment level to use as reference
+#' @param quantiles Numeric vector of quantiles to compute
+#' @param na.rm Logical whether to remove NA values
+#'
+#' @return A data frame with QQ results
+#' @noRd
+process_aesthetic_group <- function(
+  sig,
+  groups,
+  group_signatures,
+  unique_signatures,
+  aes_cols,
+  treatment_level,
+  quantiles,
+  na.rm
+) {
+  # Combine all groups with this signature
+  matching_groups <- names(groups)[group_signatures == sig]
+  combined_data <- do.call(rbind, groups[matching_groups])
+  
+  # Create temporary data frame with binary treatment
+  temp_data <- data.frame(
+    .var = combined_data$sample,
+    .group = as.integer(combined_data$treatment == treatment_level),
+    stringsAsFactors = FALSE
+  )
+
+  # Add weight if present
+  if (!is.null(combined_data$weight) && all(!is.na(combined_data$weight))) {
+    temp_data$.wts <- combined_data$weight
+    wts_arg <- ".wts"
+  } else {
+    wts_arg <- NULL
+  }
+
+  # Compute QQ data
+  qq_result <- qq(
+    .data = temp_data,
+    .var = .var,
+    .group = .group,
+    .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
+    quantiles = quantiles,
+    treatment_level = 1L,  # We already converted to 0/1
+    na.rm = na.rm,
+    include_observed = FALSE
+  )
+
+  # Build result data frame preserving aesthetics
+  result_df <- data.frame(
+    x_quantiles = qq_result$x_quantiles,
+    y_quantiles = qq_result$y_quantiles,
+    group = which(unique_signatures == sig),
+    PANEL = combined_data$PANEL[1]
+  )
+
+  # Preserve aesthetic mappings
+  for (col in aes_cols) {
+    if (col %in% names(combined_data)) {
+      result_df[[col]] <- combined_data[[col]][1]
+    }
+  }
+
+  result_df
+}
+
 #' @rdname stat_qq2
 #' @format NULL
 #' @usage NULL
@@ -192,55 +267,17 @@ StatQq2 <- ggplot2::ggproto(
       
       # Process each unique signature
       unique_signatures <- unique(group_signatures)
-      results <- purrr::map_df(unique_signatures, function(sig) {
-        # Combine all groups with this signature
-        matching_groups <- names(groups)[group_signatures == sig]
-        combined_data <- do.call(rbind, groups[matching_groups])
-        
-        # Create temporary data frame with binary treatment
-        temp_data <- data.frame(
-          .var = combined_data$sample,
-          .group = as.integer(combined_data$treatment == treatment_level),
-          stringsAsFactors = FALSE
-        )
-
-        # Add weight if present
-        if (!is.null(combined_data$weight) && all(!is.na(combined_data$weight))) {
-          temp_data$.wts <- combined_data$weight
-          wts_arg <- ".wts"
-        } else {
-          wts_arg <- NULL
-        }
-
-        # Compute QQ data
-        qq_result <- qq(
-          .data = temp_data,
-          .var = .var,
-          .group = .group,
-          .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
-          quantiles = quantiles,
-          treatment_level = 1L,  # We already converted to 0/1
-          na.rm = na.rm,
-          include_observed = FALSE
-        )
-
-        # Build result data frame preserving aesthetics
-        result_df <- data.frame(
-          x_quantiles = qq_result$x_quantiles,
-          y_quantiles = qq_result$y_quantiles,
-          group = which(unique_signatures == sig),
-          PANEL = combined_data$PANEL[1]
-        )
-
-        # Preserve aesthetic mappings
-        for (col in aes_cols) {
-          if (col %in% names(combined_data)) {
-            result_df[[col]] <- combined_data[[col]][1]
-          }
-        }
-
-        result_df
-      })
+      results <- purrr::map_df(
+        unique_signatures,
+        process_aesthetic_group,
+        groups = groups,
+        group_signatures = group_signatures,
+        unique_signatures = unique_signatures,
+        aes_cols = aes_cols,
+        treatment_level = treatment_level,
+        quantiles = quantiles,
+        na.rm = na.rm
+      )
 
       return(results)
     } else {
