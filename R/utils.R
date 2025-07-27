@@ -127,3 +127,12 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
   # Combine non-categorical and dummy variables
   dplyr::bind_cols(non_categorical_data, dummy_df)
 }
+
+# Create a signature for a group based on aesthetic columns
+create_group_signature <- function(group_data, aes_cols) {
+  if (length(aes_cols) > 0) {
+    paste(group_data[1, aes_cols, drop = FALSE], collapse = "_")
+  } else {
+    "no_aes"
+  }
+}

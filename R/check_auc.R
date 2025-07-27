@@ -8,14 +8,15 @@
 #' @param .truth The treatment/outcome variable.
 #' @param .estimate The propensity score or fitted values.
 #' @param .wts Weighting variables (supports tidyselect).
-#' @param include_observed Include unweighted results? Default `TRUE`.
-#' @param na.rm Remove missing values? Default `TRUE`.
-#' @param treatment_level The level of `.truth` to consider as the treatment/event.
-#'   Default is NULL, which uses the second level.
+#' @inheritParams check_params
+#' @inheritParams balance_params
+#' @inheritParams treatment_param
 #'
 #' @return A tibble with columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{auc}{Numeric. The ROC AUC value.}
+#' @family balance functions
+#' @seealso [check_balance()] for other balance metrics, [geom_roc()] for plotting ROC curves
 #'
 #' @examples
 #' # Check balance for propensity scores
@@ -34,9 +35,7 @@ check_auc <- function(
   na.rm = TRUE,
   treatment_level = NULL
 ) {
-  if (!is.data.frame(.data)) {
-    abort("{.arg .data} must be a data frame")
-  }
+  validate_data_frame(.data)
 
   roc_data <- roc_curve(
     .data,
@@ -50,21 +49,28 @@ check_auc <- function(
 
   # Calculate AUC for each method
   methods <- unique(roc_data$method)
-  auc_results <- purrr::map_dfr(methods, function(method) {
-    method_data <- dplyr::filter(roc_data, .data$method == !!method)
-
-    # Calculate AUC using trapezoidal rule
-    fpr <- 1 - method_data$specificity
-    tpr <- method_data$sensitivity
-    auc_val <- compute_auc(fpr, tpr)
-
-    tibble::tibble(
-      method = method,
-      auc = auc_val
-    )
-  })
+  auc_results <- purrr::map_dfr(
+    methods,
+    compute_method_auc,
+    roc_data = roc_data
+  )
 
   auc_results
+}
+
+# Compute AUC for a single method
+compute_method_auc <- function(method, roc_data) {
+  method_data <- dplyr::filter(roc_data, .data$method == !!method)
+
+  # Calculate AUC using trapezoidal rule
+  fpr <- 1 - method_data$specificity
+  tpr <- method_data$sensitivity
+  auc_val <- compute_auc(fpr, tpr)
+
+  tibble::tibble(
+    method = method,
+    auc = auc_val
+  )
 }
 
 
@@ -98,9 +104,7 @@ roc_curve <- function(
   estimate_quo <- rlang::enquo(.estimate)
   wts_quo <- rlang::enquo(.wts)
 
-  if (!is.data.frame(.data)) {
-    abort("{.arg .data} must be a data frame")
-  }
+  validate_data_frame(.data)
 
   # Extract column names
   truth_name <- names(tidyselect::eval_select(truth_quo, .data))
@@ -146,9 +150,7 @@ roc_curve <- function(
     abort("{.arg .truth} must have exactly 2 levels")
   }
 
-  if (!is.numeric(estimate)) {
-    abort("{.arg .estimate} must be numeric")
-  }
+  validate_numeric(estimate, ".estimate")
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)

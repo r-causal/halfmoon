@@ -8,15 +8,13 @@
 #' @param data Data frame to use. If not specified, inherits from the plot.
 #' @param stat Statistical transformation to use. Default is "roc".
 #' @param position Position adjustment. Default is "identity".
-#' @param na.rm Remove missing values? Default TRUE.
-#' @param show.legend Show legend? Default NA.
-#' @param inherit.aes Inherit aesthetics from plot? Default TRUE.
+#' @inheritParams ggplot2_params
 #' @param linewidth Width of the ROC curve line. Default is 0.5.
-#' @param treatment_level The level of the outcome variable to consider as the treatment/event.
-#'   Default is NULL, which uses the last level for factors or max value for numeric.
-#' @param ... Additional arguments passed to the geom.
+#' @inheritParams treatment_param
 #'
 #' @return A ggplot2 layer.
+#' @family ggplot2 functions
+#' @seealso [check_auc()] for computing AUC values, [stat_roc()] for the underlying stat
 #'
 #' @examples
 #' # Basic usage
@@ -69,16 +67,9 @@ geom_roc <- function(
 #'
 #' Statistical transformation for ROC curves.
 #'
-#' @param mapping Set of aesthetic mappings.
-#' @param data Data frame.
+#' @inheritParams ggplot2_params
 #' @param geom Geometric object to use. Default is "path".
-#' @param position Position adjustment.
-#' @param na.rm Remove missing values? Default TRUE.
-#' @param show.legend Show legend? Default NA.
-#' @param inherit.aes Inherit aesthetics? Default TRUE.
-#' @param treatment_level The level of the outcome variable to consider as the treatment/event.
-#'   Default is NULL, which uses the second level.
-#' @param ... Additional arguments.
+#' @inheritParams treatment_param
 #'
 #' @return A ggplot2 layer.
 #' @export
@@ -147,13 +138,11 @@ StatRoc <- ggplot2::ggproto(
         )
       )
 
-      group_signatures <- purrr::map_chr(groups, function(g) {
-        if (length(aes_cols) > 0) {
-          paste(g[1, aes_cols, drop = FALSE], collapse = "_")
-        } else {
-          "no_aes"
-        }
-      })
+      group_signatures <- purrr::map_chr(
+        groups,
+        create_group_signature,
+        aes_cols = aes_cols
+      )
 
       # Process groups with the same signature together
       unique_signatures <- unique(group_signatures)

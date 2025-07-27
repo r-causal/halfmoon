@@ -45,8 +45,9 @@ geom_calibration(
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
 
-\item{treatment_level}{Value indicating which level of truth represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.}
+\item{treatment_level}{The level of the outcome variable to consider as the
+treatment/event. If \code{NULL} (default), uses the last level for factors or
+the maximum value for numeric variables.}
 
 \item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
 
@@ -56,13 +57,16 @@ If NULL (default), uses the last level for factors or max value for numeric.}
 
 \item{position}{Position adjustment.}
 
-\item{na.rm}{Logical; if TRUE, drop NA values before computation.}
+\item{na.rm}{If \code{FALSE}, the default, missing values are removed with a warning.
+If \code{TRUE}, missing values are silently removed.}
 
-\item{show.legend}{Logical; include in legend.}
+\item{show.legend}{Logical. Should this layer be included in the legends?
+\code{NA}, the default, includes if any aesthetics are mapped.}
 
-\item{inherit.aes}{Logical; inherit aesthetics from ggplot.}
+\item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics, rather than
+combining with them.}
 
-\item{...}{Additional parameters passed to geoms.}
+\item{...}{Other arguments passed on to layer().}
 }
 \value{
 A ggplot2 layer or list of layers
@@ -100,3 +104,13 @@ ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 }
+\seealso{
+\code{\link[=check_calibration]{check_calibration()}} for computing calibration statistics
+
+Other ggplot2 functions: 
+\code{\link{geom_ecdf}()},
+\code{\link{geom_mirror_histogram}()},
+\code{\link{geom_qq2}()},
+\code{\link{geom_roc}()}
+}
+\concept{ggplot2 functions}

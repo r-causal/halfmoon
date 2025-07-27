@@ -23,12 +23,16 @@ check_auc(
 
 \item{.wts}{Weighting variables (supports tidyselect).}
 
-\item{include_observed}{Include unweighted results? Default \code{TRUE}.}
+\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+(unweighted) metrics? Defaults to TRUE.}
 
-\item{na.rm}{Remove missing values? Default \code{TRUE}.}
+\item{na.rm}{A logical value indicating whether to remove missing values
+before computation. If \code{FALSE} (default), missing values in the input
+will produce \code{NA} in the output.}
 
-\item{treatment_level}{The level of \code{.truth} to consider as the treatment/event.
-Default is NULL, which uses the second level.}
+\item{treatment_level}{The level of the outcome variable to consider as the
+treatment/event. If \code{NULL} (default), uses the last level for factors or
+the maximum value for numeric variables.}
 }
 \value{
 A tibble with columns:
@@ -48,3 +52,14 @@ check_auc(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))
 check_auc(nhefs_weights, qsmk, .fitted, w_ate, include_observed = FALSE)
 
 }
+\seealso{
+\code{\link[=check_balance]{check_balance()}} for other balance metrics, \code{\link[=geom_roc]{geom_roc()}} for plotting ROC curves
+
+Other balance functions: 
+\code{\link{bal_corr}()},
+\code{\link{bal_ks}()},
+\code{\link{bal_smd}()},
+\code{\link{bal_vr}()},
+\code{\link{check_balance}()}
+}
+\concept{balance functions}

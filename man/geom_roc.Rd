@@ -27,18 +27,22 @@ and \code{truth} (treatment/outcome variable). If specified, inherits from the p
 
 \item{position}{Position adjustment. Default is "identity".}
 
-\item{na.rm}{Remove missing values? Default TRUE.}
+\item{na.rm}{If \code{FALSE}, the default, missing values are removed with a warning.
+If \code{TRUE}, missing values are silently removed.}
 
-\item{show.legend}{Show legend? Default NA.}
+\item{show.legend}{Logical. Should this layer be included in the legends?
+\code{NA}, the default, includes if any aesthetics are mapped.}
 
-\item{inherit.aes}{Inherit aesthetics from plot? Default TRUE.}
+\item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics, rather than
+combining with them.}
 
 \item{linewidth}{Width of the ROC curve line. Default is 0.5.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the treatment/event.
-Default is NULL, which uses the last level for factors or max value for numeric.}
+\item{treatment_level}{The level of the outcome variable to consider as the
+treatment/event. If \code{NULL} (default), uses the last level for factors or
+the maximum value for numeric variables.}
 
-\item{...}{Additional arguments passed to the geom.}
+\item{...}{Other arguments passed on to layer().}
 }
 \value{
 A ggplot2 layer.
@@ -65,3 +69,13 @@ ggplot(long_data, aes(estimate = .fitted, truth = qsmk, weight = weight)) +
   geom_roc(aes(color = weight_type))
 
 }
+\seealso{
+\code{\link[=check_auc]{check_auc()}} for computing AUC values, \code{\link[=stat_roc]{stat_roc()}} for the underlying stat
+
+Other ggplot2 functions: 
+\code{\link{geom_calibration}()},
+\code{\link{geom_ecdf}()},
+\code{\link{geom_mirror_histogram}()},
+\code{\link{geom_qq2}()}
+}
+\concept{ggplot2 functions}

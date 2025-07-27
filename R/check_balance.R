@@ -5,23 +5,14 @@
 #' supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov, weighted correlation) and
 #' returns results in a tidy format.
 #'
-#' @param .data A data frame containing the variables to analyze.
-#' @param .vars Variables for which to calculate balance metrics. Can be unquoted
-#'   variable names, a character vector, or a tidyselect expression.
-#' @param .group Grouping variable, e.g., treatment or exposure group.
-#' @param .wts Optional weighting variables. Can be unquoted variable names,
-#'   a character vector, or NULL. Multiple weights can be provided to compare
-#'   different weighting schemes.
+#' @inheritParams check_params
 #' @param .metrics Character vector specifying which metrics to compute.
 #'   Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 #'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
 #'   "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").
-#' @param include_observed Logical. If using `.wts`, also calculate observed
-#'   metrics? Defaults to TRUE.
 #' @param reference_group The reference group level to use for comparisons.
 #'   Defaults to 1 (first level).
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. Defaults to FALSE.
+#' @inheritParams balance_params
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
 #'   variables using `model.matrix()`? Defaults to TRUE. When TRUE, categorical
 #'   variables are expanded into separate binary indicators for each level.
@@ -40,6 +31,8 @@
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{metric}{Character. The balance metric computed ("smd", "vr", "ks").}
 #'   \item{estimate}{Numeric. The computed balance statistic.}
+#' @family balance functions
+#' @seealso [bal_smd()], [bal_vr()], [bal_ks()], [bal_corr()], [bal_energy()] for individual metric functions
 #'
 #' @examples
 #' # Basic usage with all metrics
@@ -74,9 +67,7 @@ check_balance <- function(
   cubes = FALSE,
   interactions = FALSE
 ) {
-  if (!is.data.frame(.data)) {
-    stop("Argument '.data' must be a data frame")
-  }
+  validate_data_frame(.data)
 
   # Convert inputs to character vectors for consistent handling
   group_var <- rlang::as_name(rlang::enquo(.group))
@@ -176,29 +167,9 @@ check_balance <- function(
           # Prepare variables for interactions
           interaction_vars <- purrr::imap(
             original_numeric,
-            function(var_data, var_name) {
-              # Check if this was originally a binary categorical
-              if (var_name %in% binary_categorical_names) {
-                # Need to expand binary to both levels for interactions
-                original_var <- original_vars_data[[var_name]]
-                levels_to_use <- if (is.factor(original_var)) {
-                  levels(original_var)
-                } else {
-                  sort(unique(original_var))
-                }
-
-                # Create dummy for each level
-                purrr::map(levels_to_use, function(level) {
-                  dummy_name <- paste0(var_name, level)
-                  dummy_values <- as.numeric(original_var == level)
-                  stats::setNames(list(dummy_values), dummy_name)
-                }) |>
-                  purrr::flatten()
-              } else {
-                # Continuous or already expanded multi-level variable
-                stats::setNames(list(var_data), var_name)
-              }
-            }
+            prepare_interaction_variable,
+            binary_categorical_names = binary_categorical_names,
+            original_vars_data = original_vars_data
           ) |>
             purrr::flatten()
 
@@ -210,29 +181,17 @@ check_balance <- function(
           )
 
           # Filter out same-variable dummy interactions (e.g., sex0 x sex1)
-          valid_combinations <- purrr::keep(var_combinations, function(combo) {
-            var1 <- combo[1]
-            var2 <- combo[2]
-
-            # Extract base variable names (before dummy suffixes)
-            base1 <- sub("^([^0-9]+).*", "\\1", var1)
-            base2 <- sub("^([^0-9]+).*", "\\1", var2)
-
-            # Only keep interactions between different base variables
-            base1 != base2
-          })
+          valid_combinations <- purrr::keep(
+            var_combinations,
+            is_valid_interaction_combo
+          )
 
           # Create interaction terms using functional programming
-          interaction_terms <- purrr::map(valid_combinations, function(combo) {
-            var1 <- combo[1]
-            var2 <- combo[2]
-            interaction_name <- paste(var1, var2, sep = "_x_")
-
-            # Return a named list with the interaction term
-            interaction_value <- interaction_vars[[var1]] *
-              interaction_vars[[var2]]
-            stats::setNames(list(interaction_value), interaction_name)
-          })
+          interaction_terms <- purrr::map(
+            valid_combinations,
+            create_interaction_term,
+            interaction_vars = interaction_vars
+          )
 
           # Flatten the list and add to vars_data
           interaction_terms <- purrr::flatten(interaction_terms)
@@ -261,9 +220,7 @@ check_balance <- function(
   }
 
   # Validate group variable
-  if (!group_var %in% names(transformed_data)) {
-    stop("Group variable '", group_var, "' not found in data")
-  }
+  validate_column_exists(transformed_data, group_var, "data")
 
   # Get group levels in proper order
   # For correlation, we allow continuous group variables
@@ -361,119 +318,18 @@ check_balance <- function(
   combinations <- dplyr::bind_rows(univariate_combinations, energy_combinations)
 
   # Use purrr to compute all balance statistics
-  results <- purrr::pmap_dfr(combinations, function(variable, method, metric) {
-    # Handle weights
-    if (method == "observed") {
-      weights_data <- NULL
-    } else {
-      weights_data <- .data[[method]]
-    }
-
-    # Get the appropriate function and compute
-    compute_fn <- metric_functions[[metric]]
-
-    # Compute the statistic
-    tryCatch(
-      {
-        if (metric == "energy") {
-          # For energy, use all variables
-          group_data <- transformed_data[[group_var]]
-          covariates_data <- transformed_data[var_names]
-
-          estimate <- compute_fn(
-            covariates = covariates_data,
-            group = group_data,
-            weights = weights_data,
-            na.rm = na.rm
-          )
-        } else if (metric == "correlation") {
-          # For correlation, use the group variable as the second variable
-          var_data <- transformed_data[[variable]]
-          group_data <- transformed_data[[group_var]]
-
-          estimate <- compute_fn(
-            x = var_data,
-            y = group_data,
-            weights = weights_data,
-            na.rm = na.rm
-          )
-        } else {
-          # For other metrics (smd, vr, ks)
-          var_data <- transformed_data[[variable]]
-          group_data <- transformed_data[[group_var]]
-          # Handle reference group parameter based on the function
-          ref_group_param <- if (metric == "smd") {
-            # bal_smd accepts both indices and group values
-            reference_group
-          } else {
-            # bal_vr and bal_ks expect actual group values
-            # Always treat numeric reference_group as index for consistency
-            if (is.numeric(reference_group) && length(reference_group) == 1) {
-              group_levels[reference_group]
-            } else {
-              reference_group
-            }
-          }
-
-          estimate <- compute_fn(
-            covariate = var_data,
-            group = group_data,
-            weights = weights_data,
-            reference_group = ref_group_param,
-            na.rm = na.rm
-          )
-        }
-
-        # Determine the group level for reporting
-        if (metric == "correlation") {
-          # For correlation, report the group variable name since it's continuous
-          group_level <- group_var
-        } else if (metric == "energy") {
-          # For energy, use NA since it's multivariate
-          group_level <- NA_character_
-        } else {
-          # For other metrics, determine the non-reference group level
-          if (reference_group %in% group_levels) {
-            ref_level <- reference_group
-          } else {
-            # If reference_group is numeric index, get the corresponding level
-            ref_level <- group_levels[reference_group]
-          }
-          group_level <- setdiff(group_levels, ref_level)[1]
-        }
-
-        tibble::tibble(
-          variable = variable,
-          group_level = as.character(group_level),
-          method = method,
-          metric = metric,
-          estimate = estimate
-        )
-      },
-      error = function(e) {
-        # Return NA for failed computations but preserve structure
-        error_group_level <- if (metric == "correlation") {
-          group_var
-        } else if (metric == "energy") {
-          NA_character_
-        } else {
-          setdiff(
-            group_levels,
-            if (reference_group %in% group_levels) reference_group else
-              group_levels[reference_group]
-          )[1]
-        }
-
-        tibble::tibble(
-          variable = variable,
-          group_level = as.character(error_group_level),
-          method = method,
-          metric = metric,
-          estimate = NA_real_
-        )
-      }
-    )
-  })
+  results <- purrr::pmap_dfr(
+    combinations,
+    compute_single_balance_metric,
+    .data = .data,
+    metric_functions = metric_functions,
+    transformed_data = transformed_data,
+    group_var = group_var,
+    na.rm = na.rm,
+    reference_group = reference_group,
+    group_levels = group_levels,
+    var_names = var_names
+  )
 
   # Arrange results for better readability
   if (nrow(results) > 0) {
@@ -481,4 +337,186 @@ check_balance <- function(
   }
 
   return(results)
+}
+
+# Compute a single balance metric for a variable/method/metric combination
+compute_single_balance_metric <- function(
+  variable,
+  method,
+  metric,
+  .data,
+  metric_functions,
+  transformed_data,
+  group_var,
+  na.rm,
+  reference_group,
+  group_levels,
+  var_names
+) {
+  # Handle weights
+  if (method == "observed") {
+    weights_data <- NULL
+  } else {
+    weights_data <- .data[[method]]
+  }
+
+  # Get the appropriate function and compute
+  compute_fn <- metric_functions[[metric]]
+
+  # Compute the statistic
+  tryCatch(
+    {
+      if (metric == "energy") {
+        # For energy, use all variables
+        group_data <- transformed_data[[group_var]]
+        covariates_data <- transformed_data[var_names]
+
+        estimate <- compute_fn(
+          covariates = covariates_data,
+          group = group_data,
+          weights = weights_data,
+          na.rm = na.rm
+        )
+      } else if (metric == "correlation") {
+        # For correlation, use the group variable as the second variable
+        var_data <- transformed_data[[variable]]
+        group_data <- transformed_data[[group_var]]
+
+        estimate <- compute_fn(
+          x = var_data,
+          y = group_data,
+          weights = weights_data,
+          na.rm = na.rm
+        )
+      } else {
+        # For other metrics (smd, vr, ks)
+        var_data <- transformed_data[[variable]]
+        group_data <- transformed_data[[group_var]]
+        # Handle reference group parameter based on the function
+        ref_group_param <- if (metric == "smd") {
+          # bal_smd accepts both indices and group values
+          reference_group
+        } else {
+          # bal_vr and bal_ks expect actual group values
+          # Always treat numeric reference_group as index for consistency
+          if (is.numeric(reference_group) && length(reference_group) == 1) {
+            group_levels[reference_group]
+          } else {
+            reference_group
+          }
+        }
+
+        estimate <- compute_fn(
+          covariate = var_data,
+          group = group_data,
+          weights = weights_data,
+          reference_group = ref_group_param,
+          na.rm = na.rm
+        )
+      }
+
+      # Determine the group level for reporting
+      if (metric == "correlation") {
+        # For correlation, report the group variable name since it's continuous
+        group_level <- group_var
+      } else if (metric == "energy") {
+        # For energy, use NA since it's multivariate
+        group_level <- NA_character_
+      } else {
+        # For other metrics, determine the non-reference group level
+        if (reference_group %in% group_levels) {
+          ref_level <- reference_group
+        } else {
+          # If reference_group is numeric index, get the corresponding level
+          ref_level <- group_levels[reference_group]
+        }
+        group_level <- setdiff(group_levels, ref_level)[1]
+      }
+
+      tibble::tibble(
+        variable = variable,
+        group_level = as.character(group_level),
+        method = method,
+        metric = metric,
+        estimate = estimate
+      )
+    },
+    error = function(e) {
+      # Return NA for failed computations but preserve structure
+      error_group_level <- if (metric == "correlation") {
+        group_var
+      } else if (metric == "energy") {
+        NA_character_
+      } else {
+        setdiff(
+          group_levels,
+          if (reference_group %in% group_levels) reference_group else
+            group_levels[reference_group]
+        )[1]
+      }
+
+      tibble::tibble(
+        variable = variable,
+        group_level = as.character(error_group_level),
+        method = method,
+        metric = metric,
+        estimate = NA_real_
+      )
+    }
+  )
+}
+
+# Prepare a variable for interaction terms
+prepare_interaction_variable <- function(
+  var_data,
+  var_name,
+  binary_categorical_names,
+  original_vars_data
+) {
+  # Check if this was originally a binary categorical
+  if (var_name %in% binary_categorical_names) {
+    # Need to expand binary to both levels for interactions
+    original_var <- original_vars_data[[var_name]]
+    levels_to_use <- if (is.factor(original_var)) {
+      levels(original_var)
+    } else {
+      sort(unique(original_var))
+    }
+
+    # Create dummy for each level
+    purrr::map(levels_to_use, function(level) {
+      dummy_name <- paste0(var_name, level)
+      dummy_values <- as.numeric(original_var == level)
+      stats::setNames(list(dummy_values), dummy_name)
+    }) |>
+      purrr::flatten()
+  } else {
+    # Continuous or already expanded multi-level variable
+    stats::setNames(list(var_data), var_name)
+  }
+}
+
+# Check if an interaction combination is valid (not between same variable dummies)
+is_valid_interaction_combo <- function(combo) {
+  var1 <- combo[1]
+  var2 <- combo[2]
+
+  # Extract base variable names (before dummy suffixes)
+  base1 <- sub("^([^0-9]+).*", "\\1", var1)
+  base2 <- sub("^([^0-9]+).*", "\\1", var2)
+
+  # Only keep interactions between different base variables
+  base1 != base2
+}
+
+# Create an interaction term between two variables
+create_interaction_term <- function(combo, interaction_vars) {
+  var1 <- combo[1]
+  var2 <- combo[2]
+  interaction_name <- paste(var1, var2, sep = "_x_")
+
+  # Return a named list with the interaction term
+  interaction_value <- interaction_vars[[var1]] *
+    interaction_vars[[var2]]
+  stats::setNames(list(interaction_value), interaction_name)
 }

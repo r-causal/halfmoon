@@ -4,19 +4,12 @@
 #' smd package. This is a common measure of effect size for comparing group
 #' differences while accounting for variability.
 #'
-#' @param covariate A numeric vector containing the covariate values to compare.
-#' @param group A vector (factor or numeric) indicating group membership. Must
-#'   have exactly two unique levels.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `covariate`. All weights must be non-negative.
-#' @param reference_group The reference group level to use as the comparison
-#'   baseline. Can be either a group level or index. If `NULL` (default), uses the first level.
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   `NA` output.
+#' @inheritParams balance_params
 #' @return A numeric value representing the standardized mean difference.
 #'   Positive values indicate the comparison group has a higher mean than
 #'   the reference group.
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
@@ -32,26 +25,10 @@ bal_smd <- function(
   reference_group = NULL,
   na.rm = FALSE
 ) {
-  if (!is.numeric(covariate)) {
-    stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
-  }
-  if (length(covariate) == 0) {
-    stop("Argument 'covariate' cannot be empty")
-  }
-  if (length(covariate) != length(group)) {
-    stop("Arguments 'covariate' and 'group' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(covariate)) {
-      stop("Argument 'weights' must have the same length as 'covariate'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Handle missing values first
   if (!na.rm) {
@@ -64,16 +41,17 @@ bal_smd <- function(
     }
   }
 
-  # Convert reference_group to index if it's a level value
+  # Convert reference_group to index for smd package
   levels_g <- unique(stats::na.omit(group))
+
+  # Validate we have exactly two levels
   if (length(levels_g) != 2) {
-    stop(
-      "Grouping variable must have exactly two levels, got ",
-      length(levels_g)
+    abort(
+      "Group variable must have exactly two levels, got {length(levels_g)}"
     )
   }
 
-  # If reference_group is NULL, use the first level (like other functions)
+  # Determine gref_index for smd package
   if (is.null(reference_group)) {
     gref_index <- 1L
   } else {
@@ -81,6 +59,7 @@ bal_smd <- function(
     if (reference_group %in% levels_g) {
       gref_index <- which(levels_g == reference_group)
     } else {
+      # Use it directly as an index
       gref_index <- reference_group
     }
   }
@@ -107,18 +86,11 @@ is_binary <- function(x) {
 #' For binary variables, uses the p*(1-p) variance formula. For continuous variables,
 #' uses Bessel's correction for weighted sample variance.
 #'
-#' @param covariate A numeric vector containing the covariate values to compare.
-#' @param group A vector (factor or numeric) indicating group membership. Must
-#'   have exactly two unique levels.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `covariate`. All weights must be non-negative.
-#' @param reference_group The reference group level to use as the denominator.
-#'   If `NULL` (default), uses the first level.
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   `NA` output.
+#' @inheritParams balance_params
 #' @return A numeric value representing the variance ratio. Values greater than 1
 #'   indicate the comparison group has higher variance than the reference group.
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
 #' # With weights
@@ -134,58 +106,28 @@ bal_vr <- function(
   na.rm = FALSE
 ) {
   # Input validation
-  if (!is.numeric(covariate)) {
-    stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
-  }
-  if (length(covariate) == 0) {
-    stop("Argument 'covariate' cannot be empty")
-  }
-  if (length(covariate) != length(group)) {
-    stop("Arguments 'covariate' and 'group' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(covariate)) {
-      stop("Argument 'weights' must have the same length as 'covariate'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Identify reference and comparison indices
-  lvl <- unique(stats::na.omit(group))
-  if (length(lvl) != 2) {
-    stop("Grouping variable must have exactly two levels, got ", length(lvl))
-  }
-  ref <- if (!is.null(reference_group)) reference_group else lvl[1]
-  if (!ref %in% lvl) {
-    stop("Reference group '", ref, "' not found in grouping variable")
-  }
-  idx_ref <- which(group == ref)
-  idx_other <- which(group != ref)
+  group_splits <- split_by_group(covariate, group, reference_group)
+  idx_ref <- group_splits$reference
+  idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
-    if (is.null(weights)) {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref])]
-      idx_other <- idx_other[!is.na(covariate[idx_other])]
-    } else {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref]) & !is.na(weights[idx_ref])]
-      idx_other <- idx_other[
-        !is.na(covariate[idx_other]) & !is.na(weights[idx_other])
-      ]
-    }
+    idx_ref <- filter_na_indices(idx_ref, covariate, weights, na.rm = TRUE)
+    idx_other <- filter_na_indices(idx_other, covariate, weights, na.rm = TRUE)
   } else {
-    if (is.null(weights)) {
-      if (any(is.na(covariate[c(idx_ref, idx_other)]))) return(NA_real_)
-    } else {
-      if (
-        any(is.na(covariate[c(idx_ref, idx_other)])) ||
-          any(is.na(weights[c(idx_ref, idx_other)]))
+    if (
+      check_na_return(
+        covariate[c(idx_ref, idx_other)],
+        weights[c(idx_ref, idx_other)] %||% NULL,
+        na.rm = FALSE
       )
-        return(NA_real_)
+    ) {
+      return(NA_real_)
     }
   }
 
@@ -262,20 +204,12 @@ bal_vr <- function(
 #' difference in proportions. For continuous variables, computes the maximum
 #' difference between empirical CDFs.
 #'
-#' @param covariate A numeric vector containing the covariate values to compare.
-#' @param group A vector (factor or numeric) indicating group membership. Must
-#'   have exactly two unique levels.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `covariate`. All weights must be non-negative.
-#' @param reference_group The reference group level to use as the comparison
-#'   baseline. If `NULL` (default), uses the first level.
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   `NA` output.
+#' @inheritParams balance_params
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,
 #'   with 0 indicating identical distributions and 1 indicating completely separate
 #'   distributions.
-#'
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
@@ -291,57 +225,27 @@ bal_ks <- function(
   na.rm = FALSE
 ) {
   # Input validation
-  if (!is.numeric(covariate)) {
-    stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
-  }
-  if (length(covariate) == 0) {
-    stop("Argument 'covariate' cannot be empty")
-  }
-  if (length(covariate) != length(group)) {
-    stop("Arguments 'covariate' and 'group' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(covariate)) {
-      stop("Argument 'weights' must have the same length as 'covariate'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
-  lvl <- unique(stats::na.omit(group))
-  if (length(lvl) != 2) {
-    stop("Grouping variable must have exactly two levels, got ", length(lvl))
-  }
-  ref <- if (!is.null(reference_group)) reference_group else lvl[1]
-  if (!ref %in% lvl) {
-    stop("Reference group '", ref, "' not found in grouping variable")
-  }
-  idx_ref <- which(group == ref)
-  idx_other <- which(group != ref)
+  group_splits <- split_by_group(covariate, group, reference_group)
+  idx_ref <- group_splits$reference
+  idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
-    if (is.null(weights)) {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref])]
-      idx_other <- idx_other[!is.na(covariate[idx_other])]
-    } else {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref]) & !is.na(weights[idx_ref])]
-      idx_other <- idx_other[
-        !is.na(covariate[idx_other]) & !is.na(weights[idx_other])
-      ]
-    }
+    idx_ref <- filter_na_indices(idx_ref, covariate, weights, na.rm = TRUE)
+    idx_other <- filter_na_indices(idx_other, covariate, weights, na.rm = TRUE)
   } else {
-    if (is.null(weights)) {
-      if (any(is.na(covariate[c(idx_ref, idx_other)]))) return(NA_real_)
-    } else {
-      if (
-        any(is.na(covariate[c(idx_ref, idx_other)])) ||
-          any(is.na(weights[c(idx_ref, idx_other)]))
+    if (
+      check_na_return(
+        covariate[c(idx_ref, idx_other)],
+        weights[c(idx_ref, idx_other)] %||% NULL,
+        na.rm = FALSE
       )
-        return(NA_real_)
+    ) {
+      return(NA_real_)
     }
   }
 
@@ -419,36 +323,20 @@ bal_ks <- function(
 #'   `NA` output.
 #' @return A numeric value representing the correlation coefficient between -1 and 1.
 #'   Returns `NA` if either variable has zero variance.
-#'
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_corr(nhefs_weights$age, nhefs_weights$wt71)
 #'
 #' @export
 bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
-  if (!is.numeric(x)) {
-    stop("Argument 'x' must be numeric, got ", class(x)[1])
-  }
-  if (!is.numeric(y)) {
-    stop("Argument 'y' must be numeric, got ", class(y)[1])
-  }
-  if (length(x) == 0 || length(y) == 0) {
-    stop("Arguments 'x' and 'y' cannot be empty")
-  }
-  if (length(x) != length(y)) {
-    stop("Arguments 'x' and 'y' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(x)) {
-      stop("Argument 'weights' must have the same length as 'x' and 'y'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(x)
+  validate_numeric(y)
+  validate_not_empty(x)
+  validate_not_empty(y)
+  validate_equal_length(x, y)
+  validate_weights(weights, length(x))
 
   if (na.rm) {
     # Handle missing values carefully - avoid logical(0) issue
@@ -602,25 +490,8 @@ bal_energy <- function(
     abort("Argument {.arg covariates} cannot be empty")
   }
 
-  if (length(group) != nrow(covariates)) {
-    abort(
-      "Arguments {.arg group} and {.arg covariates} must have the same length"
-    )
-  }
-
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != nrow(covariates)) {
-      abort(
-        "Argument {.arg weights} must have the same length as rows in {.arg covariates}"
-      )
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_equal_length(group, covariates, "group", "covariates")
+  validate_weights(weights, nrow(covariates))
 
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
     abort(

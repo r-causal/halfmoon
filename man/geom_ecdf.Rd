@@ -162,4 +162,11 @@ ggplot(
 \item \code{\link[=geom_qq2]{geom_qq2()}} for an alternative visualization using quantile-quantile plots
 \item \code{\link[ggplot2:stat_ecdf]{ggplot2::stat_ecdf()}} for the unweighted version
 }
+
+Other ggplot2 functions: 
+\code{\link{geom_calibration}()},
+\code{\link{geom_mirror_histogram}()},
+\code{\link{geom_qq2}()},
+\code{\link{geom_roc}()}
 }
+\concept{ggplot2 functions}

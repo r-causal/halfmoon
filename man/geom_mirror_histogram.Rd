@@ -133,3 +133,11 @@ ggplot(nhefs_weights, aes(.fitted)) +
   ) +
   scale_y_continuous(labels = abs)
 }
+\seealso{
+Other ggplot2 functions: 
+\code{\link{geom_calibration}()},
+\code{\link{geom_ecdf}()},
+\code{\link{geom_qq2}()},
+\code{\link{geom_roc}()}
+}
+\concept{ggplot2 functions}

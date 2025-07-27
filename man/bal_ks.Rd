@@ -13,14 +13,14 @@ bal_ks(covariate, group, weights = NULL, reference_group = NULL, na.rm = FALSE)
 have exactly two unique levels.}
 
 \item{weights}{An optional numeric vector of case weights. If provided, must
-have the same length as \code{covariate}. All weights must be non-negative.}
+have the same length as other input vectors. All weights must be non-negative.}
 
-\item{reference_group}{The reference group level to use as the comparison
-baseline. If \code{NULL} (default), uses the first level.}
+\item{reference_group}{The reference group level for comparisons. Can be either
+a group level value or a numeric index. If \code{NULL} (default), uses the first level.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
-before computation. If \code{FALSE} (default), missing values result in
-\code{NA} output.}
+before computation. If \code{FALSE} (default), missing values in the input
+will produce \code{NA} in the output.}
 }
 \value{
 A numeric value representing the KS statistic. Values range from 0 to 1,
@@ -40,3 +40,14 @@ bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
            weights = nhefs_weights$w_ate)
 }
+\seealso{
+\code{\link[=check_balance]{check_balance()}} for computing multiple balance metrics at once
+
+Other balance functions: 
+\code{\link{bal_corr}()},
+\code{\link{bal_smd}()},
+\code{\link{bal_vr}()},
+\code{\link{check_auc}()},
+\code{\link{check_balance}()}
+}
+\concept{balance functions}

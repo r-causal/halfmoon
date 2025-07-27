@@ -10,8 +10,7 @@
 #'   Can be unquoted (e.g., `p`) or quoted (e.g., `"p"`).
 #' @param .group Column name of treatment/group variable.
 #'   Can be unquoted (e.g., `g`) or quoted (e.g., `"g"`).
-#' @param treatment_level Value indicating which level of `.group` represents treatment.
-#'   If `NULL` (default), uses the last level for factors or max value for numeric.
+#' @inheritParams treatment_param
 #' @param method Character; calibration method. One of: "breaks", "logistic", or "windowed".
 #' @param bins Integer > 1; number of bins for the "breaks" method.
 #' @param binning_method "equal_width" or "quantile" for bin creation (breaks method only).
@@ -135,40 +134,18 @@ empty_calibration <- function(method = "breaks") {
 }
 
 check_treatment_level <- function(group_var, treatment_level) {
-  unique_levels <- unique(group_var[!is.na(group_var)])
-  # Default: use last level for factors, max value for numeric
-  if (is.null(treatment_level)) {
-    if (is.factor(group_var)) {
-      treatment_level <- levels(group_var)[length(levels(group_var))]
-    } else {
-      if (length(unique_levels) == 0) {
-        # Default for empty data
-        treatment_level <- 1
-      } else {
-        treatment_level <- max(unique_levels, na.rm = TRUE)
-      }
+  # Validate treatment level exists if provided
+  if (!is.null(treatment_level)) {
+    unique_levels <- unique(group_var[!is.na(group_var)])
+    if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
+      abort(
+        "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
+      )
     }
   }
 
-  # Validate treatment level exists (skip for empty data)
-  if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
-    abort(
-      "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
-    )
-  }
-
-  # Create binary treatment indicator (1 = treatment, 0 = control)
-  # Handle both factor and non-factor variables
-  if (is.factor(group_var)) {
-    # For factors, ensure we're comparing as character to handle numeric-looking levels
-    treatment_indicator <- as.numeric(
-      as.character(group_var) == as.character(treatment_level)
-    )
-  } else {
-    treatment_indicator <- as.numeric(group_var == treatment_level)
-  }
-
-  treatment_indicator
+  # Use the helper function to create treatment indicator
+  create_treatment_indicator(group_var, treatment_level)
 }
 
 check_columns <- function(data, fitted_name, group_name, treatment_level) {
@@ -283,7 +260,9 @@ compute_calibration_breaks_imp <- function(
     warning_counts <- n_total[warning_mask]
     bins_list <- paste(warning_bins, collapse = ", ")
     counts_list <- paste(warning_counts, collapse = ", ")
-    warn("Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.")
+    warn(
+      "Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method."
+    )
   }
 
   n_rows <- nrow(result)
@@ -294,23 +273,7 @@ compute_calibration_breaks_imp <- function(
   if (length(valid_indices) > 0) {
     ci_results <- purrr::map(
       valid_indices,
-      ~ {
-        tryCatch(
-          {
-            suppressWarnings({
-              ci <- stats::prop.test(
-                x = n_events[.x],
-                n = n_total[.x],
-                conf.level = conf_level
-              )$conf.int
-            })
-            list(lower = ci[1], upper = ci[2])
-          },
-          error = function(e) {
-            list(lower = NA_real_, upper = NA_real_)
-          }
-        )
-      }
+      ~ calculate_prop_ci(n_events[.x], n_total[.x], conf_level)
     )
 
     # Extract results
@@ -321,19 +284,9 @@ compute_calibration_breaks_imp <- function(
   # For edge cases, use normal approximation with purrr
   edge_cases <- which(!valid_mask & n_total > 0)
   if (length(edge_cases) > 0) {
-    alpha <- 1 - conf_level
-    z_score <- stats::qnorm(1 - alpha / 2)
-
     edge_results <- purrr::map(
       edge_cases,
-      ~ {
-        rate <- result$observed_rate[.x]
-        se <- sqrt(rate * (1 - rate) / n_total[.x])
-        list(
-          lower = max(0, rate - z_score * se),
-          upper = min(1, rate + z_score * se)
-        )
-      }
+      ~ calculate_normal_ci(result$observed_rate[.x], n_total[.x], conf_level)
     )
 
     result$lower[edge_cases] <- purrr::map_dbl(edge_results, ~ .x$lower)
@@ -371,8 +324,7 @@ compute_calibration_logistic_imp <- function(
   pred_probs <- plogis(preds$fit)
 
   # Calculate confidence intervals
-  alpha <- 1 - conf_level
-  z_score <- qnorm(1 - alpha / 2)
+  z_score <- get_z_score(conf_level)
   lower <- plogis(preds$fit - z_score * preds$se.fit)
   upper <- plogis(preds$fit + z_score * preds$se.fit)
 
@@ -392,8 +344,7 @@ compute_calibration_windowed_imp <- function(
 ) {
   steps <- seq(0, 1, by = step_size)
   n_steps <- length(steps)
-  alpha <- 1 - conf_level
-  z_score <- stats::qnorm(1 - alpha / 2)
+  z_score <- get_z_score(conf_level)
   half_window <- window_size / 2
 
   window_results <- purrr::map(
@@ -424,7 +375,9 @@ compute_calibration_windowed_imp <- function(
       warning_counts <- sample_sizes[warning_mask]
       windows_list <- paste(round(warning_windows, 3), collapse = ", ")
       counts_list <- paste(warning_counts, collapse = ", ")
-      warn("Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.")
+      warn(
+        "Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method."
+      )
     }
   }
 
@@ -471,47 +424,24 @@ calculate_window_statistics <- function(
 
       # Calculate confidence intervals
       if (n_events > 0 && n_events < n_total) {
-        tryCatch(
-          {
-            suppressWarnings({
-              prop_test <- stats::prop.test(
-                n_events,
-                n_total,
-                conf.level = conf_level
-              )
-            })
-            list(
-              predicted_rate = .x,
-              observed_rate = event_rate,
-              lower = prop_test$conf.int[1],
-              upper = prop_test$conf.int[2],
-              valid = TRUE,
-              n_total = n_total,
-              n_events = n_events
-            )
-          },
-          error = function(e) {
-            # Fallback to normal approximation
-            se <- sqrt(event_rate * (1 - event_rate) / n_total)
-            list(
-              predicted_rate = .x,
-              observed_rate = event_rate,
-              lower = max(0, event_rate - z_score * se),
-              upper = min(1, event_rate + z_score * se),
-              valid = TRUE,
-              n_total = n_total,
-              n_events = n_events
-            )
-          }
-        )
-      } else {
-        # For edge cases, use normal approximation
-        se <- sqrt(event_rate * (1 - event_rate) / n_total)
+        ci <- calculate_prop_ci(n_events, n_total, conf_level)
         list(
           predicted_rate = .x,
           observed_rate = event_rate,
-          lower = max(0, event_rate - z_score * se),
-          upper = min(1, event_rate + z_score * se),
+          lower = ci$lower,
+          upper = ci$upper,
+          valid = TRUE,
+          n_total = n_total,
+          n_events = n_events
+        )
+      } else {
+        # For edge cases, use normal approximation
+        ci <- calculate_normal_ci(event_rate, n_total, conf_level)
+        list(
+          predicted_rate = .x,
+          observed_rate = event_rate,
+          lower = ci$lower,
+          upper = ci$upper,
           valid = TRUE,
           n_total = n_total,
           n_events = n_events
@@ -574,13 +504,11 @@ StatCalibration <- ggplot2::ggproto(
         c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
       )
 
-      group_signatures <- purrr::map_chr(groups, function(g) {
-        if (length(aes_cols) > 0) {
-          paste(g[1, aes_cols, drop = FALSE], collapse = "_")
-        } else {
-          "no_aes"
-        }
-      })
+      group_signatures <- purrr::map_chr(
+        groups,
+        create_group_signature,
+        aes_cols = aes_cols
+      )
 
       # Process groups with the same signature together
       unique_signatures <- unique(group_signatures)
@@ -644,25 +572,9 @@ compute_calibration_for_group <- function(
   na.rm,
   group_id
 ) {
-  # Convert to binary using check_treatment_level logic
+  # Convert to binary using helper function
   truth <- data$truth
-  if (is.null(treatment_level)) {
-    treatment_level <- if (is.factor(truth)) {
-      levels(truth)[length(levels(truth))]
-    } else {
-      max(unique(truth))
-    }
-  }
-
-  # Create binary treatment indicator (1 = treatment, 0 = control)
-  if (is.factor(truth)) {
-    # For factors, ensure we're comparing as character to handle numeric-looking levels
-    treatment_indicator <- as.numeric(
-      as.character(truth) == as.character(treatment_level)
-    )
-  } else {
-    treatment_indicator <- as.numeric(truth == treatment_level)
-  }
+  treatment_indicator <- create_treatment_indicator(truth, treatment_level)
 
   # Create data frame for calibration computation
   df <- tibble::tibble(
@@ -770,17 +682,14 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
-#' @param treatment_level Value indicating which level of truth represents treatment.
-#'   If NULL (default), uses the last level for factors or max value for numeric.
+#' @inheritParams treatment_param
 #' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
-#' @param position Position adjustment.
-#' @param na.rm Logical; if TRUE, drop NA values before computation.
-#' @param show.legend Logical; include in legend.
-#' @param inherit.aes Logical; inherit aesthetics from ggplot.
-#' @param ... Additional parameters passed to geoms.
+#' @inheritParams ggplot2_params
 #' @return A ggplot2 layer or list of layers
+#' @family ggplot2 functions
+#' @seealso [check_calibration()] for computing calibration statistics
 #' @examples
 #' library(ggplot2)
 #'

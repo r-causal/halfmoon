@@ -32,3 +32,14 @@ unweighted data and weighted covariance for weighted data.
 bal_corr(nhefs_weights$age, nhefs_weights$wt71)
 
 }
+\seealso{
+\code{\link[=check_balance]{check_balance()}} for computing multiple balance metrics at once
+
+Other balance functions: 
+\code{\link{bal_ks}()},
+\code{\link{bal_smd}()},
+\code{\link{bal_vr}()},
+\code{\link{check_auc}()},
+\code{\link{check_balance}()}
+}
+\concept{balance functions}
