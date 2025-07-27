@@ -43,14 +43,14 @@ bal_smd <- function(
 
   # Convert reference_group to index for smd package
   levels_g <- unique(stats::na.omit(group))
-  
+
   # Validate we have exactly two levels
   if (length(levels_g) != 2) {
     abort(
       "Group variable must have exactly two levels, got {length(levels_g)}"
     )
   }
-  
+
   # Determine gref_index for smd package
   if (is.null(reference_group)) {
     gref_index <- 1L
@@ -117,24 +117,17 @@ bal_vr <- function(
   idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
-    if (is.null(weights)) {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref])]
-      idx_other <- idx_other[!is.na(covariate[idx_other])]
-    } else {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref]) & !is.na(weights[idx_ref])]
-      idx_other <- idx_other[
-        !is.na(covariate[idx_other]) & !is.na(weights[idx_other])
-      ]
-    }
+    idx_ref <- filter_na_indices(idx_ref, covariate, weights, na.rm = TRUE)
+    idx_other <- filter_na_indices(idx_other, covariate, weights, na.rm = TRUE)
   } else {
-    if (is.null(weights)) {
-      if (any(is.na(covariate[c(idx_ref, idx_other)]))) return(NA_real_)
-    } else {
-      if (
-        any(is.na(covariate[c(idx_ref, idx_other)])) ||
-          any(is.na(weights[c(idx_ref, idx_other)]))
+    if (
+      check_na_return(
+        covariate[c(idx_ref, idx_other)],
+        weights[c(idx_ref, idx_other)] %||% NULL,
+        na.rm = FALSE
       )
-        return(NA_real_)
+    ) {
+      return(NA_real_)
     }
   }
 
@@ -242,24 +235,17 @@ bal_ks <- function(
   idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
-    if (is.null(weights)) {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref])]
-      idx_other <- idx_other[!is.na(covariate[idx_other])]
-    } else {
-      idx_ref <- idx_ref[!is.na(covariate[idx_ref]) & !is.na(weights[idx_ref])]
-      idx_other <- idx_other[
-        !is.na(covariate[idx_other]) & !is.na(weights[idx_other])
-      ]
-    }
+    idx_ref <- filter_na_indices(idx_ref, covariate, weights, na.rm = TRUE)
+    idx_other <- filter_na_indices(idx_other, covariate, weights, na.rm = TRUE)
   } else {
-    if (is.null(weights)) {
-      if (any(is.na(covariate[c(idx_ref, idx_other)]))) return(NA_real_)
-    } else {
-      if (
-        any(is.na(covariate[c(idx_ref, idx_other)])) ||
-          any(is.na(weights[c(idx_ref, idx_other)]))
+    if (
+      check_na_return(
+        covariate[c(idx_ref, idx_other)],
+        weights[c(idx_ref, idx_other)] %||% NULL,
+        na.rm = FALSE
       )
-        return(NA_real_)
+    ) {
+      return(NA_real_)
     }
   }
 

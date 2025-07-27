@@ -275,8 +275,11 @@ StatQq2 <- ggplot2::ggproto(
 
       # Create signatures for each group based on aesthetic values
       # Groups with the same signature should be merged
-      group_signatures <- purrr::map_chr(groups, create_group_signature,
-                                        aes_cols = aes_cols)
+      group_signatures <- purrr::map_chr(
+        groups,
+        create_group_signature,
+        aes_cols = aes_cols
+      )
 
       # Process each unique signature
       unique_signatures <- unique(group_signatures)

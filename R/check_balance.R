@@ -181,10 +181,15 @@ check_balance <- function(
           )
 
           # Filter out same-variable dummy interactions (e.g., sex0 x sex1)
-          valid_combinations <- purrr::keep(var_combinations, is_valid_interaction_combo)
+          valid_combinations <- purrr::keep(
+            var_combinations,
+            is_valid_interaction_combo
+          )
 
           # Create interaction terms using functional programming
-          interaction_terms <- purrr::map(valid_combinations, create_interaction_term,
+          interaction_terms <- purrr::map(
+            valid_combinations,
+            create_interaction_term,
             interaction_vars = interaction_vars
           )
 
@@ -313,7 +318,9 @@ check_balance <- function(
   combinations <- dplyr::bind_rows(univariate_combinations, energy_combinations)
 
   # Use purrr to compute all balance statistics
-  results <- purrr::pmap_dfr(combinations, compute_single_balance_metric,
+  results <- purrr::pmap_dfr(
+    combinations,
+    compute_single_balance_metric,
     .data = .data,
     metric_functions = metric_functions,
     transformed_data = transformed_data,
@@ -333,11 +340,19 @@ check_balance <- function(
 }
 
 # Compute a single balance metric for a variable/method/metric combination
-compute_single_balance_metric <- function(variable, method, metric,
-                                        .data, metric_functions,
-                                        transformed_data, group_var,
-                                        na.rm, reference_group,
-                                        group_levels, var_names) {
+compute_single_balance_metric <- function(
+  variable,
+  method,
+  metric,
+  .data,
+  metric_functions,
+  transformed_data,
+  group_var,
+  na.rm,
+  reference_group,
+  group_levels,
+  var_names
+) {
   # Handle weights
   if (method == "observed") {
     weights_data <- NULL
@@ -452,9 +467,12 @@ compute_single_balance_metric <- function(variable, method, metric,
 }
 
 # Prepare a variable for interaction terms
-prepare_interaction_variable <- function(var_data, var_name,
-                                       binary_categorical_names,
-                                       original_vars_data) {
+prepare_interaction_variable <- function(
+  var_data,
+  var_name,
+  binary_categorical_names,
+  original_vars_data
+) {
   # Check if this was originally a binary categorical
   if (var_name %in% binary_categorical_names) {
     # Need to expand binary to both levels for interactions

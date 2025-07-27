@@ -49,7 +49,11 @@ check_auc <- function(
 
   # Calculate AUC for each method
   methods <- unique(roc_data$method)
-  auc_results <- purrr::map_dfr(methods, compute_method_auc, roc_data = roc_data)
+  auc_results <- purrr::map_dfr(
+    methods,
+    compute_method_auc,
+    roc_data = roc_data
+  )
 
   auc_results
 }

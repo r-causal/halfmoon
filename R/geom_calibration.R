@@ -143,7 +143,7 @@ check_treatment_level <- function(group_var, treatment_level) {
       )
     }
   }
-  
+
   # Use the helper function to create treatment indicator
   create_treatment_indicator(group_var, treatment_level)
 }
@@ -273,23 +273,7 @@ compute_calibration_breaks_imp <- function(
   if (length(valid_indices) > 0) {
     ci_results <- purrr::map(
       valid_indices,
-      ~ {
-        tryCatch(
-          {
-            suppressWarnings({
-              ci <- stats::prop.test(
-                x = n_events[.x],
-                n = n_total[.x],
-                conf.level = conf_level
-              )$conf.int
-            })
-            list(lower = ci[1], upper = ci[2])
-          },
-          error = function(e) {
-            list(lower = NA_real_, upper = NA_real_)
-          }
-        )
-      }
+      ~ calculate_prop_ci(n_events[.x], n_total[.x], conf_level)
     )
 
     # Extract results
@@ -300,19 +284,9 @@ compute_calibration_breaks_imp <- function(
   # For edge cases, use normal approximation with purrr
   edge_cases <- which(!valid_mask & n_total > 0)
   if (length(edge_cases) > 0) {
-    alpha <- 1 - conf_level
-    z_score <- stats::qnorm(1 - alpha / 2)
-
     edge_results <- purrr::map(
       edge_cases,
-      ~ {
-        rate <- result$observed_rate[.x]
-        se <- sqrt(rate * (1 - rate) / n_total[.x])
-        list(
-          lower = max(0, rate - z_score * se),
-          upper = min(1, rate + z_score * se)
-        )
-      }
+      ~ calculate_normal_ci(result$observed_rate[.x], n_total[.x], conf_level)
     )
 
     result$lower[edge_cases] <- purrr::map_dbl(edge_results, ~ .x$lower)
@@ -350,8 +324,7 @@ compute_calibration_logistic_imp <- function(
   pred_probs <- plogis(preds$fit)
 
   # Calculate confidence intervals
-  alpha <- 1 - conf_level
-  z_score <- qnorm(1 - alpha / 2)
+  z_score <- get_z_score(conf_level)
   lower <- plogis(preds$fit - z_score * preds$se.fit)
   upper <- plogis(preds$fit + z_score * preds$se.fit)
 
@@ -371,8 +344,7 @@ compute_calibration_windowed_imp <- function(
 ) {
   steps <- seq(0, 1, by = step_size)
   n_steps <- length(steps)
-  alpha <- 1 - conf_level
-  z_score <- stats::qnorm(1 - alpha / 2)
+  z_score <- get_z_score(conf_level)
   half_window <- window_size / 2
 
   window_results <- purrr::map(
@@ -452,47 +424,24 @@ calculate_window_statistics <- function(
 
       # Calculate confidence intervals
       if (n_events > 0 && n_events < n_total) {
-        tryCatch(
-          {
-            suppressWarnings({
-              prop_test <- stats::prop.test(
-                n_events,
-                n_total,
-                conf.level = conf_level
-              )
-            })
-            list(
-              predicted_rate = .x,
-              observed_rate = event_rate,
-              lower = prop_test$conf.int[1],
-              upper = prop_test$conf.int[2],
-              valid = TRUE,
-              n_total = n_total,
-              n_events = n_events
-            )
-          },
-          error = function(e) {
-            # Fallback to normal approximation
-            se <- sqrt(event_rate * (1 - event_rate) / n_total)
-            list(
-              predicted_rate = .x,
-              observed_rate = event_rate,
-              lower = max(0, event_rate - z_score * se),
-              upper = min(1, event_rate + z_score * se),
-              valid = TRUE,
-              n_total = n_total,
-              n_events = n_events
-            )
-          }
-        )
-      } else {
-        # For edge cases, use normal approximation
-        se <- sqrt(event_rate * (1 - event_rate) / n_total)
+        ci <- calculate_prop_ci(n_events, n_total, conf_level)
         list(
           predicted_rate = .x,
           observed_rate = event_rate,
-          lower = max(0, event_rate - z_score * se),
-          upper = min(1, event_rate + z_score * se),
+          lower = ci$lower,
+          upper = ci$upper,
+          valid = TRUE,
+          n_total = n_total,
+          n_events = n_events
+        )
+      } else {
+        # For edge cases, use normal approximation
+        ci <- calculate_normal_ci(event_rate, n_total, conf_level)
+        list(
+          predicted_rate = .x,
+          observed_rate = event_rate,
+          lower = ci$lower,
+          upper = ci$upper,
           valid = TRUE,
           n_total = n_total,
           n_events = n_events
@@ -555,8 +504,11 @@ StatCalibration <- ggplot2::ggproto(
         c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
       )
 
-      group_signatures <- purrr::map_chr(groups, create_group_signature,
-                                        aes_cols = aes_cols)
+      group_signatures <- purrr::map_chr(
+        groups,
+        create_group_signature,
+        aes_cols = aes_cols
+      )
 
       # Process groups with the same signature together
       unique_signatures <- unique(group_signatures)
