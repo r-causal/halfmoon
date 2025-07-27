@@ -1,4 +1,4 @@
-#' Created 2-dimensional QQ geometries
+#' Create 2-dimensional QQ geometries
 #'
 #' `geom_qq2()` is a geom for creating quantile-quantile plots with support for
 #' weighted comparisons. QQ plots compare the quantiles of two distributions,
