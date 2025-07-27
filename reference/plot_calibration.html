@@ -152,32 +152,56 @@ If NULL (default), uses the last level for factors or max value for numeric.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic calibration plot</span></span></span>
 <span class="r-in"><span><span class="fu">plot_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
 <span class="r-plt img"><img src="plot_calibration-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With rug plot</span></span></span>
 <span class="r-in"><span><span class="fu">plot_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, include_rug <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
 <span class="r-plt img"><img src="plot_calibration-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Different methods</span></span></span>
 <span class="r-in"><span><span class="fu">plot_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, method <span class="op">=</span> <span class="st">"logistic"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot_calibration-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">plot_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, method <span class="op">=</span> <span class="st">"windowed"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7, 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7, 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7, 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7,</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> a larger window size or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7,</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> a larger window size or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7,</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> a larger window size or a different calibration method.</span>
 <span class="r-plt img"><img src="plot_calibration-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify treatment level explicitly</span></span></span>
 <span class="r-in"><span><span class="fu">plot_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, treatment_level <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
 <span class="r-plt img"><img src="plot_calibration-5.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

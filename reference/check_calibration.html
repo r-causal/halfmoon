@@ -150,7 +150,9 @@ If <code>NULL</code> (default), uses the last level for factors or max value for
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Using the included `nhefs_weights` dataset</span></span></span>
 <span class="r-in"><span><span class="co"># `.fitted` contains propensity scores, and `qsmk` is the treatment variable</span></span></span>
 <span class="r-in"><span><span class="fu">check_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 6</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     .bin predicted_rate observed_rate count  lower upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -184,7 +186,9 @@ If <code>NULL</code> (default), uses the last level for factors or max value for
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Windowed method</span></span></span>
 <span class="r-in"><span><span class="fu">check_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, method <span class="op">=</span> <span class="st">"windowed"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7, 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7,</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> a larger window size or a different calibration method.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 16 × 4</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    predicted_rate observed_rate  lower upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
