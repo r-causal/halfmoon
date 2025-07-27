@@ -13,7 +13,7 @@ test_that("check_calibration works with basic input", {
   )
 
   # Test basic functionality
-  result <- check_calibration(test_data, pred, obs)
+  result <- suppress_calibration_warnings(check_calibration(test_data, pred, obs))
 
   expect_s3_class(result, "tbl_df")
   expect_true(all(
@@ -39,7 +39,7 @@ test_that("check_calibration works with quoted column names", {
   )
 
   # Test with quoted column names
-  result <- check_calibration(test_data, pred, obs)
+  result <- suppress_calibration_warnings(check_calibration(test_data, pred, obs))
 
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
@@ -57,7 +57,7 @@ test_that("check_calibration works with unquoted column names", {
     obs = actual
   )
 
-  result <- check_calibration(test_data, "pred", "obs")
+  result <- suppress_calibration_warnings(check_calibration(test_data, "pred", "obs"))
 
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
@@ -97,20 +97,20 @@ test_that("check_calibration handles different binning methods", {
   )
 
   # Test equal_width binning
-  result_eq <- check_calibration(
+  result_eq <- suppress_calibration_warnings(check_calibration(
     test_data,
     "pred",
     "obs",
     binning_method = "equal_width"
-  )
+  ))
 
   # Test quantile binning
-  result_qt <- check_calibration(
+  result_qt <- suppress_calibration_warnings(check_calibration(
     test_data,
     "pred",
     "obs",
     binning_method = "quantile"
-  )
+  ))
 
   expect_s3_class(result_eq, "tbl_df")
   expect_s3_class(result_qt, "tbl_df")
@@ -128,14 +128,14 @@ test_that("check_calibration handles edge cases", {
 
   # Test all zeros (treatment level 0, so observed_rate should be 1)
   all_zeros <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
-  result_zeros <- check_calibration(all_zeros, pred, obs)
+  result_zeros <- suppress_calibration_warnings(check_calibration(all_zeros, pred, obs))
 
   expect_s3_class(result_zeros, "tbl_df")
   expect_true(all(result_zeros$observed_rate == 1)) # All obs are 0, which becomes the treatment level
 
   # Test all ones (treatment level 1, so observed_rate should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
-  result_ones <- check_calibration(all_ones, pred, obs)
+  result_ones <- suppress_calibration_warnings(check_calibration(all_ones, pred, obs))
 
   expect_s3_class(result_ones, "tbl_df")
   expect_true(all(result_ones$observed_rate == 1)) # All obs are 1, which becomes the treatment level
@@ -158,13 +158,13 @@ test_that("check_calibration handles NA values", {
   )
 
   # Test with na.rm = TRUE
-  result_na_rm <- check_calibration(test_data, pred, obs, na.rm = TRUE)
+  result_na_rm <- suppress_calibration_warnings(check_calibration(test_data, pred, obs, na.rm = TRUE))
 
   expect_s3_class(result_na_rm, "tbl_df")
   expect_true(nrow(result_na_rm) > 0)
 
   # Test with na.rm = FALSE (should have fewer complete cases)
-  result_na_keep <- check_calibration(test_data, pred, obs, na.rm = FALSE)
+  result_na_keep <- suppress_calibration_warnings(check_calibration(test_data, pred, obs, na.rm = FALSE))
 
   expect_s3_class(result_na_keep, "tbl_df")
 })
@@ -208,13 +208,13 @@ test_that("check_calibration works with logistic method", {
   expect_true(all(result_logistic$upper >= result_logistic$observed_rate))
 
   # Test logistic with smoothing
-  result_smooth <- check_calibration(
+  result_smooth <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "logistic",
     smooth = TRUE
-  )
+  ))
 
   expect_s3_class(result_smooth, "tbl_df")
   expect_equal(nrow(result_smooth), 100)
@@ -234,22 +234,22 @@ test_that("check_calibration logistic method handles different confidence levels
   )
 
   # Test with 90% confidence
-  result_90 <- check_calibration(
+  result_90 <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "logistic",
     conf_level = 0.90
-  )
+  ))
 
   # Test with 99% confidence
-  result_99 <- check_calibration(
+  result_99 <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "logistic",
     conf_level = 0.99
-  )
+  ))
 
   # 99% CI should be wider than 90% CI
   expect_true(
@@ -290,14 +290,14 @@ test_that("check_calibration works with windowed method", {
   )
 
   # Test windowed method
-  result_windowed <- check_calibration(
+  result_windowed <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "windowed",
     window_size = 0.2,
     step_size = 0.1
-  )
+  ))
 
   expect_s3_class(result_windowed, "tbl_df")
   expect_true(all(
@@ -317,14 +317,14 @@ test_that("check_calibration works with windowed method", {
   expect_true(all(result_windowed$upper >= result_windowed$observed_rate))
 
   # Test with different window sizes
-  result_small_window <- check_calibration(
+  result_small_window <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "windowed",
     window_size = 0.05,
     step_size = 0.025
-  )
+  ))
 
   expect_true(nrow(result_small_window) > nrow(result_windowed))
 
@@ -355,14 +355,14 @@ test_that("check_calibration windowed method handles edge cases", {
   expect_true(nrow(result) > 0)
 
   # Test with very small window
-  result_tiny <- check_calibration(
+  result_tiny <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "windowed",
     window_size = 0.01,
     step_size = 0.1
-  )
+  ))
 
   # Some windows might be empty
   expect_true(nrow(result_tiny) <= length(seq(0, 1, by = 0.1)))
@@ -443,12 +443,12 @@ test_that("check_calibration handles all zeros and all ones", {
 
   # When all observations are 0, default treatment_level will be 0
   # Test the actual behavior
-  result_breaks_zeros_default <- check_calibration(
+  result_breaks_zeros_default <- suppress_calibration_warnings(check_calibration(
     zeros_data,
     pred,
     obs,
     method = "breaks"
-  )
+  ))
   # All values are 0 and treatment_level=0, so observed_rate=1
   expect_true(all(result_breaks_zeros_default$observed_rate == 1))
 
@@ -458,13 +458,13 @@ test_that("check_calibration handles all zeros and all ones", {
     obs = c(rep(0, 25), rep(1, 25))
   )
 
-  result_mixed <- check_calibration(
+  result_mixed <- suppress_calibration_warnings(check_calibration(
     mixed_data,
     pred,
     obs,
     method = "breaks",
     treatment_level = 1
-  )
+  ))
   # This should give us meaningful calibration metrics
   expect_true(all(
     result_mixed$observed_rate >= 0 & result_mixed$observed_rate <= 1
@@ -476,29 +476,29 @@ test_that("check_calibration handles all zeros and all ones", {
     obs = rep(1, 50)
   )
 
-  result_breaks_ones <- check_calibration(
+  result_breaks_ones <- suppress_calibration_warnings(check_calibration(
     ones_data,
     pred,
     obs,
     method = "breaks"
-  )
+  ))
   expect_true(all(result_breaks_ones$observed_rate == 1))
 
-  result_windowed_ones <- check_calibration(
+  result_windowed_ones <- suppress_calibration_warnings(check_calibration(
     ones_data,
     pred,
     obs,
     method = "windowed"
-  )
+  ))
   expect_true(all(result_windowed_ones$observed_rate == 1))
 
   # Test the default behavior with all zeros
-  result_default_zeros <- check_calibration(
+  result_default_zeros <- suppress_calibration_warnings(check_calibration(
     zeros_data,
     pred,
     obs,
     method = "breaks"
-  )
+  ))
   # With default treatment_level, all zeros means treatment_level=0, so observed_rate=1
   expect_true(all(result_default_zeros$observed_rate == 1))
 })
@@ -512,22 +512,22 @@ test_that("check_calibration handles NA values correctly", {
   )
 
   # Test with na.rm = FALSE (default)
-  result_false <- check_calibration(
+  result_false <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "breaks",
     na.rm = FALSE
-  )
+  ))
 
   # Test with na.rm = TRUE
-  result_true <- check_calibration(
+  result_true <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "breaks",
     na.rm = TRUE
-  )
+  ))
 
   # na.rm = TRUE should have data, na.rm = FALSE might have less
   expect_true(sum(result_true$count) == 45)
@@ -541,13 +541,13 @@ test_that("check_calibration handles factor treatment variables", {
   )
 
   # Should work with factor
-  result <- check_calibration(
+  result <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "breaks",
     treatment_level = "1"
-  )
+  ))
 
   expect_s3_class(result, "tbl_df")
   expect_true(all(result$observed_rate >= 0 & result$observed_rate <= 1))
@@ -592,19 +592,19 @@ test_that("check_calibration produces consistent results across methods", {
     method = "breaks",
     bins = 5
   )
-  result_logistic <- check_calibration(
+  result_logistic <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "logistic"
-  )
-  result_windowed <- check_calibration(
+  ))
+  result_windowed <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "windowed",
     window_size = 0.2
-  )
+  ))
 
   # All methods should show reasonable calibration (observed_rate ≈ predicted_rate)
   # For breaks method
@@ -935,8 +935,8 @@ test_that("geom_calibration works with both numeric and factor outcomes", {
   # Both should work
   expect_s3_class(p_numeric, "ggplot")
   expect_s3_class(p_factor, "ggplot")
-  expect_no_error(ggplot_build(p_numeric))
-  expect_no_error(ggplot_build(p_factor))
+  expect_no_error(suppressWarnings(ggplot_build(p_numeric)))
+  expect_no_error(suppressWarnings(ggplot_build(p_factor)))
 
   # Visual tests
   skip_on_ci()
@@ -960,7 +960,14 @@ test_that("geom_calibration errors with invalid method", {
   p <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "invalid_method")
 
-  expect_warning(ggplot_build(p))
+  expect_warning(
+    expect_warning(
+      ggplot_build(p), 
+      "Invalid calibration method: invalid_method",
+      fixed = TRUE
+    ),
+    ".*"
+  )
 })
 
 test_that("check_calibration errors with invalid bins", {
@@ -1123,41 +1130,41 @@ test_that("k parameter is ignored for non-logistic methods", {
   )
 
   # k should be ignored for breaks method
-  result1 <- check_calibration(
+  result1 <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "breaks",
     k = 5
-  )
+  ))
 
-  result2 <- check_calibration(
+  result2 <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "breaks",
     k = 20
-  )
+  ))
 
   # Results should be identical
   expect_equal(result1$observed_rate, result2$observed_rate)
 
   # k should be ignored for windowed method
-  result3 <- check_calibration(
+  result3 <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "windowed",
     k = 5
-  )
+  ))
 
-  result4 <- check_calibration(
+  result4 <- suppress_calibration_warnings(check_calibration(
     test_data,
     pred,
     obs,
     method = "windowed",
     k = 20
-  )
+  ))
 
   # Results should be identical
   expect_equal(result3$observed_rate, result4$observed_rate)

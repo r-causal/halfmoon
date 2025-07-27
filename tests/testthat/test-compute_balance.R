@@ -452,12 +452,18 @@ test_that("bal_corr handles edge cases", {
   x_zero <- rep(1, 100)
   y_normal <- rnorm(100)
 
-  cor_zero <- bal_corr(x_zero, y_normal)
+  expect_warning(
+    cor_zero <- bal_corr(x_zero, y_normal),
+    "the standard deviation is zero"
+  )
   expect_true(is.na(cor_zero))
 
   # Both zero variance should return NA
   y_zero <- rep(2, 100)
-  cor_both_zero <- bal_corr(x_zero, y_zero)
+  expect_warning(
+    cor_both_zero <- bal_corr(x_zero, y_zero),
+    "the standard deviation is zero"
+  )
   expect_true(is.na(cor_both_zero))
 })
 

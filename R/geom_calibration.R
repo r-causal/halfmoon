@@ -610,6 +610,15 @@ compute_calibration_for_group <- function(
       step_size,
       conf_level
     )
+  } else {
+    # Invalid method - warn and return empty result
+    warn("Invalid calibration method: {method}")
+    tibble::tibble(
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
+      lower = numeric(0),
+      upper = numeric(0)
+    )
   }
 
   # Return with after_stat names
@@ -620,9 +629,11 @@ compute_calibration_for_group <- function(
     upper = calibration_result$upper
   )
 
-  # Preserve required ggplot2 columns
-  result$PANEL <- data$PANEL[1]
-  result$group <- group_id
+  # Preserve required ggplot2 columns (only if we have results)
+  if (nrow(result) > 0) {
+    result$PANEL <- data$PANEL[1]
+    result$group <- group_id
+  }
 
   result
 }

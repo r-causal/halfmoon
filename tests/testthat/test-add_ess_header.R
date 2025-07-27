@@ -4,8 +4,9 @@ suppressPackageStartupMessages(library(dplyr))
 
 # Create survey design and gtsummary tables.
 svy <- svydesign(~1, data = nhefs_weights, weights = ~w_ate)
-tbl <- tbl_svysummary(svy, include = c(age, sex, smokeyrs))
-tbl_by <- tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs))
+# Suppress warnings from external packages (gtsummary/survey/cardx partial argument matches)
+tbl <- suppressWarnings(tbl_svysummary(svy, include = c(age, sex, smokeyrs)))
+tbl_by <- suppressWarnings(tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs)))
 
 # Tests --------------------------------------------------------------------
 

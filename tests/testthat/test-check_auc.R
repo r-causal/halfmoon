@@ -126,13 +126,13 @@ test_that("functions handle edge cases correctly", {
   )
 
   # With na.rm = TRUE
-  roc_na_rm <- roc_curve(
+  roc_na_rm <- suppressMessages(roc_curve(
     test_data_na,
     truth,
     estimate,
     weight1,
     na.rm = TRUE
-  )
+  ))
   expect_s3_class(roc_na_rm, "tbl_df")
 
   # With na.rm = FALSE should error
@@ -161,7 +161,10 @@ test_that("functions handle edge cases correctly", {
     weight_zero = c(rep(0, 5), runif(15))
   )
 
-  roc_zero <- roc_curve(test_data_zero, truth, estimate, weight_zero)
+  expect_warning(
+    roc_zero <- roc_curve(test_data_zero, truth, estimate, weight_zero),
+    "Removing .* observations with zero or negative weights from weight_zero"
+  )
   expect_s3_class(roc_zero, "tbl_df")
 
   # Test with negative weights
@@ -171,7 +174,10 @@ test_that("functions handle edge cases correctly", {
     weight_neg = c(rep(-1, 5), runif(15))
   )
 
-  roc_neg <- roc_curve(test_data_neg, truth, estimate, weight_neg)
+  expect_warning(
+    roc_neg <- roc_curve(test_data_neg, truth, estimate, weight_neg),
+    "Removing .* observations with zero or negative weights from weight_neg"
+  )
   expect_s3_class(roc_neg, "tbl_df")
 })
 
