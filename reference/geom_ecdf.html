@@ -178,10 +178,32 @@ the default plot specification, e.g. <code><a href="https://ggplot2.tidyverse.or
     <p>a geom</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>ECDF plots show the cumulative distribution function \(F(x) = P(X \leq x)\),
+displaying what proportion of observations fall below each value. When comparing
+treatment groups, overlapping ECDF curves indicate similar distributions and
+thus good balance.</p>
+<p>ECDF plots are closely related to quantile-quantile (QQ) plots (see <code><a href="geom_qq2.html">geom_qq2()</a></code>).
+While ECDF plots show \(F(x)\) for each group, QQ plots show the inverse relationship
+by plotting \(F_1^{-1}(p)\) vs \(F_2^{-1}(p)\). Both visualize the same distributional
+information:</p><ul><li><p>ECDF plots: Compare cumulative probabilities at each value</p></li>
+<li><p>QQ plots: Compare values at each quantile</p></li>
+</ul><p>Choose ECDF plots when you want to see the full cumulative distribution or when
+comparing multiple groups simultaneously. Choose QQ plots when you want to directly
+compare two groups with an easy-to-interpret 45-degree reference line.</p>
+    </div>
+    <div class="section level2">
     <h2 id="aesthetics">Aesthetics<a class="anchor" aria-label="anchor" href="#aesthetics"></a></h2>
     <p>In addition to the aesthetics for
 <code><a href="https://ggplot2.tidyverse.org/reference/stat_ecdf.html" class="external-link">ggplot2::stat_ecdf()</a></code>, <code>geom_ecdf()</code> also accepts:</p><ul><li><p>weights</p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index">
+<ul><li><p><code><a href="geom_qq2.html">geom_qq2()</a></code> for an alternative visualization using quantile-quantile plots</p></li>
+<li><p><code><a href="https://ggplot2.tidyverse.org/reference/stat_ecdf.html" class="external-link">ggplot2::stat_ecdf()</a></code> for the unweighted version</p></li>
+</ul></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
