@@ -13,7 +13,7 @@
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to compute quantiles for. Supports tidyselect syntax.
 #' @param .group Column name of treatment/group variable. Supports tidyselect syntax.
-#' @param .wts Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax.),
+#' @param .wts Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
 #' @param quantiles Numeric vector of quantiles to compute. Default is
