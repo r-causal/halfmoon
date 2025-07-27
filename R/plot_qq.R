@@ -239,8 +239,8 @@ compute_method_quantiles <- function(
   dplyr::tibble(
     method = method,
     quantile = quantiles,
-    x_quantiles = ref_q,
-    y_quantiles = comp_q
+    treated_quantiles = ref_q,
+    untreated_quantiles = comp_q
   )
 }
 

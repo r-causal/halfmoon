@@ -23,8 +23,8 @@
 #' @return A tibble with columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
-#'   \item{x_quantiles}{Numeric. The quantile value for the reference group.}
-#'   \item{y_quantiles}{Numeric. The quantile value for the comparison group.}
+#'   \item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
+#'   \item{untreated_quantiles}{Numeric. The quantile value for the control group.}
 #'
 #' @examples
 #' # Basic QQ data (observed only)
