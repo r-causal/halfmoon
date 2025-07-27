@@ -110,7 +110,7 @@ plot_calibration <- function(
         alpha = 0.5,
         sides = "b"
       )
-    
+
     # Add appropriate color scale based on variable type
     if (is.factor(.data[[group_name]])) {
       p <- p + ggplot2::scale_color_discrete(name = group_name)

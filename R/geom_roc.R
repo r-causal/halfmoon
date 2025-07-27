@@ -131,9 +131,20 @@ StatRoc <- ggplot2::ggproto(
 
       # Create signatures for each group based on aesthetic values
       # We want to merge groups that differ only by truth factor levels
+      # but preserve groups that differ by other aesthetics like colour
       aes_cols <- setdiff(
         names(data),
-        c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
+        c(
+          "estimate",
+          "truth",
+          "weight",
+          "PANEL",
+          "group",
+          "x",
+          "y",
+          "fpr",
+          "tpr"
+        )
       )
 
       group_signatures <- purrr::map_chr(groups, function(g) {
@@ -186,11 +197,11 @@ compute_roc_for_group <- function(data, na.rm, treatment_level, group_id) {
   } else {
     unique(truth[!is.na(truth)])
   }
-  
+
   if (length(unique_truth) != 2) {
     abort("truth must have exactly 2 unique values for ROC curve")
   }
-  
+
   # Convert truth to binary
   if (is.null(treatment_level)) {
     treatment_level <- if (is.factor(truth)) {
@@ -220,11 +231,27 @@ compute_roc_for_group <- function(data, na.rm, treatment_level, group_id) {
     treatment_level = "1" # We've already converted to binary
   )
 
-  # Return data for ggplot2 with after_stat names
-  data.frame(
+  # Get aesthetic columns to preserve (like colour, linetype, etc.)
+  aes_cols <- setdiff(
+    names(data),
+    c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
+  )
+
+  # Create base result
+  result <- data.frame(
     fpr = 1 - roc_data$specificity,
     tpr = roc_data$sensitivity,
     PANEL = data$PANEL[1],
     group = group_id
   )
+
+  # Add aesthetic columns if they exist
+  if (length(aes_cols) > 0) {
+    # Use the first row's values since they should be constant within the group
+    for (col in aes_cols) {
+      result[[col]] <- data[[col]][1]
+    }
+  }
+
+  result
 }

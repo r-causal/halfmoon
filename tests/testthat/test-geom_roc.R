@@ -8,8 +8,11 @@ test_that("geom_roc and stat_roc work", {
   expect_no_error(ggplot_build(p))
 
   # Test with numeric outcome
-  qsmk_numeric <- as.numeric(nhefs_weights$qsmk) - 1  # Convert to 0/1
-  p_numeric <- ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk_numeric)) +
+  qsmk_numeric <- as.numeric(nhefs_weights$qsmk) - 1 # Convert to 0/1
+  p_numeric <- ggplot(
+    nhefs_weights,
+    aes(estimate = .fitted, truth = qsmk_numeric)
+  ) +
     geom_roc()
   expect_s3_class(p_numeric, "gg")
   expect_no_error(ggplot_build(p_numeric))
@@ -119,18 +122,21 @@ test_that("geom_roc visual regression", {
 
 test_that("geom_roc works with both numeric and factor outcomes - visual", {
   skip_on_ci()
-  
+
   # Test with factor outcome (qsmk is already a factor)
   p_factor <- ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
     geom_roc() +
     labs(title = "ROC with factor outcome")
-  
+
   # Test with numeric outcome
-  qsmk_numeric <- as.numeric(nhefs_weights$qsmk) - 1  # Convert to 0/1
-  p_numeric <- ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk_numeric)) +
+  qsmk_numeric <- as.numeric(nhefs_weights$qsmk) - 1 # Convert to 0/1
+  p_numeric <- ggplot(
+    nhefs_weights,
+    aes(estimate = .fitted, truth = qsmk_numeric)
+  ) +
     geom_roc() +
     labs(title = "ROC with numeric outcome")
-  
+
   # Visual tests
   expect_doppelganger("roc-factor-outcome", p_factor)
   expect_doppelganger("roc-numeric-outcome", p_numeric)

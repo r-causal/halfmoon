@@ -913,25 +913,25 @@ test_that("geom_calibration works with both numeric and factor outcomes", {
   )
   test_data$obs_numeric <- rbinom(n, 1, test_data$pred)
   test_data$obs_factor <- factor(test_data$obs_numeric, levels = c(0, 1))
-  
+
   # Test with numeric outcome
   p_numeric <- ggplot(test_data, aes(estimate = pred, truth = obs_numeric)) +
     geom_calibration(method = "breaks", bins = 5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(title = "Calibration with numeric outcome")
-  
-  # Test with factor outcome  
+
+  # Test with factor outcome
   p_factor <- ggplot(test_data, aes(estimate = pred, truth = obs_factor)) +
     geom_calibration(method = "breaks", bins = 5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(title = "Calibration with factor outcome")
-  
+
   # Both should work
   expect_s3_class(p_numeric, "ggplot")
   expect_s3_class(p_factor, "ggplot")
   expect_no_error(ggplot_build(p_numeric))
   expect_no_error(ggplot_build(p_factor))
-  
+
   # Visual tests
   skip_on_ci()
   expect_doppelganger("calibration-numeric-outcome", p_numeric)
