@@ -7,7 +7,7 @@
 
 [![R-CMD-check](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
-coverage](https://codecov.io/gh/malcolmbarrett/halfmoon/branch/main/graph/badge.svg)](https://app.codecov.io/gh/malcolmbarrett/halfmoon?branch=main)
+coverage](https://codecov.io/gh/r-causal/halfmoon/branch/main/graph/badge.svg)](https://app.codecov.io/gh/r-causal/halfmoon?branch=main)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN
@@ -37,7 +37,7 @@ You can also install the development version of halfmoon from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("malcolmbarrett/halfmoon")
+devtools::install_github("r-causal/halfmoon")
 ```
 
 ## Example: Weighting
