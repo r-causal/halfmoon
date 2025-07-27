@@ -18,7 +18,8 @@ geom_roc(
 )
 }
 \arguments{
-\item{mapping}{Set of aesthetic mappings. If specified, inherits from the plot.}
+\item{mapping}{Set of aesthetic mappings. Must include \code{estimate} (propensity scores/predictions)
+and \code{truth} (treatment/outcome variable). If specified, inherits from the plot.}
 
 \item{data}{Data frame to use. If not specified, inherits from the plot.}
 
@@ -35,7 +36,7 @@ geom_roc(
 \item{linewidth}{Width of the ROC curve line. Default is 0.5.}
 
 \item{treatment_level}{The level of the outcome variable to consider as the treatment/event.
-Default is NULL, which uses the second level.}
+Default is NULL, which uses the last level for factors or max value for numeric.}
 
 \item{...}{Additional arguments passed to the geom.}
 }
@@ -49,7 +50,7 @@ Emphasizes the balance interpretation where AUC around 0.5 indicates good balanc
 \examples{
 # Basic usage
 library(ggplot2)
-ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   geom_roc()
 
 # With grouping by weight
@@ -60,7 +61,7 @@ long_data <- tidyr::pivot_longer(
   values_to = "weight"
 )
 
-ggplot(long_data, aes(x = .fitted, y = qsmk, weight = weight)) +
+ggplot(long_data, aes(estimate = .fitted, truth = qsmk, weight = weight)) +
   geom_roc(aes(color = weight_type))
 
 }

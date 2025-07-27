@@ -22,7 +22,7 @@ qq(
 
 \item{.group}{Column name of treatment/group variable. Supports tidyselect syntax.}
 
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax.),
+\item{.wts}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 

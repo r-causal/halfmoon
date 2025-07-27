@@ -65,39 +65,12 @@ plot_calibration <- function(
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".group")
 
-  # Convert factor to numeric for proper y-axis scale
-  # This ensures the y-axis shows calibration rates (0-1) not factor labels
-  if (is.factor(.data[[group_name]])) {
-    # Determine which level is treatment
-    if (!is.null(treatment_level)) {
-      # User specified treatment level
-      .data$.y_numeric <- as.numeric(.data[[group_name]] == treatment_level)
-    } else {
-      # Use default logic - last level for factors
-      levels <- levels(.data[[group_name]])
-      if (all(levels %in% c("0", "1"))) {
-        # For 0/1 factors, use "1" as treatment
-        .data$.y_numeric <- as.numeric(.data[[group_name]] == "1")
-      } else {
-        # Use last level as treatment
-        .data$.y_numeric <- as.numeric(
-          .data[[group_name]] == levels[length(levels)]
-        )
-      }
-    }
-    y_aes <- ggplot2::aes(y = .data$.y_numeric)
-  } else {
-    # Not a factor, use as-is
-    y_aes <- ggplot2::aes(y = .data[[group_name]])
-  }
-
-  # Create the base plot
+  # Create the base plot with new aesthetics
   p <- ggplot2::ggplot(
     .data,
-    ggplot2::aes(x = .data[[fitted_name]])
+    ggplot2::aes(estimate = .data[[fitted_name]], truth = .data[[group_name]])
   ) +
     geom_calibration(
-      y_aes,
       method = method,
       bins = bins,
       smooth = smooth,
@@ -131,26 +104,18 @@ plot_calibration <- function(
 
   # Add rug if requested
   if (include_rug) {
+    p <- p +
+      ggplot2::geom_rug(
+        ggplot2::aes(color = .data[[group_name]]),
+        alpha = 0.5,
+        sides = "b"
+      )
+    
+    # Add appropriate color scale based on variable type
     if (is.factor(.data[[group_name]])) {
-      # Use the numeric version for consistency
-      p <- p +
-        ggplot2::geom_rug(
-          ggplot2::aes(color = factor(.data$.y_numeric)),
-          alpha = 0.5,
-          sides = "b"
-        ) +
-        ggplot2::scale_color_discrete(
-          name = group_name,
-          labels = c("Control", "Treatment")
-        )
+      p <- p + ggplot2::scale_color_discrete(name = group_name)
     } else {
-      p <- p +
-        ggplot2::geom_rug(
-          ggplot2::aes(color = factor(.data[[group_name]])),
-          alpha = 0.5,
-          sides = "b"
-        ) +
-        ggplot2::scale_color_discrete(name = group_name)
+      p <- p + ggplot2::scale_color_continuous(name = group_name)
     }
   }
 

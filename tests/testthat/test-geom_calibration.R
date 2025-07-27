@@ -780,7 +780,7 @@ test_that("geom_calibration works with breaks method", {
   )
 
   # Test breaks method
-  p_breaks <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_breaks <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "breaks", bins = 5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
@@ -803,7 +803,7 @@ test_that("geom_calibration works with logistic method", {
   )
 
   # Test logistic method (linear)
-  p_logistic <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_logistic <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "logistic", smooth = FALSE, show_points = FALSE) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
@@ -826,7 +826,7 @@ test_that("geom_calibration works with windowed method", {
   )
 
   # Test windowed method
-  p_windowed <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_windowed <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
@@ -849,13 +849,13 @@ test_that("geom_calibration works with different show options", {
   )
 
   # Test with ribbon hidden
-  p_no_ribbon <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_no_ribbon <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "breaks", show_ribbon = FALSE) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     lims(x = c(0, 1), y = c(0, 1))
 
   # Test with points hidden
-  p_no_points <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_no_points <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "breaks", show_points = FALSE) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     lims(x = c(0, 1), y = c(0, 1))
@@ -879,7 +879,7 @@ test_that("geom_calibration handles different confidence levels", {
   )
 
   # Test with 90% confidence level
-  p_90 <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_90 <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "breaks", conf_level = 0.90) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     lims(x = c(0, 1), y = c(0, 1))
@@ -895,7 +895,7 @@ test_that("geom_calibration works with nhefs_weights data", {
   cal_data <- nhefs_weights
   cal_data$binary_outcome <- rbinom(nrow(cal_data), 1, cal_data$.fitted)
 
-  p_nhefs <- ggplot(cal_data, aes(x = .fitted, y = binary_outcome)) +
+  p_nhefs <- ggplot(cal_data, aes(estimate = .fitted, truth = binary_outcome)) +
     geom_calibration(method = "breaks", bins = 8) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Propensity Score", y = "Observed Rate") +
@@ -903,6 +903,39 @@ test_that("geom_calibration works with nhefs_weights data", {
 
   expect_s3_class(p_nhefs, "ggplot")
   expect_doppelganger("calibration nhefs data", p_nhefs)
+})
+
+test_that("geom_calibration works with both numeric and factor outcomes", {
+  set.seed(123)
+  n <- 100
+  test_data <- data.frame(
+    pred = runif(n, 0, 1)
+  )
+  test_data$obs_numeric <- rbinom(n, 1, test_data$pred)
+  test_data$obs_factor <- factor(test_data$obs_numeric, levels = c(0, 1))
+  
+  # Test with numeric outcome
+  p_numeric <- ggplot(test_data, aes(estimate = pred, truth = obs_numeric)) +
+    geom_calibration(method = "breaks", bins = 5) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    labs(title = "Calibration with numeric outcome")
+  
+  # Test with factor outcome  
+  p_factor <- ggplot(test_data, aes(estimate = pred, truth = obs_factor)) +
+    geom_calibration(method = "breaks", bins = 5) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    labs(title = "Calibration with factor outcome")
+  
+  # Both should work
+  expect_s3_class(p_numeric, "ggplot")
+  expect_s3_class(p_factor, "ggplot")
+  expect_no_error(ggplot_build(p_numeric))
+  expect_no_error(ggplot_build(p_factor))
+  
+  # Visual tests
+  skip_on_ci()
+  expect_doppelganger("calibration-numeric-outcome", p_numeric)
+  expect_doppelganger("calibration-factor-outcome", p_factor)
 })
 
 test_that("geom_calibration errors with invalid method", {
@@ -918,7 +951,7 @@ test_that("geom_calibration errors with invalid method", {
   )
 
   # Test with invalid method - error occurs during rendering
-  p <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "invalid_method")
 
   expect_warning(ggplot_build(p))
@@ -961,7 +994,7 @@ test_that("geom_calibration logistic method works with smooth = TRUE", {
   )
 
   # Test logistic method with smooth = TRUE (should work regardless of mgcv availability)
-  p_smooth <- ggplot(cal_data, aes(x = pred, y = obs)) +
+  p_smooth <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "logistic", smooth = TRUE, show_points = FALSE) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
@@ -1134,19 +1167,19 @@ test_that("k parameter works in geom_calibration", {
   )
 
   # Create plots with different k values
-  p_k5 <- ggplot(test_data, aes(x = pred, y = obs)) +
+  p_k5 <- ggplot(test_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "logistic", smooth = TRUE, k = 5) +
     geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
     lims(x = c(0, 1), y = c(0, 1))
 
-  p_k10 <- ggplot(test_data, aes(x = pred, y = obs)) +
+  p_k10 <- ggplot(test_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "logistic", smooth = TRUE, k = 10) +
     geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +
     lims(x = c(0, 1), y = c(0, 1))
 
-  p_k20 <- ggplot(test_data, aes(x = pred, y = obs)) +
+  p_k20 <- ggplot(test_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "logistic", smooth = TRUE, k = 20) +
     geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
     labs(x = "Predicted Probability", y = "Observed Rate") +

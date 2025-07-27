@@ -542,9 +542,15 @@ calculate_window_statistics <- function(
 StatCalibration <- ggplot2::ggproto(
   "StatCalibration",
   ggplot2::Stat,
-  required_aes = c("x", "y"),
-  default_aes = ggplot2::aes(alpha = 0.3),
-  dropped_aes = c("y"),
+  required_aes = c("estimate", "truth"),
+  default_aes = ggplot2::aes(
+    x = ggplot2::after_stat(fitted_mean),
+    y = ggplot2::after_stat(group_mean),
+    ymin = ggplot2::after_stat(lower),
+    ymax = ggplot2::after_stat(upper),
+    alpha = 0.3
+  ),
+  dropped_aes = c("truth"),
   setup_params = function(data, params) {
     # Set default parameters
     params$method <- params$method %||% "breaks"
@@ -567,36 +573,161 @@ StatCalibration <- ggplot2::ggproto(
     window_size = 0.1,
     step_size = window_size / 2,
     treatment_level = NULL,
-    k = 10
+    k = 10,
+    binning_method = "equal_width",
+    na.rm = FALSE
   ) {
-    calibration_result <- check_calibration(
-      data = data,
-      .fitted = x,
-      .group = y,
-      treatment_level = treatment_level,
-      method = method,
-      bins = bins,
-      smooth = smooth,
-      conf_level = conf_level,
-      window_size = window_size,
-      step_size = step_size,
-      k = k
-    )
+    # If we have multiple groups, handle smart group merging
+    if ("group" %in% names(data) && length(unique(data$group)) > 1) {
+      groups <- split(data, data$group)
 
-    result <- data.frame(
-      x = calibration_result$fitted_mean,
-      y = calibration_result$group_mean,
-      ymin = calibration_result$lower,
-      ymax = calibration_result$upper
-    )
+      # Create signatures for each group based on aesthetic values
+      # We want to merge groups that differ only by truth factor levels
+      aes_cols <- setdiff(
+        names(data),
+        c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
+      )
 
-    # Preserve required ggplot2 columns
-    result$PANEL <- data$PANEL[1]
-    result$group <- data$group[1]
+      group_signatures <- purrr::map_chr(groups, function(g) {
+        if (length(aes_cols) > 0) {
+          paste(g[1, aes_cols, drop = FALSE], collapse = "_")
+        } else {
+          "no_aes"
+        }
+      })
 
-    result
+      # Process groups with the same signature together
+      unique_signatures <- unique(group_signatures)
+      results <- purrr::map_df(unique_signatures, function(sig) {
+        matching_groups <- names(groups)[group_signatures == sig]
+        combined_data <- do.call(rbind, groups[matching_groups])
+
+        # Use the first matching group's group ID
+        group_id <- groups[[matching_groups[1]]]$group[1]
+
+        # Process the combined data
+        compute_calibration_for_group(
+          combined_data,
+          treatment_level,
+          method,
+          bins,
+          binning_method,
+          smooth,
+          conf_level,
+          window_size,
+          step_size,
+          k,
+          na.rm,
+          group_id
+        )
+      })
+
+      results
+    } else {
+      # Single group or no groups
+      compute_calibration_for_group(
+        data,
+        treatment_level,
+        method,
+        bins,
+        binning_method,
+        smooth,
+        conf_level,
+        window_size,
+        step_size,
+        k,
+        na.rm,
+        data$group[1]
+      )
+    }
   }
 )
+
+# Helper function to compute calibration for a single group
+compute_calibration_for_group <- function(
+  data,
+  treatment_level,
+  method,
+  bins,
+  binning_method,
+  smooth,
+  conf_level,
+  window_size,
+  step_size,
+  k,
+  na.rm,
+  group_id
+) {
+  # Convert to binary using check_treatment_level logic
+  truth <- data$truth
+  if (is.null(treatment_level)) {
+    treatment_level <- if (is.factor(truth)) {
+      levels(truth)[length(levels(truth))]
+    } else {
+      max(unique(truth))
+    }
+  }
+
+  # Create binary treatment indicator (1 = treatment, 0 = control)
+  if (is.factor(truth)) {
+    # For factors, ensure we're comparing as character to handle numeric-looking levels
+    treatment_indicator <- as.numeric(
+      as.character(truth) == as.character(treatment_level)
+    )
+  } else {
+    treatment_indicator <- as.numeric(truth == treatment_level)
+  }
+
+  # Create data frame for calibration computation
+  df <- tibble::tibble(
+    x_var = data$estimate,
+    y_var = treatment_indicator
+  )
+
+  if (isTRUE(na.rm)) {
+    df <- df |>
+      dplyr::filter(!is.na(x_var) & !is.na(y_var))
+  }
+
+  if (nrow(df) == 0) {
+    return(data.frame(
+      fitted_mean = numeric(0),
+      group_mean = numeric(0),
+      lower = numeric(0),
+      upper = numeric(0),
+      PANEL = data$PANEL[1],
+      group = group_id
+    ))
+  }
+
+  # Compute calibration based on method
+  calibration_result <- if (method == "breaks") {
+    compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
+  } else if (method == "logistic") {
+    compute_calibration_logistic_imp(df, smooth, conf_level, k = k)
+  } else if (method == "windowed") {
+    compute_calibration_windowed_imp(
+      df,
+      window_size,
+      step_size,
+      conf_level
+    )
+  }
+
+  # Return with after_stat names
+  result <- data.frame(
+    fitted_mean = calibration_result$fitted_mean,
+    group_mean = calibration_result$group_mean,
+    lower = calibration_result$lower,
+    upper = calibration_result$upper
+  )
+
+  # Preserve required ggplot2 columns
+  result$PANEL <- data$PANEL[1]
+  result$group <- group_id
+
+  result
+}
 
 # Geom for calibration line
 GeomCalibrationLine <- ggplot2::ggproto(
@@ -643,22 +774,18 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' probabilities and observed binary outcomes. It supports three methods:
 #' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with [`check_calibration()`].
 #'
-#' @param mapping Aesthetic mapping (must supply x and y if not inherited).
-#'   x should be propensity scores/predicted probabilities, y should be treatment variable.
+#' @param mapping Aesthetic mapping (must supply `estimate` and `truth` if not inherited).
+#'   `estimate` should be propensity scores/predicted probabilities, `truth` should be treatment variable.
 #' @param data Data frame or tibble; if NULL, uses ggplot default.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
+#' @param binning_method "equal_width" or "quantile" for bin creation (breaks method only).
 #' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
-#' @param treatment_level Value indicating which level of y represents treatment.
+#' @param treatment_level Value indicating which level of truth represents treatment.
 #'   If NULL (default), uses the last level for factors or max value for numeric.
-#'   For factors with numeric-looking levels (e.g., "0", "1"), this parameter
-#'   works as expected. For factors with non-numeric levels (e.g., "Control",
-#'   "Treatment"), the function will attempt to use the higher level as treatment
-#'   but may not always correctly identify the intended level. In such cases,
-#'   consider converting the factor to numeric before plotting.
 #' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
@@ -673,25 +800,25 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'
 #' # Basic calibration plot using nhefs_weights dataset
 #' # .fitted contains propensity scores, qsmk is the treatment variable
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration() +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Using different methods
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration(method = "logistic") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Specify treatment level explicitly
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration(treatment_level = "1") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Windowed method with custom parameters
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
@@ -702,6 +829,7 @@ geom_calibration <- function(
   data = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = "equal_width",
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -731,6 +859,7 @@ geom_calibration <- function(
       params = list(
         method = method,
         bins = bins,
+        binning_method = binning_method,
         smooth = smooth,
         conf_level = conf_level,
         window_size = window_size,
@@ -780,6 +909,7 @@ geom_calibration <- function(
       params = list(
         method = method,
         bins = bins,
+        binning_method = binning_method,
         smooth = smooth,
         conf_level = conf_level,
         window_size = window_size,
