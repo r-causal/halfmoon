@@ -4,7 +4,7 @@
 \name{stat_qq2}
 \alias{stat_qq2}
 \alias{StatQq2}
-\title{QQ Plot Stat}
+\title{QQ2 Plot Stat}
 \usage{
 stat_qq2(
   mapping = NULL,

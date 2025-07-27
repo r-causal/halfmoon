@@ -1,8 +1,11 @@
-#' QQ Plot Geom
+#' Created 2-dimensional QQ geometries 
 #'
-#' A ggplot2 geom for creating quantile-quantile plots with support for
+#' `geom_qq2()` is a geom for creating quantile-quantile plots with support for
 #' weighted comparisons. QQ plots compare the quantiles of two distributions,
 #' making them useful for assessing distributional balance in causal inference.
+#' As opposed to `geom_qq()`, this geom does not compare a variable against a
+#' theoretical distribution, but rather against two group's distributions, e.g., 
+#' treatment vs. control.
 #'
 #' @details
 #' Quantile-quantile (QQ) plots visualize how the distributions of a variable
@@ -12,9 +15,9 @@
 #'
 #' QQ plots are closely related to empirical cumulative distribution function
 #' (ECDF) plots (see [`geom_ecdf()`]). While ECDF plots show \eqn{F(x) = P(X \leq x)}
-#' for each group, QQ plots show \eqn{F_1^{-1}(p)} vs \eqn{F_2^{-1}(p)} - essentially the inverse
+#' for each group, QQ plots show \eqn{F_1^{-1}(p)} vs \eqn{F_2^{-1}(p)}, essentially the inverse
 #' relationship. Both approaches visualize the same information about distributional
-#' differences, but QQ plots make it easier to spot deviations through the 45-degree
+#' differences, but QQ plots make it easier to spot deviations through a 45-degree
 #' reference line.
 #'
 #' @param mapping Set of aesthetic mappings. Required aesthetics are `sample` (variable)
@@ -58,8 +61,8 @@
 #'   values_to = "weight"
 #' )
 #'
-#' ggplot(long_data, aes(sample = age, treatment = qsmk, weight = weight)) +
-#'   geom_qq2(aes(color = weight_type)) +
+#' ggplot(long_data, aes(color = weight_type)) +
+#'   geom_qq2(aes(sample = age, treatment = qsmk, weight = weight)) +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
 #' @export
@@ -92,7 +95,7 @@ geom_qq2 <- function(
   )
 }
 
-#' QQ Plot Stat
+#' QQ2 Plot Stat
 #'
 #' Statistical transformation for QQ plots.
 #'
@@ -188,7 +191,6 @@ process_aesthetic_group <- function(
     wts_arg <- NULL
   }
 
-  # Compute QQ data
   qq_result <- qq(
     .data = temp_data,
     .var = .var,
@@ -234,6 +236,8 @@ StatQq2 <- ggplot2::ggproto(
   dropped_aes = "weight",
 
   # Override compute_panel instead of compute_group to work with all data at once
+  # For QQ plots, we need all the data to compute quantiles properly
+  # So we work at the panel level, not the group level
   compute_panel = function(
     data,
     scales,
@@ -242,9 +246,6 @@ StatQq2 <- ggplot2::ggproto(
     na.rm = TRUE,
     include_observed = FALSE
   ) {
-    # For QQ plots, we need all the data to compute quantiles properly
-    # So we work at the panel level, not the group level
-    
     # Handle NULL treatment_level
     if (is.null(treatment_level)) {
       if (is.factor(data$treatment)) {
@@ -315,7 +316,6 @@ StatQq2 <- ggplot2::ggproto(
         wts_arg <- NULL
       }
 
-      # Compute QQ data
       qq_result <- qq(
         .data = temp_data,
         .var = .var,
@@ -327,7 +327,7 @@ StatQq2 <- ggplot2::ggproto(
         include_observed = FALSE
       )
 
-      # Return data frame without x and y - let after_stat handle that
+      # Return data frame without x and y; let `after_stat()` handle that
       data.frame(
         treated_quantiles = qq_result$treated_quantiles,
         untreated_quantiles = qq_result$untreated_quantiles,
