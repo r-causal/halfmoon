@@ -16,7 +16,7 @@
 #' information:
 #' - ECDF plots: Compare cumulative probabilities at each value
 #' - QQ plots: Compare values at each quantile
-#' 
+#'
 #' Choose ECDF plots when you want to see the full cumulative distribution or when
 #' comparing multiple groups simultaneously. Choose QQ plots when you want to directly
 #' compare two groups with an easy-to-interpret 45-degree reference line.
@@ -28,11 +28,11 @@
 #' @inheritParams ggplot2::stat_ecdf
 #'
 #' @return a geom
-#' 
+#'
 #' @seealso
 #' - [`geom_qq2()`] for an alternative visualization using quantile-quantile plots
 #' - [`ggplot2::stat_ecdf()`] for the unweighted version
-#' 
+#'
 #' @export
 #'
 #' @examples

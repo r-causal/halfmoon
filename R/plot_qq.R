@@ -8,7 +8,7 @@
 #' @details
 #' QQ plots display the quantiles of one distribution against the quantiles of
 #' another. Perfect distributional balance appears as points along the 45-degree
-#' line (y = x). This function automatically adds this reference line and 
+#' line (y = x). This function automatically adds this reference line and
 #' appropriate axis labels.
 #'
 #' For an alternative visualization of the same information, see [`geom_ecdf()`],
@@ -108,7 +108,9 @@ plot_qq <- function(
 
   # Validate treatment_level exists
   if (!treatment_level %in% group_levels) {
-    abort("{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}")
+    abort(
+      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}"
+    )
   }
 
   ref_group <- treatment_level

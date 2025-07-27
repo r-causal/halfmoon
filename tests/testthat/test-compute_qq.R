@@ -87,22 +87,22 @@ test_that("qq handles NULL treatment_level correctly", {
     x = 1:10,
     group = factor(rep(c("Control", "Treatment"), each = 5))
   )
-  
+
   result_factor <- qq(test_factor, x, group, quantiles = 0.5)
   # Should use "Treatment" (last level) as reference
-  expect_equal(as.numeric(result_factor$treated_quantiles), 8)  # median of 6:10
-  expect_equal(as.numeric(result_factor$untreated_quantiles), 3)  # median of 1:5
-  
+  expect_equal(as.numeric(result_factor$treated_quantiles), 8) # median of 6:10
+  expect_equal(as.numeric(result_factor$untreated_quantiles), 3) # median of 1:5
+
   # Test with numeric
   test_numeric <- data.frame(
     x = 1:10,
     group = rep(c(0, 1), each = 5)
   )
-  
+
   result_numeric <- qq(test_numeric, x, group, quantiles = 0.5)
   # Should use 1 (max value) as reference
-  expect_equal(as.numeric(result_numeric$treated_quantiles), 8)  # median of 6:10
-  expect_equal(as.numeric(result_numeric$untreated_quantiles), 3)  # median of 1:5
+  expect_equal(as.numeric(result_numeric$treated_quantiles), 8) # median of 6:10
+  expect_equal(as.numeric(result_numeric$untreated_quantiles), 3) # median of 1:5
 })
 
 test_that("qq returns expected quantile values", {
@@ -121,9 +121,17 @@ test_that("qq returns expected quantile values", {
   # With default NULL treatment_level, B (last level) is reference group
   # So treated_quantiles are from B (higher values) and untreated_quantiles from A (lower values)
   expect_true(all(result$treated_quantiles > result$untreated_quantiles))
-  
+
   # Test with explicit treatment_level = "A"
-  result_explicit <- qq(test_data, x, group, quantiles = c(0.25, 0.5, 0.75), treatment_level = "A")
+  result_explicit <- qq(
+    test_data,
+    x,
+    group,
+    quantiles = c(0.25, 0.5, 0.75),
+    treatment_level = "A"
+  )
   # Now A is reference, so treated_quantiles < untreated_quantiles
-  expect_true(all(result_explicit$treated_quantiles < result_explicit$untreated_quantiles))
+  expect_true(all(
+    result_explicit$treated_quantiles < result_explicit$untreated_quantiles
+  ))
 })

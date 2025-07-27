@@ -39,7 +39,7 @@
 #'
 #' # Compare multiple weighting schemes
 #' qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
-#' 
+#'
 #' @export
 qq <- function(
   .data,
@@ -100,7 +100,9 @@ qq <- function(
 
   # Validate treatment_level exists
   if (!treatment_level %in% group_levels) {
-    abort("{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}")
+    abort(
+      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}"
+    )
   }
 
   # Determine reference and comparison groups

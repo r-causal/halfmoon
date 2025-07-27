@@ -1,10 +1,10 @@
-#' Created 2-dimensional QQ geometries 
+#' Created 2-dimensional QQ geometries
 #'
 #' `geom_qq2()` is a geom for creating quantile-quantile plots with support for
 #' weighted comparisons. QQ plots compare the quantiles of two distributions,
 #' making them useful for assessing distributional balance in causal inference.
 #' As opposed to `geom_qq()`, this geom does not compare a variable against a
-#' theoretical distribution, but rather against two group's distributions, e.g., 
+#' theoretical distribution, but rather against two group's distributions, e.g.,
 #' treatment vs. control.
 #'
 #' @details
@@ -37,7 +37,7 @@
 #'
 #' @return A ggplot2 layer.
 #'
-#' @seealso 
+#' @seealso
 #' - [`geom_ecdf()`] for an alternative visualization of distributional differences
 #' - [`plot_qq()`] for a complete plotting function with reference line and labels
 #' - [`qq()`] for the underlying data computation
@@ -175,7 +175,7 @@ process_aesthetic_group <- function(
   # Combine all groups with this signature
   matching_groups <- names(groups)[group_signatures == sig]
   combined_data <- do.call(rbind, groups[matching_groups])
-  
+
   # Create temporary data frame with binary treatment
   temp_data <- data.frame(
     .var = combined_data$sample,
@@ -197,7 +197,7 @@ process_aesthetic_group <- function(
     .group = .group,
     .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
     quantiles = quantiles,
-    treatment_level = 1L,  # We already converted to 0/1
+    treatment_level = 1L, # We already converted to 0/1
     na.rm = na.rm,
     include_observed = FALSE
   )
@@ -250,30 +250,32 @@ StatQq2 <- ggplot2::ggproto(
     if (is.null(treatment_level)) {
       if (is.factor(data$treatment)) {
         # Factor - use the last level
-        treatment_level <- levels(data$treatment)[length(levels(data$treatment))]
+        treatment_level <- levels(data$treatment)[length(levels(
+          data$treatment
+        ))]
       } else {
         # Numeric or character
         treatment_values <- unique(data$treatment[!is.na(data$treatment)])
         if (length(treatment_values) == 0) {
-          treatment_level <- 1  # Default for empty data
+          treatment_level <- 1 # Default for empty data
         } else {
           treatment_level <- max(treatment_values)
         }
       }
     }
-    
+
     # If we have multiple groups, identify which ones should be merged
     # Groups that differ only by treatment level should be processed together
     if ("group" %in% names(data) && length(unique(data$group)) > 1) {
       # Split by group
       groups <- split(data, data$group)
-      
+
       # Identify aesthetic columns (exclude data and panel columns)
       aes_cols <- setdiff(
         names(data),
         c("sample", "treatment", "weight", "PANEL", "group", "x", "y")
       )
-      
+
       # Create signatures for each group based on aesthetic values
       # Groups with the same signature should be merged
       group_signatures <- purrr::map_chr(groups, function(g) {
@@ -284,7 +286,7 @@ StatQq2 <- ggplot2::ggproto(
           "no_aes"
         }
       })
-      
+
       # Process each unique signature
       unique_signatures <- unique(group_signatures)
       results <- purrr::map_df(
@@ -322,7 +324,7 @@ StatQq2 <- ggplot2::ggproto(
         .group = .group,
         .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
         quantiles = quantiles,
-        treatment_level = 1L,  # We already converted to 0/1
+        treatment_level = 1L, # We already converted to 0/1
         na.rm = na.rm,
         include_observed = FALSE
       )
