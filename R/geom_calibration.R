@@ -283,7 +283,9 @@ compute_calibration_breaks_imp <- function(
     warning_counts <- n_total[warning_mask]
     bins_list <- paste(warning_bins, collapse = ", ")
     counts_list <- paste(warning_counts, collapse = ", ")
-    warn("Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.")
+    warn(
+      "Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method."
+    )
   }
 
   n_rows <- nrow(result)
@@ -424,7 +426,9 @@ compute_calibration_windowed_imp <- function(
       warning_counts <- sample_sizes[warning_mask]
       windows_list <- paste(round(warning_windows, 3), collapse = ", ")
       counts_list <- paste(warning_counts, collapse = ", ")
-      warn("Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.")
+      warn(
+        "Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method."
+      )
     }
   }
 

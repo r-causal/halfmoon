@@ -32,26 +32,10 @@ bal_smd <- function(
   reference_group = NULL,
   na.rm = FALSE
 ) {
-  if (!is.numeric(covariate)) {
-    stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
-  }
-  if (length(covariate) == 0) {
-    stop("Argument 'covariate' cannot be empty")
-  }
-  if (length(covariate) != length(group)) {
-    stop("Arguments 'covariate' and 'group' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(covariate)) {
-      stop("Argument 'weights' must have the same length as 'covariate'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Handle missing values first
   if (!na.rm) {
@@ -65,13 +49,7 @@ bal_smd <- function(
   }
 
   # Convert reference_group to index if it's a level value
-  levels_g <- unique(stats::na.omit(group))
-  if (length(levels_g) != 2) {
-    stop(
-      "Grouping variable must have exactly two levels, got ",
-      length(levels_g)
-    )
-  }
+  levels_g <- validate_binary_group(group, "group")
 
   # If reference_group is NULL, use the first level (like other functions)
   if (is.null(reference_group)) {
@@ -134,36 +112,15 @@ bal_vr <- function(
   na.rm = FALSE
 ) {
   # Input validation
-  if (!is.numeric(covariate)) {
-    stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
-  }
-  if (length(covariate) == 0) {
-    stop("Argument 'covariate' cannot be empty")
-  }
-  if (length(covariate) != length(group)) {
-    stop("Arguments 'covariate' and 'group' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(covariate)) {
-      stop("Argument 'weights' must have the same length as 'covariate'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Identify reference and comparison indices
-  lvl <- unique(stats::na.omit(group))
-  if (length(lvl) != 2) {
-    stop("Grouping variable must have exactly two levels, got ", length(lvl))
-  }
+  lvl <- validate_binary_group(group)
   ref <- if (!is.null(reference_group)) reference_group else lvl[1]
-  if (!ref %in% lvl) {
-    stop("Reference group '", ref, "' not found in grouping variable")
-  }
+  validate_reference_group(ref, lvl)
   idx_ref <- which(group == ref)
   idx_other <- which(group != ref)
   # Handle missing values
@@ -291,35 +248,14 @@ bal_ks <- function(
   na.rm = FALSE
 ) {
   # Input validation
-  if (!is.numeric(covariate)) {
-    stop("Argument 'covariate' must be numeric, got ", class(covariate)[1])
-  }
-  if (length(covariate) == 0) {
-    stop("Argument 'covariate' cannot be empty")
-  }
-  if (length(covariate) != length(group)) {
-    stop("Arguments 'covariate' and 'group' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(covariate)) {
-      stop("Argument 'weights' must have the same length as 'covariate'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
-  lvl <- unique(stats::na.omit(group))
-  if (length(lvl) != 2) {
-    stop("Grouping variable must have exactly two levels, got ", length(lvl))
-  }
+  lvl <- validate_binary_group(group)
   ref <- if (!is.null(reference_group)) reference_group else lvl[1]
-  if (!ref %in% lvl) {
-    stop("Reference group '", ref, "' not found in grouping variable")
-  }
+  validate_reference_group(ref, lvl)
   idx_ref <- which(group == ref)
   idx_other <- which(group != ref)
   # Handle missing values
@@ -426,29 +362,12 @@ bal_ks <- function(
 #' @export
 bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
-  if (!is.numeric(x)) {
-    stop("Argument 'x' must be numeric, got ", class(x)[1])
-  }
-  if (!is.numeric(y)) {
-    stop("Argument 'y' must be numeric, got ", class(y)[1])
-  }
-  if (length(x) == 0 || length(y) == 0) {
-    stop("Arguments 'x' and 'y' cannot be empty")
-  }
-  if (length(x) != length(y)) {
-    stop("Arguments 'x' and 'y' must have the same length")
-  }
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != length(x)) {
-      stop("Argument 'weights' must have the same length as 'x' and 'y'")
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_numeric(x)
+  validate_numeric(y)
+  validate_not_empty(x)
+  validate_not_empty(y)
+  validate_equal_length(x, y)
+  validate_weights(weights, length(x))
 
   if (na.rm) {
     # Handle missing values carefully - avoid logical(0) issue
@@ -602,25 +521,8 @@ bal_energy <- function(
     abort("Argument {.arg covariates} cannot be empty")
   }
 
-  if (length(group) != nrow(covariates)) {
-    abort(
-      "Arguments {.arg group} and {.arg covariates} must have the same length"
-    )
-  }
-
-  if (!is.null(weights)) {
-    if (!is.numeric(weights)) {
-      abort("Argument {.arg weights} must be numeric or {.code NULL}")
-    }
-    if (length(weights) != nrow(covariates)) {
-      abort(
-        "Argument {.arg weights} must have the same length as rows in {.arg covariates}"
-      )
-    }
-    if (any(weights < 0, na.rm = TRUE)) {
-      abort("Weights cannot be negative")
-    }
-  }
+  validate_equal_length(group, covariates, "group", "covariates")
+  validate_weights(weights, nrow(covariates))
 
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
     abort(

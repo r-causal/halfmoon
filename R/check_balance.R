@@ -74,9 +74,7 @@ check_balance <- function(
   cubes = FALSE,
   interactions = FALSE
 ) {
-  if (!is.data.frame(.data)) {
-    stop("Argument '.data' must be a data frame")
-  }
+  validate_data_frame(.data)
 
   # Convert inputs to character vectors for consistent handling
   group_var <- rlang::as_name(rlang::enquo(.group))
@@ -261,9 +259,7 @@ check_balance <- function(
   }
 
   # Validate group variable
-  if (!group_var %in% names(transformed_data)) {
-    stop("Group variable '", group_var, "' not found in data")
-  }
+  validate_column_exists(transformed_data, group_var, "data")
 
   # Get group levels in proper order
   # For correlation, we allow continuous group variables

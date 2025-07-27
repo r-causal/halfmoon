@@ -34,9 +34,7 @@ check_auc <- function(
   na.rm = TRUE,
   treatment_level = NULL
 ) {
-  if (!is.data.frame(.data)) {
-    abort("{.arg .data} must be a data frame")
-  }
+  validate_data_frame(.data)
 
   roc_data <- roc_curve(
     .data,
@@ -98,9 +96,7 @@ roc_curve <- function(
   estimate_quo <- rlang::enquo(.estimate)
   wts_quo <- rlang::enquo(.wts)
 
-  if (!is.data.frame(.data)) {
-    abort("{.arg .data} must be a data frame")
-  }
+  validate_data_frame(.data)
 
   # Extract column names
   truth_name <- names(tidyselect::eval_select(truth_quo, .data))
@@ -146,9 +142,7 @@ roc_curve <- function(
     abort("{.arg .truth} must have exactly 2 levels")
   }
 
-  if (!is.numeric(estimate)) {
-    abort("{.arg .estimate} must be numeric")
-  }
+  validate_numeric(estimate, ".estimate")
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)

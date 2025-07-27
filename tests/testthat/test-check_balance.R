@@ -406,7 +406,7 @@ test_that("check_balance validates inputs correctly", {
   # Test invalid group variable
   expect_error(
     check_balance_basic(data, age, nonexistent_group),
-    "not found in data"
+    "not found in"
   )
 
   # Test invalid metrics
