@@ -18,6 +18,10 @@ abort <- function(.message, .envir = parent.frame()) {
   cli::cli_abort(message = .message, .envir = .envir)
 }
 
+warn <- function(.message, .envir = parent.frame()) {
+  cli::cli_warn(message = .message, .envir = .envir)
+}
+
 utils::globalVariables(c(
   "method",
   "metric",
