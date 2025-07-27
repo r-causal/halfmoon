@@ -26,16 +26,13 @@
 #' @param data Data frame to use. If not specified, inherits from the plot.
 #' @param stat Statistical transformation to use. Default is "qq2".
 #' @param position Position adjustment. Default is "identity".
-#' @param na.rm Remove missing values? Default TRUE.
-#' @param show.legend Show legend? Default NA.
-#' @param inherit.aes Inherit aesthetics from plot? Default TRUE.
+#' @inheritParams ggplot2_params
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @param treatment_level The reference treatment level to use for comparisons.
-#'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
-#' @param ... Additional arguments passed to the geom.
+#' @inheritParams treatment_param
 #'
 #' @return A ggplot2 layer.
+#' @family ggplot2 functions
 #'
 #' @seealso
 #' - [`geom_ecdf()`] for an alternative visualization of distributional differences

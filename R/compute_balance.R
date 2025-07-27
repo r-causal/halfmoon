@@ -4,19 +4,12 @@
 #' smd package. This is a common measure of effect size for comparing group
 #' differences while accounting for variability.
 #'
-#' @param covariate A numeric vector containing the covariate values to compare.
-#' @param group A vector (factor or numeric) indicating group membership. Must
-#'   have exactly two unique levels.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `covariate`. All weights must be non-negative.
-#' @param reference_group The reference group level to use as the comparison
-#'   baseline. Can be either a group level or index. If `NULL` (default), uses the first level.
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   `NA` output.
+#' @inheritParams balance_params
 #' @return A numeric value representing the standardized mean difference.
 #'   Positive values indicate the comparison group has a higher mean than
 #'   the reference group.
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
@@ -93,18 +86,11 @@ is_binary <- function(x) {
 #' For binary variables, uses the p*(1-p) variance formula. For continuous variables,
 #' uses Bessel's correction for weighted sample variance.
 #'
-#' @param covariate A numeric vector containing the covariate values to compare.
-#' @param group A vector (factor or numeric) indicating group membership. Must
-#'   have exactly two unique levels.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `covariate`. All weights must be non-negative.
-#' @param reference_group The reference group level to use as the denominator.
-#'   If `NULL` (default), uses the first level.
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   `NA` output.
+#' @inheritParams balance_params
 #' @return A numeric value representing the variance ratio. Values greater than 1
 #'   indicate the comparison group has higher variance than the reference group.
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
 #' # With weights
@@ -225,20 +211,12 @@ bal_vr <- function(
 #' difference in proportions. For continuous variables, computes the maximum
 #' difference between empirical CDFs.
 #'
-#' @param covariate A numeric vector containing the covariate values to compare.
-#' @param group A vector (factor or numeric) indicating group membership. Must
-#'   have exactly two unique levels.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `covariate`. All weights must be non-negative.
-#' @param reference_group The reference group level to use as the comparison
-#'   baseline. If `NULL` (default), uses the first level.
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   `NA` output.
+#' @inheritParams balance_params
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,
 #'   with 0 indicating identical distributions and 1 indicating completely separate
 #'   distributions.
-#'
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
@@ -359,7 +337,8 @@ bal_ks <- function(
 #'   `NA` output.
 #' @return A numeric value representing the correlation coefficient between -1 and 1.
 #'   Returns `NA` if either variable has zero variance.
-#'
+#' @family balance functions
+#' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
 #' bal_corr(nhefs_weights$age, nhefs_weights$wt71)
 #'

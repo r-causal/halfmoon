@@ -28,19 +28,23 @@ Optional aesthetics include \code{weight} for weighting.}
 
 \item{position}{Position adjustment. Default is "identity".}
 
-\item{na.rm}{Remove missing values? Default TRUE.}
+\item{na.rm}{If \code{FALSE}, the default, missing values are removed with a warning.
+If \code{TRUE}, missing values are silently removed.}
 
-\item{show.legend}{Show legend? Default NA.}
+\item{show.legend}{Logical. Should this layer be included in the legends?
+\code{NA}, the default, includes if any aesthetics are mapped.}
 
-\item{inherit.aes}{Inherit aesthetics from plot? Default TRUE.}
+\item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics, rather than
+combining with them.}
 
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{treatment_level}{The reference treatment level to use for comparisons.
-If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
+\item{treatment_level}{The level of the outcome variable to consider as the
+treatment/event. If \code{NULL} (default), uses the last level for factors or
+the maximum value for numeric variables.}
 
-\item{...}{Additional arguments passed to the geom.}
+\item{...}{Other arguments passed on to layer().}
 }
 \value{
 A ggplot2 layer.
@@ -96,4 +100,11 @@ ggplot(long_data, aes(color = weight_type)) +
 \item \code{\link[=plot_qq]{plot_qq()}} for a complete plotting function with reference line and labels
 \item \code{\link[=qq]{qq()}} for the underlying data computation
 }
+
+Other ggplot2 functions: 
+\code{\link{geom_calibration}()},
+\code{\link{geom_ecdf}()},
+\code{\link{geom_mirror_histogram}()},
+\code{\link{geom_roc}()}
 }
+\concept{ggplot2 functions}

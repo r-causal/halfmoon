@@ -28,6 +28,7 @@
 #' @inheritParams ggplot2::stat_ecdf
 #'
 #' @return a geom
+#' @family ggplot2 functions
 #'
 #' @seealso
 #' - [`geom_qq2()`] for an alternative visualization using quantile-quantile plots

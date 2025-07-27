@@ -3,6 +3,7 @@
 #' @inheritParams ggplot2::geom_histogram
 #'
 #' @return a geom
+#' @family ggplot2 functions
 #' @export
 #'
 #' @examples

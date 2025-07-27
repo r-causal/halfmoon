@@ -10,8 +10,7 @@
 #'   Can be unquoted (e.g., `p`) or quoted (e.g., `"p"`).
 #' @param .group Column name of treatment/group variable.
 #'   Can be unquoted (e.g., `g`) or quoted (e.g., `"g"`).
-#' @param treatment_level Value indicating which level of `.group` represents treatment.
-#'   If `NULL` (default), uses the last level for factors or max value for numeric.
+#' @inheritParams treatment_param
 #' @param method Character; calibration method. One of: "breaks", "logistic", or "windowed".
 #' @param bins Integer > 1; number of bins for the "breaks" method.
 #' @param binning_method "equal_width" or "quantile" for bin creation (breaks method only).
@@ -731,17 +730,14 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
-#' @param treatment_level Value indicating which level of truth represents treatment.
-#'   If NULL (default), uses the last level for factors or max value for numeric.
+#' @inheritParams treatment_param
 #' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
-#' @param position Position adjustment.
-#' @param na.rm Logical; if TRUE, drop NA values before computation.
-#' @param show.legend Logical; include in legend.
-#' @param inherit.aes Logical; inherit aesthetics from ggplot.
-#' @param ... Additional parameters passed to geoms.
+#' @inheritParams ggplot2_params
 #' @return A ggplot2 layer or list of layers
+#' @family ggplot2 functions
+#' @seealso [check_calibration()] for computing calibration statistics
 #' @examples
 #' library(ggplot2)
 #'

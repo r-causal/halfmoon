@@ -22,7 +22,7 @@ check_balance(
 \arguments{
 \item{.data}{A data frame containing the variables to analyze.}
 
-\item{.vars}{Variables for which to calculate balance metrics. Can be unquoted
+\item{.vars}{Variables for which to calculate metrics. Can be unquoted
 variable names, a character vector, or a tidyselect expression.}
 
 \item{.group}{Grouping variable, e.g., treatment or exposure group.}
@@ -37,13 +37,14 @@ Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").}
 
 \item{include_observed}{Logical. If using \code{.wts}, also calculate observed
-metrics? Defaults to TRUE.}
+(unweighted) metrics? Defaults to TRUE.}
 
 \item{reference_group}{The reference group level to use for comparisons.
 Defaults to 1 (first level).}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
-before computation. Defaults to FALSE.}
+before computation. If \code{FALSE} (default), missing values in the input
+will produce \code{NA} in the output.}
 
 \item{make_dummy_vars}{Logical. Transform categorical variables to dummy
 variables using \code{model.matrix()}? Defaults to TRUE. When TRUE, categorical
@@ -93,3 +94,14 @@ check_balance(nhefs_weights, c(age, sex, race), qsmk)
 # Without dummy variables for categorical variables
 check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = FALSE)
 }
+\seealso{
+\code{\link[=bal_smd]{bal_smd()}}, \code{\link[=bal_vr]{bal_vr()}}, \code{\link[=bal_ks]{bal_ks()}}, \code{\link[=bal_corr]{bal_corr()}}, \code{\link[=bal_energy]{bal_energy()}} for individual metric functions
+
+Other balance functions: 
+\code{\link{bal_corr}()},
+\code{\link{bal_ks}()},
+\code{\link{bal_smd}()},
+\code{\link{bal_vr}()},
+\code{\link{check_auc}()}
+}
+\concept{balance functions}

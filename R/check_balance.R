@@ -5,23 +5,14 @@
 #' supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov, weighted correlation) and
 #' returns results in a tidy format.
 #'
-#' @param .data A data frame containing the variables to analyze.
-#' @param .vars Variables for which to calculate balance metrics. Can be unquoted
-#'   variable names, a character vector, or a tidyselect expression.
-#' @param .group Grouping variable, e.g., treatment or exposure group.
-#' @param .wts Optional weighting variables. Can be unquoted variable names,
-#'   a character vector, or NULL. Multiple weights can be provided to compare
-#'   different weighting schemes.
+#' @inheritParams check_params
 #' @param .metrics Character vector specifying which metrics to compute.
 #'   Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 #'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
 #'   "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").
-#' @param include_observed Logical. If using `.wts`, also calculate observed
-#'   metrics? Defaults to TRUE.
 #' @param reference_group The reference group level to use for comparisons.
 #'   Defaults to 1 (first level).
-#' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. Defaults to FALSE.
+#' @inheritParams balance_params
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
 #'   variables using `model.matrix()`? Defaults to TRUE. When TRUE, categorical
 #'   variables are expanded into separate binary indicators for each level.
@@ -40,6 +31,8 @@
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{metric}{Character. The balance metric computed ("smd", "vr", "ks").}
 #'   \item{estimate}{Numeric. The computed balance statistic.}
+#' @family balance functions
+#' @seealso [bal_smd()], [bal_vr()], [bal_ks()], [bal_corr()], [bal_energy()] for individual metric functions
 #'
 #' @examples
 #' # Basic usage with all metrics
