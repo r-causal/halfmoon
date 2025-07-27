@@ -11,3 +11,5 @@ scratch/
 .claude/
 *.Rcheck
 CLAUDE.md
+
+/.quarto/

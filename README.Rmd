@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-causal/halfmoon/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/malcolmbarrett/halfmoon/branch/main/graph/badge.svg)](https://app.codecov.io/gh/malcolmbarrett/halfmoon?branch=main)
+[![Codecov test coverage](https://codecov.io/gh/r-causal/halfmoon/branch/main/graph/badge.svg)](https://app.codecov.io/gh/r-causal/halfmoon?branch=main)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN status](https://www.r-pkg.org/badges/version/halfmoon)](https://CRAN.R-project.org/package=halfmoon)
 <!-- badges: end -->
@@ -45,7 +45,7 @@ You can also install the development version of halfmoon from [GitHub](https://g
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("malcolmbarrett/halfmoon")
+devtools::install_github("r-causal/halfmoon")
 ```
 
 ## Example: Weighting
@@ -95,6 +95,75 @@ ggplot(
   )
 ) +
   geom_love()
+```
+
+## Propensity Score Diagnostics
+
+halfmoon provides comprehensive tools for assessing propensity score model quality through ROC curves, calibration plots, and distributional diagnostics.
+
+### ROC Curves
+
+Assess how well your propensity score model discriminates between treatment groups, as well as whether or not the weights create an AUC of about 0.5 (what you would observe from a randomized experiment):
+
+```{r roc-example}
+# Check AUC across different weighting methods
+roc_results <- roc_curve(
+  nhefs_weights,
+  .truth = qsmk,
+  .estimate = .fitted,
+  .wts = starts_with("w_")
+)
+
+auc_results <- check_auc(
+  nhefs_weights,
+  .truth = qsmk,
+  .estimate = .fitted,
+  .wts = starts_with("w_")
+)
+
+# Plot ROC curves
+plot_roc_curve(roc_results)
+
+# Display AUC values
+plot_roc_auc(auc_results)
+```
+
+### Calibration Assessment
+
+Evaluate whether predicted probabilities align with observed treatment frequencies:
+
+```{r calibration-example}
+#| warning: false
+plot_calibration(nhefs_weights, .fitted, qsmk)
+```
+
+### Comprehensive Balance Checking
+
+Assess balance across multiple metrics simultaneously:
+
+```{r balance-example}
+# Check balance using multiple metrics
+balance_results <- check_balance(
+  nhefs_weights,
+  .vars = race:active,
+  .group = qsmk,
+  .wts = starts_with("w_"),
+  .metrics = c("smd", "vr", "ks", "energy")
+)
+
+# Visualize balance across metrics
+ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
+  geom_point(aes(color = method)) +
+  facet_wrap(~ metric, scales = "free_x") +
+  labs(x = "Balance Statistic", y = "Variable")
+```
+
+### Distributional Balance with QQ Plots
+
+Assess distributional balance between treatment groups:
+
+```{r qq-example}
+plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
 ```
 
 ## Example: Matching
