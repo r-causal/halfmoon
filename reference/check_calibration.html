@@ -132,14 +132,14 @@ If <code>NULL</code> (default), uses the last level for factors or max value for
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns:</p><ul><li><p>For "breaks" method:</p><ul><li><p><code>.bin</code>: integer bin index</p></li>
-<li><p><code>fitted_mean</code>: mean predicted probability in bin</p></li>
-<li><p><code>group_mean</code>: observed treatment rate in bin</p></li>
+<li><p><code>predicted_rate</code>: mean predicted probability in bin</p></li>
+<li><p><code>observed_rate</code>: observed treatment rate in bin</p></li>
 <li><p><code>count</code>: number of observations in bin</p></li>
-<li><p><code>lower</code>: lower bound of CI for <code>group_mean</code></p></li>
-<li><p><code>upper</code>: upper bound of CI for <code>group_mean</code></p></li>
+<li><p><code>lower</code>: lower bound of CI for <code>observed_rate</code></p></li>
+<li><p><code>upper</code>: upper bound of CI for <code>observed_rate</code></p></li>
 </ul></li>
-<li><p>For "logistic" and "windowed" methods:</p><ul><li><p><code>fitted_mean</code>: predicted probability values</p></li>
-<li><p><code>group_mean</code>: calibrated outcome rate</p></li>
+<li><p>For "logistic" and "windowed" methods:</p><ul><li><p><code>predicted_rate</code>: predicted probability values</p></li>
+<li><p><code>observed_rate</code>: calibrated outcome rate</p></li>
 <li><p><code>lower</code>: lower bound of CI</p></li>
 <li><p><code>upper</code>: upper bound of CI</p></li>
 </ul></li>
@@ -152,58 +152,58 @@ If <code>NULL</code> (default), uses the last level for factors or max value for
 <span class="r-in"><span><span class="fu">check_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 6</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     .bin fitted_mean group_mean count  lower upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>     1      0.097<span style="text-decoration: underline;">1</span>     0.064<span style="text-decoration: underline;">9</span>   154 0.033<span style="text-decoration: underline;">3</span> 0.119</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>     2      0.162      0.166    355 0.130  0.210</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>     3      0.230      0.254    445 0.215  0.298</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>     4      0.302      0.294    293 0.243  0.350</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>     5      0.372      0.368    155 0.293  0.449</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>     6      0.443      0.372     86 0.272  0.484</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>     7      0.516      0.511     45 0.360  0.661</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>     8      0.591      0.773     22 0.542  0.913</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>     9      0.648      0.375      8 0.102  0.741</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>    10      0.738      1          3 1      1    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     .bin predicted_rate observed_rate count  lower upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>     1         0.097<span style="text-decoration: underline;">1</span>        0.064<span style="text-decoration: underline;">9</span>   154 0.033<span style="text-decoration: underline;">3</span> 0.119</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>     2         0.162         0.166    355 0.130  0.210</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>     3         0.230         0.254    445 0.215  0.298</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>     4         0.302         0.294    293 0.243  0.350</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>     5         0.372         0.368    155 0.293  0.449</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>     6         0.443         0.372     86 0.272  0.484</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>     7         0.516         0.511     45 0.360  0.661</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>     8         0.591         0.773     22 0.542  0.913</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>     9         0.648         0.375      8 0.102  0.741</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>    10         0.738         1          3 1      1    </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Logistic method with smoothing</span></span></span>
 <span class="r-in"><span><span class="fu">check_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, method <span class="op">=</span> <span class="st">"logistic"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 100 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    fitted_mean group_mean     lower     upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl[1d]&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl[1d]&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl[1d]&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>      0.051<span style="text-decoration: underline;">0</span>     0.065<span style="text-decoration: underline;">1</span>    0.036<span style="text-decoration: underline;">3</span>     0.114</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>      0.058<span style="text-decoration: underline;">3</span>     0.069<span style="text-decoration: underline;">4</span>    0.040<span style="text-decoration: underline;">4</span>     0.117</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>      0.065<span style="text-decoration: underline;">7</span>     0.074<span style="text-decoration: underline;">0</span>    0.044<span style="text-decoration: underline;">8</span>     0.120</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>      0.073<span style="text-decoration: underline;">0</span>     0.078<span style="text-decoration: underline;">9</span>    0.049<span style="text-decoration: underline;">7</span>     0.123</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>      0.080<span style="text-decoration: underline;">3</span>     0.084<span style="text-decoration: underline;">0</span>    0.054<span style="text-decoration: underline;">9</span>     0.126</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>      0.087<span style="text-decoration: underline;">7</span>     0.089<span style="text-decoration: underline;">4</span>    0.060<span style="text-decoration: underline;">6</span>     0.130</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>      0.095<span style="text-decoration: underline;">0</span>     0.095<span style="text-decoration: underline;">2</span>    0.066<span style="text-decoration: underline;">6</span>     0.134</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>      0.102      0.101     0.073<span style="text-decoration: underline;">0</span>     0.139</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>      0.110      0.108     0.079<span style="text-decoration: underline;">7</span>     0.144</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>      0.117      0.114     0.086<span style="text-decoration: underline;">8</span>     0.149</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    predicted_rate observed_rate     lower     upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl[1d]&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl[1d]&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl[1d]&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>         0.051<span style="text-decoration: underline;">0</span>        0.065<span style="text-decoration: underline;">1</span>    0.036<span style="text-decoration: underline;">3</span>     0.114</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>         0.058<span style="text-decoration: underline;">3</span>        0.069<span style="text-decoration: underline;">4</span>    0.040<span style="text-decoration: underline;">4</span>     0.117</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>         0.065<span style="text-decoration: underline;">7</span>        0.074<span style="text-decoration: underline;">0</span>    0.044<span style="text-decoration: underline;">8</span>     0.120</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>         0.073<span style="text-decoration: underline;">0</span>        0.078<span style="text-decoration: underline;">9</span>    0.049<span style="text-decoration: underline;">7</span>     0.123</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>         0.080<span style="text-decoration: underline;">3</span>        0.084<span style="text-decoration: underline;">0</span>    0.054<span style="text-decoration: underline;">9</span>     0.126</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>         0.087<span style="text-decoration: underline;">7</span>        0.089<span style="text-decoration: underline;">4</span>    0.060<span style="text-decoration: underline;">6</span>     0.130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>         0.095<span style="text-decoration: underline;">0</span>        0.095<span style="text-decoration: underline;">2</span>    0.066<span style="text-decoration: underline;">6</span>     0.134</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>         0.102         0.101     0.073<span style="text-decoration: underline;">0</span>     0.139</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>         0.110         0.108     0.079<span style="text-decoration: underline;">7</span>     0.144</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>         0.117         0.114     0.086<span style="text-decoration: underline;">8</span>     0.149</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 90 more rows</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Windowed method</span></span></span>
 <span class="r-in"><span><span class="fu">check_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, method <span class="op">=</span> <span class="st">"windowed"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in windows centered at 0.7, 0.75, 0.8 (n = 5, 3, 1). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 16 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    fitted_mean group_mean  lower upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>        0.05     0.050<span style="text-decoration: underline;">6</span> 0.016<span style="text-decoration: underline;">3</span> 0.131</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>        0.1      0.106  0.073<span style="text-decoration: underline;">1</span> 0.152</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>        0.15     0.156  0.124  0.193</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>        0.2      0.212  0.180  0.248</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>        0.25     0.258  0.223  0.296</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>        0.3      0.290  0.248  0.337</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>        0.35     0.327  0.274  0.386</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>        0.4      0.370  0.301  0.444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>        0.45     0.420  0.331  0.514</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>        0.5      0.467  0.352  0.585</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span>        0.55     0.562  0.413  0.702</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span>        0.6      0.724  0.525  0.866</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span>        0.65     0.625  0.359  0.837</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span>        0.7      0.6    0.170  0.927</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">15</span>        0.75     1      1      1    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">16</span>        0.8      1      1      1    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    predicted_rate observed_rate  lower upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>           0.05        0.050<span style="text-decoration: underline;">6</span> 0.016<span style="text-decoration: underline;">3</span> 0.131</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>           0.1         0.106  0.073<span style="text-decoration: underline;">1</span> 0.152</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>           0.15        0.156  0.124  0.193</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>           0.2         0.212  0.180  0.248</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>           0.25        0.258  0.223  0.296</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>           0.3         0.290  0.248  0.337</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>           0.35        0.327  0.274  0.386</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>           0.4         0.370  0.301  0.444</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>           0.45        0.420  0.331  0.514</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>           0.5         0.467  0.352  0.585</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span>           0.55        0.562  0.413  0.702</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span>           0.6         0.724  0.525  0.866</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span>           0.65        0.625  0.359  0.837</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span>           0.7         0.6    0.170  0.927</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">15</span>           0.75        1      1      1    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">16</span>           0.8         1      1      1    </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

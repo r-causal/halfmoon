@@ -55,6 +55,7 @@ binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"),
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"breaks"</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  binning_method <span class="op">=</span> <span class="st">"equal_width"</span>,</span>
 <span>  smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  conf_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  window_size <span class="op">=</span> <span class="fl">0.1</span>,</span>
@@ -76,8 +77,8 @@ binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"),
 
 
 <dl><dt id="arg-mapping">mapping<a class="anchor" aria-label="anchor" href="#arg-mapping"></a></dt>
-<dd><p>Aesthetic mapping (must supply x and y if not inherited).
-x should be propensity scores/predicted probabilities, y should be treatment variable.</p></dd>
+<dd><p>Aesthetic mapping (must supply <code>estimate</code> and <code>truth</code> if not inherited).
+<code>estimate</code> should be propensity scores/predicted probabilities, <code>truth</code> should be treatment variable.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
@@ -90,6 +91,10 @@ x should be propensity scores/predicted probabilities, y should be treatment var
 
 <dt id="arg-bins">bins<a class="anchor" aria-label="anchor" href="#arg-bins"></a></dt>
 <dd><p>Integer &gt;1; number of bins for the "breaks" method.</p></dd>
+
+
+<dt id="arg-binning-method">binning_method<a class="anchor" aria-label="anchor" href="#arg-binning-method"></a></dt>
+<dd><p>"equal_width" or "quantile" for bin creation (breaks method only).</p></dd>
 
 
 <dt id="arg-smooth">smooth<a class="anchor" aria-label="anchor" href="#arg-smooth"></a></dt>
@@ -109,13 +114,8 @@ x should be propensity scores/predicted probabilities, y should be treatment var
 
 
 <dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
-<dd><p>Value indicating which level of y represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.
-For factors with numeric-looking levels (e.g., "0", "1"), this parameter
-works as expected. For factors with non-numeric levels (e.g., "Control",
-"Treatment"), the function will attempt to use the higher level as treatment
-but may not always correctly identify the intended level. In such cases,
-consider converting the factor to numeric before plotting.</p></dd>
+<dd><p>Value indicating which level of truth represents treatment.
+If NULL (default), uses the last level for factors or max value for numeric.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
@@ -161,7 +161,7 @@ consider converting the factor to numeric before plotting.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic calibration plot using nhefs_weights dataset</span></span></span>
 <span class="r-in"><span><span class="co"># .fitted contains propensity scores, qsmk is the treatment variable</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.fitted</span>, y <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="va">.fitted</span>, truth <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu">geom_calibration</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fl">0</span>, slope <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Propensity Score"</span>, y <span class="op">=</span> <span class="st">"Observed Treatment Rate"</span><span class="op">)</span></span></span>
@@ -171,14 +171,14 @@ consider converting the factor to numeric before plotting.</p></dd>
 <span class="r-plt img"><img src="geom_calibration-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using different methods</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.fitted</span>, y <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="va">.fitted</span>, truth <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu">geom_calibration</span><span class="op">(</span>method <span class="op">=</span> <span class="st">"logistic"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fl">0</span>, slope <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Propensity Score"</span>, y <span class="op">=</span> <span class="st">"Observed Treatment Rate"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="geom_calibration-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify treatment level explicitly</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.fitted</span>, y <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="va">.fitted</span>, truth <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu">geom_calibration</span><span class="op">(</span>treatment_level <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fl">0</span>, slope <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Propensity Score"</span>, y <span class="op">=</span> <span class="st">"Observed Treatment Rate"</span><span class="op">)</span></span></span>
@@ -188,7 +188,7 @@ consider converting the factor to numeric before plotting.</p></dd>
 <span class="r-plt img"><img src="geom_calibration-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Windowed method with custom parameters</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.fitted</span>, y <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="va">.fitted</span>, truth <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu">geom_calibration</span><span class="op">(</span>method <span class="op">=</span> <span class="st">"windowed"</span>, window_size <span class="op">=</span> <span class="fl">0.2</span>, step_size <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fl">0</span>, slope <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Propensity Score"</span>, y <span class="op">=</span> <span class="st">"Observed Treatment Rate"</span><span class="op">)</span></span></span>
