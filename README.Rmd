@@ -103,10 +103,17 @@ halfmoon provides comprehensive tools for assessing propensity score model quali
 
 ### ROC Curves
 
-Assess how well your propensity score model discriminates between treatment groups:
+Assess how well your propensity score model discriminates between treatment groups, as well as whether or not the weights create an AUC of about 0.5 (what you would observe from a randomized experiment):
 
 ```{r roc-example}
 # Check AUC across different weighting methods
+roc_results <- roc_curve(
+  nhefs_weights,
+  .truth = qsmk,
+  .estimate = .fitted,
+  .wts = starts_with("w_")
+)
+
 auc_results <- check_auc(
   nhefs_weights,
   .truth = qsmk,
@@ -115,7 +122,7 @@ auc_results <- check_auc(
 )
 
 # Plot ROC curves
-plot_roc_curve(auc_results)
+plot_roc_curve(roc_results)
 
 # Display AUC values
 plot_roc_auc(auc_results)
@@ -126,16 +133,8 @@ plot_roc_auc(auc_results)
 Evaluate whether predicted probabilities align with observed treatment frequencies:
 
 ```{r calibration-example}
-# Check calibration using different methods
-cal_results <- check_calibration(
-  nhefs_weights,
-  .fitted = .fitted,
-  .group = qsmk,
-  method = "logistic"
-)
-
-# Plot calibration curve
-plot_calibration(cal_results)
+#| warning: false
+plot_calibration(nhefs_weights, .fitted, qsmk)
 ```
 
 ### Comprehensive Balance Checking
@@ -153,7 +152,7 @@ balance_results <- check_balance(
 )
 
 # Visualize balance across metrics
-ggplot(balance_results, aes(x = abs(statistic), y = variable)) +
+ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
   geom_point(aes(color = method)) +
   facet_wrap(~ metric, scales = "free_x") +
   labs(x = "Balance Statistic", y = "Variable")
@@ -164,11 +163,7 @@ ggplot(balance_results, aes(x = abs(statistic), y = variable)) +
 Assess distributional balance between treatment groups:
 
 ```{r qq-example}
-# Create QQ plots for key variables
-ggplot(nhefs_weights, aes(sample = age)) +
-  geom_qq2(aes(color = qsmk, weight = w_ate)) +
-  geom_abline() +
-  labs(title = "QQ Plot: Age Distribution by Treatment Group")
+plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
 ```
 
 ## Example: Matching

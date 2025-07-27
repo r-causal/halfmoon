@@ -104,14 +104,25 @@ ggplot(
 
 ## Propensity Score Diagnostics
 
-halfmoon provides comprehensive tools for assessing propensity score model quality through ROC curves, calibration plots, and distributional diagnostics.
+halfmoon provides comprehensive tools for assessing propensity score
+model quality through ROC curves, calibration plots, and distributional
+diagnostics.
 
 ### ROC Curves
 
-Assess how well your propensity score model discriminates between treatment groups:
+Assess how well your propensity score model discriminates between
+treatment groups, as well as whether or not the weights create an AUC of
+about 0.5 (what you would observe from a randomized experiment):
 
 ``` r
 # Check AUC across different weighting methods
+roc_results <- roc_curve(
+  nhefs_weights,
+  .truth = qsmk,
+  .estimate = .fitted,
+  .wts = starts_with("w_")
+)
+
 auc_results <- check_auc(
   nhefs_weights,
   .truth = qsmk,
@@ -120,28 +131,29 @@ auc_results <- check_auc(
 )
 
 # Plot ROC curves
-plot_roc_curve(auc_results)
+plot_roc_curve(roc_results)
+```
+
+<img src="man/figures/README-roc-example-1.png" width="100%" />
+
+``` r
 
 # Display AUC values
 plot_roc_auc(auc_results)
 ```
 
+<img src="man/figures/README-roc-example-2.png" width="100%" />
+
 ### Calibration Assessment
 
-Evaluate whether predicted probabilities align with observed treatment frequencies:
+Evaluate whether predicted probabilities align with observed treatment
+frequencies:
 
 ``` r
-# Check calibration using different methods
-cal_results <- check_calibration(
-  nhefs_weights,
-  .fitted = .fitted,
-  .group = qsmk,
-  method = "logistic"
-)
-
-# Plot calibration curve
-plot_calibration(cal_results)
+plot_calibration(nhefs_weights, .fitted, qsmk)
 ```
+
+<img src="man/figures/README-calibration-example-1.png" width="100%" />
 
 ### Comprehensive Balance Checking
 
@@ -158,23 +170,23 @@ balance_results <- check_balance(
 )
 
 # Visualize balance across metrics
-ggplot(balance_results, aes(x = abs(statistic), y = variable)) +
+ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
   geom_point(aes(color = method)) +
   facet_wrap(~ metric, scales = "free_x") +
   labs(x = "Balance Statistic", y = "Variable")
 ```
+
+<img src="man/figures/README-balance-example-1.png" width="100%" />
 
 ### Distributional Balance with QQ Plots
 
 Assess distributional balance between treatment groups:
 
 ``` r
-# Create QQ plots for key variables
-ggplot(nhefs_weights, aes(sample = age)) +
-  geom_qq2(aes(color = qsmk, weight = w_ate)) +
-  geom_abline() +
-  labs(title = "QQ Plot: Age Distribution by Treatment Group")
+plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
 ```
+
+<img src="man/figures/README-qq-example-1.png" width="100%" />
 
 ## Example: Matching
 
