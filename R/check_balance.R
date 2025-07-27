@@ -5,6 +5,30 @@
 #' supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov, weighted correlation) and
 #' returns results in a tidy format.
 #'
+#' @details
+#' This function serves as a comprehensive balance assessment tool by computing multiple
+#' balance metrics simultaneously. It automatically handles different variable types and
+#' can optionally transform variables (dummy coding, polynomial terms, interactions)
+#' before computing balance statistics.
+#'
+#' The function supports several balance metrics:
+#' \itemize{
+#'   \item **SMD (Standardized Mean Difference)**: Measures effect size between groups,
+#'     with values around 0.1 or smaller generally indicating good balance
+#'   \item **Variance Ratio**: Compares group variances, with values near 1.0 indicating
+#'     similar variability between groups
+#'   \item **Kolmogorov-Smirnov**: Tests distributional differences between groups,
+#'     with smaller values indicating better balance
+#'   \item **Correlation**: For continuous exposures, measures linear association
+#'     between covariate and exposure
+#'   \item **Energy Distance**: Multivariate test comparing entire distributions
+#' }
+#'
+#' When multiple weighting schemes are provided, the function computes balance
+#' for each method, enabling comparison of different approaches (e.g., ATE vs ATT weights).
+#' The `include_observed` parameter controls whether unweighted ("observed") balance
+#' is included in the results.
+#'
 #' @inheritParams check_params
 #' @param .metrics Character vector specifying which metrics to compute.
 #'   Available options: "smd" (standardized mean difference), "vr" (variance ratio),

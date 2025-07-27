@@ -75,6 +75,30 @@ optional weighting schemes. This function generalizes balance checking by
 supporting multiple metrics (SMD, variance ratio, Kolmogorov-Smirnov, weighted correlation) and
 returns results in a tidy format.
 }
+\details{
+This function serves as a comprehensive balance assessment tool by computing multiple
+balance metrics simultaneously. It automatically handles different variable types and
+can optionally transform variables (dummy coding, polynomial terms, interactions)
+before computing balance statistics.
+
+The function supports several balance metrics:
+\itemize{
+\item \strong{SMD (Standardized Mean Difference)}: Measures effect size between groups,
+with values around 0.1 or smaller generally indicating good balance
+\item \strong{Variance Ratio}: Compares group variances, with values near 1.0 indicating
+similar variability between groups
+\item \strong{Kolmogorov-Smirnov}: Tests distributional differences between groups,
+with smaller values indicating better balance
+\item \strong{Correlation}: For continuous exposures, measures linear association
+between covariate and exposure
+\item \strong{Energy Distance}: Multivariate test comparing entire distributions
+}
+
+When multiple weighting schemes are provided, the function computes balance
+for each method, enabling comparison of different approaches (e.g., ATE vs ATT weights).
+The \code{include_observed} parameter controls whether unweighted ("observed") balance
+is included in the results.
+}
 \examples{
 # Basic usage with all metrics
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))

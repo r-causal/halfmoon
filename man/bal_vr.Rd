@@ -31,6 +31,19 @@ Calculates the ratio of variances between two groups: var(comparison) / var(refe
 For binary variables, uses the p*(1-p) variance formula. For continuous variables,
 uses Bessel's correction for weighted sample variance.
 }
+\details{
+The variance ratio compares the variability of a covariate between treatment groups.
+It is calculated as:
+\deqn{VR = \frac{s_1^2}{s_0^2}}
+where \eqn{s_1^2} and \eqn{s_0^2} are the variances of the treatment and control groups.
+
+For binary variables (0/1), variance is computed as \eqn{p(1-p)} where \eqn{p} is the
+proportion of 1s in each group. For continuous variables, the weighted sample variance
+is used with Bessel's correction when weights are provided.
+
+Values close to 1.0 indicate similar variability between groups, which is desirable
+for balance. Values substantially different from 1.0 suggest imbalanced variance.
+}
 \examples{
 bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
 # With weights

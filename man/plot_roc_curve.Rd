@@ -27,6 +27,18 @@ A ggplot2 object.
 Creates a ggplot2 visualization of ROC curves for evaluating propensity score balance.
 In causal inference, weighted curves near the diagonal (AUC around 0.5) indicate good balance.
 }
+\details{
+ROC curves for balance assessment plot the true positive rate (sensitivity) against
+the false positive rate (1 - specificity) when using propensity scores to classify
+treatment assignment. When weights achieve perfect balance, the propensity score
+distributions become identical between groups, yielding an ROC curve along the
+diagonal (chance performance).
+
+Curves that deviate substantially from the diagonal indicate that propensity
+scores can still discriminate between treatment groups after weighting, suggesting
+residual imbalance. The closer the curve is to the diagonal, the better the
+balance achieved by the weighting scheme.
+}
 \examples{
 roc_data <- roc_curve(
   nhefs_weights,
