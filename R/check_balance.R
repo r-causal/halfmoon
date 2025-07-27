@@ -80,7 +80,7 @@ check_balance <- function(
 
   # Convert inputs to character vectors for consistent handling
   group_var <- rlang::as_name(rlang::enquo(.group))
-  var_names <- names(dplyr::select(.data, {{ .vars }}))
+  var_names <- names(tidyselect::eval_select(rlang::enquo(.vars), .data))
 
   if (length(var_names) == 0) {
     stop("No variables selected for '.vars'")
@@ -255,7 +255,7 @@ check_balance <- function(
   # Handle weights using proper NSE - capture quosure and check if null
   .wts <- rlang::enquo(.wts)
   if (!rlang::quo_is_null(.wts)) {
-    wts_names <- names(dplyr::select(.data, {{ .wts }}))
+    wts_names <- names(tidyselect::eval_select(.wts, .data))
   } else {
     wts_names <- NULL
   }
