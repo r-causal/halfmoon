@@ -135,6 +135,22 @@ qq <- function(
   qq_data
 }
 
+#' Compute quantiles for a single method
+#'
+#' Internal function to compute quantiles for one method (observed or weighted).
+#'
+#' @param method Character string indicating the method ("observed" or weight column name)
+#' @param .data Data frame
+#' @param var_name Variable name to compute quantiles for
+#' @param group_name Group variable name
+#' @param ref_group Reference group level
+#' @param comp_group Comparison group level
+#' @param quantiles Numeric vector of quantiles
+#' @param na.rm Logical indicating whether to remove NAs
+#'
+#' @return A tibble with quantile data
+#'
+#' @noRd
 compute_method_quantiles <- function(
   method,
   .data,
