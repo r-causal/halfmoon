@@ -135,40 +135,18 @@ empty_calibration <- function(method = "breaks") {
 }
 
 check_treatment_level <- function(group_var, treatment_level) {
-  unique_levels <- unique(group_var[!is.na(group_var)])
-  # Default: use last level for factors, max value for numeric
-  if (is.null(treatment_level)) {
-    if (is.factor(group_var)) {
-      treatment_level <- levels(group_var)[length(levels(group_var))]
-    } else {
-      if (length(unique_levels) == 0) {
-        # Default for empty data
-        treatment_level <- 1
-      } else {
-        treatment_level <- max(unique_levels, na.rm = TRUE)
-      }
+  # Validate treatment level exists if provided
+  if (!is.null(treatment_level)) {
+    unique_levels <- unique(group_var[!is.na(group_var)])
+    if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
+      abort(
+        "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
+      )
     }
   }
-
-  # Validate treatment level exists (skip for empty data)
-  if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
-    abort(
-      "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
-    )
-  }
-
-  # Create binary treatment indicator (1 = treatment, 0 = control)
-  # Handle both factor and non-factor variables
-  if (is.factor(group_var)) {
-    # For factors, ensure we're comparing as character to handle numeric-looking levels
-    treatment_indicator <- as.numeric(
-      as.character(group_var) == as.character(treatment_level)
-    )
-  } else {
-    treatment_indicator <- as.numeric(group_var == treatment_level)
-  }
-
-  treatment_indicator
+  
+  # Use the helper function to create treatment indicator
+  create_treatment_indicator(group_var, treatment_level)
 }
 
 check_columns <- function(data, fitted_name, group_name, treatment_level) {
@@ -648,25 +626,9 @@ compute_calibration_for_group <- function(
   na.rm,
   group_id
 ) {
-  # Convert to binary using check_treatment_level logic
+  # Convert to binary using helper function
   truth <- data$truth
-  if (is.null(treatment_level)) {
-    treatment_level <- if (is.factor(truth)) {
-      levels(truth)[length(levels(truth))]
-    } else {
-      max(unique(truth))
-    }
-  }
-
-  # Create binary treatment indicator (1 = treatment, 0 = control)
-  if (is.factor(truth)) {
-    # For factors, ensure we're comparing as character to handle numeric-looking levels
-    treatment_indicator <- as.numeric(
-      as.character(truth) == as.character(treatment_level)
-    )
-  } else {
-    treatment_indicator <- as.numeric(truth == treatment_level)
-  }
+  treatment_indicator <- create_treatment_indicator(truth, treatment_level)
 
   # Create data frame for calibration computation
   df <- tibble::tibble(

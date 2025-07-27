@@ -48,10 +48,17 @@ bal_smd <- function(
     }
   }
 
-  # Convert reference_group to index if it's a level value
-  levels_g <- validate_binary_group(group, "group")
-
-  # If reference_group is NULL, use the first level (like other functions)
+  # Convert reference_group to index for smd package
+  levels_g <- unique(stats::na.omit(group))
+  
+  # Validate we have exactly two levels
+  if (length(levels_g) != 2) {
+    abort(
+      "Group variable must have exactly two levels, got {length(levels_g)}"
+    )
+  }
+  
+  # Determine gref_index for smd package
   if (is.null(reference_group)) {
     gref_index <- 1L
   } else {
@@ -59,6 +66,7 @@ bal_smd <- function(
     if (reference_group %in% levels_g) {
       gref_index <- which(levels_g == reference_group)
     } else {
+      # Use it directly as an index
       gref_index <- reference_group
     }
   }
@@ -118,11 +126,9 @@ bal_vr <- function(
   validate_weights(weights, length(covariate))
 
   # Identify reference and comparison indices
-  lvl <- validate_binary_group(group)
-  ref <- if (!is.null(reference_group)) reference_group else lvl[1]
-  validate_reference_group(ref, lvl)
-  idx_ref <- which(group == ref)
-  idx_other <- which(group != ref)
+  group_splits <- split_by_group(covariate, group, reference_group)
+  idx_ref <- group_splits$reference
+  idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
     if (is.null(weights)) {
@@ -253,11 +259,9 @@ bal_ks <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
-  lvl <- validate_binary_group(group)
-  ref <- if (!is.null(reference_group)) reference_group else lvl[1]
-  validate_reference_group(ref, lvl)
-  idx_ref <- which(group == ref)
-  idx_other <- which(group != ref)
+  group_splits <- split_by_group(covariate, group, reference_group)
+  idx_ref <- group_splits$reference
+  idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
     if (is.null(weights)) {
