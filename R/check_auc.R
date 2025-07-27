@@ -186,7 +186,7 @@ roc_curve <- function(
 
     # Validate weights
     if (!is.numeric(weights)) {
-      cli::cli_warn("Skipping non-numeric weight variable: {wt_name}")
+      warn("Skipping non-numeric weight variable: {wt_name}")
       next
     }
 
@@ -241,7 +241,7 @@ compute_roc_curve_imp <- function(
 
   # Check for constant estimates
   if (length(unique(estimate)) == 1) {
-    cli::cli_warn("Estimate variable is constant; ROC curve will be degenerate")
+    warn("Estimate variable is constant; ROC curve will be degenerate")
     return(tibble::tibble(
       threshold = c(-Inf, unique(estimate), Inf),
       sensitivity = c(1, 0.5, 0),
@@ -312,14 +312,14 @@ compute_roc_curve_imp <- function(
 
   # Handle edge cases
   if (is.na(total_tp) || total_tp == 0) {
-    cli::cli_warn("No events found in truth variable")
+    warn("No events found in truth variable")
     sensitivity <- rep(0, length(tp))
   } else {
     sensitivity <- tp / total_tp
   }
 
   if (is.na(total_fp) || total_fp == 0) {
-    cli::cli_warn("No non-events found in truth variable")
+    warn("No non-events found in truth variable")
     specificity <- rep(1, length(fp))
   } else {
     specificity <- 1 - fp / total_fp
