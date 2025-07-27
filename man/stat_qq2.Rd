@@ -15,7 +15,7 @@ stat_qq2(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = 1L,
+  treatment_level = NULL,
   include_observed = FALSE,
   ...
 )

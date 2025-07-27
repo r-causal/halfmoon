@@ -13,7 +13,7 @@ geom_qq2(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = 1L,
+  treatment_level = NULL,
   ...
 )
 }
@@ -38,7 +38,7 @@ Optional aesthetics include \code{weight} for weighting.}
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
 \item{treatment_level}{The reference treatment level to use for comparisons.
-Defaults to 1 (first level).}
+If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
 
 \item{...}{Additional arguments passed to the geom.}
 }

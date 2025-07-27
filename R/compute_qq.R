@@ -17,7 +17,7 @@
 #' @param include_observed Logical. If using `.wts`, also compute observed
 #'   (unweighted) quantiles? Defaults to TRUE.
 #' @param treatment_level The reference treatment level to use for comparisons.
-#'   Defaults to 1 (first level).
+#'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
 #' @return A tibble with columns:
@@ -49,7 +49,7 @@ qq <- function(
   .wts = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = 1L,
+  treatment_level = NULL,
   na.rm = FALSE
 ) {
   # Handle both quoted and unquoted column names
@@ -77,19 +77,36 @@ qq <- function(
   }
 
   # Get group levels
-  group_levels <- if (is.factor(.data[[group_name]])) {
-    levels(.data[[group_name]])
+  group_var <- .data[[group_name]]
+  group_levels <- if (is.factor(group_var)) {
+    levels(group_var)
   } else {
-    sort(unique(.data[[group_name]]))
+    sort(unique(group_var[!is.na(group_var)]))
   }
 
   if (length(group_levels) != 2) {
     abort("Group variable must have exactly 2 levels")
   }
 
+  # Handle NULL treatment_level
+  if (is.null(treatment_level)) {
+    if (is.factor(group_var)) {
+      # For factors, use the last level
+      treatment_level <- group_levels[length(group_levels)]
+    } else {
+      # For numeric, use the maximum value
+      treatment_level <- max(group_levels)
+    }
+  }
+
+  # Validate treatment_level exists
+  if (!treatment_level %in% group_levels) {
+    abort("{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}")
+  }
+
   # Determine reference and comparison groups
-  ref_group <- group_levels[treatment_level]
-  comp_group <- group_levels[-treatment_level]
+  ref_group <- treatment_level
+  comp_group <- setdiff(group_levels, treatment_level)
 
   # Create list of methods to compute
   methods <- character(0)

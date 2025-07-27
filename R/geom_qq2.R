@@ -15,7 +15,7 @@
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
 #' @param treatment_level The reference treatment level to use for comparisons.
-#'   Defaults to 1 (first level).
+#'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
 #' @param ... Additional arguments passed to the geom.
 #'
 #' @return A ggplot2 layer.
@@ -53,7 +53,7 @@ geom_qq2 <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = 1L,
+  treatment_level = NULL,
   ...
 ) {
   ggplot2::layer(
@@ -102,7 +102,7 @@ stat_qq2 <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = 1L,
+  treatment_level = NULL,
   include_observed = FALSE,
   ...
 ) {
@@ -144,12 +144,28 @@ StatQq2 <- ggplot2::ggproto(
     data,
     scales,
     quantiles = seq(0.01, 0.99, 0.01),
-    treatment_level = 1L,
+    treatment_level = NULL,
     na.rm = TRUE,
     include_observed = FALSE
   ) {
     # For QQ plots, we need all the data to compute quantiles properly
     # So we work at the panel level, not the group level
+    
+    # Handle NULL treatment_level
+    if (is.null(treatment_level)) {
+      if (is.factor(data$treatment)) {
+        # Factor - use the last level
+        treatment_level <- levels(data$treatment)[length(levels(data$treatment))]
+      } else {
+        # Numeric or character
+        treatment_values <- unique(data$treatment[!is.na(data$treatment)])
+        if (length(treatment_values) == 0) {
+          treatment_level <- 1  # Default for empty data
+        } else {
+          treatment_level <- max(treatment_values)
+        }
+      }
+    }
     
     # If we have multiple groups, identify which ones should be merged
     # Groups that differ only by treatment level should be processed together

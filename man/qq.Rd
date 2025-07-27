@@ -11,7 +11,7 @@ qq(
   .wts = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = 1L,
+  treatment_level = NULL,
   na.rm = FALSE
 )
 }
@@ -35,7 +35,7 @@ different weighting schemes. Default is NULL (unweighted).}
 (unweighted) quantiles? Defaults to TRUE.}
 
 \item{treatment_level}{The reference treatment level to use for comparisons.
-Defaults to 1 (first level).}
+If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before computation.}
 }
