@@ -56,16 +56,16 @@ A tibble with columns:
 \item For "breaks" method:
 \itemize{
 \item \code{.bin}: integer bin index
-\item \code{fitted_mean}: mean predicted probability in bin
-\item \code{group_mean}: observed treatment rate in bin
+\item \code{predicted_rate}: mean predicted probability in bin
+\item \code{observed_rate}: observed treatment rate in bin
 \item \code{count}: number of observations in bin
-\item \code{lower}: lower bound of CI for \code{group_mean}
-\item \code{upper}: upper bound of CI for \code{group_mean}
+\item \code{lower}: lower bound of CI for \code{observed_rate}
+\item \code{upper}: upper bound of CI for \code{observed_rate}
 }
 \item For "logistic" and "windowed" methods:
 \itemize{
-\item \code{fitted_mean}: predicted probability values
-\item \code{group_mean}: calibrated outcome rate
+\item \code{predicted_rate}: predicted probability values
+\item \code{observed_rate}: calibrated outcome rate
 \item \code{lower}: lower bound of CI
 \item \code{upper}: upper bound of CI
 }

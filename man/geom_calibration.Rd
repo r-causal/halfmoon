@@ -9,6 +9,7 @@ geom_calibration(
   data = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = "equal_width",
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -25,14 +26,16 @@ geom_calibration(
 )
 }
 \arguments{
-\item{mapping}{Aesthetic mapping (must supply x and y if not inherited).
-x should be propensity scores/predicted probabilities, y should be treatment variable.}
+\item{mapping}{Aesthetic mapping (must supply \code{estimate} and \code{truth} if not inherited).
+\code{estimate} should be propensity scores/predicted probabilities, \code{truth} should be treatment variable.}
 
 \item{data}{Data frame or tibble; if NULL, uses ggplot default.}
 
 \item{method}{Character; calibration method - "breaks", "logistic", or "windowed".}
 
 \item{bins}{Integer >1; number of bins for the "breaks" method.}
+
+\item{binning_method}{"equal_width" or "quantile" for bin creation (breaks method only).}
 
 \item{smooth}{Logical; for "logistic" method, use GAM smoothing if available.}
 
@@ -42,13 +45,8 @@ x should be propensity scores/predicted probabilities, y should be treatment var
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
 
-\item{treatment_level}{Value indicating which level of y represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.
-For factors with numeric-looking levels (e.g., "0", "1"), this parameter
-works as expected. For factors with non-numeric levels (e.g., "Control",
-"Treatment"), the function will attempt to use the higher level as treatment
-but may not always correctly identify the intended level. In such cases,
-consider converting the factor to numeric before plotting.}
+\item{treatment_level}{Value indicating which level of truth represents treatment.
+If NULL (default), uses the last level for factors or max value for numeric.}
 
 \item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
 
@@ -79,25 +77,25 @@ library(ggplot2)
 
 # Basic calibration plot using nhefs_weights dataset
 # .fitted contains propensity scores, qsmk is the treatment variable
-ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   geom_calibration() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 
 # Using different methods
-ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   geom_calibration(method = "logistic") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 
 # Specify treatment level explicitly
-ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   geom_calibration(treatment_level = "1") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 
 # Windowed method with custom parameters
-ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")

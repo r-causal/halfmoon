@@ -127,7 +127,7 @@ test_that("StatRoc handles edge cases", {
   )
 
   # The error happens during build, not creation
-  p_bad <- ggplot(bad_data, aes(x = x, y = y)) + stat_roc()
+  p_bad <- ggplot(bad_data, aes(estimate = x, truth = y)) + stat_roc()
   expect_error(
     ggplot_build(p_bad),
     "must have exactly 2 unique values"
@@ -140,7 +140,7 @@ test_that("StatRoc handles edge cases", {
   )
 
   # Should work with na.rm = TRUE (default)
-  p_na <- ggplot(na_data, aes(x = x, y = y)) +
+  p_na <- ggplot(na_data, aes(estimate = x, truth = y)) +
     stat_roc(na.rm = TRUE)
   expect_s3_class(p_na, "gg")
 })

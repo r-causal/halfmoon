@@ -25,14 +25,14 @@
 #' @return A tibble with columns:
 #'   - For "breaks" method:
 #'     - `.bin`: integer bin index
-#'     - `fitted_mean`: mean predicted probability in bin
-#'     - `group_mean`: observed treatment rate in bin
+#'     - `predicted_rate`: mean predicted probability in bin
+#'     - `observed_rate`: observed treatment rate in bin
 #'     - `count`: number of observations in bin
-#'     - `lower`: lower bound of CI for `group_mean`
-#'     - `upper`: upper bound of CI for `group_mean`
+#'     - `lower`: lower bound of CI for `observed_rate`
+#'     - `upper`: upper bound of CI for `observed_rate`
 #'   - For "logistic" and "windowed" methods:
-#'     - `fitted_mean`: predicted probability values
-#'     - `group_mean`: calibrated outcome rate
+#'     - `predicted_rate`: predicted probability values
+#'     - `observed_rate`: calibrated outcome rate
 #'     - `lower`: lower bound of CI
 #'     - `upper`: upper bound of CI
 #' @examples
@@ -118,16 +118,16 @@ empty_calibration <- function(method = "breaks") {
   if (method == "breaks") {
     tibble::tibble(
       .bin = integer(0),
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       count = integer(0),
       lower = numeric(0),
       upper = numeric(0)
     )
   } else {
     tibble::tibble(
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       lower = numeric(0),
       upper = numeric(0)
     )
@@ -251,15 +251,15 @@ compute_calibration_breaks_imp <- function(
     ) |>
     dplyr::group_by(.bin) |>
     dplyr::summarise(
-      fitted_mean = mean(x_var, na.rm = TRUE),
-      group_mean = mean(y_var, na.rm = TRUE),
+      predicted_rate = mean(x_var, na.rm = TRUE),
+      observed_rate = mean(y_var, na.rm = TRUE),
       count = dplyr::n(),
       .groups = "drop"
     ) |>
     dplyr::arrange(.bin)
 
   n_total <- result$count
-  n_events <- round(result$group_mean * n_total)
+  n_events <- round(result$observed_rate * n_total)
 
   # Handle edge cases up front:
   # - total count must be positive
@@ -334,7 +334,7 @@ compute_calibration_breaks_imp <- function(
     edge_results <- purrr::map(
       edge_cases,
       ~ {
-        rate <- result$group_mean[.x]
+        rate <- result$observed_rate[.x]
         se <- sqrt(rate * (1 - rate) / n_total[.x])
         list(
           lower = max(0, rate - z_score * se),
@@ -384,8 +384,8 @@ compute_calibration_logistic_imp <- function(
   upper <- plogis(preds$fit + z_score * preds$se.fit)
 
   tibble::tibble(
-    fitted_mean = pred_seq,
-    group_mean = pred_probs,
+    predicted_rate = pred_seq,
+    observed_rate = pred_probs,
     lower = lower,
     upper = upper
   )
@@ -420,7 +420,7 @@ compute_calibration_windowed_imp <- function(
   if (length(valid_results) > 0) {
     sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
     event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
-    window_centers <- purrr::map_dbl(valid_results, ~ .x$fitted_mean)
+    window_centers <- purrr::map_dbl(valid_results, ~ .x$predicted_rate)
 
     small_cells <- sample_sizes < 10
     extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
@@ -445,16 +445,16 @@ compute_calibration_windowed_imp <- function(
   # Return only valid windows
   if (length(valid_results) > 0) {
     tibble::tibble(
-      fitted_mean = purrr::map_dbl(valid_results, ~ .x$fitted_mean),
-      group_mean = purrr::map_dbl(valid_results, ~ .x$group_mean),
+      predicted_rate = purrr::map_dbl(valid_results, ~ .x$predicted_rate),
+      observed_rate = purrr::map_dbl(valid_results, ~ .x$observed_rate),
       lower = purrr::map_dbl(valid_results, ~ .x$lower),
       upper = purrr::map_dbl(valid_results, ~ .x$upper)
     )
   } else {
     # Return empty data frame with correct structure
     tibble::tibble(
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       lower = numeric(0),
       upper = numeric(0)
     )
@@ -495,8 +495,8 @@ calculate_window_statistics <- function(
               )
             })
             list(
-              fitted_mean = .x,
-              group_mean = event_rate,
+              predicted_rate = .x,
+              observed_rate = event_rate,
               lower = prop_test$conf.int[1],
               upper = prop_test$conf.int[2],
               valid = TRUE,
@@ -508,8 +508,8 @@ calculate_window_statistics <- function(
             # Fallback to normal approximation
             se <- sqrt(event_rate * (1 - event_rate) / n_total)
             list(
-              fitted_mean = .x,
-              group_mean = event_rate,
+              predicted_rate = .x,
+              observed_rate = event_rate,
               lower = max(0, event_rate - z_score * se),
               upper = min(1, event_rate + z_score * se),
               valid = TRUE,
@@ -522,8 +522,8 @@ calculate_window_statistics <- function(
         # For edge cases, use normal approximation
         se <- sqrt(event_rate * (1 - event_rate) / n_total)
         list(
-          fitted_mean = .x,
-          group_mean = event_rate,
+          predicted_rate = .x,
+          observed_rate = event_rate,
           lower = max(0, event_rate - z_score * se),
           upper = min(1, event_rate + z_score * se),
           valid = TRUE,
@@ -542,9 +542,15 @@ calculate_window_statistics <- function(
 StatCalibration <- ggplot2::ggproto(
   "StatCalibration",
   ggplot2::Stat,
-  required_aes = c("x", "y"),
-  default_aes = ggplot2::aes(alpha = 0.3),
-  dropped_aes = c("y"),
+  required_aes = c("estimate", "truth"),
+  default_aes = ggplot2::aes(
+    x = ggplot2::after_stat(predicted_rate),
+    y = ggplot2::after_stat(observed_rate),
+    ymin = ggplot2::after_stat(lower),
+    ymax = ggplot2::after_stat(upper),
+    alpha = 0.3
+  ),
+  dropped_aes = c("truth"),
   setup_params = function(data, params) {
     # Set default parameters
     params$method <- params$method %||% "breaks"
@@ -567,36 +573,161 @@ StatCalibration <- ggplot2::ggproto(
     window_size = 0.1,
     step_size = window_size / 2,
     treatment_level = NULL,
-    k = 10
+    k = 10,
+    binning_method = "equal_width",
+    na.rm = FALSE
   ) {
-    calibration_result <- check_calibration(
-      data = data,
-      .fitted = x,
-      .group = y,
-      treatment_level = treatment_level,
-      method = method,
-      bins = bins,
-      smooth = smooth,
-      conf_level = conf_level,
-      window_size = window_size,
-      step_size = step_size,
-      k = k
-    )
+    # If we have multiple groups, handle smart group merging
+    if ("group" %in% names(data) && length(unique(data$group)) > 1) {
+      groups <- split(data, data$group)
 
-    result <- data.frame(
-      x = calibration_result$fitted_mean,
-      y = calibration_result$group_mean,
-      ymin = calibration_result$lower,
-      ymax = calibration_result$upper
-    )
+      # Create signatures for each group based on aesthetic values
+      # We want to merge groups that differ only by truth factor levels
+      aes_cols <- setdiff(
+        names(data),
+        c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
+      )
 
-    # Preserve required ggplot2 columns
-    result$PANEL <- data$PANEL[1]
-    result$group <- data$group[1]
+      group_signatures <- purrr::map_chr(groups, function(g) {
+        if (length(aes_cols) > 0) {
+          paste(g[1, aes_cols, drop = FALSE], collapse = "_")
+        } else {
+          "no_aes"
+        }
+      })
 
-    result
+      # Process groups with the same signature together
+      unique_signatures <- unique(group_signatures)
+      results <- purrr::map_df(unique_signatures, function(sig) {
+        matching_groups <- names(groups)[group_signatures == sig]
+        combined_data <- do.call(rbind, groups[matching_groups])
+
+        # Use the first matching group's group ID
+        group_id <- groups[[matching_groups[1]]]$group[1]
+
+        # Process the combined data
+        compute_calibration_for_group(
+          combined_data,
+          treatment_level,
+          method,
+          bins,
+          binning_method,
+          smooth,
+          conf_level,
+          window_size,
+          step_size,
+          k,
+          na.rm,
+          group_id
+        )
+      })
+
+      results
+    } else {
+      # Single group or no groups
+      compute_calibration_for_group(
+        data,
+        treatment_level,
+        method,
+        bins,
+        binning_method,
+        smooth,
+        conf_level,
+        window_size,
+        step_size,
+        k,
+        na.rm,
+        data$group[1]
+      )
+    }
   }
 )
+
+# Helper function to compute calibration for a single group
+compute_calibration_for_group <- function(
+  data,
+  treatment_level,
+  method,
+  bins,
+  binning_method,
+  smooth,
+  conf_level,
+  window_size,
+  step_size,
+  k,
+  na.rm,
+  group_id
+) {
+  # Convert to binary using check_treatment_level logic
+  truth <- data$truth
+  if (is.null(treatment_level)) {
+    treatment_level <- if (is.factor(truth)) {
+      levels(truth)[length(levels(truth))]
+    } else {
+      max(unique(truth))
+    }
+  }
+
+  # Create binary treatment indicator (1 = treatment, 0 = control)
+  if (is.factor(truth)) {
+    # For factors, ensure we're comparing as character to handle numeric-looking levels
+    treatment_indicator <- as.numeric(
+      as.character(truth) == as.character(treatment_level)
+    )
+  } else {
+    treatment_indicator <- as.numeric(truth == treatment_level)
+  }
+
+  # Create data frame for calibration computation
+  df <- tibble::tibble(
+    x_var = data$estimate,
+    y_var = treatment_indicator
+  )
+
+  if (isTRUE(na.rm)) {
+    df <- df |>
+      dplyr::filter(!is.na(x_var) & !is.na(y_var))
+  }
+
+  if (nrow(df) == 0) {
+    return(data.frame(
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
+      lower = numeric(0),
+      upper = numeric(0),
+      PANEL = data$PANEL[1],
+      group = group_id
+    ))
+  }
+
+  # Compute calibration based on method
+  calibration_result <- if (method == "breaks") {
+    compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
+  } else if (method == "logistic") {
+    compute_calibration_logistic_imp(df, smooth, conf_level, k = k)
+  } else if (method == "windowed") {
+    compute_calibration_windowed_imp(
+      df,
+      window_size,
+      step_size,
+      conf_level
+    )
+  }
+
+  # Return with after_stat names
+  result <- data.frame(
+    predicted_rate = calibration_result$predicted_rate,
+    observed_rate = calibration_result$observed_rate,
+    lower = calibration_result$lower,
+    upper = calibration_result$upper
+  )
+
+  # Preserve required ggplot2 columns
+  result$PANEL <- data$PANEL[1]
+  result$group <- group_id
+
+  result
+}
 
 # Geom for calibration line
 GeomCalibrationLine <- ggplot2::ggproto(
@@ -643,22 +774,18 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' probabilities and observed binary outcomes. It supports three methods:
 #' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with [`check_calibration()`].
 #'
-#' @param mapping Aesthetic mapping (must supply x and y if not inherited).
-#'   x should be propensity scores/predicted probabilities, y should be treatment variable.
+#' @param mapping Aesthetic mapping (must supply `estimate` and `truth` if not inherited).
+#'   `estimate` should be propensity scores/predicted probabilities, `truth` should be treatment variable.
 #' @param data Data frame or tibble; if NULL, uses ggplot default.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
+#' @param binning_method "equal_width" or "quantile" for bin creation (breaks method only).
 #' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
-#' @param treatment_level Value indicating which level of y represents treatment.
+#' @param treatment_level Value indicating which level of truth represents treatment.
 #'   If NULL (default), uses the last level for factors or max value for numeric.
-#'   For factors with numeric-looking levels (e.g., "0", "1"), this parameter
-#'   works as expected. For factors with non-numeric levels (e.g., "Control",
-#'   "Treatment"), the function will attempt to use the higher level as treatment
-#'   but may not always correctly identify the intended level. In such cases,
-#'   consider converting the factor to numeric before plotting.
 #' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.
 #' @param show_ribbon Logical; show confidence interval ribbon.
 #' @param show_points Logical; show points (only for "breaks" and "windowed" methods).
@@ -673,25 +800,25 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'
 #' # Basic calibration plot using nhefs_weights dataset
 #' # .fitted contains propensity scores, qsmk is the treatment variable
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration() +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Using different methods
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration(method = "logistic") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Specify treatment level explicitly
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration(treatment_level = "1") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Windowed method with custom parameters
-#' ggplot(nhefs_weights, aes(x = .fitted, y = qsmk)) +
+#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 #'   geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
@@ -702,6 +829,7 @@ geom_calibration <- function(
   data = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = "equal_width",
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -731,6 +859,7 @@ geom_calibration <- function(
       params = list(
         method = method,
         bins = bins,
+        binning_method = binning_method,
         smooth = smooth,
         conf_level = conf_level,
         window_size = window_size,
@@ -780,6 +909,7 @@ geom_calibration <- function(
       params = list(
         method = method,
         bins = bins,
+        binning_method = binning_method,
         smooth = smooth,
         conf_level = conf_level,
         window_size = window_size,

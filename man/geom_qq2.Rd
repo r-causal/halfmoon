@@ -2,7 +2,7 @@
 % Please edit documentation in R/geom_qq2.R
 \name{geom_qq2}
 \alias{geom_qq2}
-\title{Created 2-dimensional QQ geometries}
+\title{Create 2-dimensional QQ geometries}
 \usage{
 geom_qq2(
   mapping = NULL,
