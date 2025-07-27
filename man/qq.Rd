@@ -18,13 +18,11 @@ qq(
 \arguments{
 \item{.data}{A data frame containing the variables.}
 
-\item{.var}{Variable to compute quantiles for. Can be unquoted (e.g., \code{age})
-or quoted (e.g., \code{"age"}).}
+\item{.var}{Variable to compute quantiles for. Supports tidyselect syntax.}
 
-\item{.group}{Column name of treatment/group variable. Can be unquoted
-(e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
+\item{.group}{Column name of treatment/group variable. Supports tidyselect syntax.}
 
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names,
+\item{.wts}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax.),
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 
@@ -60,10 +58,5 @@ qq(nhefs_weights, age, qsmk, .wts = w_ate)
 
 # Compare multiple weighting schemes
 qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
-
-# Custom quantiles
-qq(nhefs_weights, age, qsmk,
-   .wts = w_ate,
-   quantiles = c(0.1, 0.25, 0.5, 0.75, 0.9))
 
 }
