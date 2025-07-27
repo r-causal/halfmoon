@@ -4,6 +4,12 @@
 #' between treatment groups. This function computes the quantiles for both
 #' groups and returns a tidy data frame suitable for plotting or further analysis.
 #'
+#' @details
+#' This function computes the data needed for quantile-quantile plots by calculating
+#' corresponding quantiles from two distributions. The computation uses the inverse
+#' of the empirical cumulative distribution function (ECDF). For weighted data,
+#' it first computes the weighted ECDF and then inverts it to obtain quantiles.
+#'
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to compute quantiles for. Supports tidyselect syntax.
 #' @param .group Column name of treatment/group variable. Supports tidyselect syntax.

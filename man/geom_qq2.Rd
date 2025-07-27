@@ -47,7 +47,21 @@ A ggplot2 layer.
 }
 \description{
 A ggplot2 geom for creating quantile-quantile plots with support for
-weighted comparisons.
+weighted comparisons. QQ plots compare the quantiles of two distributions,
+making them useful for assessing distributional balance in causal inference.
+}
+\details{
+Quantile-quantile (QQ) plots visualize how the distributions of a variable
+differ between treatment groups by plotting corresponding quantiles against
+each other. If the distributions are identical, points fall on the 45-degree
+line (y = x). Deviations from this line indicate differences in the distributions.
+
+QQ plots are closely related to empirical cumulative distribution function
+(ECDF) plots (see \code{\link[=geom_ecdf]{geom_ecdf()}}). While ECDF plots show \eqn{F(x) = P(X \leq x)}
+for each group, QQ plots show \eqn{F_1^{-1}(p)} vs \eqn{F_2^{-1}(p)} - essentially the inverse
+relationship. Both approaches visualize the same information about distributional
+differences, but QQ plots make it easier to spot deviations through the 45-degree
+reference line.
 }
 \examples{
 library(ggplot2)
@@ -72,4 +86,11 @@ ggplot(long_data, aes(sample = age, treatment = qsmk, weight = weight)) +
   geom_qq2(aes(color = weight_type)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
+}
+\seealso{
+\itemize{
+\item \code{\link[=geom_ecdf]{geom_ecdf()}} for an alternative visualization of distributional differences
+\item \code{\link[=plot_qq]{plot_qq()}} for a complete plotting function with reference line and labels
+\item \code{\link[=qq]{qq()}} for the underlying data computation
+}
 }

@@ -46,6 +46,15 @@ between treatment groups before and after weighting. This function helps
 assess covariate balance by visualizing how well the quantiles align between
 groups.
 }
+\details{
+QQ plots display the quantiles of one distribution against the quantiles of
+another. Perfect distributional balance appears as points along the 45-degree
+line (y = x). This function automatically adds this reference line and
+appropriate axis labels.
+
+For an alternative visualization of the same information, see \code{\link[=geom_ecdf]{geom_ecdf()}},
+which shows the empirical cumulative distribution functions directly.
+}
 \examples{
 library(ggplot2)
 
@@ -64,4 +73,11 @@ plot_qq(nhefs_weights, .fitted, qsmk, .wts = w_ate)
 # Without observed comparison
 plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
 
+}
+\seealso{
+\itemize{
+\item \code{\link[=geom_ecdf]{geom_ecdf()}} for ECDF plots, an alternative distributional visualization
+\item \code{\link[=geom_qq2]{geom_qq2()}} for the underlying geom used by this function
+\item \code{\link[=qq]{qq()}} for computing QQ data without plotting
+}
 }

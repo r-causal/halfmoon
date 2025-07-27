@@ -5,6 +5,15 @@
 #' assess covariate balance by visualizing how well the quantiles align between
 #' groups.
 #'
+#' @details
+#' QQ plots display the quantiles of one distribution against the quantiles of
+#' another. Perfect distributional balance appears as points along the 45-degree
+#' line (y = x). This function automatically adds this reference line and 
+#' appropriate axis labels.
+#'
+#' For an alternative visualization of the same information, see [`geom_ecdf()`],
+#' which shows the empirical cumulative distribution functions directly.
+#'
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
 #' @param .group Column name of treatment/group variable. Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
@@ -20,6 +29,11 @@
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
 #' @return A ggplot2 object.
+#'
+#' @seealso
+#' - [`geom_ecdf()`] for ECDF plots, an alternative distributional visualization
+#' - [`geom_qq2()`] for the underlying geom used by this function
+#' - [`qq()`] for computing QQ data without plotting
 #'
 #' @examples
 #' library(ggplot2)

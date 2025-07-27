@@ -49,6 +49,12 @@ Calculate quantile-quantile data comparing the distribution of a variable
 between treatment groups. This function computes the quantiles for both
 groups and returns a tidy data frame suitable for plotting or further analysis.
 }
+\details{
+This function computes the data needed for quantile-quantile plots by calculating
+corresponding quantiles from two distributions. The computation uses the inverse
+of the empirical cumulative distribution function (ECDF). For weighted data,
+it first computes the weighted ECDF and then inverts it to obtain quantiles.
+}
 \examples{
 # Basic QQ data (observed only)
 qq(nhefs_weights, age, qsmk)
