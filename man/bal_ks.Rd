@@ -33,6 +33,21 @@ functions (CDFs) between two groups. For binary variables, returns the absolute
 difference in proportions. For continuous variables, computes the maximum
 difference between empirical CDFs.
 }
+\details{
+The Kolmogorov-Smirnov statistic measures the maximum difference between
+empirical cumulative distribution functions of two groups:
+\deqn{KS = \max_x |F_1(x) - F_0(x)|}
+where \eqn{F_1(x)} and \eqn{F_0(x)} are the empirical CDFs of the treatment
+and control groups.
+
+For binary variables, this reduces to the absolute difference in proportions.
+For continuous variables, the statistic captures differences in the entire
+distribution shape, not just means or variances.
+
+The KS statistic ranges from 0 (identical distributions) to 1 (completely
+separate distributions). Smaller values indicate better distributional balance
+between groups.
+}
 \examples{
 bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 

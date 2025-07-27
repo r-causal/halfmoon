@@ -44,6 +44,20 @@ Computes weighted ROC curves and AUC for evaluating propensity score balance.
 In causal inference, a weighted ROC curve near the diagonal (AUC around 0.5)
 indicates good balance between treatment groups.
 }
+\details{
+The Area Under the ROC Curve (AUC) provides a single metric for assessing
+propensity score balance. When propensity scores achieve perfect balance,
+the weighted distribution of scores should be identical between treatment
+groups, resulting in an AUC of 0.5 (chance performance).
+
+AUC values significantly different from 0.5 indicate systematic differences
+in propensity score distributions between groups, suggesting inadequate
+balance. Values closer to 0.5 indicate better balance achieved by the
+weighting scheme.
+
+This approach complements traditional balance diagnostics by focusing
+specifically on the propensity score overlap and balance.
+}
 \examples{
 # Check balance for propensity scores
 check_auc(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))

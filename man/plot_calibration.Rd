@@ -67,6 +67,25 @@ Create a calibration plot to assess the agreement between predicted
 probabilities and observed treatment rates. This function wraps
 \code{geom_calibration()}.
 }
+\details{
+Calibration plots visualize how well predicted probabilities match observed
+outcome rates. Since outcomes are binary (0/1), the "observed rate" represents
+the proportion of units with outcome = 1 within each prediction group. For
+example, among all units with predicted probability around 0.3, we expect
+approximately 30\% to actually have the outcome. Perfect calibration occurs
+when predicted probabilities equal observed rates (points fall on the 45-degree
+line).
+
+The plot supports three calibration assessment methods:
+\itemize{
+\item \strong{"breaks"}: Bins predictions into groups and compares mean prediction
+vs observed rate within each bin
+\item \strong{"logistic"}: Fits a logistic regression of outcomes on predictions;
+perfect calibration yields slope=1, intercept=0
+\item \strong{"windowed"}: Uses sliding windows across the prediction range for
+smooth calibration curves
+}
+}
 \examples{
 library(ggplot2)
 

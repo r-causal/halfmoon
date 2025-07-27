@@ -4,6 +4,15 @@
 #' smd package. This is a common measure of effect size for comparing group
 #' differences while accounting for variability.
 #'
+#' @details
+#' The standardized mean difference (SMD) is calculated as:
+#' \deqn{SMD = \frac{\bar{x}_1 - \bar{x}_0}{\sqrt{(s_1^2 + s_0^2)/2}}}
+#' where \eqn{\bar{x}_1} and \eqn{\bar{x}_0} are the means of the treatment and control
+#' groups, and \eqn{s_1^2} and \eqn{s_0^2} are their variances.
+#'
+#' In causal inference, SMD values of 0.1 or smaller are often considered
+#' indicative of good balance between treatment groups.
+#'
 #' @inheritParams balance_params
 #' @return A numeric value representing the standardized mean difference.
 #'   Positive values indicate the comparison group has a higher mean than
@@ -85,6 +94,19 @@ is_binary <- function(x) {
 #' Calculates the ratio of variances between two groups: var(comparison) / var(reference).
 #' For binary variables, uses the p*(1-p) variance formula. For continuous variables,
 #' uses Bessel's correction for weighted sample variance.
+#'
+#' @details
+#' The variance ratio compares the variability of a covariate between treatment groups.
+#' It is calculated as:
+#' \deqn{VR = \frac{s_1^2}{s_0^2}}
+#' where \eqn{s_1^2} and \eqn{s_0^2} are the variances of the treatment and control groups.
+#'
+#' For binary variables (0/1), variance is computed as \eqn{p(1-p)} where \eqn{p} is the
+#' proportion of 1s in each group. For continuous variables, the weighted sample variance
+#' is used with Bessel's correction when weights are provided.
+#'
+#' Values close to 1.0 indicate similar variability between groups, which is desirable
+#' for balance. Values substantially different from 1.0 suggest imbalanced variance.
 #'
 #' @inheritParams balance_params
 #' @return A numeric value representing the variance ratio. Values greater than 1
@@ -203,6 +225,21 @@ bal_vr <- function(
 #' functions (CDFs) between two groups. For binary variables, returns the absolute
 #' difference in proportions. For continuous variables, computes the maximum
 #' difference between empirical CDFs.
+#'
+#' @details
+#' The Kolmogorov-Smirnov statistic measures the maximum difference between
+#' empirical cumulative distribution functions of two groups:
+#' \deqn{KS = \max_x |F_1(x) - F_0(x)|}
+#' where \eqn{F_1(x)} and \eqn{F_0(x)} are the empirical CDFs of the treatment
+#' and control groups.
+#'
+#' For binary variables, this reduces to the absolute difference in proportions.
+#' For continuous variables, the statistic captures differences in the entire
+#' distribution shape, not just means or variances.
+#'
+#' The KS statistic ranges from 0 (identical distributions) to 1 (completely
+#' separate distributions). Smaller values indicate better distributional balance
+#' between groups.
 #'
 #' @inheritParams balance_params
 #' @return A numeric value representing the KS statistic. Values range from 0 to 1,

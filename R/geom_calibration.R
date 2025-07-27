@@ -683,6 +683,22 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' probabilities and observed binary outcomes. It supports three methods:
 #' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with [`check_calibration()`].
 #'
+#' @details
+#' This geom provides a ggplot2 layer for creating calibration plots with confidence
+#' intervals. The geom automatically computes calibration statistics using the
+#' specified method and renders appropriate geometric elements (points, lines, ribbons)
+#' to visualize the relationship between predicted and observed rates.
+#'
+#' The three methods offer different approaches to calibration assessment:
+#' \itemize{
+#'   \item **"breaks"**: Discrete binning approach, useful for understanding calibration
+#'     across prediction ranges with sufficient sample sizes
+#'   \item **"logistic"**: Regression-based approach that can include smoothing for
+#'     continuous calibration curves
+#'   \item **"windowed"**: Sliding window approach providing smooth curves without
+#'     requiring additional packages
+#' }
+#'
 #' @param mapping Aesthetic mapping (must supply `estimate` and `truth` if not inherited).
 #'   `estimate` should be propensity scores/predicted probabilities, `truth` should be treatment variable.
 #' @param data Data frame or tibble; if NULL, uses ggplot default.

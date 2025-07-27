@@ -38,6 +38,15 @@ Calculates the standardized mean difference between two groups using the
 smd package. This is a common measure of effect size for comparing group
 differences while accounting for variability.
 }
+\details{
+The standardized mean difference (SMD) is calculated as:
+\deqn{SMD = \frac{\bar{x}_1 - \bar{x}_0}{\sqrt{(s_1^2 + s_0^2)/2}}}
+where \eqn{\bar{x}_1} and \eqn{\bar{x}_0} are the means of the treatment and control
+groups, and \eqn{s_1^2} and \eqn{s_0^2} are their variances.
+
+In causal inference, SMD values of 0.1 or smaller are often considered
+indicative of good balance between treatment groups.
+}
 \examples{
 bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 
