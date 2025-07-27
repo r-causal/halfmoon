@@ -25,14 +25,14 @@
 #' @return A tibble with columns:
 #'   - For "breaks" method:
 #'     - `.bin`: integer bin index
-#'     - `fitted_mean`: mean predicted probability in bin
-#'     - `group_mean`: observed treatment rate in bin
+#'     - `predicted_rate`: mean predicted probability in bin
+#'     - `observed_rate`: observed treatment rate in bin
 #'     - `count`: number of observations in bin
-#'     - `lower`: lower bound of CI for `group_mean`
-#'     - `upper`: upper bound of CI for `group_mean`
+#'     - `lower`: lower bound of CI for `observed_rate`
+#'     - `upper`: upper bound of CI for `observed_rate`
 #'   - For "logistic" and "windowed" methods:
-#'     - `fitted_mean`: predicted probability values
-#'     - `group_mean`: calibrated outcome rate
+#'     - `predicted_rate`: predicted probability values
+#'     - `observed_rate`: calibrated outcome rate
 #'     - `lower`: lower bound of CI
 #'     - `upper`: upper bound of CI
 #' @examples
@@ -118,16 +118,16 @@ empty_calibration <- function(method = "breaks") {
   if (method == "breaks") {
     tibble::tibble(
       .bin = integer(0),
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       count = integer(0),
       lower = numeric(0),
       upper = numeric(0)
     )
   } else {
     tibble::tibble(
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       lower = numeric(0),
       upper = numeric(0)
     )
@@ -251,15 +251,15 @@ compute_calibration_breaks_imp <- function(
     ) |>
     dplyr::group_by(.bin) |>
     dplyr::summarise(
-      fitted_mean = mean(x_var, na.rm = TRUE),
-      group_mean = mean(y_var, na.rm = TRUE),
+      predicted_rate = mean(x_var, na.rm = TRUE),
+      observed_rate = mean(y_var, na.rm = TRUE),
       count = dplyr::n(),
       .groups = "drop"
     ) |>
     dplyr::arrange(.bin)
 
   n_total <- result$count
-  n_events <- round(result$group_mean * n_total)
+  n_events <- round(result$observed_rate * n_total)
 
   # Handle edge cases up front:
   # - total count must be positive
@@ -334,7 +334,7 @@ compute_calibration_breaks_imp <- function(
     edge_results <- purrr::map(
       edge_cases,
       ~ {
-        rate <- result$group_mean[.x]
+        rate <- result$observed_rate[.x]
         se <- sqrt(rate * (1 - rate) / n_total[.x])
         list(
           lower = max(0, rate - z_score * se),
@@ -384,8 +384,8 @@ compute_calibration_logistic_imp <- function(
   upper <- plogis(preds$fit + z_score * preds$se.fit)
 
   tibble::tibble(
-    fitted_mean = pred_seq,
-    group_mean = pred_probs,
+    predicted_rate = pred_seq,
+    observed_rate = pred_probs,
     lower = lower,
     upper = upper
   )
@@ -420,7 +420,7 @@ compute_calibration_windowed_imp <- function(
   if (length(valid_results) > 0) {
     sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
     event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
-    window_centers <- purrr::map_dbl(valid_results, ~ .x$fitted_mean)
+    window_centers <- purrr::map_dbl(valid_results, ~ .x$predicted_rate)
 
     small_cells <- sample_sizes < 10
     extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
@@ -445,16 +445,16 @@ compute_calibration_windowed_imp <- function(
   # Return only valid windows
   if (length(valid_results) > 0) {
     tibble::tibble(
-      fitted_mean = purrr::map_dbl(valid_results, ~ .x$fitted_mean),
-      group_mean = purrr::map_dbl(valid_results, ~ .x$group_mean),
+      predicted_rate = purrr::map_dbl(valid_results, ~ .x$predicted_rate),
+      observed_rate = purrr::map_dbl(valid_results, ~ .x$observed_rate),
       lower = purrr::map_dbl(valid_results, ~ .x$lower),
       upper = purrr::map_dbl(valid_results, ~ .x$upper)
     )
   } else {
     # Return empty data frame with correct structure
     tibble::tibble(
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       lower = numeric(0),
       upper = numeric(0)
     )
@@ -495,8 +495,8 @@ calculate_window_statistics <- function(
               )
             })
             list(
-              fitted_mean = .x,
-              group_mean = event_rate,
+              predicted_rate = .x,
+              observed_rate = event_rate,
               lower = prop_test$conf.int[1],
               upper = prop_test$conf.int[2],
               valid = TRUE,
@@ -508,8 +508,8 @@ calculate_window_statistics <- function(
             # Fallback to normal approximation
             se <- sqrt(event_rate * (1 - event_rate) / n_total)
             list(
-              fitted_mean = .x,
-              group_mean = event_rate,
+              predicted_rate = .x,
+              observed_rate = event_rate,
               lower = max(0, event_rate - z_score * se),
               upper = min(1, event_rate + z_score * se),
               valid = TRUE,
@@ -522,8 +522,8 @@ calculate_window_statistics <- function(
         # For edge cases, use normal approximation
         se <- sqrt(event_rate * (1 - event_rate) / n_total)
         list(
-          fitted_mean = .x,
-          group_mean = event_rate,
+          predicted_rate = .x,
+          observed_rate = event_rate,
           lower = max(0, event_rate - z_score * se),
           upper = min(1, event_rate + z_score * se),
           valid = TRUE,
@@ -544,8 +544,8 @@ StatCalibration <- ggplot2::ggproto(
   ggplot2::Stat,
   required_aes = c("estimate", "truth"),
   default_aes = ggplot2::aes(
-    x = ggplot2::after_stat(fitted_mean),
-    y = ggplot2::after_stat(group_mean),
+    x = ggplot2::after_stat(predicted_rate),
+    y = ggplot2::after_stat(observed_rate),
     ymin = ggplot2::after_stat(lower),
     ymax = ggplot2::after_stat(upper),
     alpha = 0.3
@@ -691,8 +691,8 @@ compute_calibration_for_group <- function(
 
   if (nrow(df) == 0) {
     return(data.frame(
-      fitted_mean = numeric(0),
-      group_mean = numeric(0),
+      predicted_rate = numeric(0),
+      observed_rate = numeric(0),
       lower = numeric(0),
       upper = numeric(0),
       PANEL = data$PANEL[1],
@@ -716,8 +716,8 @@ compute_calibration_for_group <- function(
 
   # Return with after_stat names
   result <- data.frame(
-    fitted_mean = calibration_result$fitted_mean,
-    group_mean = calibration_result$group_mean,
+    predicted_rate = calibration_result$predicted_rate,
+    observed_rate = calibration_result$observed_rate,
     lower = calibration_result$lower,
     upper = calibration_result$upper
   )

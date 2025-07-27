@@ -17,12 +17,12 @@ test_that("check_calibration works with basic input", {
 
   expect_s3_class(result, "tbl_df")
   expect_true(all(
-    c(".bin", "fitted_mean", "group_mean", "count", "lower", "upper") %in%
+    c(".bin", "predicted_rate", "observed_rate", "count", "lower", "upper") %in%
       names(result)
   ))
   expect_true(nrow(result) > 0)
-  expect_true(all(result$fitted_mean >= 0 & result$fitted_mean <= 1))
-  expect_true(all(result$group_mean >= 0 & result$group_mean <= 1))
+  expect_true(all(result$predicted_rate >= 0 & result$predicted_rate <= 1))
+  expect_true(all(result$observed_rate >= 0 & result$observed_rate <= 1))
   expect_true(all(result$count > 0))
 })
 
@@ -126,19 +126,19 @@ test_that("check_calibration handles edge cases", {
   expect_s3_class(result_empty, "tbl_df")
   expect_equal(nrow(result_empty), 0)
 
-  # Test all zeros (treatment level 0, so group_mean should be 1)
+  # Test all zeros (treatment level 0, so observed_rate should be 1)
   all_zeros <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
   result_zeros <- check_calibration(all_zeros, pred, obs)
 
   expect_s3_class(result_zeros, "tbl_df")
-  expect_true(all(result_zeros$group_mean == 1)) # All obs are 0, which becomes the treatment level
+  expect_true(all(result_zeros$observed_rate == 1)) # All obs are 0, which becomes the treatment level
 
-  # Test all ones (treatment level 1, so group_mean should be 1)
+  # Test all ones (treatment level 1, so observed_rate should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
   result_ones <- check_calibration(all_ones, pred, obs)
 
   expect_s3_class(result_ones, "tbl_df")
-  expect_true(all(result_ones$group_mean == 1)) # All obs are 1, which becomes the treatment level
+  expect_true(all(result_ones$observed_rate == 1)) # All obs are 1, which becomes the treatment level
 })
 
 test_that("check_calibration handles NA values", {
@@ -192,19 +192,20 @@ test_that("check_calibration works with logistic method", {
 
   expect_s3_class(result_logistic, "tbl_df")
   expect_true(all(
-    c("fitted_mean", "group_mean", "lower", "upper") %in% names(result_logistic)
+    c("predicted_rate", "observed_rate", "lower", "upper") %in%
+      names(result_logistic)
   ))
   expect_equal(nrow(result_logistic), 100) # Default 100 prediction points
   expect_true(all(
-    result_logistic$fitted_mean >= 0 & result_logistic$fitted_mean <= 1
+    result_logistic$predicted_rate >= 0 & result_logistic$predicted_rate <= 1
   ))
   expect_true(all(
-    result_logistic$group_mean >= 0 & result_logistic$group_mean <= 1
+    result_logistic$observed_rate >= 0 & result_logistic$observed_rate <= 1
   ))
   expect_true(all(result_logistic$lower >= 0 & result_logistic$lower <= 1))
   expect_true(all(result_logistic$upper >= 0 & result_logistic$upper <= 1))
-  expect_true(all(result_logistic$lower <= result_logistic$group_mean))
-  expect_true(all(result_logistic$upper >= result_logistic$group_mean))
+  expect_true(all(result_logistic$lower <= result_logistic$observed_rate))
+  expect_true(all(result_logistic$upper >= result_logistic$observed_rate))
 
   # Test logistic with smoothing
   result_smooth <- check_calibration(
@@ -217,12 +218,12 @@ test_that("check_calibration works with logistic method", {
 
   expect_s3_class(result_smooth, "tbl_df")
   expect_equal(nrow(result_smooth), 100)
-  expect_true(all(result_smooth$lower <= result_smooth$group_mean))
-  expect_true(all(result_smooth$upper >= result_smooth$group_mean))
+  expect_true(all(result_smooth$lower <= result_smooth$observed_rate))
+  expect_true(all(result_smooth$upper >= result_smooth$observed_rate))
 
   # Test that predictions span the range of input data
-  expect_equal(min(result_logistic$fitted_mean), min(test_data$pred))
-  expect_equal(max(result_logistic$fitted_mean), max(test_data$pred))
+  expect_equal(min(result_logistic$predicted_rate), min(test_data$pred))
+  expect_equal(max(result_logistic$predicted_rate), max(test_data$pred))
 })
 
 test_that("check_calibration logistic method handles different confidence levels", {
@@ -300,19 +301,20 @@ test_that("check_calibration works with windowed method", {
 
   expect_s3_class(result_windowed, "tbl_df")
   expect_true(all(
-    c("fitted_mean", "group_mean", "lower", "upper") %in% names(result_windowed)
+    c("predicted_rate", "observed_rate", "lower", "upper") %in%
+      names(result_windowed)
   ))
   expect_true(nrow(result_windowed) > 0)
   expect_true(all(
-    result_windowed$fitted_mean >= 0 & result_windowed$fitted_mean <= 1
+    result_windowed$predicted_rate >= 0 & result_windowed$predicted_rate <= 1
   ))
   expect_true(all(
-    result_windowed$group_mean >= 0 & result_windowed$group_mean <= 1
+    result_windowed$observed_rate >= 0 & result_windowed$observed_rate <= 1
   ))
   expect_true(all(result_windowed$lower >= 0 & result_windowed$lower <= 1))
   expect_true(all(result_windowed$upper >= 0 & result_windowed$upper <= 1))
-  expect_true(all(result_windowed$lower <= result_windowed$group_mean))
-  expect_true(all(result_windowed$upper >= result_windowed$group_mean))
+  expect_true(all(result_windowed$lower <= result_windowed$observed_rate))
+  expect_true(all(result_windowed$upper >= result_windowed$observed_rate))
 
   # Test with different window sizes
   result_small_window <- check_calibration(
@@ -328,7 +330,7 @@ test_that("check_calibration works with windowed method", {
 
   # Test window centers
   expected_centers <- seq(0, 1, by = 0.1)
-  expect_equal(result_windowed$fitted_mean, expected_centers)
+  expect_equal(result_windowed$predicted_rate, expected_centers)
 })
 
 test_that("check_calibration windowed method handles edge cases", {
@@ -384,9 +386,9 @@ test_that("check_calibration windowed method respects window boundaries", {
 
   # Windows at 0 and 1 should have no data (depending on window size)
   # But windows around 0.5 should have data
-  center_window <- result[result$fitted_mean == 0.5, ]
+  center_window <- result[result$predicted_rate == 0.5, ]
   expect_equal(nrow(center_window), 1)
-  expect_true(center_window$group_mean >= 0)
+  expect_true(center_window$observed_rate >= 0)
 })
 
 test_that("check_calibration method parameter validation", {
@@ -433,7 +435,7 @@ test_that("check_calibration handles all zeros and all ones", {
   set.seed(123)
 
   # All zeros - when treatment_level is not specified, 0 becomes the treatment level
-  # so group_mean will be 1 (all observations match treatment level)
+  # so observed_rate will be 1 (all observations match treatment level)
   zeros_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = rep(0, 50)
@@ -447,8 +449,8 @@ test_that("check_calibration handles all zeros and all ones", {
     obs,
     method = "breaks"
   )
-  # All values are 0 and treatment_level=0, so group_mean=1
-  expect_true(all(result_breaks_zeros_default$group_mean == 1))
+  # All values are 0 and treatment_level=0, so observed_rate=1
+  expect_true(all(result_breaks_zeros_default$observed_rate == 1))
 
   # Now test with mixed data where 1 is the treatment level
   mixed_data <- data.frame(
@@ -464,9 +466,11 @@ test_that("check_calibration handles all zeros and all ones", {
     treatment_level = 1
   )
   # This should give us meaningful calibration metrics
-  expect_true(all(result_mixed$group_mean >= 0 & result_mixed$group_mean <= 1))
+  expect_true(all(
+    result_mixed$observed_rate >= 0 & result_mixed$observed_rate <= 1
+  ))
 
-  # All ones - default treatment level will be 1, so group_mean = 1
+  # All ones - default treatment level will be 1, so observed_rate = 1
   ones_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = rep(1, 50)
@@ -478,7 +482,7 @@ test_that("check_calibration handles all zeros and all ones", {
     obs,
     method = "breaks"
   )
-  expect_true(all(result_breaks_ones$group_mean == 1))
+  expect_true(all(result_breaks_ones$observed_rate == 1))
 
   result_windowed_ones <- check_calibration(
     ones_data,
@@ -486,7 +490,7 @@ test_that("check_calibration handles all zeros and all ones", {
     obs,
     method = "windowed"
   )
-  expect_true(all(result_windowed_ones$group_mean == 1))
+  expect_true(all(result_windowed_ones$observed_rate == 1))
 
   # Test the default behavior with all zeros
   result_default_zeros <- check_calibration(
@@ -495,8 +499,8 @@ test_that("check_calibration handles all zeros and all ones", {
     obs,
     method = "breaks"
   )
-  # With default treatment_level, all zeros means treatment_level=0, so group_mean=1
-  expect_true(all(result_default_zeros$group_mean == 1))
+  # With default treatment_level, all zeros means treatment_level=0, so observed_rate=1
+  expect_true(all(result_default_zeros$observed_rate == 1))
 })
 
 test_that("check_calibration handles NA values correctly", {
@@ -546,7 +550,7 @@ test_that("check_calibration handles factor treatment variables", {
   )
 
   expect_s3_class(result, "tbl_df")
-  expect_true(all(result$group_mean >= 0 & result$group_mean <= 1))
+  expect_true(all(result$observed_rate >= 0 & result$observed_rate <= 1))
 })
 
 test_that("check_calibration validates input parameters", {
@@ -602,14 +606,16 @@ test_that("check_calibration produces consistent results across methods", {
     window_size = 0.2
   )
 
-  # All methods should show reasonable calibration (group_mean ≈ fitted_mean)
+  # All methods should show reasonable calibration (observed_rate ≈ predicted_rate)
   # For breaks method
-  breaks_diff <- mean(abs(result_breaks$group_mean - result_breaks$fitted_mean))
+  breaks_diff <- mean(abs(
+    result_breaks$observed_rate - result_breaks$predicted_rate
+  ))
   expect_true(breaks_diff < 0.2) # Allow some deviation
 
   # For windowed method
   windowed_diff <- mean(abs(
-    result_windowed$group_mean - result_windowed$fitted_mean
+    result_windowed$observed_rate - result_windowed$predicted_rate
   ))
   expect_true(windowed_diff < 0.2)
 })
@@ -1060,9 +1066,13 @@ test_that("k parameter works in check_calibration", {
 
   # Results should be different (different smoothness)
   # Can't test exact values but can verify structure
-  expect_true(all(result_k5$group_mean >= 0 & result_k5$group_mean <= 1))
-  expect_true(all(result_k10$group_mean >= 0 & result_k10$group_mean <= 1))
-  expect_true(all(result_k20$group_mean >= 0 & result_k20$group_mean <= 1))
+  expect_true(all(result_k5$observed_rate >= 0 & result_k5$observed_rate <= 1))
+  expect_true(all(
+    result_k10$observed_rate >= 0 & result_k10$observed_rate <= 1
+  ))
+  expect_true(all(
+    result_k20$observed_rate >= 0 & result_k20$observed_rate <= 1
+  ))
 })
 
 test_that("k parameter is ignored when smooth = FALSE", {
@@ -1096,7 +1106,7 @@ test_that("k parameter is ignored when smooth = FALSE", {
   )
 
   # Results should be identical
-  expect_equal(result1$group_mean, result2$group_mean)
+  expect_equal(result1$observed_rate, result2$observed_rate)
   expect_equal(result1$lower, result2$lower)
   expect_equal(result1$upper, result2$upper)
 })
@@ -1130,7 +1140,7 @@ test_that("k parameter is ignored for non-logistic methods", {
   )
 
   # Results should be identical
-  expect_equal(result1$group_mean, result2$group_mean)
+  expect_equal(result1$observed_rate, result2$observed_rate)
 
   # k should be ignored for windowed method
   result3 <- check_calibration(
@@ -1150,7 +1160,7 @@ test_that("k parameter is ignored for non-logistic methods", {
   )
 
   # Results should be identical
-  expect_equal(result3$group_mean, result4$group_mean)
+  expect_equal(result3$observed_rate, result4$observed_rate)
 })
 
 test_that("k parameter works in geom_calibration", {
