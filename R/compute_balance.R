@@ -617,7 +617,7 @@ bal_energy <- function(
   }
 
   # Identify binary variables (checking each column)
-  binary_vars <- purrr::map_lgl(as.data.frame(covariates), function(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(covariates), \(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
@@ -786,7 +786,7 @@ bal_energy_between_group <- function(
     # Multi-category case
     nn_matrix <- purrr::map(
       utils::combn(seq_len(n_groups), 2, simplify = FALSE),
-      function(pair) {
+      \(pair) {
         diff_vec <- normalized_indicators[, pair[1]] -
           normalized_indicators[, pair[2]]
         tcrossprod(diff_vec)
@@ -827,7 +827,7 @@ bal_energy_ate <- function(
   if (use_improved && n_groups > 1) {
     pairwise_matrices <- purrr::map(
       utils::combn(seq_len(n_groups), 2, simplify = FALSE),
-      function(pair) {
+      \(pair) {
         diff_vec <- normalized_indicators[, pair[1]] -
           normalized_indicators[, pair[2]]
         tcrossprod(diff_vec)
@@ -933,7 +933,7 @@ bal_energy_continuous <- function(
   weights_norm <- weights / sum(weights)
 
   # Identify binary variables
-  binary_vars <- purrr::map_lgl(as.data.frame(covariates), function(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(covariates), \(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
