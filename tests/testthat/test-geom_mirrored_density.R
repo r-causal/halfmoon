@@ -173,3 +173,159 @@ test_that("geom_mirrored_density preserves group structure correctly", {
   expect_true(all(group1_data$density <= 0))
   expect_true(all(group2_data$density >= 0))
 })
+
+test_that("geom_mirrored_density works with fill aesthetic", {
+  # Basic fill by group
+  p_fill <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk),
+      bw = 0.02
+    ) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("fill by group", p_fill)
+})
+
+test_that("geom_mirrored_density works with fill and alpha", {
+  # Fill with transparency
+  p_alpha <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk),
+      bw = 0.02,
+      alpha = 0.7
+    ) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("fill with alpha", p_alpha)
+})
+
+test_that("geom_mirrored_density works with custom fill colors", {
+  # Custom fill scale
+  p_custom_fill <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk),
+      bw = 0.02
+    ) +
+    scale_fill_manual(values = c("0" = "#2166ac", "1" = "#b2182b")) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("custom fill colors", p_custom_fill)
+})
+
+test_that("geom_mirrored_density works with fill and color aesthetics", {
+  # Both fill and color
+  p_fill_color <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk, color = qsmk),
+      bw = 0.02,
+      alpha = 0.5,
+      linewidth = 1
+    ) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("fill and color", p_fill_color)
+})
+
+test_that("geom_mirrored_density works with position adjustments", {
+  # Test with position dodge
+  p_position <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk),
+      bw = 0.02,
+      position = "identity",
+      alpha = 0.8
+    ) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("position identity", p_position)
+})
+
+test_that("geom_mirrored_density works with multiple layers and fill", {
+  # Multiple layers with different fills
+  p_multi_fill <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk),
+      bw = 0.02,
+      fill = "gray80"
+    ) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk, weight = w_ate),
+      bw = 0.02,
+      alpha = 0.6
+    ) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("multiple layers with fill", p_multi_fill)
+})
+
+test_that("geom_mirrored_density handles fill NA correctly", {
+  # No fill (outline only)
+  p_no_fill <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, color = qsmk),
+      bw = 0.02,
+      fill = NA,
+      linewidth = 1.2
+    ) +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("no fill outline only", p_no_fill)
+})
+
+test_that("geom_mirrored_density works with theme modifications", {
+  # Fill with theme adjustments
+  p_theme <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk),
+      bw = 0.02
+    ) +
+    scale_y_continuous(labels = abs) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+
+  expect_doppelganger("fill with theme", p_theme)
+})
+
+test_that("geom_mirrored_density works with gradient fills", {
+  # Use factor levels for gradient effect
+  nhefs_gradient <- nhefs_weights
+  nhefs_gradient$treatment_group <- factor(
+    paste0(nhefs_gradient$qsmk, "_", nhefs_gradient$sex),
+    levels = c("0_Male", "0_Female", "1_Male", "1_Female")
+  )
+
+  p_gradient <- ggplot(nhefs_gradient, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = treatment_group),
+      bw = 0.02,
+      alpha = 0.7
+    ) +
+    scale_fill_brewer(palette = "RdBu") +
+    scale_y_continuous(labels = abs)
+
+  expect_doppelganger("gradient fills", p_gradient)
+})
+
+test_that("geom_mirrored_density fill behavior matches documentation", {
+  # Test that fill correctly follows group structure
+  p <- ggplot(nhefs_weights, aes(.fitted)) +
+    geom_mirror_density(
+      aes(group = qsmk, fill = qsmk),
+      bw = 0.02
+    )
+
+  built <- ggplot_build(p)
+  layer_data <- built$data[[1]]
+
+  # Check that each group has the correct fill
+  unique_fills <- unique(layer_data[, c("group", "fill")])
+  expect_equal(nrow(unique_fills), 2)
+
+  # Verify fills are properly assigned
+  group1_fill <- unique(layer_data[layer_data$group == 1, "fill"])
+  group2_fill <- unique(layer_data[layer_data$group == 2, "fill"])
+
+  expect_length(group1_fill, 1)
+  expect_length(group2_fill, 1)
+  expect_false(group1_fill == group2_fill)
+})
