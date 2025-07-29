@@ -22,6 +22,7 @@
 <url><loc>https://r-causal.github.io/halfmoon/reference/ess.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_calibration.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_ecdf.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/geom_mirror_density.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_mirror_histogram.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_qq2.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/geom_roc.html</loc></url>
@@ -30,6 +31,7 @@
 <url><loc>https://r-causal.github.io/halfmoon/reference/index.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/nhefs_weights.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/plot_calibration.html</loc></url>
+<url><loc>https://r-causal.github.io/halfmoon/reference/plot_mirror_distributions.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/plot_qq.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/plot_roc_auc.html</loc></url>
 <url><loc>https://r-causal.github.io/halfmoon/reference/plot_roc_curve.html</loc></url>
