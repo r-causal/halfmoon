@@ -5,8 +5,12 @@ suppress_calibration_warnings <- function(expr) {
   withCallingHandlers(
     expr,
     warning = function(w) {
-      if (grepl("Small sample sizes or extreme proportions detected", 
-                conditionMessage(w))) {
+      if (
+        grepl(
+          "Small sample sizes or extreme proportions detected",
+          conditionMessage(w)
+        )
+      ) {
         invokeRestart("muffleWarning")
       }
     }

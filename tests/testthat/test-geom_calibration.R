@@ -13,7 +13,11 @@ test_that("check_calibration works with basic input", {
   )
 
   # Test basic functionality
-  result <- suppress_calibration_warnings(check_calibration(test_data, pred, obs))
+  result <- suppress_calibration_warnings(check_calibration(
+    test_data,
+    pred,
+    obs
+  ))
 
   expect_s3_class(result, "tbl_df")
   expect_true(all(
@@ -39,7 +43,11 @@ test_that("check_calibration works with quoted column names", {
   )
 
   # Test with quoted column names
-  result <- suppress_calibration_warnings(check_calibration(test_data, pred, obs))
+  result <- suppress_calibration_warnings(check_calibration(
+    test_data,
+    pred,
+    obs
+  ))
 
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
@@ -57,7 +65,11 @@ test_that("check_calibration works with unquoted column names", {
     obs = actual
   )
 
-  result <- suppress_calibration_warnings(check_calibration(test_data, "pred", "obs"))
+  result <- suppress_calibration_warnings(check_calibration(
+    test_data,
+    "pred",
+    "obs"
+  ))
 
   expect_s3_class(result, "tbl_df")
   expect_true(nrow(result) > 0)
@@ -128,14 +140,22 @@ test_that("check_calibration handles edge cases", {
 
   # Test all zeros (treatment level 0, so observed_rate should be 1)
   all_zeros <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
-  result_zeros <- suppress_calibration_warnings(check_calibration(all_zeros, pred, obs))
+  result_zeros <- suppress_calibration_warnings(check_calibration(
+    all_zeros,
+    pred,
+    obs
+  ))
 
   expect_s3_class(result_zeros, "tbl_df")
   expect_true(all(result_zeros$observed_rate == 1)) # All obs are 0, which becomes the treatment level
 
   # Test all ones (treatment level 1, so observed_rate should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
-  result_ones <- suppress_calibration_warnings(check_calibration(all_ones, pred, obs))
+  result_ones <- suppress_calibration_warnings(check_calibration(
+    all_ones,
+    pred,
+    obs
+  ))
 
   expect_s3_class(result_ones, "tbl_df")
   expect_true(all(result_ones$observed_rate == 1)) # All obs are 1, which becomes the treatment level
@@ -158,13 +178,23 @@ test_that("check_calibration handles NA values", {
   )
 
   # Test with na.rm = TRUE
-  result_na_rm <- suppress_calibration_warnings(check_calibration(test_data, pred, obs, na.rm = TRUE))
+  result_na_rm <- suppress_calibration_warnings(check_calibration(
+    test_data,
+    pred,
+    obs,
+    na.rm = TRUE
+  ))
 
   expect_s3_class(result_na_rm, "tbl_df")
   expect_true(nrow(result_na_rm) > 0)
 
   # Test with na.rm = FALSE (should have fewer complete cases)
-  result_na_keep <- suppress_calibration_warnings(check_calibration(test_data, pred, obs, na.rm = FALSE))
+  result_na_keep <- suppress_calibration_warnings(check_calibration(
+    test_data,
+    pred,
+    obs,
+    na.rm = FALSE
+  ))
 
   expect_s3_class(result_na_keep, "tbl_df")
 })
@@ -962,7 +992,7 @@ test_that("geom_calibration errors with invalid method", {
 
   expect_warning(
     expect_warning(
-      ggplot_build(p), 
+      ggplot_build(p),
       "Invalid calibration method: invalid_method",
       fixed = TRUE
     ),

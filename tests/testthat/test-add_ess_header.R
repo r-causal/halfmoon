@@ -6,7 +6,11 @@ suppressPackageStartupMessages(library(dplyr))
 svy <- svydesign(~1, data = nhefs_weights, weights = ~w_ate)
 # Suppress warnings from external packages (gtsummary/survey/cardx partial argument matches)
 tbl <- suppressWarnings(tbl_svysummary(svy, include = c(age, sex, smokeyrs)))
-tbl_by <- suppressWarnings(tbl_svysummary(svy, by = qsmk, include = c(age, sex, smokeyrs)))
+tbl_by <- suppressWarnings(tbl_svysummary(
+  svy,
+  by = qsmk,
+  include = c(age, sex, smokeyrs)
+))
 
 # Tests --------------------------------------------------------------------
 

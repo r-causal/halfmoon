@@ -165,6 +165,7 @@ ggplot(
 
 Other ggplot2 functions: 
 \code{\link{geom_calibration}()},
+\code{\link{geom_mirror_density}()},
 \code{\link{geom_mirror_histogram}()},
 \code{\link{geom_qq2}()},
 \code{\link{geom_roc}()}
