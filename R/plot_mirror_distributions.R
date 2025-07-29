@@ -1,12 +1,12 @@
-#' Create mirrored distribution plots
+#' Create mirror distribution plots
 #'
-#' Create mirrored distribution plots (histograms or density plots) to compare
+#' Create mirror distribution plots (histograms or density plots) to compare
 #' the distribution of variables between treatment groups before and after
 #' weighting. This function helps assess covariate balance by visualizing
 #' the distributions side-by-side with one group mirrored below the axis.
 #'
 #' @details
-#' Mirrored distribution plots display the distribution of one group above the
+#' Mirror distribution plots display the distribution of one group above the
 #' x-axis and the other group below (mirrored). This makes it easy to compare
 #' distributions and assess balance. The function supports both histogram and
 #' density plot types.
@@ -48,19 +48,19 @@
 #' library(ggplot2)
 #'
 #' # Basic histogram (unweighted)
-#' plot_mirrored_distributions(nhefs_weights, age, qsmk)
+#' plot_mirror_distributions(nhefs_weights, age, qsmk)
 #'
 #' # Density plot instead of histogram
-#' plot_mirrored_distributions(nhefs_weights, age, qsmk, type = "density")
+#' plot_mirror_distributions(nhefs_weights, age, qsmk, type = "density")
 #'
 #' # With weighting
-#' plot_mirrored_distributions(nhefs_weights, age, qsmk, .wts = w_ate)
+#' plot_mirror_distributions(nhefs_weights, age, qsmk, .wts = w_ate)
 #'
 #' # Compare multiple weighting schemes
-#' plot_mirrored_distributions(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+#' plot_mirror_distributions(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
 #'
 #' # Customize appearance
-#' plot_mirrored_distributions(
+#' plot_mirror_distributions(
 #'   nhefs_weights, age, qsmk,
 #'   .wts = w_ate,
 #'   type = "density",
@@ -68,14 +68,14 @@
 #' )
 #'
 #' # Without unweighted comparison
-#' plot_mirrored_distributions(
+#' plot_mirror_distributions(
 #'   nhefs_weights, age, qsmk,
 #'   .wts = w_ate,
 #'   include_unweighted = FALSE
 #' )
 #'
 #' @export
-plot_mirrored_distributions <- function(
+plot_mirror_distributions <- function(
   .data,
   .var,
   .group,
