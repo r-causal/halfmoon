@@ -6,7 +6,7 @@
 \usage{
 plot_roc_curve(
   .data,
-  linewidth = 1,
+  linewidth = 0.5,
   diagonal_color = "gray50",
   diagonal_linetype = "dashed"
 )
