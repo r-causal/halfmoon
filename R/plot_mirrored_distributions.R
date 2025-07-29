@@ -16,10 +16,10 @@
 #' by providing multiple weight variables.
 #'
 #' @param .data A data frame containing the variables.
-#' @param .var The variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
-#' @param .group Column name of treatment/group variable. Can be unquoted (e.g., `qsmk`)
-#'   or quoted (e.g., `"qsmk"`). Must have exactly 2 levels.
-#' @param .wts Optional weighting variable(s). Can be unquoted variable names,
+#' @param .var The variable to plot. Supports tidyselect syntax. Can be unquoted.
+#' @param .group Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
+#'   Must have exactly 2 levels.
+#' @param .wts Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
 #' @param type Character; type of plot - "histogram" or "density". Default is "histogram".

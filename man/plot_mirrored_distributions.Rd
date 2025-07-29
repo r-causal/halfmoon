@@ -23,12 +23,12 @@ plot_mirrored_distributions(
 \arguments{
 \item{.data}{A data frame containing the variables.}
 
-\item{.var}{Variable to plot. Can be unquoted (e.g., \code{age}) or quoted (e.g., \code{"age"}).}
+\item{.var}{The variable to plot. Supports tidyselect syntax. Can be unquoted.}
 
-\item{.group}{Column name of treatment/group variable. Can be unquoted (e.g., \code{qsmk})
-or quoted (e.g., \code{"qsmk"}). Must have exactly 2 levels.}
+\item{.group}{Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
+Must have exactly 2 levels.}
 
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names,
+\item{.wts}{Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 
