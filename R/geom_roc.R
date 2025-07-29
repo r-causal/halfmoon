@@ -20,7 +20,8 @@
 #' # Basic usage
 #' library(ggplot2)
 #' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
-#'   geom_roc()
+#'   geom_roc() +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
 #' # With grouping by weight
 #' long_data <- tidyr::pivot_longer(
@@ -31,7 +32,8 @@
 #' )
 #'
 #' ggplot(long_data, aes(estimate = .fitted, truth = qsmk, weight = weight)) +
-#'   geom_roc(aes(color = weight_type))
+#'   geom_roc(aes(color = weight_type)) +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
 #' @export
 geom_roc <- function(
