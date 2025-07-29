@@ -16,13 +16,13 @@
 #' by providing multiple weight variables.
 #'
 #' @param .data A data frame containing the variables.
-#' @param .var Variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
+#' @param .var The variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
 #' @param .group Column name of treatment/group variable. Can be unquoted (e.g., `qsmk`)
 #'   or quoted (e.g., `"qsmk"`). Must have exactly 2 levels.
 #' @param .wts Optional weighting variable(s). Can be unquoted variable names,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
-#' @param type Character; type of plot - "histogram" or "density". Default is "density".
+#' @param type Character; type of plot - "histogram" or "density". Default is "histogram".
 #' @param mirror_axis Character; which axis to mirror - "y" (default) or "x".
 #' @param bins Integer; number of bins for histogram. Only used when type = "histogram".
 #' @param binwidth Numeric; width of bins for histogram. Only used when type = "histogram".
@@ -47,11 +47,11 @@
 #' @examples
 #' library(ggplot2)
 #'
-#' # Basic density plot (unweighted)
+#' # Basic histogram (unweighted)
 #' plot_mirrored_distributions(nhefs_weights, age, qsmk)
 #'
-#' # Histogram instead of density
-#' plot_mirrored_distributions(nhefs_weights, age, qsmk, type = "histogram", bins = 30)
+#' # Density plot instead of histogram
+#' plot_mirrored_distributions(nhefs_weights, age, qsmk, type = "density")
 #'
 #' # With weighting
 #' plot_mirrored_distributions(nhefs_weights, age, qsmk, .wts = w_ate)
@@ -80,7 +80,7 @@ plot_mirrored_distributions <- function(
   .var,
   .group,
   .wts = NULL,
-  type = c("density", "histogram"),
+  type = c("histogram", "density"),
   mirror_axis = "y",
   bins = NULL,
   binwidth = NULL,
@@ -222,7 +222,7 @@ plot_mirrored_distributions <- function(
     ggplot2::scale_y_continuous(labels = abs) +
     ggplot2::labs(
       x = var_name,
-      y = ifelse(type == "density", "Density", "Count")
+      y = ifelse(type == "histogram", "Count", "Density")
     ) +
     ggplot2::theme(
       legend.position = "bottom"

@@ -9,7 +9,7 @@ plot_mirrored_distributions(
   .var,
   .group,
   .wts = NULL,
-  type = c("density", "histogram"),
+  type = c("histogram", "density"),
   mirror_axis = "y",
   bins = NULL,
   binwidth = NULL,
@@ -32,7 +32,7 @@ or quoted (e.g., \code{"qsmk"}). Must have exactly 2 levels.}
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 
-\item{type}{Character; type of plot - "histogram" or "density". Default is "density".}
+\item{type}{Character; type of plot - "histogram" or "density". Default is "histogram".}
 
 \item{mirror_axis}{Character; which axis to mirror - "y" (default) or "x".}
 
@@ -76,11 +76,11 @@ by providing multiple weight variables.
 \examples{
 library(ggplot2)
 
-# Basic density plot (unweighted)
+# Basic histogram (unweighted)
 plot_mirrored_distributions(nhefs_weights, age, qsmk)
 
-# Histogram instead of density
-plot_mirrored_distributions(nhefs_weights, age, qsmk, type = "histogram", bins = 30)
+# Density plot instead of histogram
+plot_mirrored_distributions(nhefs_weights, age, qsmk, type = "density")
 
 # With weighting
 plot_mirrored_distributions(nhefs_weights, age, qsmk, .wts = w_ate)

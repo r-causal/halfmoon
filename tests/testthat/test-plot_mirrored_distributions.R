@@ -2,19 +2,18 @@ library(ggplot2)
 
 test_that("plot_mirrored_distributions works with density plots", {
   # Basic density plot
-  p_density <- plot_mirrored_distributions(nhefs_weights, age, qsmk)
+  p_density <- plot_mirrored_distributions(nhefs_weights, age, qsmk, type = "density")
 
   expect_s3_class(p_density, "ggplot")
   expect_doppelganger("basic density plot", p_density)
 })
 
 test_that("plot_mirrored_distributions works with histograms", {
-  # Basic histogram
+  # Basic histogram (default)
   p_hist <- plot_mirrored_distributions(
     nhefs_weights,
     age,
     qsmk,
-    type = "histogram",
     bins = 20
   )
 
@@ -23,28 +22,28 @@ test_that("plot_mirrored_distributions works with histograms", {
 })
 
 test_that("plot_mirrored_distributions works with weights", {
-  # Weighted density
+  # Weighted histogram (default)
   p_weighted <- plot_mirrored_distributions(
     nhefs_weights,
     age,
     qsmk,
-    .wts = w_ate
+    .wts = w_ate,
+    bins = 20
   )
 
   expect_s3_class(p_weighted, "ggplot")
-  expect_doppelganger("weighted density", p_weighted)
+  expect_doppelganger("weighted histogram default", p_weighted)
 
-  # Weighted histogram
-  p_weighted_hist <- plot_mirrored_distributions(
+  # Weighted density
+  p_weighted_density <- plot_mirrored_distributions(
     nhefs_weights,
     age,
     qsmk,
     .wts = w_ate,
-    type = "histogram",
-    bins = 20
+    type = "density"
   )
 
-  expect_doppelganger("weighted histogram", p_weighted_hist)
+  expect_doppelganger("weighted density", p_weighted_density)
 })
 
 test_that("plot_mirrored_distributions works with multiple weights", {
@@ -53,7 +52,8 @@ test_that("plot_mirrored_distributions works with multiple weights", {
     nhefs_weights,
     age,
     qsmk,
-    .wts = c(w_ate, w_att)
+    .wts = c(w_ate, w_att),
+    bins = 20
   )
 
   expect_s3_class(p_multi, "ggplot")
@@ -67,7 +67,8 @@ test_that("plot_mirrored_distributions works without unweighted", {
     age,
     qsmk,
     .wts = w_ate,
-    include_unweighted = FALSE
+    include_unweighted = FALSE,
+    bins = 20
   )
 
   expect_s3_class(p_no_unweighted, "ggplot")
@@ -75,11 +76,12 @@ test_that("plot_mirrored_distributions works without unweighted", {
 })
 
 test_that("plot_mirrored_distributions handles custom parameters", {
-  # Custom bandwidth
+  # Custom bandwidth (density)
   p_custom_bw <- plot_mirrored_distributions(
     nhefs_weights,
     age,
     qsmk,
+    type = "density",
     bw = 5,
     adjust = 1.5
   )
@@ -104,7 +106,8 @@ test_that("plot_mirrored_distributions handles custom aesthetics", {
     nhefs_weights,
     age,
     qsmk,
-    alpha = 0.8
+    alpha = 0.8,
+    bins = 20
   )
 
   expect_doppelganger("custom aesthetics", p_custom_aes)
@@ -116,7 +119,8 @@ test_that("plot_mirrored_distributions handles mirror axis", {
     nhefs_weights,
     age,
     qsmk,
-    mirror_axis = "x"
+    mirror_axis = "x",
+    bins = 20
   )
 
   expect_doppelganger("mirror x-axis", p_mirror_x)
@@ -185,6 +189,7 @@ test_that("plot_mirrored_distributions works with different data types", {
     nhefs_weights,
     age,
     qsmk,
+    type = "density",
     bw = "sj"
   )
 
@@ -193,7 +198,7 @@ test_that("plot_mirrored_distributions works with different data types", {
 
 test_that("plot_mirrored_distributions produces correct plot structure", {
   # Check basic plot structure
-  p <- plot_mirrored_distributions(nhefs_weights, age, qsmk)
+  p <- plot_mirrored_distributions(nhefs_weights, age, qsmk, bins = 20)
 
   # Build the plot
   built <- ggplot_build(p)
