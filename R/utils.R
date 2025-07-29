@@ -66,7 +66,7 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
   # Identify categorical variables (factors and character variables)
   categorical_vars <- purrr::map_lgl(
     data,
-    function(x) is.factor(x) || is.character(x)
+    \(x) is.factor(x) || is.character(x)
   )
 
   if (!any(categorical_vars)) {
@@ -77,18 +77,18 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
   # Extract categorical and non-categorical data
   categorical_data <- dplyr::select(
     data,
-    dplyr::where(function(x) is.factor(x) || is.character(x))
+    dplyr::where(\(x) is.factor(x) || is.character(x))
   )
 
   non_categorical_data <- dplyr::select(
     data,
-    -dplyr::where(function(x) is.factor(x) || is.character(x))
+    -dplyr::where(\(x) is.factor(x) || is.character(x))
   )
 
   # Create dummy variables using functional programming
   dummy_vars <- purrr::imap(
     categorical_data,
-    function(col_data, col_name) {
+    \(col_data, col_name) {
       # Get levels based on variable type
       levels_to_use <- if (is.factor(col_data)) {
         levels(col_data)
@@ -114,7 +114,7 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
         dummy_names <- paste0(col_name, levels_to_use)
         dummy_values <- purrr::map(
           levels_to_use,
-          ~ as.numeric(col_data == .x)
+          \(x) as.numeric(col_data == x)
         )
         stats::setNames(dummy_values, dummy_names)
       }

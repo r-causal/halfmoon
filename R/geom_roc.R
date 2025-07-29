@@ -148,7 +148,7 @@ StatRoc <- ggplot2::ggproto(
 
       # Process groups with the same signature together
       unique_signatures <- unique(group_signatures)
-      results <- purrr::map_df(unique_signatures, function(sig) {
+      results <- purrr::map_df(unique_signatures, \(sig) {
         matching_groups <- names(groups)[group_signatures == sig]
         combined_data <- do.call(rbind, groups[matching_groups])
 

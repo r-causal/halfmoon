@@ -273,12 +273,12 @@ compute_calibration_breaks_imp <- function(
   if (length(valid_indices) > 0) {
     ci_results <- purrr::map(
       valid_indices,
-      ~ calculate_prop_ci(n_events[.x], n_total[.x], conf_level)
+      \(x) calculate_prop_ci(n_events[x], n_total[x], conf_level)
     )
 
     # Extract results
-    result$lower[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$lower)
-    result$upper[valid_indices] <- purrr::map_dbl(ci_results, ~ .x$upper)
+    result$lower[valid_indices] <- purrr::map_dbl(ci_results, \(x) x$lower)
+    result$upper[valid_indices] <- purrr::map_dbl(ci_results, \(x) x$upper)
   }
 
   # For edge cases, use normal approximation with purrr
@@ -286,11 +286,11 @@ compute_calibration_breaks_imp <- function(
   if (length(edge_cases) > 0) {
     edge_results <- purrr::map(
       edge_cases,
-      ~ calculate_normal_ci(result$observed_rate[.x], n_total[.x], conf_level)
+      \(x) calculate_normal_ci(result$observed_rate[x], n_total[x], conf_level)
     )
 
-    result$lower[edge_cases] <- purrr::map_dbl(edge_results, ~ .x$lower)
-    result$upper[edge_cases] <- purrr::map_dbl(edge_results, ~ .x$upper)
+    result$lower[edge_cases] <- purrr::map_dbl(edge_results, \(x) x$lower)
+    result$upper[edge_cases] <- purrr::map_dbl(edge_results, \(x) x$upper)
   }
 
   # Set NA for completely invalid cases
@@ -358,13 +358,13 @@ compute_calibration_windowed_imp <- function(
   )
 
   # Filter to valid windows only
-  valid_results <- purrr::keep(window_results, ~ .x$valid)
+  valid_results <- purrr::keep(window_results, \(x) x$valid)
 
   # Check for small cell sizes that might cause unreliable estimates
   if (length(valid_results) > 0) {
-    sample_sizes <- purrr::map_dbl(valid_results, ~ .x$n_total)
-    event_counts <- purrr::map_dbl(valid_results, ~ .x$n_events)
-    window_centers <- purrr::map_dbl(valid_results, ~ .x$predicted_rate)
+    sample_sizes <- purrr::map_dbl(valid_results, \(x) x$n_total)
+    event_counts <- purrr::map_dbl(valid_results, \(x) x$n_events)
+    window_centers <- purrr::map_dbl(valid_results, \(x) x$predicted_rate)
 
     small_cells <- sample_sizes < 10
     extreme_props <- (event_counts <= 2) | (event_counts >= sample_sizes - 2)
@@ -384,10 +384,10 @@ compute_calibration_windowed_imp <- function(
   # Return only valid windows
   if (length(valid_results) > 0) {
     tibble::tibble(
-      predicted_rate = purrr::map_dbl(valid_results, ~ .x$predicted_rate),
-      observed_rate = purrr::map_dbl(valid_results, ~ .x$observed_rate),
-      lower = purrr::map_dbl(valid_results, ~ .x$lower),
-      upper = purrr::map_dbl(valid_results, ~ .x$upper)
+      predicted_rate = purrr::map_dbl(valid_results, \(x) x$predicted_rate),
+      observed_rate = purrr::map_dbl(valid_results, \(x) x$observed_rate),
+      lower = purrr::map_dbl(valid_results, \(x) x$lower),
+      upper = purrr::map_dbl(valid_results, \(x) x$upper)
     )
   } else {
     # Return empty data frame with correct structure
@@ -512,7 +512,7 @@ StatCalibration <- ggplot2::ggproto(
 
       # Process groups with the same signature together
       unique_signatures <- unique(group_signatures)
-      results <- purrr::map_df(unique_signatures, function(sig) {
+      results <- purrr::map_df(unique_signatures, \(sig) {
         matching_groups <- names(groups)[group_signatures == sig]
         combined_data <- do.call(rbind, groups[matching_groups])
 

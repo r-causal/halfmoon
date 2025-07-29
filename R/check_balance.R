@@ -120,7 +120,7 @@ check_balance <- function(
         numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
         squared_data <- dplyr::mutate(
           numeric_data,
-          dplyr::across(everything(), ~ .x^2, .names = "{.col}_squared")
+          dplyr::across(everything(), \(x) x^2, .names = "{.col}_squared")
         )
         vars_data <- dplyr::bind_cols(
           vars_data,
@@ -142,7 +142,7 @@ check_balance <- function(
         if (ncol(original_numeric) > 0) {
           cubed_data <- dplyr::mutate(
             original_numeric,
-            dplyr::across(everything(), ~ .x^3, .names = "{.col}_cubed")
+            dplyr::across(everything(), \(x) x^3, .names = "{.col}_cubed")
           )
           vars_data <- dplyr::bind_cols(
             vars_data,
@@ -174,12 +174,12 @@ check_balance <- function(
           if (make_dummy_vars) {
             categorical_check <- purrr::map_lgl(
               original_vars_data,
-              function(x) is.factor(x) || is.character(x)
+              \(x) is.factor(x) || is.character(x)
             )
 
             if (any(categorical_check)) {
               categorical_cols <- original_vars_data[categorical_check]
-              binary_check <- purrr::map_lgl(categorical_cols, function(x) {
+              binary_check <- purrr::map_lgl(categorical_cols, \(x) {
                 n_levels <- if (is.factor(x)) length(levels(x)) else
                   length(unique(x))
                 n_levels == 2
@@ -253,7 +253,10 @@ check_balance <- function(
   if (is.factor(transformed_data[[group_var]])) {
     group_levels <- levels(transformed_data[[group_var]])
   } else {
-    group_levels <- sort(unique(stats::na.omit(transformed_data[[group_var]])))
+    group_levels <- transformed_data[[group_var]] |>
+      stats::na.omit() |>
+      unique() |>
+      sort()
   }
 
   # Check group variable requirements based on metrics
@@ -465,7 +468,7 @@ compute_single_balance_metric <- function(
         estimate = estimate
       )
     },
-    error = function(e) {
+    error = \(e) {
       # Return NA for failed computations but preserve structure
       error_group_level <- if (metric == "correlation") {
         group_var
@@ -508,7 +511,7 @@ prepare_interaction_variable <- function(
     }
 
     # Create dummy for each level
-    purrr::map(levels_to_use, function(level) {
+    purrr::map(levels_to_use, \(level) {
       dummy_name <- paste0(var_name, level)
       dummy_values <- as.numeric(original_var == level)
       stats::setNames(list(dummy_values), dummy_name)

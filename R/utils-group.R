@@ -5,7 +5,10 @@ extract_group_levels <- function(group, require_binary = TRUE) {
   levels <- if (is.factor(group)) {
     levels(group)
   } else {
-    sort(unique(stats::na.omit(group)))
+    group |>
+      stats::na.omit() |>
+      unique() |>
+      sort()
   }
 
   if (require_binary && length(levels) != 2) {
