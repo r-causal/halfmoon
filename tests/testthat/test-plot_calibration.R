@@ -129,7 +129,12 @@ test_that("plot_calibration handles NA values", {
   expect_no_error(suppress_calibration_warnings(ggplot_build(p_na_rm)))
 
   # Test with na.rm = FALSE
-  p_na_keep <- suppress_calibration_warnings(plot_calibration(test_data, .fitted, qsmk, na.rm = FALSE))
+  p_na_keep <- suppress_calibration_warnings(plot_calibration(
+    test_data,
+    .fitted,
+    qsmk,
+    na.rm = FALSE
+  ))
   expect_s3_class(p_na_keep, "ggplot")
   expect_no_error(suppressWarnings(ggplot_build(p_na_keep)))
 })
