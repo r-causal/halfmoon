@@ -152,13 +152,13 @@ test_that("plot_mirrored_distributions validates inputs", {
   # Non-existent column
   expect_error(
     plot_mirrored_distributions(nhefs_weights, nonexistent, qsmk),
-    "not found in data"
+    "not found in"
   )
 
   # Group with >2 levels
   expect_error(
     plot_mirrored_distributions(nhefs_weights, age, education),
-    "exactly 2 levels"
+    "exactly two levels"
   )
 })
 

@@ -90,56 +90,35 @@ plot_mirrored_distributions <- function(
   alpha = 0.6,
   na.rm = FALSE
 ) {
-  # Match arguments
   type <- match.arg(type)
 
-  # Handle quosures
   var_quo <- rlang::enquo(.var)
   group_quo <- rlang::enquo(.group)
   wts_quo <- rlang::enquo(.wts)
 
-  # Get column names
+  validate_data_frame(.data)
+  
   var_name <- get_column_name(var_quo, ".var")
   group_name <- get_column_name(group_quo, ".group")
 
-  # Validate columns exist
-  if (!var_name %in% names(.data)) {
-    abort("Column {.code {var_name}} not found in data")
-  }
+  validate_column_exists(.data, var_name, ".var")
+  validate_column_exists(.data, group_name, ".group")
 
-  if (!group_name %in% names(.data)) {
-    abort("Column {.code {group_name}} not found in data")
-  }
-
-  # Check for NA values
   if (!na.rm && any(is.na(.data[[var_name]]))) {
     abort("Variable contains missing values. Use `na.rm = TRUE` to drop them.")
   }
 
-  # Validate group has exactly 2 levels
   group_var <- .data[[group_name]]
-  group_levels <- if (is.factor(group_var)) {
-    levels(group_var)
-  } else {
-    sort(unique(group_var[!is.na(group_var)]))
-  }
-
-  if (length(group_levels) != 2) {
-    abort("Group variable must have exactly 2 levels")
-  }
+  group_levels <- extract_group_levels(group_var, require_binary = TRUE)
 
 
-  # Handle weights
   if (!rlang::quo_is_null(wts_quo)) {
-    # Get weight columns
     wts_cols <- tidyselect::eval_select(wts_quo, .data)
     wts_names <- names(wts_cols)
 
-    # Create long format data
     if (include_unweighted) {
-      # Add unweighted as a weight column with value 1
-      .data$.unweighted <- 1
-      wts_names <- c(".unweighted", wts_names)
+      .data$.observed <- 1
+      wts_names <- c(".observed", wts_names)
     }
 
     plot_data <- tidyr::pivot_longer(
@@ -149,14 +128,12 @@ plot_mirrored_distributions <- function(
       values_to = "weight"
     )
 
-    # Clean up method names
     plot_data$method <- ifelse(
-      plot_data$method == ".unweighted",
-      "unweighted",
+      plot_data$method == ".observed",
+      "observed",
       plot_data$method
     )
 
-    # Create faceted plot
     if (type == "density") {
       p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[var_name]])) +
         geom_mirror_density(
@@ -172,7 +149,6 @@ plot_mirrored_distributions <- function(
         ) +
         ggplot2::facet_wrap(~method, scales = "free_y")
     } else {
-      # histogram
       p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[var_name]])) +
         geom_mirror_histogram(
           ggplot2::aes(
@@ -188,7 +164,6 @@ plot_mirrored_distributions <- function(
         ggplot2::facet_wrap(~method, scales = "free_y")
     }
   } else {
-    # No weights - single plot
     if (type == "density") {
       p <- ggplot2::ggplot(.data, ggplot2::aes(x = .data[[var_name]])) +
         geom_mirror_density(
@@ -202,7 +177,6 @@ plot_mirrored_distributions <- function(
           na.rm = na.rm
         )
     } else {
-      # histogram
       p <- ggplot2::ggplot(.data, ggplot2::aes(x = .data[[var_name]])) +
         geom_mirror_histogram(
           ggplot2::aes(
@@ -217,7 +191,6 @@ plot_mirrored_distributions <- function(
     }
   }
 
-  # Add styling and labels
   p <- p +
     ggplot2::scale_y_continuous(labels = abs) +
     ggplot2::labs(
@@ -228,7 +201,6 @@ plot_mirrored_distributions <- function(
       legend.position = "bottom"
     )
 
-  # Mirror on x-axis if requested (rotate plot)
   if (mirror_axis == "x") {
     p <- p + ggplot2::coord_flip()
   }
