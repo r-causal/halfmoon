@@ -44,11 +44,13 @@
 #'
 #' # Basic QQ plot
 #' ggplot(nhefs_weights, aes(sample = age, treatment = qsmk)) +
-#'   geom_qq2()
+#'   geom_qq2() +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
 #' # With weighting
 #' ggplot(nhefs_weights, aes(sample = age, treatment = qsmk, weight = w_ate)) +
-#'   geom_qq2()
+#'   geom_qq2() +
+#'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
 #' # Compare multiple weights using long format
 #' long_data <- tidyr::pivot_longer(
