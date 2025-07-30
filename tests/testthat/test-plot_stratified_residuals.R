@@ -233,7 +233,7 @@ test_that("plot_stratified_residuals visual regression tests", {
 
   # Test model method
   expect_doppelganger(
-    "stratified residuals lm color misspecified",
+    "sr lm color wrong",
     plot_stratified_residuals(
       model_wrong,
       treatment = treatment,
@@ -242,7 +242,7 @@ test_that("plot_stratified_residuals visual regression tests", {
   )
 
   expect_doppelganger(
-    "stratified residuals lm facet misspecified",
+    "sr lm facet wrong",
     plot_stratified_residuals(
       model_wrong,
       treatment = treatment,
@@ -251,7 +251,7 @@ test_that("plot_stratified_residuals visual regression tests", {
   )
 
   expect_doppelganger(
-    "stratified residuals lm both misspecified",
+    "sr lm both wrong",
     plot_stratified_residuals(
       model_wrong,
       treatment = treatment,
@@ -260,7 +260,7 @@ test_that("plot_stratified_residuals visual regression tests", {
   )
 
   expect_doppelganger(
-    "stratified residuals lm correct model",
+    "sr lm correct",
     plot_stratified_residuals(
       model_correct,
       treatment = treatment,
@@ -272,7 +272,7 @@ test_that("plot_stratified_residuals visual regression tests", {
   ps_model <- glm(treatment ~ x, family = binomial)
   
   expect_doppelganger(
-    "stratified residuals lm ps misspecified",
+    "sr lm ps wrong",
     plot_stratified_residuals(
       model_wrong,
       treatment = treatment,
@@ -290,7 +290,7 @@ test_that("plot_stratified_residuals visual regression tests", {
   )
   
   expect_doppelganger(
-    "stratified residuals df fitted misspecified",
+    "sr df fitted wrong",
     plot_stratified_residuals(
       plot_df,
       treatment = trt,
@@ -301,7 +301,7 @@ test_that("plot_stratified_residuals visual regression tests", {
   )
   
   expect_doppelganger(
-    "stratified residuals df ps facet misspecified",
+    "sr df ps facet wrong",
     plot_stratified_residuals(
       plot_df,
       treatment = trt,

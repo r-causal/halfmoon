@@ -1059,6 +1059,6 @@
 <line x1='669.78' y1='300.25' x2='683.60' y2='300.25' style='stroke-width: 2.13; stroke: #00BFC4; stroke-linecap: butt;' />
 <text x='690.81' y='286.00' style='font-size: 8.80px; font-family: sans;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>0</text>
 <text x='690.81' y='303.28' style='font-size: 8.80px; font-family: sans;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>1</text>
-<text x='30.83' y='14.56' style='font-size: 13.20px; font-family: sans;' textLength='229.66px' lengthAdjust='spacingAndGlyphs'>stratified residuals df fitted misspecified</text>
+<text x='30.83' y='14.56' style='font-size: 13.20px; font-family: sans;' textLength='97.58px' lengthAdjust='spacingAndGlyphs'>sr df fitted wrong</text>
 </g>
 </svg>
