@@ -2,32 +2,61 @@
 % Please edit documentation in R/plot_stratified_residuals.R
 \name{plot_stratified_residuals}
 \alias{plot_stratified_residuals}
+\alias{plot_stratified_residuals.lm}
+\alias{plot_stratified_residuals.glm}
+\alias{plot_stratified_residuals.data.frame}
 \title{Create stratified residual diagnostic plots}
 \usage{
-plot_stratified_residuals(
-  .model = NULL,
-  .residuals = NULL,
-  .ps_or_fitted = NULL,
-  .treatment = NULL,
+plot_stratified_residuals(x, ...)
+
+\method{plot_stratified_residuals}{lm}(
+  x,
+  treatment,
+  ps_model = NULL,
   plot_type = c("color", "facet", "both"),
   smooth = TRUE,
   smooth_span = 1,
   alpha = 0.25,
-  x_label = NULL,
-  na.rm = FALSE
+  na.rm = FALSE,
+  ...
+)
+
+\method{plot_stratified_residuals}{glm}(
+  x,
+  treatment,
+  ps_model = NULL,
+  plot_type = c("color", "facet", "both"),
+  smooth = TRUE,
+  smooth_span = 1,
+  alpha = 0.25,
+  na.rm = FALSE,
+  ...
+)
+
+\method{plot_stratified_residuals}{data.frame}(
+  x,
+  treatment,
+  residuals,
+  x_var,
+  plot_type = c("color", "facet", "both"),
+  smooth = TRUE,
+  smooth_span = 1,
+  alpha = 0.25,
+  na.rm = FALSE,
+  ...
 )
 }
 \arguments{
-\item{.model}{A fitted model object (e.g., from \code{lm()} or \code{glm()}).
-If provided, residuals and fitted values are extracted automatically.}
+\item{x}{Either a fitted model object (lm or glm) or a data frame}
 
-\item{.residuals}{A numeric vector of residuals. Required if \code{.model} is NULL.}
+\item{...}{Additional arguments passed to methods}
 
-\item{.ps_or_fitted}{A numeric vector of propensity scores or fitted values
-to plot on the x-axis. Required if \code{.model} is NULL.}
+\item{treatment}{A vector indicating treatment group membership.
+Must have exactly two unique levels. For data frames, can be
+an unquoted column name.}
 
-\item{.treatment}{A vector indicating treatment group membership.
-Must have exactly two unique levels.}
+\item{ps_model}{Optional propensity score model (glm object).
+If provided, uses propensity scores instead of fitted values.}
 
 \item{plot_type}{Character; type of plot - "color" (default), "facet", or "both".
 \itemize{
@@ -42,13 +71,15 @@ Must have exactly two unique levels.}
 
 \item{alpha}{Numeric; transparency level for points. Default is 0.25.}
 
-\item{x_label}{Character; label for x-axis. Default is "Propensity score"
-if using propensity scores, or "Fitted values" otherwise.}
-
 \item{na.rm}{Logical; if TRUE, remove missing values before plotting.}
+
+\item{residuals}{Column containing residuals. Supports tidyselect syntax.}
+
+\item{x_var}{Column for x-axis values (fitted values or propensity scores).
+Supports tidyselect syntax.}
 }
 \value{
-A ggplot2 object.
+A ggplot2 object
 }
 \description{
 Create diagnostic plots to assess whether covariate adjustment adequately
@@ -58,16 +89,16 @@ stratified by treatment group, to reveal model mis-specification.
 }
 \details{
 This diagnostic plot was originally suggested by Rosenbaum and Rubin (1983)
-and revisited by McGowan-D'Agostino, D'Agostino, and D'Agostino (2023).
+and revisited by McGowan, D'Agostino, and D'Agostino (2023).
 The key idea is that plotting residuals against propensity scores
 (rather than fitted values) can reveal non-linear relationships or
 heterogeneous treatment effects that might be obscured in standard
 residuals-vs-fitted plots.
 
-The function accepts either:
+The function supports two approaches:
 \itemize{
-\item A fitted model object, from which it extracts residuals and fitted values
-\item Separate vectors of residuals and propensity scores/fitted values
+\item For regression models (lm/glm): Extracts residuals and fitted values automatically
+\item For data frames: Uses specified columns for residuals, treatment, and x-axis values
 }
 }
 \examples{
@@ -84,45 +115,42 @@ y1 <- 0.5 * x + rnorm(n)
 y0 <- -0.5 * x + rnorm(n)
 y <- treatment * y1 + (1 - treatment) * y0
 
+# Method 1: Using model objects
 # Fit misspecified model (missing interaction)
 model_wrong <- lm(y ~ treatment + x)
 
-# Create diagnostic plot using fitted model
+# Plot with fitted values
 plot_stratified_residuals(
-  .model = model_wrong,
-  .treatment = treatment,
+  model_wrong,
+  treatment = treatment,
   plot_type = "both"
 )
 
-# Fit correct model with interaction
-model_correct <- lm(y ~ treatment * x)
-
-# Compare plots
-plot_stratified_residuals(
-  .model = model_correct,
-  .treatment = treatment,
-  plot_type = "both"
-)
-
-# Using propensity scores instead of fitted values
+# Plot with propensity scores
 ps_model <- glm(treatment ~ x, family = binomial)
-ps_fitted <- fitted(ps_model)
 
 plot_stratified_residuals(
-  .residuals = residuals(model_wrong),
-  .ps_or_fitted = ps_fitted,
-  .treatment = treatment,
-  plot_type = "color",
-  x_label = "Propensity score"
+  model_wrong,
+  treatment = treatment,
+  ps_model = ps_model,
+  plot_type = "color"
 )
 
-# The propensity score plot often reveals patterns more clearly
+# Method 2: Using data frame
+library(dplyr)
+plot_data <- data.frame(
+  treatment = treatment,
+  residuals = residuals(model_wrong),
+  fitted_values = fitted(model_wrong),
+  propensity_score = fitted(ps_model)
+)
+
 plot_stratified_residuals(
-  .residuals = residuals(model_wrong),
-  .ps_or_fitted = ps_fitted,
-  .treatment = treatment,
-  plot_type = "facet",
-  x_label = "Propensity score"
+  plot_data,
+  treatment = treatment,
+  residuals = residuals,
+  x_var = propensity_score,
+  plot_type = "facet"
 )
 }
 
