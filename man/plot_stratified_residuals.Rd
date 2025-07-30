@@ -112,7 +112,17 @@ plot_stratified_residuals(
   .residuals = residuals(model_wrong),
   .ps_or_fitted = ps_fitted,
   .treatment = treatment,
-  plot_type = "color"
+  plot_type = "color",
+  x_label = "Propensity score"
+)
+
+# The propensity score plot often reveals patterns more clearly
+plot_stratified_residuals(
+  .residuals = residuals(model_wrong),
+  .ps_or_fitted = ps_fitted,
+  .treatment = treatment,
+  plot_type = "facet",
+  x_label = "Propensity score"
 )
 }
 

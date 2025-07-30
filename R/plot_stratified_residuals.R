@@ -79,7 +79,17 @@
 #'   .residuals = residuals(model_wrong),
 #'   .ps_or_fitted = ps_fitted,
 #'   .treatment = treatment,
-#'   plot_type = "color"
+#'   plot_type = "color",
+#'   x_label = "Propensity score"
+#' )
+#'
+#' # The propensity score plot often reveals patterns more clearly
+#' plot_stratified_residuals(
+#'   .residuals = residuals(model_wrong),
+#'   .ps_or_fitted = ps_fitted,
+#'   .treatment = treatment,
+#'   plot_type = "facet",
+#'   x_label = "Propensity score"
 #' )
 #' }
 #'
@@ -211,11 +221,9 @@ plot_stratified_residuals <- function(
 
   # Styling
   p <- p +
-    ggplot2::theme_minimal() +
     ggplot2::labs(
       x = x_label,
-      y = "Residuals",
-      color = "Treatment"
+      y = "residuals"
     )
 
   # Add horizontal reference line at y = 0

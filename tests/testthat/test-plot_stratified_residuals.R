@@ -49,6 +49,19 @@ test_that("plot_stratified_residuals works with separate vectors", {
     .treatment = treatment
   )
   expect_s3_class(p, "gg")
+  
+  # Test with propensity scores
+  ps_model <- glm(treatment ~ x, family = binomial)
+  ps_fitted <- fitted(ps_model)
+  
+  p_ps <- plot_stratified_residuals(
+    .residuals = resids,
+    .ps_or_fitted = ps_fitted,
+    .treatment = treatment,
+    x_label = "Propensity score"
+  )
+  expect_s3_class(p_ps, "gg")
+  expect_equal(p_ps$labels$x, "Propensity score")
 })
 
 test_that("plot_stratified_residuals validates inputs correctly", {
@@ -210,6 +223,32 @@ test_that("plot_stratified_residuals visual regression tests", {
       .model = model_correct,
       .treatment = treatment,
       plot_type = "both"
+    )
+  )
+  
+  # Test with propensity scores
+  ps_model <- glm(treatment ~ x, family = binomial)
+  ps_fitted <- fitted(ps_model)
+  
+  expect_doppelganger(
+    "stratified residuals ps misspecified",
+    plot_stratified_residuals(
+      .residuals = residuals(model_wrong),
+      .ps_or_fitted = ps_fitted,
+      .treatment = treatment,
+      plot_type = "color",
+      x_label = "Propensity score"
+    )
+  )
+  
+  expect_doppelganger(
+    "stratified residuals ps facet (m)",
+    plot_stratified_residuals(
+      .residuals = residuals(model_wrong),
+      .ps_or_fitted = ps_fitted,
+      .treatment = treatment,
+      plot_type = "facet",
+      x_label = "Propensity score"
     )
   )
 })
