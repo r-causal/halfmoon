@@ -1,8 +1,9 @@
 test_that("plot_stratified_residuals works with model input", {
-  set.seed(123)
-  n <- 100
+  set.seed(8)
+  n <- 500
   x <- rnorm(n)
   treatment <- rbinom(n, 1, plogis(x))
+  # Simple additive model for basic tests
   y <- 2 * treatment + x + rnorm(n)
 
   model <- lm(y ~ treatment + x)
@@ -31,10 +32,11 @@ test_that("plot_stratified_residuals works with model input", {
 })
 
 test_that("plot_stratified_residuals works with separate vectors", {
-  set.seed(123)
-  n <- 100
+  set.seed(8)
+  n <- 500
   x <- rnorm(n)
   treatment <- rbinom(n, 1, plogis(x))
+  # Simple additive model
   y <- 2 * treatment + x + rnorm(n)
 
   model <- lm(y ~ treatment + x)
@@ -101,8 +103,8 @@ test_that("plot_stratified_residuals validates inputs correctly", {
 })
 
 test_that("plot_stratified_residuals handles NA values correctly", {
-  set.seed(123)
-  n <- 100
+  set.seed(8)
+  n <- 500
   x <- rnorm(n)
   treatment <- rbinom(n, 1, plogis(x))
   y <- 2 * treatment + x + rnorm(n)
@@ -122,8 +124,8 @@ test_that("plot_stratified_residuals handles NA values correctly", {
 })
 
 test_that("plot_stratified_residuals customization options work", {
-  set.seed(123)
-  n <- 100
+  set.seed(8)
+  n <- 500
   x <- rnorm(n)
   treatment <- rbinom(n, 1, plogis(x))
   y <- 2 * treatment + x + rnorm(n)
@@ -159,19 +161,20 @@ test_that("plot_stratified_residuals customization options work", {
 test_that("plot_stratified_residuals visual regression tests", {
   skip_if_not_installed("vdiffr")
 
-  set.seed(123)
-  n <- 200
+  # Use same simulation as in documentation example
+  set.seed(8)
+  n <- 1000
   x <- rnorm(n)
-  ps <- plogis(x)
-  treatment <- rbinom(n, 1, ps)
+  treatment <- rbinom(n, 1, plogis(x))
+  # Create treatment effect heterogeneity
   y1 <- 0.5 * x + rnorm(n)
   y0 <- -0.5 * x + rnorm(n)
   y <- treatment * y1 + (1 - treatment) * y0
 
-  # Misspecified model
+  # Misspecified model (missing interaction)
   model_wrong <- lm(y ~ treatment + x)
 
-  # Correct model
+  # Correct model with interaction
   model_correct <- lm(y ~ treatment * x)
 
   expect_doppelganger(
