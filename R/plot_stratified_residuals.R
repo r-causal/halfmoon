@@ -1,4 +1,4 @@
-#' Create treatment model diagnostic plots
+#' Create stratified residual diagnostic plots
 #'
 #' Create diagnostic plots to assess whether covariate adjustment adequately
 #' controls confounding in observational studies. This function plots residuals
@@ -42,7 +42,7 @@
 #' library(ggplot2)
 #'
 #' # Simulate data with treatment effect heterogeneity
-#' set.seed(123)
+#' set.seed(8)
 #' n <- 1000
 #' x <- rnorm(n)
 #' ps <- plogis(x)  # True propensity score
@@ -55,7 +55,7 @@
 #' model_wrong <- lm(y ~ treatment + x)
 #'
 #' # Create diagnostic plot using fitted model
-#' plot_treatment_diagnostics(
+#' plot_stratified_residuals(
 #'   .model = model_wrong,
 #'   .treatment = treatment,
 #'   plot_type = "both"
@@ -65,7 +65,7 @@
 #' model_correct <- lm(y ~ treatment * x)
 #'
 #' # Compare plots
-#' plot_treatment_diagnostics(
+#' plot_stratified_residuals(
 #'   .model = model_correct,
 #'   .treatment = treatment,
 #'   plot_type = "both"
@@ -75,7 +75,7 @@
 #' ps_model <- glm(treatment ~ x, family = binomial)
 #' ps_fitted <- fitted(ps_model)
 #'
-#' plot_treatment_diagnostics(
+#' plot_stratified_residuals(
 #'   .residuals = residuals(model_wrong),
 #'   .ps_or_fitted = ps_fitted,
 #'   .treatment = treatment,
@@ -97,7 +97,7 @@
 #' - [`plot_qq()`] for QQ plots
 #'
 #' @export
-plot_treatment_diagnostics <- function(
+plot_stratified_residuals <- function(
   .model = NULL,
   .residuals = NULL,
   .ps_or_fitted = NULL,

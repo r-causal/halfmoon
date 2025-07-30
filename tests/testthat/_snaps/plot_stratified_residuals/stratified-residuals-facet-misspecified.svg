@@ -301,6 +301,6 @@
 <text x='25.90' y='107.43' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='4.89px' lengthAdjust='spacingAndGlyphs'>2</text>
 <text x='372.67' y='568.24' text-anchor='middle' style='font-size: 11.00px; font-family: sans;' textLength='62.37px' lengthAdjust='spacingAndGlyphs'>Fitted values</text>
 <text transform='translate(13.05,292.27) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: sans;' textLength='48.31px' lengthAdjust='spacingAndGlyphs'>Residuals</text>
-<text x='30.83' y='14.56' style='font-size: 13.20px; font-family: sans;' textLength='234.08px' lengthAdjust='spacingAndGlyphs'>treatment diagnostics facet misspecified</text>
+<text x='30.83' y='14.56' style='font-size: 13.20px; font-family: sans;' textLength='214.99px' lengthAdjust='spacingAndGlyphs'>stratified residuals facet misspecified</text>
 </g>
 </svg>

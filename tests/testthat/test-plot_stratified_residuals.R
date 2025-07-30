@@ -1,4 +1,4 @@
-test_that("plot_treatment_diagnostics works with model input", {
+test_that("plot_stratified_residuals works with model input", {
   set.seed(123)
   n <- 100
   x <- rnorm(n)
@@ -8,21 +8,21 @@ test_that("plot_treatment_diagnostics works with model input", {
   model <- lm(y ~ treatment + x)
 
   # Basic plot should work
-  p <- plot_treatment_diagnostics(
+  p <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment
   )
   expect_s3_class(p, "gg")
 
   # Different plot types
-  p_facet <- plot_treatment_diagnostics(
+  p_facet <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment,
     plot_type = "facet"
   )
   expect_s3_class(p_facet, "gg")
 
-  p_both <- plot_treatment_diagnostics(
+  p_both <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment,
     plot_type = "both"
@@ -30,7 +30,7 @@ test_that("plot_treatment_diagnostics works with model input", {
   expect_s3_class(p_both, "gg")
 })
 
-test_that("plot_treatment_diagnostics works with separate vectors", {
+test_that("plot_stratified_residuals works with separate vectors", {
   set.seed(123)
   n <- 100
   x <- rnorm(n)
@@ -41,7 +41,7 @@ test_that("plot_treatment_diagnostics works with separate vectors", {
   resids <- residuals(model)
   fitted_vals <- fitted(model)
 
-  p <- plot_treatment_diagnostics(
+  p <- plot_stratified_residuals(
     .residuals = resids,
     .ps_or_fitted = fitted_vals,
     .treatment = treatment
@@ -49,20 +49,20 @@ test_that("plot_treatment_diagnostics works with separate vectors", {
   expect_s3_class(p, "gg")
 })
 
-test_that("plot_treatment_diagnostics validates inputs correctly", {
+test_that("plot_stratified_residuals validates inputs correctly", {
   # Missing required inputs
   expect_error(
-    plot_treatment_diagnostics(),
+    plot_stratified_residuals(),
     "Either"
   )
 
   expect_error(
-    plot_treatment_diagnostics(.residuals = 1:10),
+    plot_stratified_residuals(.residuals = 1:10),
     "Either"
   )
 
   expect_error(
-    plot_treatment_diagnostics(
+    plot_stratified_residuals(
       .residuals = 1:10,
       .ps_or_fitted = 1:10
     ),
@@ -71,7 +71,7 @@ test_that("plot_treatment_diagnostics validates inputs correctly", {
 
   # Non-numeric inputs
   expect_error(
-    plot_treatment_diagnostics(
+    plot_stratified_residuals(
       .residuals = letters[1:10],
       .ps_or_fitted = 1:10,
       .treatment = rep(0:1, 5)
@@ -81,7 +81,7 @@ test_that("plot_treatment_diagnostics validates inputs correctly", {
 
   # Wrong number of treatment levels
   expect_error(
-    plot_treatment_diagnostics(
+    plot_stratified_residuals(
       .residuals = 1:10,
       .ps_or_fitted = 1:10,
       .treatment = rep(1:3, length.out = 10)
@@ -91,7 +91,7 @@ test_that("plot_treatment_diagnostics validates inputs correctly", {
 
   # Mismatched lengths
   expect_error(
-    plot_treatment_diagnostics(
+    plot_stratified_residuals(
       .residuals = 1:10,
       .ps_or_fitted = 1:5,
       .treatment = rep(0:1, 5)
@@ -100,7 +100,7 @@ test_that("plot_treatment_diagnostics validates inputs correctly", {
   )
 })
 
-test_that("plot_treatment_diagnostics handles NA values correctly", {
+test_that("plot_stratified_residuals handles NA values correctly", {
   set.seed(123)
   n <- 100
   x <- rnorm(n)
@@ -113,7 +113,7 @@ test_that("plot_treatment_diagnostics handles NA values correctly", {
   model <- lm(y ~ treatment + x, na.action = na.exclude)
 
   # Should work with na.rm = TRUE
-  p <- plot_treatment_diagnostics(
+  p <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment,
     na.rm = TRUE
@@ -121,7 +121,7 @@ test_that("plot_treatment_diagnostics handles NA values correctly", {
   expect_s3_class(p, "gg")
 })
 
-test_that("plot_treatment_diagnostics customization options work", {
+test_that("plot_stratified_residuals customization options work", {
   set.seed(123)
   n <- 100
   x <- rnorm(n)
@@ -131,7 +131,7 @@ test_that("plot_treatment_diagnostics customization options work", {
   model <- lm(y ~ treatment + x)
 
   # Test smooth = FALSE
-  p_no_smooth <- plot_treatment_diagnostics(
+  p_no_smooth <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment,
     smooth = FALSE
@@ -139,7 +139,7 @@ test_that("plot_treatment_diagnostics customization options work", {
   expect_s3_class(p_no_smooth, "gg")
 
   # Test custom x_label
-  p_custom_label <- plot_treatment_diagnostics(
+  p_custom_label <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment,
     x_label = "Propensity score"
@@ -148,7 +148,7 @@ test_that("plot_treatment_diagnostics customization options work", {
   expect_equal(p_custom_label$labels$x, "Propensity score")
 
   # Test custom alpha
-  p_alpha <- plot_treatment_diagnostics(
+  p_alpha <- plot_stratified_residuals(
     .model = model,
     .treatment = treatment,
     alpha = 0.5
@@ -156,7 +156,7 @@ test_that("plot_treatment_diagnostics customization options work", {
   expect_s3_class(p_alpha, "gg")
 })
 
-test_that("plot_treatment_diagnostics visual regression tests", {
+test_that("plot_stratified_residuals visual regression tests", {
   skip_if_not_installed("vdiffr")
 
   set.seed(123)
@@ -174,36 +174,36 @@ test_that("plot_treatment_diagnostics visual regression tests", {
   # Correct model
   model_correct <- lm(y ~ treatment * x)
 
-  vdiffr::expect_doppelganger(
-    "treatment diagnostics color misspecified",
-    plot_treatment_diagnostics(
+  expect_doppelganger(
+    "stratified residuals color misspecified",
+    plot_stratified_residuals(
       .model = model_wrong,
       .treatment = treatment,
       plot_type = "color"
     )
   )
 
-  vdiffr::expect_doppelganger(
-    "treatment diagnostics facet misspecified",
-    plot_treatment_diagnostics(
+  expect_doppelganger(
+    "stratified residuals facet misspecified",
+    plot_stratified_residuals(
       .model = model_wrong,
       .treatment = treatment,
       plot_type = "facet"
     )
   )
 
-  vdiffr::expect_doppelganger(
-    "treatment diagnostics both misspecified",
-    plot_treatment_diagnostics(
+  expect_doppelganger(
+    "stratified residuals both misspecified",
+    plot_stratified_residuals(
       .model = model_wrong,
       .treatment = treatment,
       plot_type = "both"
     )
   )
 
-  vdiffr::expect_doppelganger(
-    "treatment diagnostics correct model",
-    plot_treatment_diagnostics(
+  expect_doppelganger(
+    "stratified residuals correct model",
+    plot_stratified_residuals(
       .model = model_correct,
       .treatment = treatment,
       plot_type = "both"
