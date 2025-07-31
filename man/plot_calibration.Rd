@@ -2,10 +2,15 @@
 % Please edit documentation in R/plot_calibration.R
 \name{plot_calibration}
 \alias{plot_calibration}
+\alias{plot_calibration.data.frame}
+\alias{plot_calibration.glm}
+\alias{plot_calibration.lm}
 \title{Create calibration plot}
 \usage{
-plot_calibration(
-  .data,
+plot_calibration(x, ...)
+
+\method{plot_calibration}{data.frame}(
+  x,
   .fitted,
   .group,
   treatment_level = NULL,
@@ -22,9 +27,45 @@ plot_calibration(
   na.rm = FALSE,
   ...
 )
+
+\method{plot_calibration}{glm}(
+  x,
+  treatment_level = NULL,
+  method = "breaks",
+  bins = 10,
+  smooth = TRUE,
+  conf_level = 0.95,
+  window_size = 0.1,
+  step_size = window_size/2,
+  k = 10,
+  include_rug = FALSE,
+  include_ribbon = TRUE,
+  include_points = TRUE,
+  na.rm = FALSE,
+  ...
+)
+
+\method{plot_calibration}{lm}(
+  x,
+  treatment_level = NULL,
+  method = "breaks",
+  bins = 10,
+  smooth = TRUE,
+  conf_level = 0.95,
+  window_size = 0.1,
+  step_size = window_size/2,
+  k = 10,
+  include_rug = FALSE,
+  include_ribbon = TRUE,
+  include_points = TRUE,
+  na.rm = FALSE,
+  ...
+)
 }
 \arguments{
-\item{.data}{A data frame containing the variables.}
+\item{x}{Either a fitted model object (lm or glm) or a data frame}
+
+\item{...}{Additional arguments passed to methods}
 
 \item{.fitted}{Column name of predicted probabilities (propensity scores).
 Can be unquoted (e.g., \code{.fitted}) or quoted (e.g., \code{".fitted"}).}
@@ -56,8 +97,6 @@ If NULL (default), uses the last level for factors or max value for numeric.}
 \item{include_points}{Logical; show points (only for "breaks" and "windowed" methods).}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before computation.}
-
-\item{...}{Additional parameters passed to \code{geom_calibration()}.}
 }
 \value{
 A ggplot2 object.
@@ -85,11 +124,17 @@ perfect calibration yields slope=1, intercept=0
 \item \strong{"windowed"}: Uses sliding windows across the prediction range for
 smooth calibration curves
 }
+
+The function supports two approaches:
+\itemize{
+\item For regression models (lm/glm): Extracts fitted values and observed outcomes automatically
+\item For data frames: Uses specified columns for fitted values and treatment group
+}
 }
 \examples{
 library(ggplot2)
 
-# Basic calibration plot
+# Method 1: Using data frame
 plot_calibration(nhefs_weights, .fitted, qsmk)
 
 # With rug plot
@@ -101,4 +146,23 @@ plot_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 
 # Specify treatment level explicitly
 plot_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+
+# Method 2: Using model objects
+# Fit a propensity score model
+ps_model <- glm(qsmk ~ age + sex + race + education,
+                data = nhefs_weights,
+                family = binomial())
+
+# Plot calibration from the model
+plot_calibration(ps_model)
+
+}
+\seealso{
+\itemize{
+\item \code{\link[=geom_calibration]{geom_calibration()}} for the underlying geom
+\item \code{\link[=check_calibration]{check_calibration()}} for numerical calibration metrics
+\item \code{\link[=plot_stratified_residuals]{plot_stratified_residuals()}} for residual diagnostic plots
+\item \code{\link[=plot_roc_curve]{plot_roc_curve()}} for ROC curves
+\item \code{\link[=plot_qq]{plot_qq()}} for QQ plots
+}
 }

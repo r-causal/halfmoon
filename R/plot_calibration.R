@@ -23,7 +23,51 @@
 #'     smooth calibration curves
 #' }
 #'
-#' @param .data A data frame containing the variables.
+#' The function supports two approaches:
+#' - For regression models (lm/glm): Extracts fitted values and observed outcomes automatically
+#' - For data frames: Uses specified columns for fitted values and treatment group
+#'
+#' @param x Either a fitted model object (lm or glm) or a data frame
+#' @param ... Additional arguments passed to methods
+#' @return A ggplot2 object.
+#' @examples
+#' library(ggplot2)
+#'
+#' # Method 1: Using data frame
+#' plot_calibration(nhefs_weights, .fitted, qsmk)
+#'
+#' # With rug plot
+#' plot_calibration(nhefs_weights, .fitted, qsmk, include_rug = TRUE)
+#'
+#' # Different methods
+#' plot_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
+#' plot_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
+#'
+#' # Specify treatment level explicitly
+#' plot_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+#'
+#' # Method 2: Using model objects
+#' # Fit a propensity score model
+#' ps_model <- glm(qsmk ~ age + sex + race + education,
+#'                 data = nhefs_weights,
+#'                 family = binomial())
+#'
+#' # Plot calibration from the model
+#' plot_calibration(ps_model)
+#'
+#' @seealso
+#' - [`geom_calibration()`] for the underlying geom
+#' - [`check_calibration()`] for numerical calibration metrics
+#' - [`plot_stratified_residuals()`] for residual diagnostic plots
+#' - [`plot_roc_curve()`] for ROC curves
+#' - [`plot_qq()`] for QQ plots
+#'
+#' @export
+plot_calibration <- function(x, ...) {
+  UseMethod("plot_calibration")
+}
+
+#' @rdname plot_calibration
 #' @param .fitted Column name of predicted probabilities (propensity scores).
 #'   Can be unquoted (e.g., `.fitted`) or quoted (e.g., `".fitted"`).
 #' @param .group Column name of treatment/group variable.
@@ -41,26 +85,9 @@
 #' @param include_ribbon Logical; show confidence interval ribbon.
 #' @param include_points Logical; show points (only for "breaks" and "windowed" methods).
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
-#' @param ... Additional parameters passed to `geom_calibration()`.
-#' @return A ggplot2 object.
-#' @examples
-#' library(ggplot2)
-#'
-#' # Basic calibration plot
-#' plot_calibration(nhefs_weights, .fitted, qsmk)
-#'
-#' # With rug plot
-#' plot_calibration(nhefs_weights, .fitted, qsmk, include_rug = TRUE)
-#'
-#' # Different methods
-#' plot_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
-#' plot_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
-#'
-#' # Specify treatment level explicitly
-#' plot_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 #' @export
-plot_calibration <- function(
-  .data,
+plot_calibration.data.frame <- function(
+  x,
   .fitted,
   .group,
   treatment_level = NULL,
@@ -86,7 +113,7 @@ plot_calibration <- function(
 
   # Create the base plot with new aesthetics
   p <- ggplot2::ggplot(
-    .data,
+    x,
     ggplot2::aes(estimate = .data[[fitted_name]], truth = .data[[group_name]])
   ) +
     geom_calibration(
@@ -131,7 +158,7 @@ plot_calibration <- function(
       )
 
     # Add appropriate color scale based on variable type
-    if (is.factor(.data[[group_name]])) {
+    if (is.factor(x[[group_name]])) {
       p <- p + ggplot2::scale_color_discrete(name = group_name)
     } else {
       p <- p + ggplot2::scale_color_continuous(name = group_name)
@@ -140,3 +167,61 @@ plot_calibration <- function(
 
   p
 }
+
+#' @rdname plot_calibration
+#' @export
+plot_calibration.glm <- function(
+  x,
+  treatment_level = NULL,
+  method = "breaks",
+  bins = 10,
+  smooth = TRUE,
+  conf_level = 0.95,
+  window_size = 0.1,
+  step_size = window_size / 2,
+  k = 10,
+  include_rug = FALSE,
+  include_ribbon = TRUE,
+  include_points = TRUE,
+  na.rm = FALSE,
+  ...
+) {
+  # Get the model frame to access the original data
+  model_frame <- stats::model.frame(x)
+
+  # Extract fitted values
+  .fitted <- stats::fitted(x)
+
+  # For GLM/LM models, the response is the first column of the model frame
+  .group <- model_frame[[1]]
+
+  # Create a data frame for plotting
+  plot_data <- data.frame(
+    .fitted = .fitted,
+    .group = .group
+  )
+
+  # Call the data frame method
+  plot_calibration.data.frame(
+    plot_data,
+    .fitted = .fitted,
+    .group = .group,
+    treatment_level = treatment_level,
+    method = method,
+    bins = bins,
+    smooth = smooth,
+    conf_level = conf_level,
+    window_size = window_size,
+    step_size = step_size,
+    k = k,
+    include_rug = include_rug,
+    include_ribbon = include_ribbon,
+    include_points = include_points,
+    na.rm = na.rm,
+    ...
+  )
+}
+
+#' @rdname plot_calibration
+#' @export
+plot_calibration.lm <- plot_calibration.glm

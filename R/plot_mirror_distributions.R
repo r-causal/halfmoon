@@ -97,7 +97,7 @@ plot_mirror_distributions <- function(
   wts_quo <- rlang::enquo(.wts)
 
   validate_data_frame(.data)
-  
+
   var_name <- get_column_name(var_quo, ".var")
   group_name <- get_column_name(group_quo, ".group")
 
@@ -110,7 +110,6 @@ plot_mirror_distributions <- function(
 
   group_var <- .data[[group_name]]
   group_levels <- extract_group_levels(group_var, require_binary = TRUE)
-
 
   if (!rlang::quo_is_null(wts_quo)) {
     wts_cols <- tidyselect::eval_select(wts_quo, .data)

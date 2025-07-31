@@ -2,7 +2,12 @@ library(ggplot2)
 
 test_that("plot_mirror_distributions works with density plots", {
   # Basic density plot
-  p_density <- plot_mirror_distributions(nhefs_weights, age, qsmk, type = "density")
+  p_density <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    qsmk,
+    type = "density"
+  )
 
   expect_s3_class(p_density, "ggplot")
   expect_doppelganger("basic density plot", p_density)
