@@ -29,7 +29,7 @@ test_that("plot_stratified_residuals.lm works with model input", {
     plot_type = "both"
   )
   expect_s3_class(p_both, "gg")
-  
+
   # Test with propensity score model
   ps_model <- glm(treatment ~ x, family = binomial)
   p_ps <- plot_stratified_residuals(
@@ -50,7 +50,7 @@ test_that("plot_stratified_residuals.data.frame works", {
 
   model <- lm(y ~ treatment + x)
   ps_model <- glm(treatment ~ x, family = binomial)
-  
+
   # Create data frame with all needed columns
   plot_data <- data.frame(
     trt = treatment,
@@ -67,7 +67,7 @@ test_that("plot_stratified_residuals.data.frame works", {
     x_var = fitted_vals
   )
   expect_s3_class(p, "gg")
-  
+
   # Test with propensity scores
   p_ps <- plot_stratified_residuals(
     plot_data,
@@ -77,7 +77,7 @@ test_that("plot_stratified_residuals.data.frame works", {
   )
   expect_s3_class(p_ps, "gg")
   expect_equal(p_ps$labels$x, "Propensity score")
-  
+
   # Test with string column names
   p_string <- plot_stratified_residuals(
     plot_data,
@@ -91,13 +91,13 @@ test_that("plot_stratified_residuals.data.frame works", {
 test_that("plot_stratified_residuals validates inputs correctly", {
   # Test model method validations
   model <- lm(mpg ~ wt, data = mtcars)
-  
+
   # Missing treatment
   expect_error(
     plot_stratified_residuals(model),
     "missing"
   )
-  
+
   # Wrong ps_model type
   expect_error(
     plot_stratified_residuals(
@@ -107,20 +107,20 @@ test_that("plot_stratified_residuals validates inputs correctly", {
     ),
     "must be a glm or lm object"
   )
-  
+
   # Test data frame method validations
   df <- data.frame(
     trt = rep(0:1, 5),
     resids = rnorm(10),
     x = rnorm(10)
   )
-  
+
   # Missing required arguments - need to provide all required args
   expect_error(
     plot_stratified_residuals(df),
     class = "rlang_error"
   )
-  
+
   expect_error(
     plot_stratified_residuals(
       df,
@@ -129,7 +129,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
     ),
     "arg_name"
   )
-  
+
   # Non-existent column
   expect_error(
     plot_stratified_residuals(
@@ -140,7 +140,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
     ),
     "not found"
   )
-  
+
   # Wrong number of treatment levels
   df_wrong <- df
   df_wrong$trt <- rep(1:3, length.out = 10)
@@ -200,7 +200,7 @@ test_that("plot_stratified_residuals customization options work", {
     alpha = 0.5
   )
   expect_s3_class(p_alpha, "gg")
-  
+
   # Test x_label with ps_model
   ps_model <- glm(treatment ~ x, family = binomial)
   p_ps <- plot_stratified_residuals(
@@ -267,10 +267,10 @@ test_that("plot_stratified_residuals visual regression tests", {
       plot_type = "both"
     )
   )
-  
+
   # Test with propensity scores
   ps_model <- glm(treatment ~ x, family = binomial)
-  
+
   expect_doppelganger(
     "sr lm ps wrong",
     plot_stratified_residuals(
@@ -280,7 +280,7 @@ test_that("plot_stratified_residuals visual regression tests", {
       plot_type = "color"
     )
   )
-  
+
   # Test data frame method
   plot_df <- data.frame(
     trt = treatment,
@@ -288,7 +288,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     fitted_vals = fitted(model_wrong),
     ps = fitted(ps_model)
   )
-  
+
   expect_doppelganger(
     "sr df fitted wrong",
     plot_stratified_residuals(
@@ -299,7 +299,7 @@ test_that("plot_stratified_residuals visual regression tests", {
       plot_type = "color"
     )
   )
-  
+
   expect_doppelganger(
     "sr df ps facet wrong",
     plot_stratified_residuals(
