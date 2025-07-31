@@ -138,7 +138,7 @@ plot_balance <- function(
     )
   
   # Add points for energy metric (no lines since only one point per method)
-  if ("energy" %in% unique(.df$metric)) {
+  if ("energy" %in% unique_metrics) {
     p <- p +
       ggplot2::geom_point(
         data = function(x) dplyr::filter(x, metric == "energy"),
