@@ -176,7 +176,7 @@ plot_balance <- function(
 
   # Adjust x-axis limits based on metric
   # For variance ratio, center around 1
-  if ("vr" %in% unique(.df$metric) && n_metrics == 1) {
+  if ("vr" %in% unique_metrics && n_metrics == 1) {
     max_dev <- max(abs(.df$estimate - 1), na.rm = TRUE)
     p <- p +
       ggplot2::scale_x_continuous(
