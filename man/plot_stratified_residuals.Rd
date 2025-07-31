@@ -82,16 +82,16 @@ Supports tidyselect syntax.}
 A ggplot2 object
 }
 \description{
-Create diagnostic plots to assess whether covariate adjustment adequately
-controls confounding in observational studies. This function plots residuals
+Create diagnostic plots to assess differences between treatment group after adjustment.
+This function plots residuals
 from an outcome model against propensity scores (or fitted values),
 stratified by treatment group, to reveal model mis-specification.
 }
 \details{
 This diagnostic plot was originally suggested by Rosenbaum and Rubin (1983)
-and revisited by McGowan, D'Agostino, and D'Agostino (2023).
+and revisited by D'Agostino McGowan, D'Agostino, and D'Agostino (2023).
 The key idea is that plotting residuals against propensity scores
-(rather than fitted values) can reveal non-linear relationships or
+or fitted values by treatment group can reveal non-linear relationships or
 heterogeneous treatment effects that might be obscured in standard
 residuals-vs-fitted plots.
 

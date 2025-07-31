@@ -9,7 +9,7 @@
 #' This diagnostic plot was originally suggested by Rosenbaum and Rubin (1983)
 #' and revisited by D'Agostino McGowan, D'Agostino, and D'Agostino (2023).
 #' The key idea is that plotting residuals against propensity scores
-#' (rather than fitted values) can reveal non-linear relationships or
+#' or fitted values by treatment group can reveal non-linear relationships or
 #' heterogeneous treatment effects that might be obscured in standard
 #' residuals-vs-fitted plots.
 #'
@@ -119,7 +119,7 @@ plot_stratified_residuals.lm <- function(
   na.rm = FALSE,
   ...
 ) {
-  plot_type <- match.arg(plot_type)
+  plot_type <- rlang::arg_match(plot_type)
 
   # Extract residuals from the outcome model
   .residuals <- stats::residuals(x)
