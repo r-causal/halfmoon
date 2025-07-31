@@ -156,7 +156,7 @@ plot_balance <- function(
     )
 
   # Add faceting if multiple metrics
-  n_metrics <- length(unique(.df$metric))
+  n_metrics <- length(unique_metrics)
   if (n_metrics > 1) {
     p <- p +
       ggplot2::facet_wrap(
