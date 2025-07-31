@@ -27,8 +27,7 @@
 </defs>
 <g clip-path='url(#cpMTAyLjIzfDM0Ni42N3wzOS40M3w1MzEuNzU=)'>
 <rect x='102.23' y='39.43' width='244.44' height='492.32' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<line x1='335.56' y1='531.75' x2='335.56' y2='39.43' style='stroke-width: 1.28; stroke: #B3B3B3; stroke-linecap: butt;' />
-<circle cx='229.75' cy='285.59' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
+<circle cx='335.56' cy='285.59' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
 <circle cx='113.34' cy='285.59' r='2.33' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 <rect x='102.23' y='39.43' width='244.44' height='492.32' style='stroke-width: 1.07; stroke: #333333;' />
 </g>
@@ -41,7 +40,6 @@
 </defs>
 <g clip-path='url(#cpNDAwLjE1fDY0NC41OXwzOS40M3w1MzEuNzU=)'>
 <rect x='400.15' y='39.43' width='244.44' height='492.32' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<line x1='489.57' y1='531.75' x2='489.57' y2='39.43' style='stroke-width: 1.28; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='633.48,484.11 451.66,404.70 498.77,325.29 447.91,245.89 431.95,166.48 541.69,87.08 ' style='stroke-width: 1.71; stroke: #F8766D; stroke-linecap: butt;' />
 <polyline points='415.22,484.11 431.20,404.70 412.62,325.29 413.79,245.89 431.38,166.48 411.26,87.08 ' style='stroke-width: 1.71; stroke: #00BFC4; stroke-linecap: butt;' />
 <circle cx='633.48' cy='484.11' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
@@ -81,16 +79,16 @@
 <text x='522.37' y='34.14' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: sans;' textLength='115.95px' lengthAdjust='spacingAndGlyphs'>standardized mean difference</text>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
-<polyline points='104.71,534.49 104.71,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
-<polyline points='162.42,534.49 162.42,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
-<polyline points='220.14,534.49 220.14,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
-<polyline points='277.85,534.49 277.85,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
-<polyline points='335.56,534.49 335.56,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
-<text x='104.71' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='22.02px' lengthAdjust='spacingAndGlyphs'>0.000</text>
-<text x='162.42' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='22.02px' lengthAdjust='spacingAndGlyphs'>0.025</text>
-<text x='220.14' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='22.02px' lengthAdjust='spacingAndGlyphs'>0.050</text>
-<text x='277.85' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='22.02px' lengthAdjust='spacingAndGlyphs'>0.075</text>
-<text x='335.56' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='22.02px' lengthAdjust='spacingAndGlyphs'>0.100</text>
+<polyline points='140.93,534.49 140.93,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='185.00,534.49 185.00,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='229.07,534.49 229.07,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='273.14,534.49 273.14,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='317.22,534.49 317.22,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='140.93' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.01</text>
+<text x='185.00' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.02</text>
+<text x='229.07' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.03</text>
+<text x='273.14' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.04</text>
+<text x='317.22' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.05</text>
 <polyline points='410.60,534.49 410.60,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='489.57,534.49 489.57,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='568.55,534.49 568.55,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
@@ -118,8 +116,10 @@
 <rect x='655.55' y='275.98' width='17.28' height='17.28' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
 <line x1='657.28' y1='284.62' x2='671.10' y2='284.62' style='stroke-width: 1.71; stroke: #F8766D; stroke-linecap: butt;' />
 <circle cx='664.19' cy='284.62' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
+<circle cx='664.19' cy='284.62' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
 <rect x='655.55' y='293.26' width='17.28' height='17.28' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
 <line x1='657.28' y1='301.90' x2='671.10' y2='301.90' style='stroke-width: 1.71; stroke: #00BFC4; stroke-linecap: butt;' />
+<circle cx='664.19' cy='301.90' r='2.33' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 <circle cx='664.19' cy='301.90' r='2.33' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 <text x='678.31' y='287.65' style='font-size: 8.80px; font-family: sans;' textLength='36.21px' lengthAdjust='spacingAndGlyphs'>observed</text>
 <text x='678.31' y='304.93' style='font-size: 8.80px; font-family: sans;' textLength='23.49px' lengthAdjust='spacingAndGlyphs'>w_ate</text>

@@ -118,14 +118,32 @@ plot_balance <- function(
       color = method,
       fill = method
     )
-  ) +
+  )
+  
+  # Determine if we should show vline (only for SMD when it's the only metric)
+  show_vline <- "smd" %in% unique(.df$metric) && length(unique(.df$metric)) == 1
+  
+  # Add geom_love for non-energy metrics
+  p <- p +
     geom_love(
+      data = function(x) dplyr::filter(x, metric != "energy"),
       linewidth = linewidth,
       point_size = point_size,
-      vline_xintercept = vline_xintercept,
+      vline_xintercept = if (show_vline) vline_xintercept else NULL,
       vline_color = vline_color,
       vlinewidth = vlinewidth
-    ) +
+    )
+  
+  # Add points for energy metric (no lines since only one point per method)
+  if ("energy" %in% unique(.df$metric)) {
+    p <- p +
+      ggplot2::geom_point(
+        data = function(x) dplyr::filter(x, metric == "energy"),
+        size = point_size
+      )
+  }
+  
+  p <- p +
     ggplot2::labs(
       x = "balance metric",
       y = "variable",
