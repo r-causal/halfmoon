@@ -54,14 +54,14 @@
 #'
 #' # Plot calibration from the model
 #' plot_calibration(ps_model)
-#' 
+#'
 #' @seealso
 #' - [`geom_calibration()`] for the underlying geom
 #' - [`check_calibration()`] for numerical calibration metrics
 #' - [`plot_stratified_residuals()`] for residual diagnostic plots
 #' - [`plot_roc_curve()`] for ROC curves
 #' - [`plot_qq()`] for QQ plots
-#' 
+#'
 #' @export
 plot_calibration <- function(x, ...) {
   UseMethod("plot_calibration")
