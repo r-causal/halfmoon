@@ -173,7 +173,7 @@ plot_stratified_residuals.data.frame <- function(
   na.rm = FALSE,
   ...
 ) {
-  plot_type <- match.arg(plot_type)
+  plot_type <- rlang::arg_match(plot_type)
 
   # Validate data frame
   validate_data_frame(x)
