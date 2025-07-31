@@ -120,8 +120,11 @@ plot_balance <- function(
     )
   )
   
+  # Compute unique metrics once to avoid redundant computation
+  unique_metrics <- unique(.df$metric)
+  
   # Determine if we should show vline (only for SMD when it's the only metric)
-  show_vline <- "smd" %in% unique(.df$metric) && length(unique(.df$metric)) == 1
+  show_vline <- "smd" %in% unique_metrics && length(unique_metrics) == 1
   
   # Add geom_love for non-energy metrics
   p <- p +
