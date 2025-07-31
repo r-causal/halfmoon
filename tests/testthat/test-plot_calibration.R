@@ -153,6 +153,78 @@ test_that("plot_calibration has correct labels and theme", {
   ))
 })
 
+test_that("plot_calibration works with glm objects", {
+  # Fit a propensity score model
+  ps_model <- glm(
+    qsmk ~ age + sex + race + education,
+    data = nhefs_weights,
+    family = binomial()
+  )
+
+  # Basic functionality
+  p <- plot_calibration(ps_model)
+  expect_s3_class(p, "ggplot")
+  expect_gte(length(p$layers), 3) # calibration layers + abline
+
+  # Check that the plot can be built
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
+
+  # Test with different methods
+  p_logistic <- plot_calibration(ps_model, method = "logistic")
+  expect_s3_class(p_logistic, "ggplot")
+
+  p_windowed <- plot_calibration(ps_model, method = "windowed")
+  expect_s3_class(p_windowed, "ggplot")
+
+  # Test with options
+  p_rug <- plot_calibration(ps_model, include_rug = TRUE)
+  expect_s3_class(p_rug, "ggplot")
+
+  # Test with treatment level
+  p_treatment <- plot_calibration(ps_model, treatment_level = 1)
+  expect_s3_class(p_treatment, "ggplot")
+})
+
+test_that("plot_calibration works with lm objects", {
+  # Create a linear probability model
+  lpm_model <- lm(
+    as.numeric(qsmk == "1") ~ age + sex + race + education,
+    data = nhefs_weights
+  )
+
+  # Basic functionality
+  p <- plot_calibration(lpm_model)
+  expect_s3_class(p, "ggplot")
+  expect_gte(length(p$layers), 3) # calibration layers + abline
+
+  # Check that the plot can be built
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
+})
+
+test_that("plot_calibration model method handles NA values", {
+  # Create test data with NAs
+  test_data <- nhefs_weights[1:100, ]
+  test_data$age[1:5] <- NA
+  test_data$qsmk[6:10] <- NA
+
+  # Fit model (will drop NAs)
+  ps_model <- glm(
+    qsmk ~ age + sex + race + education,
+    data = test_data,
+    family = binomial()
+  )
+
+  # Test with na.rm = TRUE
+  p_na_rm <- plot_calibration(ps_model, na.rm = TRUE)
+  expect_s3_class(p_na_rm, "ggplot")
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p_na_rm)))
+
+  # Test with na.rm = FALSE
+  p_na_keep <- plot_calibration(ps_model, na.rm = FALSE)
+  expect_s3_class(p_na_keep, "ggplot")
+  expect_no_error(suppress_calibration_warnings(ggplot_build(p_na_keep)))
+})
+
 test_that("plot_calibration visual snapshot tests", {
   # Skip on CI to avoid platform-specific rendering differences
   skip_on_ci()
@@ -176,4 +248,51 @@ test_that("plot_calibration visual snapshot tests", {
   # With explicit treatment level
   p5 <- plot_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
   expect_doppelganger("plot_calibration explicit treatment", p5)
+
+  # GLM model tests
+  ps_model <- glm(
+    qsmk ~ age + sex + race + education,
+    data = nhefs_weights,
+    family = binomial()
+  )
+
+  # Basic GLM plot
+  p6 <- plot_calibration(ps_model)
+  expect_doppelganger("plot_calibration glm basic", p6)
+
+  # GLM with rug
+  p7 <- plot_calibration(ps_model, include_rug = TRUE)
+  expect_doppelganger("plot_calibration glm with rug", p7)
+
+  # GLM with logistic method
+  p8 <- plot_calibration(ps_model, method = "logistic")
+  expect_doppelganger("plot_calibration glm logistic", p8)
+
+  # GLM with windowed method
+  p9 <- plot_calibration(ps_model, method = "windowed")
+  expect_doppelganger("plot_calibration glm windowed", p9)
+
+  # GLM with no ribbon
+  p10 <- plot_calibration(ps_model, include_ribbon = FALSE)
+  expect_doppelganger("plot_calibration glm no ribbon", p10)
+
+  # GLM with no points
+  p11 <- plot_calibration(ps_model, include_points = FALSE)
+  expect_doppelganger("plot_calibration glm no points", p11)
+
+  # GLM with different bins
+  p12 <- plot_calibration(ps_model, bins = 5)
+  expect_doppelganger("plot_calibration glm 5 bins", p12)
+
+  # LM model test (linear probability model)
+  lpm_model <- lm(
+    as.numeric(qsmk == "1") ~ age + sex + race + education,
+    data = nhefs_weights
+  )
+
+  p13 <- plot_calibration(lpm_model)
+  expect_doppelganger("plot_calibration lm basic", p13)
+
+  p14 <- plot_calibration(lpm_model, method = "logistic", include_rug = TRUE)
+  expect_doppelganger("plot_calibration lm logistic with rug", p14)
 })
