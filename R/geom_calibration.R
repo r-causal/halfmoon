@@ -160,35 +160,6 @@ check_columns <- function(data, fitted_name, group_name, treatment_level) {
   }
 }
 
-# Function to extract column name from quosure
-get_column_name <- function(quo, arg_name) {
-  # First try as_name (works for symbols and strings)
-  tryCatch(
-    {
-      rlang::as_name(quo)
-    },
-    error = function(e) {
-      # If as_name fails, try to evaluate the quosure
-      val <- tryCatch(
-        {
-          rlang::eval_tidy(quo)
-        },
-        error = function(e2) {
-          abort("{.code arg_name} must be a column name (quoted or unquoted)")
-        }
-      )
-
-      # Handle different types of evaluated values
-      if (is.character(val) && length(val) == 1) {
-        val
-      } else if (is.symbol(val)) {
-        as.character(val)
-      } else {
-        abort("{.code arg_name} must be a column name (quoted or unquoted)")
-      }
-    }
-  )
-}
 
 # Internal helper function for breaks method
 compute_calibration_breaks_imp <- function(

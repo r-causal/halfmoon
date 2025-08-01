@@ -47,6 +47,8 @@ nhefs_weights <- propensity_model %>%
     exercise,
     active,
     wt71,
+    wt82_71,
+    death,
     starts_with("w_"),
     .fitted
   ) %>%

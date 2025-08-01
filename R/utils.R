@@ -22,6 +22,37 @@ warn <- function(.message, .envir = parent.frame()) {
   cli::cli_warn(message = .message, .envir = .envir)
 }
 
+# Function to extract column name from quosure
+# Handles both quoted and unquoted column names
+get_column_name <- function(quo, arg_name) {
+  # First try as_name (works for symbols and strings)
+  tryCatch(
+    {
+      rlang::as_name(quo)
+    },
+    error = function(e) {
+      # If as_name fails, try to evaluate the quosure
+      val <- tryCatch(
+        {
+          rlang::eval_tidy(quo)
+        },
+        error = function(e2) {
+          abort("{.code arg_name} must be a column name (quoted or unquoted)")
+        }
+      )
+      
+      # Handle different types of evaluated values
+      if (is.character(val) && length(val) == 1) {
+        val
+      } else if (is.symbol(val)) {
+        as.character(val)
+      } else {
+        abort("{.code arg_name} must be a column name (quoted or unquoted)")
+      }
+    }
+  )
+}
+
 utils::globalVariables(c(
   "method",
   "metric",
@@ -44,7 +75,8 @@ utils::globalVariables(c(
   "x_quantiles",
   "y_quantiles",
   "weight",
-  ".var"
+  ".var",
+  ".weights"
 ))
 
 #' Create dummy variables from categorical data
