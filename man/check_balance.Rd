@@ -126,6 +126,7 @@ Other balance functions:
 \code{\link{bal_ks}()},
 \code{\link{bal_smd}()},
 \code{\link{bal_vr}()},
-\code{\link{check_auc}()}
+\code{\link{check_auc}()},
+\code{\link{plot_balance}()}
 }
 \concept{balance functions}

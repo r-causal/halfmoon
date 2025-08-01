@@ -26,6 +26,7 @@ utils::globalVariables(c(
   "method",
   "metric",
   "variable",
+  "estimate",
   ".bin",
   "bin",
   "n_events",
