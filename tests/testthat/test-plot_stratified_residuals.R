@@ -127,7 +127,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
       treatment = trt,
       residuals = resids
     ),
-    "arg_name"
+    "`x_var` must be a column name"
   )
 
   # Non-existent column
