@@ -96,10 +96,8 @@ bal_prognostic_score <- function(
   na.rm = FALSE,
   ...
 ) {
-  # Validate inputs
   validate_data_frame(.data)
   
-  # Handle treatment using get_column_name helper
   treatment_quo <- rlang::enquo(treatment)
   treatment_var <- get_column_name(treatment_quo, "treatment")
   validate_column_exists(.data, treatment_var)
@@ -235,7 +233,6 @@ bal_prognostic_score <- function(
   prognostic_scores
 }
 
-# Internal function to fit the prognostic model
 bal_prognostic_fit_model <- function(
   .data,
   model_formula,
@@ -247,12 +244,10 @@ bal_prognostic_fit_model <- function(
   # Subset to control group for fitting
   control_data <- .data[is_control, ]
   
-  # Subset weights if provided and add to control_data
   if (!is.null(weights)) {
     control_data$.weights <- weights[is_control]
   }
   
-  # Fit the model with error handling
   model <- tryCatch({
     if (!is.null(weights)) {
       stats::glm(
@@ -277,7 +272,6 @@ bal_prognostic_fit_model <- function(
     ))
   })
   
-  # Check for model convergence
   if (!model$converged) {
     warn("Prognostic score model did not converge. Results may be unreliable.")
   }
@@ -292,6 +286,5 @@ bal_prognostic_fit_model <- function(
     ))
   })
   
-  # Return predictions as numeric vector
   as.numeric(predictions)
 }
