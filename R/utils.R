@@ -47,7 +47,7 @@ get_column_name <- function(quo, arg_name) {
       } else if (is.symbol(val)) {
         as.character(val)
       } else {
-        abort("{.code arg_name} must be a column name (quoted or unquoted)")
+        abort("{.code {arg_name}} must be a column name (quoted or unquoted)")
       }
     }
   )
