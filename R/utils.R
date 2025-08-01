@@ -37,7 +37,7 @@ get_column_name <- function(quo, arg_name) {
           rlang::eval_tidy(quo)
         },
         error = function(e2) {
-          abort("{.code arg_name} must be a column name (quoted or unquoted)")
+          abort("{.code {arg_name}} must be a column name (quoted or unquoted)")
         }
       )
       
