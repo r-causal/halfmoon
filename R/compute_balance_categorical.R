@@ -151,10 +151,9 @@ compute_categorical_balance <- function(
   method_name
 ) {
   # Extract comparison info from names
-  comparison_info <- stringr::str_match(
-    names(cat_results),
-    "^(.+)_vs_(.+)$"
-  )
+  pattern <- "^(.+)_vs_(.+)$"
+  matches <- regexec(pattern, names(cat_results))
+  comparison_info <- do.call(rbind, regmatches(names(cat_results), matches))
 
   data.frame(
     variable = variable_name,

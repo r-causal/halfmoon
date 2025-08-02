@@ -443,10 +443,9 @@ compute_single_balance_metric <- function(
           !is.null(names(estimate))
       ) {
         # Categorical exposure - expand results
-        comparison_info <- stringr::str_match(
-          names(estimate),
-          "^(.+)_vs_(.+)$"
-        )
+        pattern <- "^(.+)_vs_(.+)$"
+        matches <- regexec(pattern, names(estimate))
+        comparison_info <- do.call(rbind, regmatches(names(estimate), matches))
 
         tibble::tibble(
           variable = variable,
