@@ -1,5 +1,92 @@
 # Tests for categorical exposure balance functions
 
+# Tests using real nhefs_weights data with categorical exposure
+test_that("categorical balance functions work with nhefs_weights data", {
+  # Test SMD with categorical exposure
+  result_smd <- bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+  
+  expect_type(result_smd, "double")
+  expect_length(result_smd, 5)  # 6 levels - 1 reference = 5 comparisons
+  expect_true(all(grepl("_vs_", names(result_smd))))
+  expect_true(all(!is.na(result_smd)))
+  
+  # Test with different reference group
+  result_ref <- bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, 
+                        reference_group = "2_3_per_week")
+  expect_true(all(grepl("_vs_2_3_per_week$", names(result_ref))))
+  expect_false(identical(result_smd, result_ref))
+  
+  # Test with categorical weights (filter out rows with NA weights)
+  nhefs_with_weights <- nhefs_weights[!is.na(nhefs_weights$w_cat_ate), ]
+  nhefs_with_weights$alcoholfreq_cat <- droplevels(nhefs_with_weights$alcoholfreq_cat)
+  
+  result_weighted <- bal_smd(nhefs_with_weights$wt71, 
+                            nhefs_with_weights$alcoholfreq_cat,
+                            weights = nhefs_with_weights$w_cat_ate)
+  expect_length(result_weighted, 4)  # 5 levels - 1 reference = 4 (unknown excluded)
+  expect_true(all(!is.na(result_weighted)))
+  
+  # Test VR
+  result_vr <- bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+  expect_type(result_vr, "double")
+  expect_length(result_vr, 5)  # 6 levels - 1 reference = 5 comparisons
+  expect_true(all(result_vr > 0))
+  
+  # Test KS
+  result_ks <- bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+  expect_type(result_ks, "double")
+  expect_length(result_ks, 5)  # 6 levels - 1 reference = 5 comparisons
+  expect_true(all(result_ks >= 0 & result_ks <= 1))
+})
+
+test_that("check_balance integrates categorical exposure from nhefs_weights", {
+  # Test with single metric
+  result <- check_balance(
+    nhefs_weights, 
+    c(age, wt71), 
+    alcoholfreq_cat, 
+    .metrics = "smd"
+  )
+  
+  expect_s3_class(result, "data.frame")
+  # 2 variables × 5 comparisons = 10 rows (6 levels - 1 reference = 5 comparisons)
+  expect_equal(nrow(result), 10)
+  expect_equal(unique(result$metric), "smd")
+  expect_true(all(!is.na(result$estimate)))
+  
+  # Test with weights
+  result_weighted <- check_balance(
+    nhefs_weights,
+    c(age, wt71),
+    alcoholfreq_cat,
+    .wts = w_cat_ate,
+    .metrics = c("smd", "vr")
+  )
+  
+  # When using weights, unknown category is excluded (NA weights)
+  # 2 vars × 2 metrics × 4 comparisons × 2 methods = 32 rows
+  expect_equal(nrow(result_weighted), 32)
+  expect_setequal(unique(result_weighted$method), c("observed", "w_cat_ate"))
+  
+  # Test with subset that has no NA weights
+  # Need to drop unused levels after filtering
+  nhefs_complete <- nhefs_weights[!is.na(nhefs_weights$w_cat_ate), ]
+  nhefs_complete$alcoholfreq_cat <- droplevels(nhefs_complete$alcoholfreq_cat)
+  
+  result_subset <- check_balance(
+    nhefs_complete,
+    age,
+    alcoholfreq_cat,
+    .wts = w_cat_ate,
+    .metrics = "smd",
+    include_observed = FALSE
+  )
+  
+  # When using weights, unknown category is excluded (NA weights)
+  expect_equal(nrow(result_subset), 4)  # 4 comparisons (excluding unknown)
+  expect_equal(unique(result_subset$method), "w_cat_ate")
+})
+
 # Create test data with categorical exposure
 create_test_data_categorical <- function(n = 300, seed = 123) {
   set.seed(seed)

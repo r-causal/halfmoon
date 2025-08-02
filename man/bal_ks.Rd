@@ -49,11 +49,23 @@ separate distributions). Smaller values indicate better distributional balance
 between groups.
 }
 \examples{
+# Binary exposure
 bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 
 # With weights
 bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
-           weights = nhefs_weights$w_ate)
+       weights = nhefs_weights$w_ate)
+
+# Categorical exposure (returns named vector)
+bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+
+# Specify reference group
+bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+       reference_group = "none")
+
+# With categorical weights
+bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+       weights = nhefs_weights$w_cat_ate)
 }
 \seealso{
 \code{\link[=check_balance]{check_balance()}} for computing multiple balance metrics at once

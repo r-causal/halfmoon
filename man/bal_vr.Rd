@@ -45,10 +45,23 @@ Values close to 1.0 indicate similar variability between groups, which is desira
 for balance. Values substantially different from 1.0 suggest imbalanced variance.
 }
 \examples{
+# Binary exposure
 bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
+
 # With weights
 bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
-                      weights = nhefs_weights$w_ate)
+       weights = nhefs_weights$w_ate)
+
+# Categorical exposure (returns named vector)
+bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+
+# Specify reference group
+bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+       reference_group = "weekly")
+
+# With categorical weights
+bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+       weights = nhefs_weights$w_cat_ate)
 
 }
 \seealso{

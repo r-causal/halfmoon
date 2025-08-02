@@ -20,11 +20,23 @@
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
+#' # Binary exposure
 #' bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'             weights = nhefs_weights$w_ate)
+#'         weights = nhefs_weights$w_ate)
+#'
+#' # Categorical exposure (returns named vector)
+#' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#'
+#' # Specify reference group
+#' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+#'         reference_group = "daily")
+#'
+#' # With categorical weights
+#' bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+#'         weights = nhefs_weights$w_cat_ate)
 #'
 #' @export
 bal_smd <- function(
@@ -126,10 +138,23 @@ is_binary <- function(x) {
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
+#' # Binary exposure
 #' bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
+#'
 #' # With weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'                       weights = nhefs_weights$w_ate)
+#'        weights = nhefs_weights$w_ate)
+#'
+#' # Categorical exposure (returns named vector)
+#' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#'
+#' # Specify reference group
+#' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+#'        reference_group = "weekly")
+#'
+#' # With categorical weights
+#' bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+#'        weights = nhefs_weights$w_cat_ate)
 #'
 #' @export
 bal_vr <- function(
@@ -272,11 +297,23 @@ bal_vr <- function(
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
+#' # Binary exposure
 #' bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
 #' bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'            weights = nhefs_weights$w_ate)
+#'        weights = nhefs_weights$w_ate)
+#'
+#' # Categorical exposure (returns named vector)
+#' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#'
+#' # Specify reference group
+#' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+#'        reference_group = "none")
+#'
+#' # With categorical weights
+#' bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+#'        weights = nhefs_weights$w_cat_ate)
 #' @export
 bal_ks <- function(
   covariate,

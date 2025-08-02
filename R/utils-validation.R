@@ -18,7 +18,7 @@ validate_weights <- function(weights, n, arg_name = "weights") {
   if (length(weights) != n) {
     abort("{.arg {arg_name}} must have length {n}, got {length(weights)}")
   }
-  if (any(weights < 0, na.rm = TRUE)) {
+  if (any(vctrs::vec_data(weights) < 0, na.rm = TRUE)) {
     abort("{.arg {arg_name}} cannot contain negative values")
   }
   invisible(weights)
