@@ -107,15 +107,15 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 
 # Categorical exposure
-check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat, 
+check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
               .wts = c(w_cat_ate, w_cat_att_2_3wk))
 
 # Specify reference group for categorical exposure
-check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat, 
+check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
               reference_group = "daily", .metrics = c("smd", "vr"))
 
 # Exclude observed results
-check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, 
+check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate,
               include_observed = FALSE)
 
 # Use correlation for continuous exposure

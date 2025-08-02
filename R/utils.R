@@ -76,7 +76,8 @@ utils::globalVariables(c(
   "y_quantiles",
   "weight",
   ".var",
-  ".weights"
+  ".weights",
+  "group_level"
 ))
 
 #' Create dummy variables from categorical data
