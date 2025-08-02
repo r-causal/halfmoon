@@ -50,6 +50,18 @@ bal_smd <- function(
     }
   }
 
+  # Check if exposure is categorical
+  if (is_categorical_exposure(group)) {
+    return(.bal_smd_categorical(
+      covariate = covariate,
+      group = group,
+      weights = weights,
+      reference_group = reference_group,
+      na.rm = na.rm
+    ))
+  }
+
+  # Binary exposure handling (existing code)
   # Convert reference_group to index for smd package
   levels_g <- unique(stats::na.omit(group))
 
@@ -133,6 +145,18 @@ bal_vr <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
+  # Check if exposure is categorical
+  if (is_categorical_exposure(group)) {
+    return(.bal_vr_categorical(
+      covariate = covariate,
+      group = group,
+      weights = weights,
+      reference_group = reference_group,
+      na.rm = na.rm
+    ))
+  }
+
+  # Binary exposure handling (existing code)
   # Identify reference and comparison indices
   group_splits <- split_by_group(covariate, group, reference_group)
   idx_ref <- group_splits$reference
@@ -267,6 +291,18 @@ bal_ks <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
+  # Check if exposure is categorical
+  if (is_categorical_exposure(group)) {
+    return(.bal_ks_categorical(
+      covariate = covariate,
+      group = group,
+      weights = weights,
+      reference_group = reference_group,
+      na.rm = na.rm
+    ))
+  }
+
+  # Binary exposure handling (existing code)
   group_splits <- split_by_group(covariate, group, reference_group)
   idx_ref <- group_splits$reference
   idx_other <- group_splits$comparison

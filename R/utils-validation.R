@@ -106,3 +106,33 @@ filter_na_indices <- function(indices, data, weights = NULL, na.rm = FALSE) {
     indices[!is.na(data[indices]) & !is.na(weights[indices])]
   }
 }
+
+# Categorical exposure validation
+is_categorical_exposure <- function(group) {
+  levels <- unique(stats::na.omit(group))
+  length(levels) > 2
+}
+
+# Get exposure type
+get_exposure_type <- function(group) {
+  levels <- unique(stats::na.omit(group))
+  n_levels <- length(levels)
+
+  if (n_levels == 2) {
+    "binary"
+  } else if (n_levels > 2) {
+    "categorical"
+  } else if (n_levels == 1) {
+    abort("Group variable has only one level")
+  } else {
+    abort("Group variable has no non-missing values")
+  }
+}
+
+# Validate exposure type
+validate_exposure_type <- function(group, arg_name = "group") {
+  exposure_type <- get_exposure_type(group)
+
+  # For now, just return the type - validation happens in get_exposure_type
+  invisible(exposure_type)
+}

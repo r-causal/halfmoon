@@ -126,7 +126,8 @@ test_that("bal_smd error handling", {
 
   # Should error with wrong number of groups
   expect_error(bal_smd(covariate = data$x_cont, group = rep(1, 100)))
-  expect_error(bal_smd(
+  # Now supports 3+ groups (categorical)
+  expect_no_error(bal_smd(
     covariate = data$x_cont,
     group = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
@@ -254,7 +255,8 @@ test_that("bal_vr error handling", {
     covariate = data$x_cont,
     group = rep(1, 100)
   ))
-  expect_error(bal_vr(
+  # Now supports 3+ groups (categorical)
+  expect_no_error(bal_vr(
     covariate = data$x_cont,
     group = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
@@ -357,7 +359,8 @@ test_that("bal_ks error handling", {
 
   # Should error with wrong number of groups
   expect_error(bal_ks(covariate = data$x_cont, group = rep(1, 100)))
-  expect_error(bal_ks(
+  # Now supports 3+ groups (categorical)
+  expect_no_error(bal_ks(
     covariate = data$x_cont,
     group = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))

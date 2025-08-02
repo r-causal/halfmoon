@@ -10,7 +10,7 @@
 #' The prognostic score method, introduced by Stuart et al. (2013), provides a
 #' way to assess balance that focuses on variables predictive of the outcome
 #' rather than just the treatment assignment. The procedure:
-#' 
+#'
 #' 1. Fits an outcome model using only control group observations
 #' 2. Generates predictions (prognostic scores) for all observations
 #' 3. Returns these scores for balance assessment
@@ -97,79 +97,82 @@ bal_prognostic_score <- function(
   ...
 ) {
   validate_data_frame(.data)
-  
+
   treatment_quo <- rlang::enquo(treatment)
   treatment_var <- get_column_name(treatment_quo, "treatment")
   validate_column_exists(.data, treatment_var)
-  
+
   # Handle formula vs tidyselect interface
   if (!is.null(formula)) {
     # Formula interface
     if (!inherits(formula, "formula")) {
       abort("`formula` must be a formula object.")
     }
-    
+
     # Extract variables from formula
     formula_vars <- all.vars(formula)
-    outcome_var <- formula_vars[1]  # LHS of formula
-    
+    outcome_var <- formula_vars[1] # LHS of formula
+
     # Check that treatment is not in the formula
     if (treatment_var %in% formula_vars) {
       abort(paste0(
-        "The treatment variable '", treatment_var, 
+        "The treatment variable '",
+        treatment_var,
         "' should not be included in the outcome model formula."
       ))
     }
-    
+
     # Validate outcome exists
     validate_column_exists(.data, outcome_var)
-    
+
     model_formula <- formula
-    
   } else {
     # Tidyselect interface
     # Handle outcome using get_column_name helper
     outcome_quo <- rlang::enquo(outcome)
-    
+
     # Check if outcome was provided using quo_is_null
     if (rlang::quo_is_null(outcome_quo)) {
       abort("Either `outcome` or `formula` must be provided.")
     }
-    
+
     outcome_var <- get_column_name(outcome_quo, "outcome")
     validate_column_exists(.data, outcome_var)
-    
+
     # Get covariate names
     covariate_enquo <- rlang::enquo(covariates)
     all_vars <- names(.data)
     # Remove outcome and treatment from available variables for selection
     available_vars <- setdiff(all_vars, c(outcome_var, treatment_var))
     covariate_names <- names(tidyselect::eval_select(
-      covariate_enquo, 
+      covariate_enquo,
       .data[available_vars]
     ))
-    
+
     if (length(covariate_names) == 0) {
       abort("No covariates selected for the outcome model.")
     }
-    
+
     # Create formula
     formula_str <- paste0(
-      outcome_var, 
-      " ~ ", 
+      outcome_var,
+      " ~ ",
       paste(covariate_names, collapse = " + ")
     )
     model_formula <- stats::as.formula(formula_str)
   }
-  
+
   # Handle weights
   weights_enquo <- rlang::enquo(weights)
   if (!rlang::quo_is_null(weights_enquo)) {
     # Try to get column name first (handles both quoted and unquoted)
-    weights_var <- tryCatch({
-      get_column_name(weights_enquo, "weights")
-    }, error = function(e) NULL)
-    
+    weights_var <- tryCatch(
+      {
+        get_column_name(weights_enquo, "weights")
+      },
+      error = function(e) NULL
+    )
+
     if (!is.null(weights_var) && weights_var %in% names(.data)) {
       # It's a column reference
       validate_column_exists(.data, weights_var)
@@ -182,44 +185,46 @@ bal_prognostic_score <- function(
   } else {
     model_weights <- NULL
   }
-  
+
   # Determine control group
   treatment_levels <- extract_group_levels(.data[[treatment_var]])
   control_level <- determine_reference_group(
-    treatment_levels, 
+    treatment_levels,
     treatment_level
   )
-  
+
   # Create control group indicator
   is_control <- .data[[treatment_var]] == control_level
-  
+
   # Handle NAs if requested
   if (na.rm) {
     # Get all variables used in the model
     model_vars <- unique(c(all.vars(model_formula), treatment_var))
     complete_idx <- stats::complete.cases(.data[model_vars])
-    
+
     if (!is.null(model_weights)) {
       complete_idx <- complete_idx & !is.na(model_weights)
     }
-    
+
     .data <- .data[complete_idx, ]
     is_control <- is_control[complete_idx]
-    
+
     if (!is.null(model_weights)) {
       model_weights <- model_weights[complete_idx]
     }
   }
-  
+
   # Check we have control observations
   n_control <- sum(is_control, na.rm = TRUE)
   if (n_control == 0) {
     abort(paste0(
       "No control observations found. ",
-      "Control level '", control_level, "' not present in treatment variable."
+      "Control level '",
+      control_level,
+      "' not present in treatment variable."
     ))
   }
-  
+
   # Fit prognostic model on control group only
   prognostic_scores <- bal_prognostic_fit_model(
     .data = .data,
@@ -229,7 +234,7 @@ bal_prognostic_score <- function(
     weights = model_weights,
     ...
   )
-  
+
   prognostic_scores
 }
 
@@ -243,48 +248,54 @@ bal_prognostic_fit_model <- function(
 ) {
   # Subset to control group for fitting
   control_data <- .data[is_control, ]
-  
+
   if (!is.null(weights)) {
     control_data$.weights <- weights[is_control]
   }
-  
-  model <- tryCatch({
-    if (!is.null(weights)) {
-      stats::glm(
-        formula = model_formula,
-        data = control_data,
-        family = family,
-        weights = .weights,
-        ...
-      )
-    } else {
-      stats::glm(
-        formula = model_formula,
-        data = control_data,
-        family = family,
-        ...
-      )
+
+  model <- tryCatch(
+    {
+      if (!is.null(weights)) {
+        stats::glm(
+          formula = model_formula,
+          data = control_data,
+          family = family,
+          weights = .weights,
+          ...
+        )
+      } else {
+        stats::glm(
+          formula = model_formula,
+          data = control_data,
+          family = family,
+          ...
+        )
+      }
+    },
+    error = function(e) {
+      abort(paste0(
+        "Failed to fit prognostic score model: ",
+        e$message
+      ))
     }
-  }, error = function(e) {
-    abort(paste0(
-      "Failed to fit prognostic score model: ",
-      e$message
-    ))
-  })
-  
+  )
+
   if (!model$converged) {
     warn("Prognostic score model did not converge. Results may be unreliable.")
   }
-  
+
   # Generate predictions for all observations
-  predictions <- tryCatch({
-    stats::predict(model, newdata = .data, type = "response")
-  }, error = function(e) {
-    abort(paste0(
-      "Failed to generate prognostic score predictions: ",
-      e$message
-    ))
-  })
-  
+  predictions <- tryCatch(
+    {
+      stats::predict(model, newdata = .data, type = "response")
+    },
+    error = function(e) {
+      abort(paste0(
+        "Failed to generate prognostic score predictions: ",
+        e$message
+      ))
+    }
+  )
+
   as.numeric(predictions)
 }
