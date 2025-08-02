@@ -7,15 +7,15 @@
 #' @format A data frame with 1566 rows and 30 variables: \describe{
 #'   \item{qsmk}{Quit smoking (binary exposure)}
 #'   \item{alcoholfreq}{Alcohol frequency (numeric 0-5)}
-#'   \item{alcoholfreq_cat}{Alcohol frequency as categorical (factor with levels: none, lt_12_per_year, 1_4_per_month, 2_3_per_week, daily, unknown)}
+#'   \item{alcoholfreq_cat}{Alcohol frequency as categorical (factor with levels: none, lt_12_per_year, 1_4_per_month, 2_3_per_week, daily); NA for unknown alcohol frequency}
 #'   \item{race}{Race} \item{age}{Age} \item{sex}{Sex}
 #'   \item{education}{Education level} \item{smokeintensity}{Smoking intensity}
 #'   \item{smokeyrs}{Number of smoke-years} \item{exercise}{Exercise level}
-#'   \item{active}{Daily activity level} \item{wt71}{Participant weight in 1971 (baseline)} 
+#'   \item{active}{Daily activity level} \item{wt71}{Participant weight in 1971 (baseline)}
 #'   \item{wt82_71}{Weight change from 1971 to 1982} \item{death}{Death indicator}
 #'   \item{wts}{Simple inverse probability weight for binary exposure}
 #'   \item{w_ate}{ATE weight for binary exposure} \item{w_att}{ATT weight for binary exposure}
-#'   \item{w_atc}{ATC weight for binary exposure} \item{w_atm}{ATM weight for binary exposure} 
+#'   \item{w_atc}{ATC weight for binary exposure} \item{w_atm}{ATM weight for binary exposure}
 #'   \item{w_ato}{ATO weight for binary exposure}
 #'   \item{w_cat_ate}{ATE weight for categorical exposure (NA for unknown alcohol frequency)}
 #'   \item{w_cat_att_none}{ATT weight with "none" as focal category (NA for unknown alcohol frequency)}

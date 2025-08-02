@@ -51,18 +51,7 @@ bal_smd <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
-  # Handle missing values first
-  if (!na.rm) {
-    # Check for missing values
-    if (is.null(weights)) {
-      if (any(is.na(covariate) | is.na(group))) return(NA_real_)
-    } else {
-      if (any(is.na(covariate) | is.na(group) | is.na(weights)))
-        return(NA_real_)
-    }
-  }
-
-  # Check if exposure is categorical
+  # Check if exposure is categorical first
   if (is_categorical_exposure(group)) {
     return(.bal_smd_categorical(
       covariate = covariate,
@@ -71,6 +60,17 @@ bal_smd <- function(
       reference_group = reference_group,
       na.rm = na.rm
     ))
+  }
+
+  # Handle missing values for binary exposures
+  if (!na.rm) {
+    # Check for missing values
+    if (is.null(weights)) {
+      if (any(is.na(covariate) | is.na(group))) return(NA_real_)
+    } else {
+      if (any(is.na(covariate) | is.na(group) | is.na(weights)))
+        return(NA_real_)
+    }
   }
 
   # Binary exposure handling (existing code)
@@ -150,7 +150,7 @@ is_binary <- function(x) {
 #'
 #' # Specify reference group
 #' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'        reference_group = "weekly")
+#'        reference_group = "2_3_per_week")
 #'
 #' # With categorical weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,

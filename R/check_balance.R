@@ -66,15 +66,15 @@
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 #'
 #' # Categorical exposure
-#' check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat, 
-#'               .wts = c(w_cat_ate, w_cat_att_weekly))
+#' check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
+#'               .wts = c(w_cat_ate, w_cat_att_2_3wk))
 #'
 #' # Specify reference group for categorical exposure
-#' check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat, 
+#' check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
 #'               reference_group = "daily", .metrics = c("smd", "vr"))
 #'
 #' # Exclude observed results
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, 
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate,
 #'               include_observed = FALSE)
 #'
 #' # Use correlation for continuous exposure
@@ -270,7 +270,7 @@ check_balance <- function(
 
   # Check group variable requirements based on metrics
   only_correlation <- length(setdiff(.metrics, "correlation")) == 0
-  
+
   # Check for single-level groups
   if (length(group_levels) < 2 && !only_correlation) {
     abort(
@@ -289,8 +289,10 @@ check_balance <- function(
   invalid_metrics <- setdiff(.metrics, available_metrics)
   if (length(invalid_metrics) > 0) {
     abort(
-      c("Invalid metric{?s}: {.val {invalid_metrics}}",
-        i = "Available metrics: {.val {available_metrics}}")
+      c(
+        "Invalid metric{?s}: {.val {invalid_metrics}}",
+        i = "Available metrics: {.val {available_metrics}}"
+      )
     )
   }
 

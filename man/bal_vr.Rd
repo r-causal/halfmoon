@@ -57,7 +57,7 @@ bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 
 # Specify reference group
 bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-       reference_group = "weekly")
+       reference_group = "2_3_per_week")
 
 # With categorical weights
 bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,

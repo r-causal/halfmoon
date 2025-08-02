@@ -4,56 +4,60 @@
 test_that("categorical balance functions work with nhefs_weights data", {
   # Test SMD with categorical exposure
   result_smd <- bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
-  
+
   expect_type(result_smd, "double")
-  expect_length(result_smd, 5)  # 6 levels - 1 reference = 5 comparisons
+  expect_length(result_smd, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
   expect_true(all(grepl("_vs_", names(result_smd))))
   expect_true(all(!is.na(result_smd)))
-  
+
   # Test with different reference group
-  result_ref <- bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, 
-                        reference_group = "2_3_per_week")
+  result_ref <- bal_smd(
+    nhefs_weights$age,
+    nhefs_weights$alcoholfreq_cat,
+    reference_group = "2_3_per_week"
+  )
   expect_true(all(grepl("_vs_2_3_per_week$", names(result_ref))))
   expect_false(identical(result_smd, result_ref))
-  
+
   # Test with categorical weights (filter out rows with NA weights)
   nhefs_with_weights <- nhefs_weights[!is.na(nhefs_weights$w_cat_ate), ]
-  nhefs_with_weights$alcoholfreq_cat <- droplevels(nhefs_with_weights$alcoholfreq_cat)
-  
-  result_weighted <- bal_smd(nhefs_with_weights$wt71, 
-                            nhefs_with_weights$alcoholfreq_cat,
-                            weights = nhefs_with_weights$w_cat_ate)
-  expect_length(result_weighted, 4)  # 5 levels - 1 reference = 4 (unknown excluded)
+
+  result_weighted <- bal_smd(
+    nhefs_with_weights$wt71,
+    nhefs_with_weights$alcoholfreq_cat,
+    weights = nhefs_with_weights$w_cat_ate
+  )
+  expect_length(result_weighted, 4) # 5 levels - 1 reference = 4 (unknown excluded)
   expect_true(all(!is.na(result_weighted)))
-  
+
   # Test VR
   result_vr <- bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
   expect_type(result_vr, "double")
-  expect_length(result_vr, 5)  # 6 levels - 1 reference = 5 comparisons
+  expect_length(result_vr, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
   expect_true(all(result_vr > 0))
-  
+
   # Test KS
   result_ks <- bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
   expect_type(result_ks, "double")
-  expect_length(result_ks, 5)  # 6 levels - 1 reference = 5 comparisons
+  expect_length(result_ks, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
   expect_true(all(result_ks >= 0 & result_ks <= 1))
 })
 
 test_that("check_balance integrates categorical exposure from nhefs_weights", {
   # Test with single metric
   result <- check_balance(
-    nhefs_weights, 
-    c(age, wt71), 
-    alcoholfreq_cat, 
+    nhefs_weights,
+    c(age, wt71),
+    alcoholfreq_cat,
     .metrics = "smd"
   )
-  
+
   expect_s3_class(result, "data.frame")
-  # 2 variables × 5 comparisons = 10 rows (6 levels - 1 reference = 5 comparisons)
-  expect_equal(nrow(result), 10)
+  # 2 variables × 4 comparisons = 8 rows (5 levels - 1 reference = 4 comparisons, NA excluded)
+  expect_equal(nrow(result), 8)
   expect_equal(unique(result$metric), "smd")
   expect_true(all(!is.na(result$estimate)))
-  
+
   # Test with weights
   result_weighted <- check_balance(
     nhefs_weights,
@@ -62,17 +66,15 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
     .wts = w_cat_ate,
     .metrics = c("smd", "vr")
   )
-  
+
   # When using weights, unknown category is excluded (NA weights)
   # 2 vars × 2 metrics × 4 comparisons × 2 methods = 32 rows
   expect_equal(nrow(result_weighted), 32)
   expect_setequal(unique(result_weighted$method), c("observed", "w_cat_ate"))
-  
+
   # Test with subset that has no NA weights
-  # Need to drop unused levels after filtering
   nhefs_complete <- nhefs_weights[!is.na(nhefs_weights$w_cat_ate), ]
-  nhefs_complete$alcoholfreq_cat <- droplevels(nhefs_complete$alcoholfreq_cat)
-  
+
   result_subset <- check_balance(
     nhefs_complete,
     age,
@@ -81,9 +83,9 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
     .metrics = "smd",
     include_observed = FALSE
   )
-  
+
   # When using weights, unknown category is excluded (NA weights)
-  expect_equal(nrow(result_subset), 4)  # 4 comparisons (excluding unknown)
+  expect_equal(nrow(result_subset), 4) # 4 comparisons (excluding unknown)
   expect_equal(unique(result_subset$method), "w_cat_ate")
 })
 
@@ -362,7 +364,7 @@ test_that("categorical balance works with ordered factors", {
 # COBALT COMPARISON TESTS FOR CATEGORICAL EXPOSURES
 # =============================================================================
 #
-# IMPORTANT: For continuous covariates, halfmoon and cobalt use different 
+# IMPORTANT: For continuous covariates, halfmoon and cobalt use different
 # variance calculations:
 # - halfmoon (via smd package): uses population variance (dividing by n)
 # - cobalt: uses sample variance with Bessel's correction (dividing by n-1)
@@ -401,7 +403,7 @@ test_that("bal_smd categorical matches cobalt for 3-level exposure with binary c
   medium_low_binary <- rep(NA, length(data$exposure))
   medium_low_binary[data$exposure == "medium"] <- 1
   medium_low_binary[data$exposure == "low"] <- 0
-  
+
   cobalt_medium_vs_low <- cobalt::col_w_smd(
     matrix(data$employed[medium_low_indices], ncol = 1),
     treat = medium_low_binary[medium_low_indices],
@@ -414,7 +416,7 @@ test_that("bal_smd categorical matches cobalt for 3-level exposure with binary c
   high_low_binary <- rep(NA, length(data$exposure))
   high_low_binary[data$exposure == "high"] <- 1
   high_low_binary[data$exposure == "low"] <- 0
-  
+
   cobalt_high_vs_low <- cobalt::col_w_smd(
     matrix(data$employed[high_low_indices], ncol = 1),
     treat = high_low_binary[high_low_indices],
@@ -451,7 +453,7 @@ test_that("bal_smd categorical with continuous covariate shows expected variance
   # Cobalt - separate calculations
   medium_low_indices <- data$exposure %in% c("medium", "low")
   medium_low_binary <- create_binary_for_cobalt(data$exposure, "medium", "low")
-  
+
   cobalt_medium_vs_low <- cobalt::col_w_smd(
     matrix(data$age[medium_low_indices], ncol = 1),
     treat = medium_low_binary[medium_low_indices],
@@ -463,7 +465,7 @@ test_that("bal_smd categorical with continuous covariate shows expected variance
   expect_equal(
     abs(unname(hm_result["medium_vs_low"])),
     abs(unname(cobalt_medium_vs_low)),
-    tolerance = 0.01  # 1% tolerance for variance difference
+    tolerance = 0.01 # 1% tolerance for variance difference
   )
 })
 
@@ -495,7 +497,11 @@ test_that("bal_smd categorical matches cobalt with weights and binary covariate"
 
   # Medium vs High: halfmoon codes as medium=1, high=0 (high is reference)
   medium_high_indices <- data$exposure %in% c("medium", "high")
-  medium_high_binary <- create_binary_for_cobalt(data$exposure, "medium", "high")
+  medium_high_binary <- create_binary_for_cobalt(
+    data$exposure,
+    "medium",
+    "high"
+  )
   cobalt_medium_vs_high <- cobalt::col_w_smd(
     matrix(data$employed[medium_high_indices], ncol = 1),
     treat = medium_high_binary[medium_high_indices],
@@ -585,7 +591,11 @@ test_that("bal_vr categorical matches cobalt with binary covariate", {
 
   # High vs Medium
   high_medium_indices <- data$exposure %in% c("high", "medium")
-  high_medium_binary <- create_binary_for_cobalt(data$exposure, "high", "medium")
+  high_medium_binary <- create_binary_for_cobalt(
+    data$exposure,
+    "high",
+    "medium"
+  )
   cobalt_high_vs_medium <- cobalt::col_w_vr(
     matrix(data$employed[high_medium_indices], ncol = 1),
     treat = high_medium_binary[high_medium_indices],
@@ -675,7 +685,11 @@ test_that("bal_ks categorical matches cobalt with weights and binary covariate",
 
   # Medium vs High
   medium_high_indices <- data$exposure %in% c("medium", "high")
-  medium_high_binary <- create_binary_for_cobalt(data$exposure, "medium", "high")
+  medium_high_binary <- create_binary_for_cobalt(
+    data$exposure,
+    "medium",
+    "high"
+  )
   cobalt_medium_vs_high <- cobalt::col_w_ks(
     matrix(data$employed[medium_high_indices], ncol = 1),
     treat = medium_high_binary[medium_high_indices],
@@ -806,11 +820,15 @@ test_that("categorical balance with 4-level exposure matches cobalt pattern", {
   n <- 300
   exposure_4 <- sample(c("A", "B", "C", "D"), n, replace = TRUE)
   # Binary covariate with different probabilities per group
-  covariate_binary <- rbinom(n, 1, prob = ifelse(exposure_4 == "A", 0.3,
-    ifelse(exposure_4 == "B", 0.5,
-      ifelse(exposure_4 == "C", 0.7, 0.9)
+  covariate_binary <- rbinom(
+    n,
+    1,
+    prob = ifelse(
+      exposure_4 == "A",
+      0.3,
+      ifelse(exposure_4 == "B", 0.5, ifelse(exposure_4 == "C", 0.7, 0.9))
     )
-  ))
+  )
 
   # Halfmoon - should return 3 comparisons vs reference
   hm_result <- bal_smd(

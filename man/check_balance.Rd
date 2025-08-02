@@ -108,7 +108,7 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 
 # Categorical exposure
 check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat, 
-              .wts = c(w_cat_ate, w_cat_att_weekly))
+              .wts = c(w_cat_ate, w_cat_att_2_3wk))
 
 # Specify reference group for categorical exposure
 check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat, 
