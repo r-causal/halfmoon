@@ -595,6 +595,7 @@ test_that("functions handle unbalanced groups", {
 
 test_that("bal_vr matches cobalt::col_w_vr", {
   skip_if_not_installed("cobalt")
+  skip_on_cran()
   data <- create_test_data(seed = 789)
 
   # Continuous variables
@@ -638,6 +639,7 @@ test_that("bal_vr matches cobalt::col_w_vr", {
 
 test_that("bal_ks matches cobalt::col_w_ks", {
   skip_if_not_installed("cobalt")
+  skip_on_cran()
   data <- create_test_data(seed = 789)
 
   # Continuous variables
@@ -678,6 +680,7 @@ test_that("bal_ks matches cobalt::col_w_ks", {
 
 test_that("bal_smd matches cobalt::col_w_smd for binary variables", {
   skip_if_not_installed("cobalt")
+  skip_on_cran()
   data <- create_test_data(seed = 789)
 
   # Binary variables should match exactly
@@ -701,6 +704,7 @@ test_that("bal_smd matches cobalt::col_w_smd for binary variables", {
 
 test_that("bal_smd is close to cobalt::col_w_smd for continuous variables", {
   skip_if_not_installed("cobalt")
+  skip_on_cran()
   data <- create_test_data(seed = 789)
 
   # Continuous variables should be close (different pooled variance approaches)
@@ -726,6 +730,7 @@ test_that("bal_smd is close to cobalt::col_w_smd for continuous variables", {
 
 test_that("cobalt comparison with missing values", {
   skip_if_not_installed("cobalt")
+  skip_on_cran()
   data <- create_test_data(seed = 789)
 
   # Add missing values
@@ -768,6 +773,7 @@ test_that("cobalt comparison with missing values", {
 
 test_that("cobalt comparison with different reference groups", {
   skip_if_not_installed("cobalt")
+  skip_on_cran()
   data <- create_test_data(seed = 789)
 
   # Test variance ratio with different reference groups
@@ -1296,6 +1302,7 @@ test_that("bal_energy handles NHEFS data", {
 
 test_that("bal_energy comparison with cobalt package", {
   testthat::skip_if_not_installed("cobalt")
+  skip_on_cran()
 
   # Create test data
   set.seed(456)
@@ -1329,6 +1336,7 @@ test_that("bal_energy comparison with cobalt package", {
 
 test_that("bal_energy multi-category comparison with cobalt", {
   testthat::skip_if_not_installed("cobalt")
+  skip_on_cran()
 
   # Create test data with 3 groups
   set.seed(789)
@@ -1358,6 +1366,7 @@ test_that("bal_energy multi-category comparison with cobalt", {
 
 test_that("bal_energy continuous treatment comparison with cobalt", {
   testthat::skip_if_not_installed("cobalt")
+  skip_on_cran()
 
   # Create test data with continuous treatment
   set.seed(321)
@@ -1389,6 +1398,7 @@ test_that("bal_energy continuous treatment comparison with cobalt", {
 
 test_that("bal_energy handles categorical covariates", {
   testthat::skip_if_not_installed("cobalt", minimum_version = "4.5.2")
+  skip_on_cran()
 
   set.seed(789)
   n <- 100

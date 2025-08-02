@@ -270,3 +270,488 @@ test_that("categorical balance works with ordered factors", {
     "medium_vs_low" %in% names(result) || "low_vs_medium" %in% names(result)
   )
 })
+
+# =============================================================================
+# COBALT COMPARISON TESTS FOR CATEGORICAL EXPOSURES
+# =============================================================================
+#
+# IMPORTANT: For continuous covariates, halfmoon and cobalt use different 
+# variance calculations:
+# - halfmoon (via smd package): uses population variance (dividing by n)
+# - cobalt: uses sample variance with Bessel's correction (dividing by n-1)
+# This results in a ~0.5-1% difference in SMD values for continuous covariates.
+#
+# For binary covariates with bin.vars=TRUE, both packages use the formula
+# p(1-p) for variance, resulting in exact matches.
+#
+# =============================================================================
+
+# Helper function to create binary indicators matching halfmoon's internal logic
+create_binary_for_cobalt <- function(exposure, comp_level, ref_level) {
+  binary <- rep(NA, length(exposure))
+  binary[exposure == comp_level] <- 1
+  binary[exposure == ref_level] <- 0
+  binary
+}
+
+test_that("bal_smd categorical matches cobalt for 3-level exposure with binary covariate", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 456)
+
+  # Halfmoon - using binary covariate for exact match
+  hm_result <- bal_smd(
+    covariate = data$employed,
+    group = data$exposure,
+    reference_group = "low"
+  )
+
+  # Cobalt - separate calculations matching halfmoon's internal logic
+  # Medium vs Low: halfmoon codes as medium=1, low=0
+  medium_low_indices <- data$exposure %in% c("medium", "low")
+  # Create binary group exactly as halfmoon does internally
+  medium_low_binary <- rep(NA, length(data$exposure))
+  medium_low_binary[data$exposure == "medium"] <- 1
+  medium_low_binary[data$exposure == "low"] <- 0
+  
+  cobalt_medium_vs_low <- cobalt::col_w_smd(
+    matrix(data$employed[medium_low_indices], ncol = 1),
+    treat = medium_low_binary[medium_low_indices],
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  # High vs Low: halfmoon codes as high=1, low=0
+  high_low_indices <- data$exposure %in% c("high", "low")
+  high_low_binary <- rep(NA, length(data$exposure))
+  high_low_binary[data$exposure == "high"] <- 1
+  high_low_binary[data$exposure == "low"] <- 0
+  
+  cobalt_high_vs_low <- cobalt::col_w_smd(
+    matrix(data$employed[high_low_indices], ncol = 1),
+    treat = high_low_binary[high_low_indices],
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  # Should match exactly for binary covariates
+  expect_equal(
+    abs(unname(hm_result["medium_vs_low"])),
+    abs(unname(cobalt_medium_vs_low)),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    abs(unname(hm_result["high_vs_low"])),
+    abs(unname(cobalt_high_vs_low)),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_smd categorical with continuous covariate shows expected variance difference", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 456)
+
+  # Halfmoon - returns named vector with both comparisons
+  hm_result <- bal_smd(
+    covariate = data$age,
+    group = data$exposure,
+    reference_group = "low"
+  )
+
+  # Cobalt - separate calculations
+  medium_low_indices <- data$exposure %in% c("medium", "low")
+  medium_low_binary <- create_binary_for_cobalt(data$exposure, "medium", "low")
+  
+  cobalt_medium_vs_low <- cobalt::col_w_smd(
+    matrix(data$age[medium_low_indices], ncol = 1),
+    treat = medium_low_binary[medium_low_indices],
+    std = TRUE
+  )[1]
+
+  # For continuous covariates, expect ~0.5-1% difference due to variance calculation
+  # halfmoon uses population variance, cobalt uses sample variance
+  expect_equal(
+    abs(unname(hm_result["medium_vs_low"])),
+    abs(unname(cobalt_medium_vs_low)),
+    tolerance = 0.01  # 1% tolerance for variance difference
+  )
+})
+
+test_that("bal_smd categorical matches cobalt with weights and binary covariate", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 400, seed = 789)
+
+  # Halfmoon with weights - using binary covariate for exact match
+  hm_result <- bal_smd(
+    covariate = data$employed,
+    group = data$exposure,
+    weights = data$weights_att,
+    reference_group = "high"
+  )
+
+  # Cobalt - separate calculations
+  # Low vs High: halfmoon codes as low=1, high=0 (high is reference)
+  low_high_indices <- data$exposure %in% c("low", "high")
+  low_high_binary <- create_binary_for_cobalt(data$exposure, "low", "high")
+  cobalt_low_vs_high <- cobalt::col_w_smd(
+    matrix(data$employed[low_high_indices], ncol = 1),
+    treat = low_high_binary[low_high_indices],
+    weights = data$weights_att[low_high_indices],
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  # Medium vs High: halfmoon codes as medium=1, high=0 (high is reference)
+  medium_high_indices <- data$exposure %in% c("medium", "high")
+  medium_high_binary <- create_binary_for_cobalt(data$exposure, "medium", "high")
+  cobalt_medium_vs_high <- cobalt::col_w_smd(
+    matrix(data$employed[medium_high_indices], ncol = 1),
+    treat = medium_high_binary[medium_high_indices],
+    weights = data$weights_att[medium_high_indices],
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  # Should match exactly for binary covariates
+  expect_equal(
+    abs(unname(hm_result["low_vs_high"])),
+    abs(unname(cobalt_low_vs_high)),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    abs(unname(hm_result["medium_vs_high"])),
+    abs(unname(cobalt_medium_vs_high)),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_vr categorical matches cobalt for 3-level exposure", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 123)
+
+  # Halfmoon - returns named vector
+  hm_result <- bal_vr(
+    covariate = data$age,
+    group = data$exposure,
+    reference_group = "low"
+  )
+
+  # Cobalt - separate calculations
+  # Medium vs Low
+  medium_low_indices <- data$exposure %in% c("medium", "low")
+  medium_low_binary <- create_binary_for_cobalt(data$exposure, "medium", "low")
+  cobalt_medium_vs_low <- cobalt::col_w_vr(
+    matrix(data$age[medium_low_indices], ncol = 1),
+    treat = medium_low_binary[medium_low_indices]
+  )[1]
+
+  # High vs Low
+  high_low_indices <- data$exposure %in% c("high", "low")
+  high_low_binary <- create_binary_for_cobalt(data$exposure, "high", "low")
+  cobalt_high_vs_low <- cobalt::col_w_vr(
+    matrix(data$age[high_low_indices], ncol = 1),
+    treat = high_low_binary[high_low_indices]
+  )[1]
+
+  # Compare results
+  expect_equal(
+    unname(hm_result["medium_vs_low"]),
+    unname(cobalt_medium_vs_low),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    unname(hm_result["high_vs_low"]),
+    unname(cobalt_high_vs_low),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_vr categorical matches cobalt with binary covariate", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 456)
+
+  # Halfmoon with binary covariate
+  hm_result <- bal_vr(
+    covariate = data$employed,
+    group = data$exposure,
+    reference_group = "medium"
+  )
+
+  # Cobalt - separate calculations with bin.vars = TRUE
+  # Low vs Medium
+  low_medium_indices <- data$exposure %in% c("low", "medium")
+  low_medium_binary <- create_binary_for_cobalt(data$exposure, "low", "medium")
+  cobalt_low_vs_medium <- cobalt::col_w_vr(
+    matrix(data$employed[low_medium_indices], ncol = 1),
+    treat = low_medium_binary[low_medium_indices],
+    bin.vars = TRUE
+  )[1]
+
+  # High vs Medium
+  high_medium_indices <- data$exposure %in% c("high", "medium")
+  high_medium_binary <- create_binary_for_cobalt(data$exposure, "high", "medium")
+  cobalt_high_vs_medium <- cobalt::col_w_vr(
+    matrix(data$employed[high_medium_indices], ncol = 1),
+    treat = high_medium_binary[high_medium_indices],
+    bin.vars = TRUE
+  )[1]
+
+  # Compare results
+  expect_equal(
+    unname(hm_result["low_vs_medium"]),
+    unname(cobalt_low_vs_medium),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    unname(hm_result["high_vs_medium"]),
+    unname(cobalt_high_vs_medium),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_ks categorical matches cobalt for 3-level exposure", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 789)
+
+  # Halfmoon - returns named vector
+  hm_result <- bal_ks(
+    covariate = data$income,
+    group = data$exposure,
+    reference_group = "low"
+  )
+
+  # Cobalt - separate calculations
+  # Medium vs Low
+  medium_low_indices <- data$exposure %in% c("medium", "low")
+  medium_low_binary <- create_binary_for_cobalt(data$exposure, "medium", "low")
+  cobalt_medium_vs_low <- cobalt::col_w_ks(
+    matrix(data$income[medium_low_indices], ncol = 1),
+    treat = medium_low_binary[medium_low_indices]
+  )[1]
+
+  # High vs Low
+  high_low_indices <- data$exposure %in% c("high", "low")
+  high_low_binary <- create_binary_for_cobalt(data$exposure, "high", "low")
+  cobalt_high_vs_low <- cobalt::col_w_ks(
+    matrix(data$income[high_low_indices], ncol = 1),
+    treat = high_low_binary[high_low_indices]
+  )[1]
+
+  # Compare results
+  expect_equal(
+    unname(hm_result["medium_vs_low"]),
+    unname(cobalt_medium_vs_low),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    unname(hm_result["high_vs_low"]),
+    unname(cobalt_high_vs_low),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_ks categorical matches cobalt with weights and binary covariate", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 400, seed = 321)
+
+  # Halfmoon with weights and binary covariate
+  hm_result <- bal_ks(
+    covariate = data$employed,
+    group = data$exposure,
+    weights = data$weights_att,
+    reference_group = "high"
+  )
+
+  # Cobalt - separate calculations
+  # Low vs High
+  low_high_indices <- data$exposure %in% c("low", "high")
+  low_high_binary <- create_binary_for_cobalt(data$exposure, "low", "high")
+  cobalt_low_vs_high <- cobalt::col_w_ks(
+    matrix(data$employed[low_high_indices], ncol = 1),
+    treat = low_high_binary[low_high_indices],
+    weights = data$weights_att[low_high_indices],
+    bin.vars = TRUE
+  )[1]
+
+  # Medium vs High
+  medium_high_indices <- data$exposure %in% c("medium", "high")
+  medium_high_binary <- create_binary_for_cobalt(data$exposure, "medium", "high")
+  cobalt_medium_vs_high <- cobalt::col_w_ks(
+    matrix(data$employed[medium_high_indices], ncol = 1),
+    treat = medium_high_binary[medium_high_indices],
+    weights = data$weights_att[medium_high_indices],
+    bin.vars = TRUE
+  )[1]
+
+  # Compare results
+  expect_equal(
+    unname(hm_result["low_vs_high"]),
+    unname(cobalt_low_vs_high),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    unname(hm_result["medium_vs_high"]),
+    unname(cobalt_medium_vs_high),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_energy categorical matches cobalt single overall statistic", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 987)
+
+  # Create covariates matrix
+  covariates <- data.frame(
+    age = data$age,
+    income = data$income,
+    employed = data$employed
+  )
+
+  # Halfmoon - single overall statistic
+  hm_result <- bal_energy(
+    covariates = covariates,
+    group = data$exposure
+  )
+
+  # Cobalt - also single overall statistic
+  cobalt_result <- cobalt::bal.compute(
+    x = covariates,
+    treat = data$exposure,
+    stat = "energy.dist"
+  )
+
+  # Both should be single values
+  expect_length(hm_result, 1)
+  expect_length(cobalt_result, 1)
+
+  # Should be very close
+  expect_equal(hm_result, cobalt_result, tolerance = 1e-4)
+})
+
+test_that("bal_energy categorical with weights matches cobalt", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 400, seed = 654)
+
+  # Create covariates matrix
+  covariates <- data.frame(
+    age = data$age,
+    income = data$income
+  )
+
+  # Halfmoon with weights
+  hm_result <- bal_energy(
+    covariates = covariates,
+    group = data$exposure,
+    weights = data$weights_att
+  )
+
+  # Cobalt with weights
+  cobalt_result <- cobalt::bal.compute(
+    x = covariates,
+    treat = data$exposure,
+    weights = data$weights_att,
+    stat = "energy.dist"
+  )
+
+  # Should be very close
+  expect_equal(hm_result, cobalt_result, tolerance = 1e-4)
+})
+
+test_that("categorical balance with NA values matches cobalt behavior", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 111)
+
+  # Introduce missing values in binary covariate
+  employed_na <- data$employed
+  employed_na[sample(length(employed_na), 20)] <- NA
+
+  # Test SMD with na.rm = TRUE
+  hm_smd <- bal_smd(
+    covariate = employed_na,
+    group = data$exposure,
+    reference_group = "low",
+    na.rm = TRUE
+  )
+
+  # Cobalt equivalent - Medium vs Low
+  medium_low_indices <- data$exposure %in% c("medium", "low")
+  medium_low_binary <- create_binary_for_cobalt(data$exposure, "medium", "low")
+  cobalt_medium_vs_low <- cobalt::col_w_smd(
+    matrix(employed_na[medium_low_indices], ncol = 1),
+    treat = medium_low_binary[medium_low_indices],
+    na.rm = TRUE,
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  expect_equal(
+    abs(unname(hm_smd["medium_vs_low"])),
+    abs(unname(cobalt_medium_vs_low)),
+    tolerance = 1e-10
+  )
+})
+
+test_that("categorical balance with 4-level exposure matches cobalt pattern", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  # Create 4-level exposure data
+  set.seed(222)
+  n <- 300
+  exposure_4 <- sample(c("A", "B", "C", "D"), n, replace = TRUE)
+  # Binary covariate with different probabilities per group
+  covariate_binary <- rbinom(n, 1, prob = ifelse(exposure_4 == "A", 0.3,
+    ifelse(exposure_4 == "B", 0.5,
+      ifelse(exposure_4 == "C", 0.7, 0.9)
+    )
+  ))
+
+  # Halfmoon - should return 3 comparisons vs reference
+  hm_result <- bal_smd(
+    covariate = covariate_binary,
+    group = exposure_4,
+    reference_group = "A"
+  )
+
+  # Should have 3 comparisons: B_vs_A, C_vs_A, D_vs_A
+  expect_length(hm_result, 3)
+  expect_setequal(
+    names(hm_result),
+    c("B_vs_A", "C_vs_A", "D_vs_A")
+  )
+
+  # Verify one comparison matches cobalt exactly
+  b_a_indices <- exposure_4 %in% c("B", "A")
+  b_a_binary <- create_binary_for_cobalt(exposure_4, "B", "A")
+  cobalt_b_vs_a <- cobalt::col_w_smd(
+    matrix(covariate_binary[b_a_indices], ncol = 1),
+    treat = b_a_binary[b_a_indices],
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  expect_equal(
+    abs(unname(hm_result["B_vs_A"])),
+    abs(unname(cobalt_b_vs_a)),
+    tolerance = 1e-10
+  )
+})

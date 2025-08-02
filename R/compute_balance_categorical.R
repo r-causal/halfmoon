@@ -1,5 +1,4 @@
 # Internal functions for computing balance statistics for categorical exposures
-
 #' Internal: Calculate SMD for categorical exposures
 #'
 #' @param covariate The covariate vector
