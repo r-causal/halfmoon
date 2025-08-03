@@ -18,7 +18,7 @@ validate_weights <- function(weights, n, arg_name = "weights") {
   if (length(weights) != n) {
     abort("{.arg {arg_name}} must have length {n}, got {length(weights)}")
   }
-  if (any(weights < 0, na.rm = TRUE)) {
+  if (any(vctrs::vec_data(weights) < 0, na.rm = TRUE)) {
     abort("{.arg {arg_name}} cannot contain negative values")
   }
   invisible(weights)
@@ -105,4 +105,34 @@ filter_na_indices <- function(indices, data, weights = NULL, na.rm = FALSE) {
   } else {
     indices[!is.na(data[indices]) & !is.na(weights[indices])]
   }
+}
+
+# Categorical exposure validation
+is_categorical_exposure <- function(group) {
+  levels <- unique(stats::na.omit(group))
+  length(levels) > 2
+}
+
+# Get exposure type
+get_exposure_type <- function(group) {
+  levels <- unique(stats::na.omit(group))
+  n_levels <- length(levels)
+
+  if (n_levels == 2) {
+    "binary"
+  } else if (n_levels > 2) {
+    "categorical"
+  } else if (n_levels == 1) {
+    abort("Group variable has only one level")
+  } else {
+    abort("Group variable has no non-missing values")
+  }
+}
+
+# Validate exposure type
+validate_exposure_type <- function(group, arg_name = "group") {
+  exposure_type <- get_exposure_type(group)
+
+  # For now, just return the type - validation happens in get_exposure_type
+  invisible(exposure_type)
 }

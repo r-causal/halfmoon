@@ -49,6 +49,37 @@ geom_mirror_histogram <- function(
 StatMirrorCount <- ggplot2::ggproto(
   "StatMirrorCount",
   ggplot2::StatBin,
+  setup_data = function(data, params) {
+    # Get unique groups in each panel
+    panel_groups <- data |>
+      dplyr::group_by(PANEL) |>
+      dplyr::summarise(
+        .panel_groups = list(sort(unique(group))),
+        .n_groups = length(unique(group)),
+        .groups = "drop"
+      )
+    
+    # Check for panels with more than 2 groups
+    if (any(panel_groups$.n_groups > 2)) {
+      abort(
+        "Groups of three or greater not supported in `geom_mirror_histogram()`"
+      )
+    }
+    
+    # Join back to get panel group info for each row
+    data <- dplyr::left_join(data, panel_groups, by = "PANEL")
+    
+    # Mark which groups should be mirrored (first group in each panel)
+    data$.should_mirror <- purrr::map2_lgl(data$group, data$.panel_groups, 
+      ~ length(.y) == 2 && .x == .y[1]
+    )
+    
+    # Clean up temporary columns
+    data$.panel_groups <- NULL
+    data$.n_groups <- NULL
+    
+    data
+  },
   compute_group = function(
     data,
     scales,
@@ -64,7 +95,19 @@ StatMirrorCount <- ggplot2::ggproto(
     right = NULL,
     drop = NULL
   ) {
+    # Check for no group
     group <- unique(data$group)
+    if (group == -1) {
+      abort(c(
+        "No group detected.",
+        "*" = "Do you need to use {.var aes(group = ...)}  \\
+        with your grouping variable?"
+      ))
+    }
+    
+    # Store mirroring flag
+    should_mirror <- unique(data$.should_mirror)
+    
     data <- ggplot2::StatBin$compute_group(
       data = data,
       scales = scales,
@@ -80,19 +123,12 @@ StatMirrorCount <- ggplot2::ggproto(
       right = right,
       drop = drop
     )
-    if (group == 1) {
+    
+    # Apply mirroring if needed
+    if (length(should_mirror) == 1 && should_mirror) {
       data$count <- -data$count
-    } else if (group > 2) {
-      abort(
-        "Groups of three or greater not supported in `geom_mirror_histogram()`"
-      )
-    } else if (group == -1) {
-      abort(c(
-        "No group detected.",
-        "*" = "Do you need to use {.var aes(group = ...)}  \\
-        with your grouping variable?"
-      ))
     }
+    
     data
   }
 )

@@ -100,14 +100,23 @@ The \code{include_observed} parameter controls whether unweighted ("observed") b
 is included in the results.
 }
 \examples{
-# Basic usage with all metrics
+# Basic usage with binary exposure
 check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 
 # With specific metrics only
 check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 
+# Categorical exposure
+check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
+              .wts = c(w_cat_ate, w_cat_att_2_3wk))
+
+# Specify reference group for categorical exposure
+check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
+              reference_group = "daily", .metrics = c("smd", "vr"))
+
 # Exclude observed results
-check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
+check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate,
+              include_observed = FALSE)
 
 # Use correlation for continuous exposure
 check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))

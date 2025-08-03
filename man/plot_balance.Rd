@@ -51,6 +51,11 @@ that shows balance statistics across different variables, methods, and metrics.
 The plot uses faceting to separate different metrics and displays the
 absolute value of SMD by default (controlled by \code{abs_smd}).
 
+For categorical exposures (>2 levels), the function automatically detects
+multiple group level comparisons and uses \code{facet_grid()} to display each
+comparison in a separate row, with metrics in columns. For binary exposures,
+the standard \code{facet_wrap()} by metric is used.
+
 Different metrics have different interpretations:
 \itemize{
 \item \strong{SMD}: Standardized mean differences, where values near 0 indicate
@@ -85,6 +90,17 @@ plot_balance(balance_data, facet_scales = "fixed")
 
 # Customize threshold lines
 plot_balance(balance_data, vline_xintercept = 0.05)
+
+# Categorical exposure example
+# Automatically uses facet_grid to show each group comparison
+balance_cat <- check_balance(
+  nhefs_weights,
+  c(age, wt71, sex),
+  alcoholfreq_cat,
+  .wts = w_cat_ate,
+  .metrics = c("smd", "vr")
+)
+plot_balance(balance_cat)
 }
 \seealso{
 \code{\link[=check_balance]{check_balance()}} for computing balance metrics, \code{\link[=geom_love]{geom_love()}} for

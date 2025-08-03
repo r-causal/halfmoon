@@ -59,14 +59,23 @@
 #' @seealso [bal_smd()], [bal_vr()], [bal_ks()], [bal_corr()], [bal_energy()] for individual metric functions
 #'
 #' @examples
-#' # Basic usage with all metrics
+#' # Basic usage with binary exposure
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
 #'
 #' # With specific metrics only
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 #'
+#' # Categorical exposure
+#' check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
+#'               .wts = c(w_cat_ate, w_cat_att_2_3wk))
+#'
+#' # Specify reference group for categorical exposure
+#' check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
+#'               reference_group = "daily", .metrics = c("smd", "vr"))
+#'
 #' # Exclude observed results
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate, include_observed = FALSE)
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate,
+#'               include_observed = FALSE)
 #'
 #' # Use correlation for continuous exposure
 #' check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
@@ -98,7 +107,7 @@ check_balance <- function(
   var_names <- names(tidyselect::eval_select(rlang::enquo(.vars), .data))
 
   if (length(var_names) == 0) {
-    stop("No variables selected for '.vars'")
+    abort("No variables selected for {.arg .vars}")
   }
 
   transformed_data <- .data
@@ -260,21 +269,17 @@ check_balance <- function(
   }
 
   # Check group variable requirements based on metrics
-  binary_only_metrics <- setdiff(.metrics, c("correlation", "energy"))
   only_correlation <- length(setdiff(.metrics, "correlation")) == 0
 
-  if (length(binary_only_metrics) > 0 && length(group_levels) != 2) {
-    stop(
-      "Group variable must have exactly two levels for metrics: ",
-      paste(binary_only_metrics, collapse = ", "),
-      ". Got ",
-      length(group_levels),
-      " levels."
+  # Check for single-level groups
+  if (length(group_levels) < 2 && !only_correlation) {
+    abort(
+      "Group variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}."
     )
   }
 
   if (using_correlation && !is.numeric(transformed_data[[group_var]])) {
-    stop(
+    abort(
       "Group variable must be numeric when using correlation metric"
     )
   }
@@ -283,11 +288,11 @@ check_balance <- function(
   available_metrics <- c("smd", "vr", "ks", "correlation", "energy")
   invalid_metrics <- setdiff(.metrics, available_metrics)
   if (length(invalid_metrics) > 0) {
-    stop(
-      "Invalid metrics: ",
-      paste(invalid_metrics, collapse = ", "),
-      ". Available metrics: ",
-      paste(available_metrics, collapse = ", ")
+    abort(
+      c(
+        "Invalid metric{?s}: {.val {invalid_metrics}}",
+        i = "Available metrics: {.val {available_metrics}}"
+      )
     )
   }
 
@@ -310,8 +315,8 @@ check_balance <- function(
   }
 
   if (length(methods) == 0) {
-    stop(
-      "No methods to compute. Either set include_observed = TRUE or provide .wts"
+    abort(
+      "No methods to compute. Either set {.arg include_observed = TRUE} or provide {.arg .wts}"
     )
   }
 
@@ -442,31 +447,52 @@ compute_single_balance_metric <- function(
         )
       }
 
-      # Determine the group level for reporting
-      if (metric == "correlation") {
-        # For correlation, report the group variable name since it's continuous
-        group_level <- group_var
-      } else if (metric == "energy") {
-        # For energy, use NA since it's multivariate
-        group_level <- NA_character_
-      } else {
-        # For other metrics, determine the non-reference group level
-        if (reference_group %in% group_levels) {
-          ref_level <- reference_group
-        } else {
-          # If reference_group is numeric index, get the corresponding level
-          ref_level <- group_levels[reference_group]
-        }
-        group_level <- setdiff(group_levels, ref_level)[1]
-      }
+      # Check if we have categorical results (named vector)
+      if (
+        is.numeric(estimate) &&
+          length(estimate) > 1 &&
+          !is.null(names(estimate))
+      ) {
+        # Categorical exposure - expand results
+        pattern <- "^(.+)_vs_(.+)$"
+        matches <- regexec(pattern, names(estimate))
+        comparison_info <- do.call(rbind, regmatches(names(estimate), matches))
 
-      tibble::tibble(
-        variable = variable,
-        group_level = as.character(group_level),
-        method = method,
-        metric = metric,
-        estimate = estimate
-      )
+        tibble::tibble(
+          variable = variable,
+          group_level = as.character(comparison_info[, 2]),
+          method = method,
+          metric = metric,
+          estimate = unname(estimate)
+        )
+      } else {
+        # Binary exposure - single result
+        # Determine the group level for reporting
+        if (metric == "correlation") {
+          # For correlation, report the group variable name since it's continuous
+          group_level <- group_var
+        } else if (metric == "energy") {
+          # For energy, use NA since it's multivariate
+          group_level <- NA_character_
+        } else {
+          # For other metrics, determine the non-reference group level
+          if (reference_group %in% group_levels) {
+            ref_level <- reference_group
+          } else {
+            # If reference_group is numeric index, get the corresponding level
+            ref_level <- group_levels[reference_group]
+          }
+          group_level <- setdiff(group_levels, ref_level)[1]
+        }
+
+        tibble::tibble(
+          variable = variable,
+          group_level = as.character(group_level),
+          method = method,
+          metric = metric,
+          estimate = estimate
+        )
+      }
     },
     error = \(e) {
       # Return NA for failed computations but preserve structure

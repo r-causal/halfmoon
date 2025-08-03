@@ -48,11 +48,23 @@ In causal inference, SMD values of 0.1 or smaller are often considered
 indicative of good balance between treatment groups.
 }
 \examples{
+# Binary exposure
 bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 
 # With weights
 bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
-            weights = nhefs_weights$w_ate)
+        weights = nhefs_weights$w_ate)
+
+# Categorical exposure (returns named vector)
+bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+
+# Specify reference group
+bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+        reference_group = "daily")
+
+# With categorical weights
+bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+        weights = nhefs_weights$w_cat_ate)
 
 }
 \seealso{

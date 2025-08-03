@@ -17,7 +17,8 @@ plot_mirror_distributions(
   adjust = 1,
   include_unweighted = TRUE,
   alpha = 0.6,
-  na.rm = FALSE
+  na.rm = FALSE,
+  reference_group = 1L
 )
 }
 \arguments{
@@ -26,7 +27,8 @@ plot_mirror_distributions(
 \item{.var}{The variable to plot. Supports tidyselect syntax. Can be unquoted.}
 
 \item{.group}{Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
-Must have exactly 2 levels.}
+For binary variables, must have exactly 2 levels. For categorical variables (>2 levels),
+creates pairwise comparisons against a reference group.}
 
 \item{.wts}{Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
 a character vector, or NULL. Multiple weights can be provided to compare
@@ -53,6 +55,10 @@ distribution? Defaults to TRUE.}
 \item{alpha}{Numeric; transparency level for fills. Default is 0.6.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before plotting.}
+
+\item{reference_group}{The reference group level for categorical exposures (>2 levels).
+Can be a string (group level) or numeric (position). Defaults to 1 (first level).
+Only used when .group has more than 2 levels.}
 }
 \value{
 A ggplot2 object.
@@ -68,6 +74,11 @@ Mirror distribution plots display the distribution of one group above the
 x-axis and the other group below (mirrored). This makes it easy to compare
 distributions and assess balance. The function supports both histogram and
 density plot types.
+
+For categorical exposures (>2 levels), the function creates a grid of
+pairwise comparisons against a reference group. Each panel shows one
+non-reference level compared to the reference level using the mirror
+distribution format.
 
 When using weights, the function can display both weighted and unweighted
 distributions for comparison. Multiple weighting schemes can be compared
@@ -101,6 +112,23 @@ plot_mirror_distributions(
   nhefs_weights, age, qsmk,
   .wts = w_ate,
   include_unweighted = FALSE
+)
+
+# Categorical exposure - creates grid of comparisons
+plot_mirror_distributions(
+  nhefs_weights, 
+  age, 
+  alcoholfreq_cat,
+  type = "density"
+)
+
+# Categorical with weights
+plot_mirror_distributions(
+  nhefs_weights,
+  wt71,
+  alcoholfreq_cat,
+  .wts = w_cat_ate,
+  reference_group = "none"
 )
 
 }

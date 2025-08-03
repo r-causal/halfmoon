@@ -22,7 +22,7 @@ extract_group_levels <- function(group, require_binary = TRUE) {
 
 # Determine reference group with consistent logic
 determine_reference_group <- function(group, reference_group = NULL) {
-  levels <- extract_group_levels(group, require_binary = TRUE)
+  levels <- extract_group_levels(group, require_binary = FALSE)
 
   if (is.null(reference_group)) {
     # Default to first level

@@ -412,18 +412,18 @@ test_that("check_balance validates inputs correctly", {
   # Test invalid metrics
   expect_error(
     check_balance_basic(data, age, qsmk, .metrics = "invalid_metric"),
-    "Invalid metrics"
+    "Invalid metric"
   )
 
   # Test no variables selected
   expect_error(check_balance_basic(data, c(), qsmk), "No variables selected")
 
-  # Test group with wrong number of levels
+  # Test group with wrong number of levels - should error
   data_bad_group <- data
   data_bad_group$bad_group <- rep(1, nrow(data))
   expect_error(
     check_balance_basic(data_bad_group, age, bad_group),
-    "must have exactly two levels"
+    "at least two levels"
   )
 
   # Test no metrics to compute - should return empty tibble

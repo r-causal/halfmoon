@@ -20,11 +20,23 @@
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
+#' # Binary exposure
 #' bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'             weights = nhefs_weights$w_ate)
+#'         weights = nhefs_weights$w_ate)
+#'
+#' # Categorical exposure (returns named vector)
+#' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#'
+#' # Specify reference group
+#' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+#'         reference_group = "daily")
+#'
+#' # With categorical weights
+#' bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+#'         weights = nhefs_weights$w_cat_ate)
 #'
 #' @export
 bal_smd <- function(
@@ -39,7 +51,18 @@ bal_smd <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
-  # Handle missing values first
+  # Check if exposure is categorical first
+  if (is_categorical_exposure(group)) {
+    return(.bal_smd_categorical(
+      covariate = covariate,
+      group = group,
+      weights = weights,
+      reference_group = reference_group,
+      na.rm = na.rm
+    ))
+  }
+
+  # Handle missing values for binary exposures
   if (!na.rm) {
     # Check for missing values
     if (is.null(weights)) {
@@ -50,6 +73,7 @@ bal_smd <- function(
     }
   }
 
+  # Binary exposure handling (existing code)
   # Convert reference_group to index for smd package
   levels_g <- unique(stats::na.omit(group))
 
@@ -114,10 +138,23 @@ is_binary <- function(x) {
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
+#' # Binary exposure
 #' bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
+#'
 #' # With weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'                       weights = nhefs_weights$w_ate)
+#'        weights = nhefs_weights$w_ate)
+#'
+#' # Categorical exposure (returns named vector)
+#' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#'
+#' # Specify reference group
+#' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+#'        reference_group = "2_3_per_week")
+#'
+#' # With categorical weights
+#' bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+#'        weights = nhefs_weights$w_cat_ate)
 #'
 #' @export
 bal_vr <- function(
@@ -133,6 +170,18 @@ bal_vr <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
+  # Check if exposure is categorical
+  if (is_categorical_exposure(group)) {
+    return(.bal_vr_categorical(
+      covariate = covariate,
+      group = group,
+      weights = weights,
+      reference_group = reference_group,
+      na.rm = na.rm
+    ))
+  }
+
+  # Binary exposure handling (existing code)
   # Identify reference and comparison indices
   group_splits <- split_by_group(covariate, group, reference_group)
   idx_ref <- group_splits$reference
@@ -248,11 +297,23 @@ bal_vr <- function(
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
+#' # Binary exposure
 #' bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 #'
 #' # With weights
 #' bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'            weights = nhefs_weights$w_ate)
+#'        weights = nhefs_weights$w_ate)
+#'
+#' # Categorical exposure (returns named vector)
+#' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#'
+#' # Specify reference group
+#' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
+#'        reference_group = "none")
+#'
+#' # With categorical weights
+#' bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
+#'        weights = nhefs_weights$w_cat_ate)
 #' @export
 bal_ks <- function(
   covariate,
@@ -267,6 +328,18 @@ bal_ks <- function(
   validate_equal_length(covariate, group)
   validate_weights(weights, length(covariate))
 
+  # Check if exposure is categorical
+  if (is_categorical_exposure(group)) {
+    return(.bal_ks_categorical(
+      covariate = covariate,
+      group = group,
+      weights = weights,
+      reference_group = reference_group,
+      na.rm = na.rm
+    ))
+  }
+
+  # Binary exposure handling (existing code)
   group_splits <- split_by_group(covariate, group, reference_group)
   idx_ref <- group_splits$reference
   idx_other <- group_splits$comparison

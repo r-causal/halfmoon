@@ -1,10 +1,4 @@
-# geom_mirrored_histogram errors/warns correctly
-
-    Computation failed in `stat_mirror_count()`.
-    Caused by error in `compute_group()`:
-    ! Groups of three or greater not supported in `geom_mirror_histogram()`
-
----
+# geom_mirrored_histogram errors correctly
 
     Computation failed in `stat_mirror_count()`.
     Caused by error in `compute_group()`:

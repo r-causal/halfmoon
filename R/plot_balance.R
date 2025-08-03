@@ -10,6 +10,11 @@
 #' The plot uses faceting to separate different metrics and displays the
 #' absolute value of SMD by default (controlled by `abs_smd`).
 #'
+#' For categorical exposures (>2 levels), the function automatically detects
+#' multiple group level comparisons and uses `facet_grid()` to display each
+#' comparison in a separate row, with metrics in columns. For binary exposures,
+#' the standard `facet_wrap()` by metric is used.
+#'
 #' Different metrics have different interpretations:
 #' \itemize{
 #'   \item **SMD**: Standardized mean differences, where values near 0 indicate
@@ -55,6 +60,17 @@
 #'
 #' # Customize threshold lines
 #' plot_balance(balance_data, vline_xintercept = 0.05)
+#'
+#' # Categorical exposure example
+#' # Automatically uses facet_grid to show each group comparison
+#' balance_cat <- check_balance(
+#'   nhefs_weights,
+#'   c(age, wt71, sex),
+#'   alcoholfreq_cat,
+#'   .wts = w_cat_ate,
+#'   .metrics = c("smd", "vr")
+#' )
+#' plot_balance(balance_cat)
 #' @export
 plot_balance <- function(
   .df,
@@ -100,6 +116,35 @@ plot_balance <- function(
       variable
     )
   )
+
+  # Detect if we have categorical exposure data (multiple group_level values)
+  # Check if group_level column exists and has multiple unique non-NA values
+  is_categorical <- FALSE
+  unique_group_levels <- NULL
+
+  if ("group_level" %in% names(.df)) {
+    # Get unique group levels, excluding NA and continuous exposure indicators
+    unique_group_levels <- unique(.df$group_level[!is.na(.df$group_level)])
+    # Remove entries that are variable names (from correlation metric)
+    unique_group_levels <- unique_group_levels[
+      !unique_group_levels %in% names(.df)
+    ]
+
+    # Check if we have multiple group levels per variable/method/metric combination
+    # This indicates categorical exposure
+    if (length(unique_group_levels) > 1) {
+      test_data <- .df |>
+        dplyr::filter(!is.na(group_level), metric != "energy") |>
+        dplyr::distinct(variable, method, metric, group_level)
+
+      # If any variable/method/metric has multiple group levels, it's categorical
+      grouped_counts <- test_data |>
+        dplyr::group_by(variable, method, metric) |>
+        dplyr::summarise(n_levels = dplyr::n(), .groups = "drop")
+
+      is_categorical <- any(grouped_counts$n_levels > 1)
+    }
+  }
 
   # Create caption based on whether we're using absolute values
   caption_text <- if (abs_smd) {
@@ -155,23 +200,48 @@ plot_balance <- function(
       caption = caption_text
     )
 
-  # Add faceting if multiple metrics
+  # Add faceting based on exposure type and number of metrics
   n_metrics <- length(unique_metrics)
-  if (n_metrics > 1) {
-    p <- p +
-      ggplot2::facet_wrap(
-        ~metric,
-        scales = facet_scales,
-        labeller = ggplot2::labeller(
-          metric = c(
-            smd = "standardized mean difference",
-            vr = "variance ratio",
-            ks = "kolmogorov-smirnov",
-            correlation = "correlation",
-            energy = "energy distance"
+
+  # Define metric labels
+  metric_labels <- c(
+    smd = "standardized mean difference",
+    vr = "variance ratio",
+    ks = "kolmogorov-smirnov",
+    correlation = "correlation",
+    energy = "energy distance"
+  )
+
+  if (is_categorical) {
+    # For categorical exposures, use facet_grid with group_level and metric
+    if (n_metrics > 1) {
+      p <- p +
+        ggplot2::facet_grid(
+          group_level ~ metric,
+          scales = facet_scales,
+          labeller = ggplot2::labeller(
+            metric = metric_labels,
+            .default = ggplot2::label_value
           )
         )
-      )
+    } else {
+      # Single metric, just facet by group_level
+      p <- p +
+        ggplot2::facet_wrap(
+          ~group_level,
+          scales = facet_scales
+        )
+    }
+  } else {
+    # For binary exposures, maintain current behavior
+    if (n_metrics > 1) {
+      p <- p +
+        ggplot2::facet_wrap(
+          ~metric,
+          scales = facet_scales,
+          labeller = ggplot2::labeller(metric = metric_labels)
+        )
+    }
   }
 
   # Adjust x-axis limits based on metric
