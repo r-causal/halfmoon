@@ -95,7 +95,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   # Missing treatment
   expect_error(
     plot_stratified_residuals(model),
-    "missing"
+    class = "halfmoon_arg_error"
   )
 
   # Wrong ps_model type
@@ -105,7 +105,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
       treatment = rep(0:1, 16),
       ps_model = "not a model"
     ),
-    "must be a glm or lm object"
+    class = "halfmoon_type_error"
   )
 
   # Test data frame method validations
@@ -127,7 +127,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
       treatment = trt,
       residuals = resids
     ),
-    "`x_var` must be a column name"
+    class = "halfmoon_arg_error"
   )
 
   # Non-existent column
@@ -138,7 +138,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
       residuals = resids,
       x_var = not_a_column
     ),
-    "not found"
+    class = "halfmoon_column_error"
   )
 
   # Wrong number of treatment levels
@@ -151,7 +151,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
       residuals = resids,
       x_var = x
     ),
-    "exactly two levels"
+    class = "halfmoon_group_error"
   )
 })
 

@@ -49,12 +49,12 @@ test_that("qq handles quoted column names", {
 test_that("qq errors with missing columns", {
   expect_error(
     qq(nhefs_weights, missing_var, qsmk),
-    "not found in data"
+    class = "halfmoon_column_error"
   )
 
   expect_error(
     qq(nhefs_weights, age, missing_group),
-    "not found in data"
+    class = "halfmoon_column_error"
   )
 })
 
@@ -64,7 +64,7 @@ test_that("qq errors with non-binary groups", {
 
   expect_error(
     qq(df, age, three_groups),
-    "exactly 2 levels"
+    class = "halfmoon_group_error"
   )
 })
 
@@ -78,7 +78,7 @@ test_that("qq handles NA values correctly", {
   expect_false(any(is.na(result$untreated_quantiles)))
 
   # Should have NAs with na.rm = FALSE
-  expect_error(qq(df, age, qsmk), "missing values")
+  expect_error(qq(df, age, qsmk), class = "halfmoon_na_error")
 })
 
 test_that("qq handles NULL treatment_level correctly", {

@@ -96,6 +96,23 @@ qq <- function(
     )
   }
 
+  # Check for missing values if na.rm = FALSE
+  if (!na.rm) {
+    var_data <- .data[[var_name]]
+    if (any(is.na(var_data))) {
+      abort(
+        "Variable {.code {var_name}} contains missing values and {.arg na.rm = FALSE}",
+        error_class = "halfmoon_na_error"
+      )
+    }
+    if (any(is.na(group_var))) {
+      abort(
+        "Group variable {.code {group_name}} contains missing values and {.arg na.rm = FALSE}",
+        error_class = "halfmoon_na_error"
+      )
+    }
+  }
+
   # Handle NULL treatment_level
   if (is.null(treatment_level)) {
     if (is.factor(group_var)) {

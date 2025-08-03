@@ -133,7 +133,8 @@ plot_roc_auc <- function(
 ) {
   if (!inherits(.data, "tbl_df") && !inherits(.data, "data.frame")) {
     abort(
-      "{.arg .data} must be a data frame or tibble from {.fn check_auc}"
+      "{.arg .data} must be a data frame or tibble from {.fn check_auc}",
+      error_class = "halfmoon_type_error"
     )
   }
 

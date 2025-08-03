@@ -44,7 +44,16 @@ warn <- function(
 
 # Function to extract column name from quosure
 # Handles both quoted and unquoted column names
-get_column_name <- function(quo, arg_name) {
+get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
+  # Check if the quosure represents a missing argument
+  if (rlang::quo_is_missing(quo)) {
+    abort(
+      "Argument {.arg {arg_name}} is required",
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+  
   # First try as_name (works for symbols and strings)
   tryCatch(
     {

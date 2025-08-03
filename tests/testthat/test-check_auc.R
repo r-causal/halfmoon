@@ -138,7 +138,7 @@ test_that("functions handle edge cases correctly", {
   # With na.rm = FALSE should error
   expect_error(
     roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
-    "Missing values found and `na.rm = FALSE`"
+    class = "halfmoon_na_error"
   )
 
   # Test with constant estimates
@@ -150,7 +150,7 @@ test_that("functions handle edge cases correctly", {
 
   expect_warning(
     roc_const <- roc_curve(test_data_const, truth, estimate),
-    "Estimate variable is constant"
+    class = "halfmoon_data_warning"
   )
   expect_equal(nrow(roc_const), 3) # Should have 3 points for degenerate curve
 
@@ -163,7 +163,7 @@ test_that("functions handle edge cases correctly", {
 
   expect_warning(
     roc_zero <- roc_curve(test_data_zero, truth, estimate, weight_zero),
-    "Removing .* observations with zero or negative weights from weight_zero"
+    class = "halfmoon_data_warning"
   )
   expect_s3_class(roc_zero, "tbl_df")
 
@@ -176,7 +176,7 @@ test_that("functions handle edge cases correctly", {
 
   expect_warning(
     roc_neg <- roc_curve(test_data_neg, truth, estimate, weight_neg),
-    "Removing .* observations with zero or negative weights from weight_neg"
+    class = "halfmoon_data_warning"
   )
   expect_s3_class(roc_neg, "tbl_df")
 })
@@ -207,7 +207,7 @@ test_that("functions handle different truth variable types", {
   test_multi <- dplyr::mutate(base_data, truth = rep(1:3, length.out = 100))
   expect_error(
     roc_curve(test_multi, truth, estimate),
-    "must have exactly 2 unique values"
+    class = "halfmoon_group_error"
   )
 })
 
@@ -220,21 +220,21 @@ test_that("error messages use proper cli formatting", {
   # Test .data not a data frame
   expect_error(
     roc_curve("not a data frame", truth, estimate),
-    "`.data` must be a data frame"
+    class = "halfmoon_type_error"
   )
 
   # Test non-numeric estimate
   test_data$estimate_char <- as.character(test_data$estimate)
   expect_error(
     roc_curve(test_data, truth, estimate_char),
-    "`.estimate` must be numeric"
+    class = "halfmoon_type_error"
   )
 
   # Test multi-level truth
   test_data$truth_multi <- factor(rep(c("A", "B", "C"), length.out = 20))
   expect_error(
     roc_curve(test_data, truth_multi, estimate),
-    "`.truth` must have exactly 2 levels"
+    class = "halfmoon_group_error"
   )
 })
 

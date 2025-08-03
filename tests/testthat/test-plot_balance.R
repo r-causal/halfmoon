@@ -130,13 +130,13 @@ test_that("plot_balance validates input", {
   # Test with invalid input
   expect_error(
     plot_balance(data.frame(x = 1:5)),
-    "Input must be output from check_balance"
+    class = "halfmoon_column_error"
   )
 
   # Test with non-data frame
   expect_error(
     plot_balance(list(variable = "x")),
-    "must be a data frame"
+    class = "halfmoon_type_error"
   )
 })
 

@@ -400,30 +400,30 @@ test_that("check_balance validates inputs correctly", {
   # Test invalid data type
   expect_error(
     check_balance_basic("not_a_dataframe", age, qsmk),
-    "must be a data frame"
+    class = "halfmoon_type_error"
   )
 
   # Test invalid group variable
   expect_error(
     check_balance_basic(data, age, nonexistent_group),
-    "not found in"
+    class = "halfmoon_column_error"
   )
 
   # Test invalid metrics
   expect_error(
     check_balance_basic(data, age, qsmk, .metrics = "invalid_metric"),
-    "Invalid metric"
+    class = "halfmoon_arg_error"
   )
 
   # Test no variables selected
-  expect_error(check_balance_basic(data, c(), qsmk), "No variables selected")
+  expect_error(check_balance_basic(data, c(), qsmk), class = "halfmoon_empty_error")
 
   # Test group with wrong number of levels - should error
   data_bad_group <- data
   data_bad_group$bad_group <- rep(1, nrow(data))
   expect_error(
     check_balance_basic(data_bad_group, age, bad_group),
-    "at least two levels"
+    class = "halfmoon_group_error"
   )
 
   # Test no metrics to compute - should return empty tibble
@@ -724,7 +724,7 @@ test_that("check_balance correlation requires numeric group variable", {
   # Should error when using factor/binary variable with correlation
   expect_error(
     check_balance_basic(data, age, qsmk, .metrics = "correlation"),
-    "Group variable must be numeric when using correlation metric"
+    class = "halfmoon_type_error"
   )
 })
 
@@ -739,7 +739,7 @@ test_that("check_balance handles mixed metrics with correlation", {
       qsmk,
       .metrics = c("smd", "correlation")
     ),
-    "Group variable must be numeric when using correlation metric"
+    class = "halfmoon_type_error"
   )
 
   # But should work with continuous group when only using correlation

@@ -52,7 +52,7 @@ test_that("bal_prognostic_score validates treatment not in formula", {
       treatment = qsmk,
       formula = wt82_71 ~ age + qsmk + wt71
     ),
-    "treatment variable.*should not be included"
+    class = "halfmoon_formula_error"
   )
 })
 
@@ -180,7 +180,7 @@ test_that("bal_prognostic_score errors with no control observations", {
       treatment = qsmk,
       covariates = c(age, sex)
     ),
-    "No control observations found"
+    class = "halfmoon_reference_error"
   )
 })
 
@@ -192,7 +192,7 @@ test_that("bal_prognostic_score errors when required arguments missing", {
       treatment = qsmk,
       covariates = c(age, sex)
     ),
-    "Either.*outcome.*or.*formula.*must be provided"
+    class = "halfmoon_arg_error"
   )
 
   # Invalid formula
@@ -202,7 +202,7 @@ test_that("bal_prognostic_score errors when required arguments missing", {
       treatment = qsmk,
       formula = "not a formula"
     ),
-    "formula.*must be a formula object"
+    class = "halfmoon_formula_error"
   )
 })
 

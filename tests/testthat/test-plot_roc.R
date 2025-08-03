@@ -62,23 +62,23 @@ test_that("plot functions handle invalid inputs", {
 
   expect_error(
     plot_roc_curve(bad_data),
-    "must contain columns"
+    class = "halfmoon_column_error"
   )
 
   expect_error(
     plot_roc_auc(bad_data),
-    "must contain columns"
+    class = "halfmoon_column_error"
   )
 
   # Test with non-data frame
   expect_error(
     plot_roc_curve("not a data frame"),
-    "must be a data frame"
+    class = "halfmoon_type_error"
   )
 
   expect_error(
     plot_roc_auc("not a data frame"),
-    "must be a data frame"
+    class = "halfmoon_type_error"
   )
 })
 
@@ -130,7 +130,7 @@ test_that("StatRoc handles edge cases", {
   p_bad <- ggplot(bad_data, aes(estimate = x, truth = y)) + stat_roc()
   expect_error(
     ggplot_build(p_bad),
-    "must have exactly 2 unique values"
+    class = "halfmoon_group_error"
   )
 
   # Test with missing values

@@ -125,7 +125,10 @@ test_that("bal_smd error handling", {
   data <- create_test_data()
 
   # Should error with wrong number of groups
-  expect_error(bal_smd(covariate = data$x_cont, group = rep(1, 100)))
+  expect_error(
+    bal_smd(covariate = data$x_cont, group = rep(1, 100)),
+    class = "halfmoon_group_error"
+  )
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_smd(
     covariate = data$x_cont,
@@ -133,15 +136,21 @@ test_that("bal_smd error handling", {
   ))
 
   # Should error with mismatched lengths
-  expect_error(bal_smd(
-    covariate = data$x_cont[1:50],
-    group = data$g_balanced
-  ))
-  expect_error(bal_smd(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform[1:50]
-  ))
+  expect_error(
+    bal_smd(
+      covariate = data$x_cont[1:50],
+      group = data$g_balanced
+    ),
+    class = "halfmoon_length_error"
+  )
+  expect_error(
+    bal_smd(
+      covariate = data$x_cont,
+      group = data$g_balanced,
+      weights = data$w_uniform[1:50]
+    ),
+    class = "halfmoon_length_error"
+  )
 })
 
 # =============================================================================
@@ -254,7 +263,7 @@ test_that("bal_vr error handling", {
   expect_error(bal_vr(
     covariate = data$x_cont,
     group = rep(1, 100)
-  ))
+  ), class = "halfmoon_group_error")
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_vr(
     covariate = data$x_cont,
@@ -265,12 +274,12 @@ test_that("bal_vr error handling", {
   expect_error(bal_vr(
     covariate = data$x_cont[1:50],
     group = data$g_balanced
-  ))
+  ), class = "halfmoon_length_error")
   expect_error(bal_vr(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform[1:50]
-  ))
+  ), class = "halfmoon_length_error")
 })
 
 # =============================================================================
@@ -358,7 +367,7 @@ test_that("bal_ks error handling", {
   data <- create_test_data()
 
   # Should error with wrong number of groups
-  expect_error(bal_ks(covariate = data$x_cont, group = rep(1, 100)))
+  expect_error(bal_ks(covariate = data$x_cont, group = rep(1, 100)), class = "halfmoon_group_error")
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_ks(
     covariate = data$x_cont,
@@ -369,12 +378,12 @@ test_that("bal_ks error handling", {
   expect_error(bal_ks(
     covariate = data$x_cont[1:50],
     group = data$g_balanced
-  ))
+  ), class = "halfmoon_length_error")
   expect_error(bal_ks(
     covariate = data$x_cont,
     group = data$g_balanced,
     weights = data$w_uniform[1:50]
-  ))
+  ), class = "halfmoon_length_error")
 })
 
 # =============================================================================
@@ -474,12 +483,12 @@ test_that("bal_corr error handling", {
   data <- create_test_data()
 
   # Should error with mismatched lengths
-  expect_error(bal_corr(data$x_cont[1:50], data$x_skewed))
+  expect_error(bal_corr(data$x_cont[1:50], data$x_skewed), class = "halfmoon_length_error")
   expect_error(bal_corr(
     data$x_cont,
     data$x_skewed,
     weights = data$w_uniform[1:50]
-  ))
+  ), class = "halfmoon_length_error")
 })
 
 # =============================================================================
@@ -1144,7 +1153,7 @@ test_that("bal_energy handles continuous treatments", {
     covariates = covs,
     group = continuous_treatment,
     estimand = "ATE"
-  ))
+  ), class = "halfmoon_arg_error")
 })
 
 test_that("bal_energy handles perfect balance", {
@@ -1195,7 +1204,7 @@ test_that("bal_energy handles missing values", {
     covariates = covs,
     group = data$g_balanced,
     na.rm = FALSE
-  ))
+  ), class = "halfmoon_na_error")
 
   # Should work when na.rm = TRUE
   energy_na.rm <- bal_energy(
@@ -1246,20 +1255,20 @@ test_that("bal_energy error handling", {
   expect_error(bal_energy(
     covariates = data.frame(x = data$x_cont[1:50]),
     group = data$g_balanced
-  ))
+  ), class = "halfmoon_length_error")
 
   # Should error with wrong number of groups (only 1)
   expect_error(bal_energy(
     covariates = data.frame(x = data$x_cont),
     group = rep(1, 100)
-  ))
+  ), class = "halfmoon_group_error")
 
   # Should error with negative weights
   expect_error(bal_energy(
     covariates = data.frame(x = data$x_cont),
     group = data$g_balanced,
     weights = c(-1, rep(1, 99))
-  ))
+  ), class = "halfmoon_range_error")
 })
 
 test_that("bal_energy handles NHEFS data", {

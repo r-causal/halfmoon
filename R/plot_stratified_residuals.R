@@ -120,6 +120,14 @@ plot_stratified_residuals.lm <- function(
   ...
 ) {
   plot_type <- rlang::arg_match(plot_type)
+  
+  # Validate required arguments
+  if (missing(treatment)) {
+    abort(
+      "Argument {.arg treatment} is required",
+      error_class = "halfmoon_arg_error"
+    )
+  }
 
   # Extract residuals from the outcome model
   .residuals <- stats::residuals(x)

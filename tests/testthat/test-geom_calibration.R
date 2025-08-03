@@ -86,13 +86,13 @@ test_that("check_calibration provides clear error messages for missing columns",
   # Test with non-existent .fitted column
   expect_error(
     check_calibration(test_data, "nonexistent", "obs"),
-    "Column `nonexistent` not found in data"
+    class = "halfmoon_column_error"
   )
 
   # Test with non-existent .group column
   expect_error(
     check_calibration(test_data, "pred", "nonexistent"),
-    "Column `nonexistent` not found in data"
+    class = "halfmoon_column_error"
   )
 })
 
@@ -427,7 +427,7 @@ test_that("check_calibration method parameter validation", {
   # Test invalid method
   expect_error(
     check_calibration(test_data, pred, obs, method = "invalid"),
-    "`method` must be one of"
+    "must be one of"
   )
 })
 
@@ -589,19 +589,19 @@ test_that("check_calibration validates input parameters", {
   # Invalid bins for breaks method
   expect_error(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 1),
-    "bins.*must be an integer > 1"
+    class = "halfmoon_arg_error"
   )
 
   # Non-integer bins
   expect_error(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 2.5),
-    "bins.*must be an integer > 1"
+    class = "halfmoon_arg_error"
   )
 
   # Missing column
   expect_error(
     check_calibration(test_data, nonexistent, obs),
-    "Column.*not found"
+    class = "halfmoon_column_error"
   )
 })
 
@@ -662,7 +662,7 @@ test_that("check_calibration provides helpful warnings for small cell sizes", {
   # Test breaks method with small cells
   expect_warning(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
-    "Small sample sizes or extreme proportions detected"
+    class = "halfmoon_data_warning"
   )
 
   # Capture the specific warning message
@@ -685,7 +685,7 @@ test_that("check_calibration provides helpful warnings for extreme proportions",
 
   expect_warning(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
-    "Small sample sizes or extreme proportions detected"
+    class = "halfmoon_data_warning"
   )
 })
 
@@ -707,7 +707,7 @@ test_that("check_calibration windowed method provides helpful warnings", {
       window_size = 0.05,
       step_size = 0.1
     ),
-    "Small sample sizes or extreme proportions detected in windows"
+    class = "halfmoon_data_warning"
   )
 
   # Capture the specific warning message
@@ -993,8 +993,7 @@ test_that("geom_calibration errors with invalid method", {
   expect_warning(
     expect_warning(
       ggplot_build(p),
-      "Invalid calibration method: invalid_method",
-      fixed = TRUE
+      class = "halfmoon_method_warning"
     ),
     ".*"
   )
