@@ -25,7 +25,7 @@ test_that("geom_mirrored_histogram errors correctly", {
   
   expect_error(
     ggplot_build(edu_group),
-    "Groups of three or greater not supported"
+    class = "halfmoon_group_error"
   )
 
   # no group

@@ -107,7 +107,11 @@ check_balance <- function(
   var_names <- names(tidyselect::eval_select(rlang::enquo(.vars), .data))
 
   if (length(var_names) == 0) {
-    abort("No variables selected for {.arg .vars}")
+    abort(
+      "No variables selected for {.arg .vars}",
+      error_class = "halfmoon_empty_error",
+      call = rlang::current_env()
+    )
   }
 
   transformed_data <- .data
@@ -274,13 +278,15 @@ check_balance <- function(
   # Check for single-level groups
   if (length(group_levels) < 2 && !only_correlation) {
     abort(
-      "Group variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}."
+      "Group variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}.",
+      error_class = "halfmoon_group_error"
     )
   }
 
   if (using_correlation && !is.numeric(transformed_data[[group_var]])) {
     abort(
-      "Group variable must be numeric when using correlation metric"
+      "Group variable must be numeric when using correlation metric",
+      error_class = "halfmoon_type_error"
     )
   }
 
@@ -292,7 +298,8 @@ check_balance <- function(
       c(
         "Invalid metric{?s}: {.val {invalid_metrics}}",
         i = "Available metrics: {.val {available_metrics}}"
-      )
+      ),
+      error_class = "halfmoon_arg_error"
     )
   }
 
@@ -316,7 +323,8 @@ check_balance <- function(
 
   if (length(methods) == 0) {
     abort(
-      "No methods to compute. Either set {.arg include_observed = TRUE} or provide {.arg .wts}"
+      "No methods to compute. Either set {.arg include_observed = TRUE} or provide {.arg .wts}",
+      error_class = "halfmoon_arg_error"
     )
   }
 

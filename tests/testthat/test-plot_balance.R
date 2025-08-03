@@ -128,15 +128,15 @@ test_that("plot_balance adjusts x-axis for variance ratio", {
 
 test_that("plot_balance validates input", {
   # Test with invalid input
-  expect_error(
+  expect_halfmoon_error(
     plot_balance(data.frame(x = 1:5)),
-    "Input must be output from check_balance"
+    "halfmoon_column_error"
   )
 
   # Test with non-data frame
-  expect_error(
+  expect_halfmoon_error(
     plot_balance(list(variable = "x")),
-    "must be a data frame"
+    "halfmoon_type_error"
   )
 })
 
@@ -400,9 +400,13 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .metrics = c("smd", "energy")
   )
   
-  expect_doppelganger(
-    "balance-plot-categorical-with-energy",
-    plot_balance(balance_cat_energy)
+  # Suppress ggplot2's "Removed 2 rows containing missing values" warning
+  # This happens when energy distance produces NA values for small sample sizes
+  suppressWarnings(
+    expect_doppelganger(
+      "balance-plot-categorical-with-energy",
+      plot_balance(balance_cat_energy)
+    )
   )
   
   # Categorical with fixed scales

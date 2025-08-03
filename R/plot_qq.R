@@ -72,16 +72,25 @@ plot_qq <- function(
   group_name <- get_column_name(group_quo, ".group")
 
   if (!var_name %in% names(.data)) {
-    abort("Column {.code {var_name}} not found in data")
+    abort(
+      "Column {.code {var_name}} not found in data",
+      error_class = "halfmoon_column_error"
+    )
   }
 
   if (!group_name %in% names(.data)) {
-    abort("Column {.code {group_name}} not found in data")
+    abort(
+      "Column {.code {group_name}} not found in data",
+      error_class = "halfmoon_column_error"
+    )
   }
 
   # Check for NA values
   if (!na.rm && any(is.na(.data[[var_name]]))) {
-    abort("Variable contains missing values. Use `na.rm = TRUE` to drop them.")
+    abort(
+      "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
+      error_class = "halfmoon_na_error"
+    )
   }
 
   group_var <- .data[[group_name]]
@@ -92,7 +101,10 @@ plot_qq <- function(
   }
 
   if (length(group_levels) != 2) {
-    abort("Group variable must have exactly 2 levels")
+    abort(
+      "Group variable must have exactly 2 levels",
+      error_class = "halfmoon_group_error"
+    )
   }
 
   # Handle NULL treatment_level
@@ -109,7 +121,8 @@ plot_qq <- function(
   # Validate treatment_level exists
   if (!treatment_level %in% group_levels) {
     abort(
-      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}"
+      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}",
+      error_class = "halfmoon_reference_error"
     )
   }
 

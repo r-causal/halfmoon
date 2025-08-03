@@ -61,11 +61,17 @@ qq <- function(
 
   # Validate inputs
   if (!var_name %in% names(.data)) {
-    abort("Column {.code {var_name}} not found in data")
+    abort(
+      "Column {.code {var_name}} not found in data",
+      error_class = "halfmoon_column_error"
+    )
   }
 
   if (!group_name %in% names(.data)) {
-    abort("Column {.code {group_name}} not found in data")
+    abort(
+      "Column {.code {group_name}} not found in data",
+      error_class = "halfmoon_column_error"
+    )
   }
 
   # Get weight column names using tidyselect
@@ -84,7 +90,27 @@ qq <- function(
   }
 
   if (length(group_levels) != 2) {
-    abort("Group variable must have exactly 2 levels")
+    abort(
+      "Group variable must have exactly 2 levels",
+      error_class = "halfmoon_group_error"
+    )
+  }
+
+  # Check for missing values if na.rm = FALSE
+  if (!na.rm) {
+    var_data <- .data[[var_name]]
+    if (any(is.na(var_data))) {
+      abort(
+        "Variable {.code {var_name}} contains missing values and {.arg na.rm = FALSE}",
+        error_class = "halfmoon_na_error"
+      )
+    }
+    if (any(is.na(group_var))) {
+      abort(
+        "Group variable {.code {group_name}} contains missing values and {.arg na.rm = FALSE}",
+        error_class = "halfmoon_na_error"
+      )
+    }
   }
 
   # Handle NULL treatment_level
@@ -101,7 +127,8 @@ qq <- function(
   # Validate treatment_level exists
   if (!treatment_level %in% group_levels) {
     abort(
-      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}"
+      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}",
+      error_class = "halfmoon_reference_error"
     )
   }
 
@@ -183,7 +210,10 @@ compute_method_quantiles <- function(
   } else {
     # Weighted quantiles
     if (!method %in% names(ref_data) || !method %in% names(comp_data)) {
-      abort("Weight column {.code {method}} not found in data")
+      abort(
+        "Weight column {.code {method}} not found in data",
+        error_class = "halfmoon_column_error"
+      )
     }
 
     ref_wts <- ref_data[[method]]

@@ -66,7 +66,8 @@ StatMirrorDensity <- ggplot2::ggproto(
     # Check for panels with more than 2 groups
     if (any(panel_groups$.n_groups > 2)) {
       abort(
-        "Groups of three or greater not supported in `geom_mirror_density()`"
+        "Groups of three or greater not supported in `geom_mirror_density()`",
+        error_class = "halfmoon_group_error"
       )
     }
     
@@ -99,11 +100,14 @@ StatMirrorDensity <- ggplot2::ggproto(
     # Check for no group
     group <- unique(data$group)
     if (group == -1) {
-      abort(c(
-        "No group detected.",
-        "*" = "Do you need to use {.var aes(group = ...)}  \\
-        with your grouping variable?"
-      ))
+      abort(
+        c(
+          "No group detected.",
+          "*" = "Do you need to use {.var aes(group = ...)}  \\
+          with your grouping variable?"
+        ),
+        error_class = "halfmoon_aes_error"
+      )
     }
     
     # Store mirroring flag

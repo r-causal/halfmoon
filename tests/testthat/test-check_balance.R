@@ -398,32 +398,32 @@ test_that("check_balance validates inputs correctly", {
   data <- get_nhefs_test_data()
 
   # Test invalid data type
-  expect_error(
+  expect_halfmoon_error(
     check_balance_basic("not_a_dataframe", age, qsmk),
-    "must be a data frame"
+    "halfmoon_type_error"
   )
 
   # Test invalid group variable
-  expect_error(
+  expect_halfmoon_error(
     check_balance_basic(data, age, nonexistent_group),
-    "not found in"
+    "halfmoon_column_error"
   )
 
   # Test invalid metrics
-  expect_error(
+  expect_halfmoon_error(
     check_balance_basic(data, age, qsmk, .metrics = "invalid_metric"),
-    "Invalid metric"
+    "halfmoon_arg_error"
   )
 
   # Test no variables selected
-  expect_error(check_balance_basic(data, c(), qsmk), "No variables selected")
+  expect_halfmoon_error(check_balance_basic(data, c(), qsmk), "halfmoon_empty_error")
 
   # Test group with wrong number of levels - should error
   data_bad_group <- data
   data_bad_group$bad_group <- rep(1, nrow(data))
-  expect_error(
+  expect_halfmoon_error(
     check_balance_basic(data_bad_group, age, bad_group),
-    "at least two levels"
+    "halfmoon_group_error"
   )
 
   # Test no metrics to compute - should return empty tibble
@@ -722,9 +722,9 @@ test_that("check_balance correlation requires numeric group variable", {
   data <- get_nhefs_test_data()
 
   # Should error when using factor/binary variable with correlation
-  expect_error(
+  expect_halfmoon_error(
     check_balance_basic(data, age, qsmk, .metrics = "correlation"),
-    "Group variable must be numeric when using correlation metric"
+    "halfmoon_type_error"
   )
 })
 
@@ -732,14 +732,14 @@ test_that("check_balance handles mixed metrics with correlation", {
   data <- get_nhefs_test_data()
 
   # Should error when mixing correlation with other metrics using binary group
-  expect_error(
+  expect_halfmoon_error(
     check_balance_basic(
       data,
       age,
       qsmk,
       .metrics = c("smd", "correlation")
     ),
-    "Group variable must be numeric when using correlation metric"
+    "halfmoon_type_error"
   )
 
   # But should work with continuous group when only using correlation

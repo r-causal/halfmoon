@@ -190,7 +190,10 @@ compute_roc_for_group <- function(data, na.rm, treatment_level, group_id) {
   }
 
   if (length(unique_truth) != 2) {
-    abort("truth must have exactly 2 unique values for ROC curve")
+    abort(
+      "truth must have exactly 2 unique values for ROC curve",
+      error_class = "halfmoon_group_error"
+    )
   }
 
   # Convert truth to binary

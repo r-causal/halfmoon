@@ -106,7 +106,11 @@ bal_prognostic_score <- function(
   if (!is.null(formula)) {
     # Formula interface
     if (!inherits(formula, "formula")) {
-      abort("`formula` must be a formula object.")
+      abort(
+        "`formula` must be a formula object.",
+        error_class = "halfmoon_formula_error",
+        call = rlang::current_env()
+      )
     }
 
     # Extract variables from formula
@@ -115,11 +119,15 @@ bal_prognostic_score <- function(
 
     # Check that treatment is not in the formula
     if (treatment_var %in% formula_vars) {
-      abort(paste0(
-        "The treatment variable '",
-        treatment_var,
-        "' should not be included in the outcome model formula."
-      ))
+      abort(
+        paste0(
+          "The treatment variable '",
+          treatment_var,
+          "' should not be included in the outcome model formula."
+        ),
+        error_class = "halfmoon_formula_error",
+        call = rlang::current_env()
+      )
     }
 
     # Validate outcome exists
@@ -133,7 +141,11 @@ bal_prognostic_score <- function(
 
     # Check if outcome was provided using quo_is_null
     if (rlang::quo_is_null(outcome_quo)) {
-      abort("Either `outcome` or `formula` must be provided.")
+      abort(
+        "Either `outcome` or `formula` must be provided.",
+        error_class = "halfmoon_arg_error",
+        call = rlang::current_env()
+      )
     }
 
     outcome_var <- get_column_name(outcome_quo, "outcome")
@@ -150,7 +162,11 @@ bal_prognostic_score <- function(
     ))
 
     if (length(covariate_names) == 0) {
-      abort("No covariates selected for the outcome model.")
+      abort(
+        "No covariates selected for the outcome model.",
+        error_class = "halfmoon_empty_error",
+        call = rlang::current_env()
+      )
     }
 
     # Create formula
@@ -217,12 +233,15 @@ bal_prognostic_score <- function(
   # Check we have control observations
   n_control <- sum(is_control, na.rm = TRUE)
   if (n_control == 0) {
-    abort(paste0(
-      "No control observations found. ",
-      "Control level '",
-      control_level,
-      "' not present in treatment variable."
-    ))
+    abort(
+      paste0(
+        "No control observations found. ",
+        "Control level '",
+        control_level,
+        "' not present in treatment variable."
+      ),
+      error_class = "halfmoon_reference_error"
+    )
   }
 
   # Fit prognostic model on control group only
@@ -273,15 +292,21 @@ bal_prognostic_fit_model <- function(
       }
     },
     error = function(e) {
-      abort(paste0(
-        "Failed to fit prognostic score model: ",
-        e$message
-      ))
+      abort(
+        paste0(
+          "Failed to fit prognostic score model: ",
+          e$message
+        ),
+        error_class = "halfmoon_formula_error"
+      )
     }
   )
 
   if (!model$converged) {
-    warn("Prognostic score model did not converge. Results may be unreliable.")
+    warn(
+      "Prognostic score model did not converge. Results may be unreliable.",
+      warning_class = "halfmoon_convergence_warning"
+    )
   }
 
   # Generate predictions for all observations
@@ -290,10 +315,13 @@ bal_prognostic_fit_model <- function(
       stats::predict(model, newdata = .data, type = "response")
     },
     error = function(e) {
-      abort(paste0(
-        "Failed to generate prognostic score predictions: ",
-        e$message
-      ))
+      abort(
+        paste0(
+          "Failed to generate prognostic score predictions: ",
+          e$message
+        ),
+        error_class = "halfmoon_formula_error"
+      )
     }
   )
 

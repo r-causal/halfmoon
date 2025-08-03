@@ -132,7 +132,11 @@ plot_mirror_distributions <- function(
   validate_column_exists(.data, group_name, ".group")
 
   if (!na.rm && any(is.na(.data[[var_name]]))) {
-    abort("Variable contains missing values. Use `na.rm = TRUE` to drop them.")
+    abort(
+      "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
+      error_class = "halfmoon_na_error",
+      call = rlang::current_env()
+    )
   }
 
   group_var <- .data[[group_name]]
@@ -169,7 +173,10 @@ plot_mirror_distributions <- function(
     # Binary exposure - no transformation needed
     group_levels <- extract_group_levels(group_var, require_binary = TRUE)
   } else {
-    abort("Group variable must have at least two levels")
+    abort(
+      "Group variable must have at least two levels",
+      error_class = "halfmoon_group_error"
+    )
   }
 
   if (!rlang::quo_is_null(wts_quo)) {

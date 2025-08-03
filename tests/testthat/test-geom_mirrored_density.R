@@ -107,9 +107,9 @@ test_that("geom_mirrored_density errors with 3+ groups", {
       bw = 0.02
     )
 
-  expect_error(
+  expect_halfmoon_error(
     ggplot_build(edu_group),
-    "Groups of three or greater not supported"
+    "halfmoon_group_error"
   )
 })
 
@@ -119,7 +119,7 @@ test_that("geom_mirrored_density errors with no group", {
 
   expect_error(
     ggplot_build(no_group),
-    "No group detected"
+    class = "halfmoon_aes_error"
   )
 })
 

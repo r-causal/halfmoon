@@ -137,9 +137,9 @@ test_that("plot_mirror_distributions handles NA values", {
   df_with_na$age[1:10] <- NA
 
   # Should error without na.rm
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(df_with_na, age, qsmk),
-    "missing values"
+    "halfmoon_na_error"
   )
 
   # Should work with na.rm
@@ -154,17 +154,28 @@ test_that("plot_mirror_distributions handles NA values", {
 })
 
 test_that("plot_mirror_distributions validates inputs", {
+  # Missing required arguments
+  expect_halfmoon_error(
+    plot_mirror_distributions(nhefs_weights),
+    "halfmoon_arg_error"
+  )
+  
+  expect_halfmoon_error(
+    plot_mirror_distributions(nhefs_weights, age),
+    "halfmoon_arg_error"
+  )
+  
   # Non-existent column
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(nhefs_weights, nonexistent, qsmk),
-    "not found in"
+    "halfmoon_column_error"
   )
 
   # Group with <2 levels
   df_one_level <- dplyr::filter(nhefs_weights, qsmk == 0)
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(df_one_level, age, qsmk),
-    "at least two levels"
+    "halfmoon_group_error"
   )
 })
 
@@ -308,24 +319,24 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
 
 test_that("plot_mirror_distributions validates categorical reference group", {
   # Invalid reference group
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(
       nhefs_weights,
       age,
       alcoholfreq_cat,
       reference_group = "invalid"
     ),
-    "not found in grouping variable"
+    "halfmoon_reference_error"
   )
   
   # Numeric reference out of range
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(
       nhefs_weights,
       age,
       alcoholfreq_cat,
       reference_group = 10
     ),
-    "out of bounds"
+    "halfmoon_range_error"
   )
 })

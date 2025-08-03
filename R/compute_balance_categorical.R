@@ -104,7 +104,8 @@ compute_categorical_balance <- function(
 
   if (length(group_levels) <= 2) {
     abort(
-      "Internal error: compute_categorical_balance called with non-categorical group"
+      "Internal error: compute_categorical_balance called with non-categorical group",
+      error_class = "halfmoon_arg_error"
     )
   }
 
@@ -227,13 +228,17 @@ determine_reference_group_categorical <- function(
   # If numeric, treat as index
   if (is.numeric(reference_group) && length(reference_group) == 1) {
     if (reference_group > length(group_levels) || reference_group < 1) {
-      abort("Reference group index {reference_group} out of bounds")
+      abort(
+        "Reference group index {reference_group} out of bounds",
+        error_class = "halfmoon_range_error"
+      )
     }
     return(group_levels[reference_group])
   }
 
   # Otherwise, it's an invalid reference group
   abort(
-    "{.arg reference_group} {.val {reference_group}} not found in grouping variable"
+    "{.arg reference_group} {.val {reference_group}} not found in grouping variable",
+    error_class = "halfmoon_reference_error"
   )
 }

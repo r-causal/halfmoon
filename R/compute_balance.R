@@ -80,7 +80,8 @@ bal_smd <- function(
   # Validate we have exactly two levels
   if (length(levels_g) != 2) {
     abort(
-      "Group variable must have exactly two levels, got {length(levels_g)}"
+      "Group variable must have exactly two levels, got {length(levels_g)}",
+      error_class = "halfmoon_group_error"
     )
   }
 
@@ -588,7 +589,10 @@ bal_energy <- function(
 ) {
   # Input validation
   if (!is.data.frame(covariates) && !is.matrix(covariates)) {
-    abort("Argument {.arg covariates} must be a data frame or matrix")
+    abort(
+      "Argument {.arg covariates} must be a data frame or matrix",
+      error_class = "halfmoon_type_error"
+    )
   }
 
   if (is.data.frame(covariates)) {
@@ -597,7 +601,10 @@ bal_energy <- function(
   }
 
   if (nrow(covariates) == 0) {
-    abort("Argument {.arg covariates} cannot be empty")
+    abort(
+      "Argument {.arg covariates} cannot be empty",
+      error_class = "halfmoon_empty_error"
+    )
   }
 
   validate_equal_length(group, covariates, "group", "covariates")
@@ -605,25 +612,29 @@ bal_energy <- function(
 
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
     abort(
-      "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}"
+      "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}",
+      error_class = "halfmoon_arg_error"
     )
   }
 
   if (!na.rm && anyNA(covariates)) {
     abort(
-      "Energy distance cannot be computed with missing values in {.arg covariates}. Set {.arg na.rm = TRUE} or remove missing values."
+      "Energy distance cannot be computed with missing values in {.arg covariates}. Set {.arg na.rm = TRUE} or remove missing values.",
+      error_class = "halfmoon_na_error"
     )
   }
 
   if (!na.rm && anyNA(group)) {
     abort(
-      "Energy distance cannot be computed with missing values in {.arg group}. Set {.arg na.rm = TRUE} or remove missing values."
+      "Energy distance cannot be computed with missing values in {.arg group}. Set {.arg na.rm = TRUE} or remove missing values.",
+      error_class = "halfmoon_na_error"
     )
   }
 
   if (!na.rm && !is.null(weights) && anyNA(weights)) {
     abort(
-      "Energy distance cannot be computed with missing values in {.arg weights}. Set {.arg na.rm = TRUE} or remove missing values."
+      "Energy distance cannot be computed with missing values in {.arg weights}. Set {.arg na.rm = TRUE} or remove missing values.",
+      error_class = "halfmoon_na_error"
     )
   }
 
@@ -648,14 +659,20 @@ bal_energy <- function(
 
   # Special case: constant group (only one unique value)
   if (n_groups <= 1) {
-    abort("Group variable must have at least two levels")
+    abort(
+      "Group variable must have at least two levels",
+      error_class = "halfmoon_group_error"
+    )
   }
 
   # Determine if treatment is continuous
   is_continuous <- is.numeric(group) && n_groups > 10
 
   if (is_continuous && !is.null(estimand)) {
-    abort("For continuous treatments, {.arg estimand} must be {.code NULL}")
+    abort(
+      "For continuous treatments, {.arg estimand} must be {.code NULL}",
+      error_class = "halfmoon_arg_error"
+    )
   }
 
   # For continuous treatments, use distance correlation
