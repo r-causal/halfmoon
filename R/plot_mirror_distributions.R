@@ -152,7 +152,7 @@ plot_mirror_distributions <- function(
   
   if (is_categorical) {
     # Categorical exposure
-    reference_group <- determine_reference_group(group_var, reference_group)
+    reference_group <- determine_reference_group(group_var, reference_group, call = rlang::current_env())
     
     # Create binary comparisons using purrr
     comparison_levels <- setdiff(group_levels, reference_group)
