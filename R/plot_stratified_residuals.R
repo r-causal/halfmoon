@@ -187,7 +187,7 @@ plot_stratified_residuals.data.frame <- function(
   plot_type <- rlang::arg_match(plot_type)
 
   # Validate data frame
-  validate_data_frame(x, call = rlang::current_env())
+  validate_data_frame(x)
 
   # Extract column names using tidyselect
   treatment_quo <- rlang::enquo(treatment)
@@ -196,17 +196,17 @@ plot_stratified_residuals.data.frame <- function(
 
   # Get treatment column
   treatment_name <- get_column_name(treatment_quo, "treatment")
-  validate_column_exists(x, treatment_name, "treatment", call = rlang::current_env())
+  validate_column_exists(x, treatment_name, "treatment")
   .treatment <- x[[treatment_name]]
 
   # Get residuals column
   residuals_name <- get_column_name(residuals_quo, "residuals")
-  validate_column_exists(x, residuals_name, "residuals", call = rlang::current_env())
+  validate_column_exists(x, residuals_name, "residuals")
   .residuals <- x[[residuals_name]]
 
   # Get x-axis column
   x_var_name <- get_column_name(x_var_quo, "x_var")
-  validate_column_exists(x, x_var_name, "x_var", call = rlang::current_env())
+  validate_column_exists(x, x_var_name, "x_var")
   .ps_or_fitted <- x[[x_var_name]]
 
   # Infer label from column name
@@ -243,21 +243,20 @@ plot_stratified_residuals_impl <- function(
   na.rm
 ) {
   # Validate inputs
-  validate_numeric(.residuals, ".residuals", call = rlang::current_env())
-  validate_numeric(.ps_or_fitted, ".ps_or_fitted", call = rlang::current_env())
+  validate_numeric(.residuals, ".residuals")
+  validate_numeric(.ps_or_fitted, ".ps_or_fitted")
 
   # Validate treatment has exactly 2 levels
-  validate_binary_group(.treatment, ".treatment", call = rlang::current_env())
+  validate_binary_group(.treatment, ".treatment")
 
   # Check lengths
   validate_equal_length(
     .residuals,
     .ps_or_fitted,
     ".residuals",
-    ".ps_or_fitted",
-    call = rlang::current_env()
+    ".ps_or_fitted"
   )
-  validate_equal_length(.residuals, .treatment, ".residuals", ".treatment", call = rlang::current_env())
+  validate_equal_length(.residuals, .treatment, ".residuals", ".treatment")
 
   # Create data frame for plotting
   plot_data <- data.frame(

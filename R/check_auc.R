@@ -49,7 +49,7 @@ check_auc <- function(
   na.rm = TRUE,
   treatment_level = NULL
 ) {
-  validate_data_frame(.data, call = rlang::current_env())
+  validate_data_frame(.data)
 
   roc_data <- roc_curve(
     .data,
@@ -118,7 +118,7 @@ roc_curve <- function(
   estimate_quo <- rlang::enquo(.estimate)
   wts_quo <- rlang::enquo(.wts)
 
-  validate_data_frame(.data, call = rlang::current_env())
+  validate_data_frame(.data)
 
   # Extract column names
   truth_name <- names(tidyselect::eval_select(truth_quo, .data))
@@ -180,7 +180,7 @@ roc_curve <- function(
     )
   }
 
-  validate_numeric(estimate, ".estimate", call = rlang::current_env())
+  validate_numeric(estimate, ".estimate")
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)
@@ -205,8 +205,7 @@ roc_curve <- function(
       truth,
       estimate,
       weights = NULL,
-      treatment_level = treatment_level,
-      call = rlang::current_env()
+      treatment_level = treatment_level
     )
     observed_curve$method <- "observed"
     results$observed <- observed_curve
@@ -249,8 +248,7 @@ roc_curve <- function(
       truth_wt,
       estimate_wt,
       weights = weights_wt,
-      treatment_level = treatment_level,
-      call = rlang::current_env()
+      treatment_level = treatment_level
     )
     weighted_curve$method <- wt_name
     results[[wt_name]] <- weighted_curve

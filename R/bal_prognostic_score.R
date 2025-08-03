@@ -96,11 +96,11 @@ bal_prognostic_score <- function(
   na.rm = FALSE,
   ...
 ) {
-  validate_data_frame(.data, call = rlang::current_env())
+  validate_data_frame(.data)
 
   treatment_quo <- rlang::enquo(treatment)
   treatment_var <- get_column_name(treatment_quo, "treatment")
-  validate_column_exists(.data, treatment_var, call = rlang::current_env())
+  validate_column_exists(.data, treatment_var)
 
   # Handle formula vs tidyselect interface
   if (!is.null(formula)) {
@@ -131,7 +131,7 @@ bal_prognostic_score <- function(
     }
 
     # Validate outcome exists
-    validate_column_exists(.data, outcome_var, call = rlang::current_env())
+    validate_column_exists(.data, outcome_var)
 
     model_formula <- formula
   } else {
@@ -149,7 +149,7 @@ bal_prognostic_score <- function(
     }
 
     outcome_var <- get_column_name(outcome_quo, "outcome")
-    validate_column_exists(.data, outcome_var, call = rlang::current_env())
+    validate_column_exists(.data, outcome_var)
 
     # Get covariate names
     covariate_enquo <- rlang::enquo(covariates)
@@ -191,12 +191,12 @@ bal_prognostic_score <- function(
 
     if (!is.null(weights_var) && weights_var %in% names(.data)) {
       # It's a column reference
-      validate_column_exists(.data, weights_var, call = rlang::current_env())
+      validate_column_exists(.data, weights_var)
       model_weights <- .data[[weights_var]]
     } else {
       # It's a numeric vector
       model_weights <- rlang::eval_tidy(weights_enquo)
-      validate_weights(model_weights, nrow(.data), call = rlang::current_env())
+      validate_weights(model_weights, nrow(.data))
     }
   } else {
     model_weights <- NULL

@@ -100,7 +100,7 @@ check_balance <- function(
   cubes = FALSE,
   interactions = FALSE
 ) {
-  validate_data_frame(.data, call = rlang::current_env())
+  validate_data_frame(.data)
 
   # Convert inputs to character vectors for consistent handling
   group_var <- rlang::as_name(rlang::enquo(.group))
@@ -257,7 +257,7 @@ check_balance <- function(
   }
 
   # Validate group variable
-  validate_column_exists(transformed_data, group_var, "data", call = rlang::current_env())
+  validate_column_exists(transformed_data, group_var, "data")
 
   # Get group levels in proper order
   # For correlation, we allow continuous group variables

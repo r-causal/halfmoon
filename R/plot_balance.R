@@ -83,7 +83,7 @@ plot_balance <- function(
   vlinewidth = 0.6
 ) {
   # Validate input
-  validate_data_frame(.df, call = rlang::current_env())
+  validate_data_frame(.df)
   required_cols <- c("variable", "method", "metric", "estimate")
   missing_cols <- setdiff(required_cols, names(.df))
   if (length(missing_cols) > 0) {

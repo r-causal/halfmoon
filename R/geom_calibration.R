@@ -82,7 +82,7 @@ check_calibration <- function(
 
   group_var <- data[[group_name]]
 
-  check_columns(data, fitted_name, group_name, treatment_level, call = rlang::current_env())
+  check_columns(data, fitted_name, group_name, treatment_level)
 
   treatment_indicator <- check_treatment_level(group_var, treatment_level)
 
@@ -101,16 +101,15 @@ check_calibration <- function(
   }
 
   result <- if (method == "breaks") {
-    compute_calibration_breaks_imp(df, bins, binning_method, conf_level, call = rlang::current_env())
+    compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
   } else if (method == "logistic") {
-    compute_calibration_logistic_imp(df, smooth, conf_level, k = k, call = rlang::current_env())
+    compute_calibration_logistic_imp(df, smooth, conf_level, k = k)
   } else if (method == "windowed") {
     compute_calibration_windowed_imp(
       df,
       window_size,
       step_size,
-      conf_level,
-      call = rlang::current_env()
+      conf_level
     )
   }
 
@@ -523,8 +522,7 @@ StatCalibration <- ggplot2::ggproto(
           step_size,
           k,
           na.rm,
-          group_id,
-          call = rlang::current_env()
+          group_id
         )
       })
 
@@ -543,8 +541,7 @@ StatCalibration <- ggplot2::ggproto(
         step_size,
         k,
         na.rm,
-        data$group[1],
-        call = rlang::current_env()
+        data$group[1]
       )
     }
   }

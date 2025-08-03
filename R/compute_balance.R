@@ -46,10 +46,10 @@ bal_smd <- function(
   reference_group = NULL,
   na.rm = FALSE
 ) {
-  validate_numeric(covariate, call = rlang::current_env())
-  validate_not_empty(covariate, call = rlang::current_env())
-  validate_equal_length(covariate, group, call = rlang::current_env())
-  validate_weights(weights, length(covariate), call = rlang::current_env())
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Check if exposure is categorical first
   if (is_categorical_exposure(group)) {
@@ -166,10 +166,10 @@ bal_vr <- function(
   na.rm = FALSE
 ) {
   # Input validation
-  validate_numeric(covariate, call = rlang::current_env())
-  validate_not_empty(covariate, call = rlang::current_env())
-  validate_equal_length(covariate, group, call = rlang::current_env())
-  validate_weights(weights, length(covariate), call = rlang::current_env())
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Check if exposure is categorical
   if (is_categorical_exposure(group)) {
@@ -324,10 +324,10 @@ bal_ks <- function(
   na.rm = FALSE
 ) {
   # Input validation
-  validate_numeric(covariate, call = rlang::current_env())
-  validate_not_empty(covariate, call = rlang::current_env())
-  validate_equal_length(covariate, group, call = rlang::current_env())
-  validate_weights(weights, length(covariate), call = rlang::current_env())
+  validate_numeric(covariate)
+  validate_not_empty(covariate)
+  validate_equal_length(covariate, group)
+  validate_weights(weights, length(covariate))
 
   # Check if exposure is categorical
   if (is_categorical_exposure(group)) {
@@ -442,12 +442,12 @@ bal_ks <- function(
 #' @export
 bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
   # Input validation
-  validate_numeric(x, call = rlang::current_env())
-  validate_numeric(y, call = rlang::current_env())
-  validate_not_empty(x, call = rlang::current_env())
-  validate_not_empty(y, call = rlang::current_env())
-  validate_equal_length(x, y, call = rlang::current_env())
-  validate_weights(weights, length(x), call = rlang::current_env())
+  validate_numeric(x)
+  validate_numeric(y)
+  validate_not_empty(x)
+  validate_not_empty(y)
+  validate_equal_length(x, y)
+  validate_weights(weights, length(x))
 
   if (na.rm) {
     # Handle missing values carefully - avoid logical(0) issue
@@ -607,8 +607,8 @@ bal_energy <- function(
     )
   }
 
-  validate_equal_length(group, covariates, "group", "covariates", call = rlang::current_env())
-  validate_weights(weights, nrow(covariates), call = rlang::current_env())
+  validate_equal_length(group, covariates, "group", "covariates")
+  validate_weights(weights, nrow(covariates))
 
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
     abort(
