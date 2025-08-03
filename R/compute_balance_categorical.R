@@ -203,7 +203,7 @@ compute_pairwise_balance <- function(
 }
 
 create_binary_comparison <- function(group, comp_level, ref_group) {
-  binary_group <- as.numeric(group == comp_level | group == ref_group)
+  binary_group <- numeric(length(group))
   binary_group[group == comp_level] <- 1
   binary_group[group == ref_group] <- 0
   binary_group

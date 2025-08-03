@@ -129,10 +129,11 @@ create_test_data_categorical <- function(n = 300, seed = 123) {
     )
   )
 
-  # Create some weights
-  ps_low <- 0.3
-  ps_medium <- 0.4
-  ps_high <- 0.3
+  # Create some weights that will actually make a difference
+  # Using different probabilities to ensure weights are distinct
+  ps_low <- 0.25
+  ps_medium <- 0.35
+  ps_high <- 0.4
 
   # Simple ATT-like weights (treat "high" as treatment)
   weights_att <- ifelse(
