@@ -32,12 +32,16 @@ add_ess_header <- function(
   # check inputs ---------------------------------------------------------------
   rlang::check_installed(c("cards", "dplyr"))
   if (!inherits(x, "tbl_svysummary")) {
-    cli::cli_abort(
-      "Argument {.arg x} must be class {.cls tbl_svysummary} and typically created with {.fun gtsummary::tbl_svysummary}."
+    abort(
+      "Argument {.arg x} must be class {.cls tbl_svysummary} and typically created with {.fun gtsummary::tbl_svysummary}.",
+      error_class = "halfmoon_type_error"
     )
   }
   if (!rlang::is_string(header)) {
-    cli::cli_abort("Argument {.arg header} must be a string.")
+    abort(
+      "Argument {.arg header} must be a string.",
+      error_class = "halfmoon_type_error"
+    )
   }
   updated_call <- append(x$call_list, list(add_ess_header = match.call()))
 

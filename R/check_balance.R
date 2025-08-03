@@ -107,7 +107,10 @@ check_balance <- function(
   var_names <- names(tidyselect::eval_select(rlang::enquo(.vars), .data))
 
   if (length(var_names) == 0) {
-    abort("No variables selected for {.arg .vars}")
+    abort(
+      "No variables selected for {.arg .vars}",
+      error_class = "halfmoon_empty_error"
+    )
   }
 
   transformed_data <- .data

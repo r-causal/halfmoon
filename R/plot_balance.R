@@ -91,7 +91,8 @@ plot_balance <- function(
       paste0(
         "Input must be output from check_balance(). Missing columns: ",
         paste(missing_cols, collapse = ", ")
-      )
+      ),
+      error_class = "halfmoon_column_error"
     )
   }
 

@@ -13,7 +13,8 @@ extract_group_levels <- function(group, require_binary = TRUE) {
 
   if (require_binary && length(levels) != 2) {
     abort(
-      "Group variable must have exactly two levels, got {length(levels)}"
+      "Group variable must have exactly two levels, got {length(levels)}",
+      error_class = "halfmoon_group_error"
     )
   }
 
@@ -37,14 +38,18 @@ determine_reference_group <- function(group, reference_group = NULL) {
   # If not in levels and is numeric, treat as index
   if (is.numeric(reference_group) && length(reference_group) == 1) {
     if (reference_group > length(levels) || reference_group < 1) {
-      abort("Reference group index {reference_group} out of bounds")
+      abort(
+        "Reference group index {reference_group} out of bounds",
+        error_class = "halfmoon_range_error"
+      )
     }
     return(levels[reference_group])
   }
 
   # Otherwise, it's an invalid reference group
   abort(
-    "{.arg reference_group} {.val {reference_group}} not found in grouping variable"
+    "{.arg reference_group} {.val {reference_group}} not found in grouping variable",
+    error_class = "halfmoon_reference_error"
   )
 }
 

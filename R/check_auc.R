@@ -125,10 +125,16 @@ roc_curve <- function(
   estimate_name <- names(tidyselect::eval_select(estimate_quo, .data))
 
   if (length(truth_name) != 1) {
-    abort("{.arg .truth} must select exactly one variable")
+    abort(
+      "{.arg .truth} must select exactly one variable",
+      error_class = "halfmoon_select_error"
+    )
   }
   if (length(estimate_name) != 1) {
-    abort("{.arg .estimate} must select exactly one variable")
+    abort(
+      "{.arg .estimate} must select exactly one variable",
+      error_class = "halfmoon_select_error"
+    )
   }
 
   # Handle weights
@@ -151,17 +157,24 @@ roc_curve <- function(
       if (length(unique_vals) == 2) {
         truth <- factor(truth, levels = sort(unique_vals))
       } else {
-        abort("{.arg .truth} must have exactly 2 unique values")
+        abort(
+          "{.arg .truth} must have exactly 2 unique values",
+          error_class = "halfmoon_group_error"
+        )
       }
     } else {
       abort(
-        "{.arg .truth} must be a factor, character, logical, or binary numeric"
+        "{.arg .truth} must be a factor, character, logical, or binary numeric",
+        error_class = "halfmoon_type_error"
       )
     }
   }
 
   if (length(levels(truth)) != 2) {
-    abort("{.arg .truth} must have exactly 2 levels")
+    abort(
+      "{.arg .truth} must have exactly 2 levels",
+      error_class = "halfmoon_group_error"
+    )
   }
 
   validate_numeric(estimate, ".estimate")
@@ -173,7 +186,10 @@ roc_curve <- function(
     .data <- .data[complete_cases, , drop = FALSE]
   } else {
     if (any(is.na(truth)) || any(is.na(estimate))) {
-      abort("Missing values found and {.code na.rm = FALSE}")
+      abort(
+        "Missing values found and {.code na.rm = FALSE}",
+        error_class = "halfmoon_na_error"
+      )
     }
   }
 
@@ -198,7 +214,10 @@ roc_curve <- function(
 
     # Validate weights
     if (!is.numeric(weights)) {
-      warn("Skipping non-numeric weight variable: {wt_name}")
+      warn(
+        "Skipping non-numeric weight variable: {wt_name}",
+        warning_class = "halfmoon_data_warning"
+      )
       next
     }
 
@@ -206,7 +225,8 @@ roc_curve <- function(
     if (any(weights <= 0, na.rm = TRUE)) {
       n_zero_neg <- sum(weights <= 0, na.rm = TRUE)
       warn(
-        "Removing {n_zero_neg} observations with zero or negative weights from {wt_name}"
+        "Removing {n_zero_neg} observations with zero or negative weights from {wt_name}",
+        warning_class = "halfmoon_data_warning"
       )
 
       valid_weights <- weights > 0 & !is.na(weights)
@@ -231,7 +251,10 @@ roc_curve <- function(
 
   # Combine results
   if (length(results) == 0) {
-    abort("No valid results to return")
+    abort(
+      "No valid results to return",
+      error_class = "halfmoon_empty_error"
+    )
   }
 
   dplyr::bind_rows(results)
@@ -253,7 +276,10 @@ compute_roc_curve_imp <- function(
 
   # Check for constant estimates
   if (length(unique(estimate)) == 1) {
-    warn("Estimate variable is constant; ROC curve will be degenerate")
+    warn(
+      "Estimate variable is constant; ROC curve will be degenerate",
+      warning_class = "halfmoon_data_warning"
+    )
     return(tibble::tibble(
       threshold = c(-Inf, unique(estimate), Inf),
       sensitivity = c(1, 0.5, 0),
@@ -274,7 +300,8 @@ compute_roc_curve_imp <- function(
       # User specified treatment level
       if (!treatment_level %in% truth_levels) {
         abort(
-          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} levels: {.val {truth_levels}}"
+          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} levels: {.val {truth_levels}}",
+          error_class = "halfmoon_reference_error"
         )
       }
       event_level <- treatment_level
@@ -289,7 +316,8 @@ compute_roc_curve_imp <- function(
     if (!is.null(treatment_level)) {
       if (!treatment_level %in% unique_vals) {
         abort(
-          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} values: {.val {unique_vals}}"
+          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} values: {.val {unique_vals}}",
+          error_class = "halfmoon_reference_error"
         )
       }
       event_level <- treatment_level
@@ -324,14 +352,20 @@ compute_roc_curve_imp <- function(
 
   # Handle edge cases
   if (is.na(total_tp) || total_tp == 0) {
-    warn("No events found in truth variable")
+    warn(
+      "No events found in truth variable",
+      warning_class = "halfmoon_data_warning"
+    )
     sensitivity <- rep(0, length(tp))
   } else {
     sensitivity <- tp / total_tp
   }
 
   if (is.na(total_fp) || total_fp == 0) {
-    warn("No non-events found in truth variable")
+    warn(
+      "No non-events found in truth variable",
+      warning_class = "halfmoon_data_warning"
+    )
     specificity <- rep(1, length(fp))
   } else {
     specificity <- 1 - fp / total_fp
@@ -352,7 +386,10 @@ compute_roc_curve_imp <- function(
 compute_auc <- function(x, y) {
   # Handle edge cases
   if (length(x) != length(y)) {
-    abort("Length mismatch: x ({length(x)}) and y ({length(y)})")
+    abort(
+      "Length mismatch: x ({length(x)}) and y ({length(y)})",
+      error_class = "halfmoon_length_error"
+    )
   }
 
   if (length(x) == 0) {

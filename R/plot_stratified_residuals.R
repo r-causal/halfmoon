@@ -128,7 +128,10 @@ plot_stratified_residuals.lm <- function(
   if (!is.null(ps_model)) {
     # Use propensity scores if PS model provided
     if (!inherits(ps_model, c("glm", "lm"))) {
-      abort("{.arg ps_model} must be a glm or lm object")
+      abort(
+        "{.arg ps_model} must be a glm or lm object",
+        error_class = "halfmoon_type_error"
+      )
     }
     .ps_or_fitted <- stats::fitted(ps_model)
     x_label <- "Propensity score"

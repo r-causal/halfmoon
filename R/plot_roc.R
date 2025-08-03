@@ -42,7 +42,8 @@ plot_roc_curve <- function(
 ) {
   if (!inherits(.data, "tbl_df") && !inherits(.data, "data.frame")) {
     abort(
-      "{.arg .data} must be a data frame or tibble from {.fn roc_curve}"
+      "{.arg .data} must be a data frame or tibble from {.fn roc_curve}",
+      error_class = "halfmoon_type_error"
     )
   }
 
@@ -50,7 +51,8 @@ plot_roc_curve <- function(
   missing_cols <- setdiff(required_cols, names(.data))
   if (length(missing_cols) > 0) {
     abort(
-      "{.arg .data} must contain columns: {.val {required_cols}}. Missing: {.val {missing_cols}}"
+      "{.arg .data} must contain columns: {.val {required_cols}}. Missing: {.val {missing_cols}}",
+      error_class = "halfmoon_column_error"
     )
   }
 
@@ -139,7 +141,8 @@ plot_roc_auc <- function(
   missing_cols <- setdiff(required_cols, names(.data))
   if (length(missing_cols) > 0) {
     abort(
-      "{.arg .data} must contain columns: {.val {required_cols}}. Missing: {.val {missing_cols}}"
+      "{.arg .data} must contain columns: {.val {required_cols}}. Missing: {.val {missing_cols}}",
+      error_class = "halfmoon_column_error"
     )
   }
 

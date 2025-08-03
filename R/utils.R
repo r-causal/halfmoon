@@ -14,12 +14,32 @@
 #' @importFrom rlang %||%
 NULL
 
-abort <- function(.message, .envir = parent.frame()) {
-  cli::cli_abort(message = .message, .envir = .envir)
+abort <- function(
+  ...,
+  error_class = NULL,
+  call = rlang::caller_env(),
+  .envir = parent.frame()
+) {
+  cli::cli_abort(
+    ...,
+    class = c(error_class, "halfmoon_error"),
+    call = call,
+    .envir = .envir
+  )
 }
 
-warn <- function(.message, .envir = parent.frame()) {
-  cli::cli_warn(message = .message, .envir = .envir)
+warn <- function(
+  ...,
+  warning_class = NULL,
+  call = rlang::caller_env(),
+  .envir = parent.frame()
+) {
+  cli::cli_warn(
+    ...,
+    class = c(warning_class, "halfmoon_warning"),
+    call = call,
+    .envir = .envir
+  )
 }
 
 # Function to extract column name from quosure
@@ -37,7 +57,10 @@ get_column_name <- function(quo, arg_name) {
           rlang::eval_tidy(quo)
         },
         error = function(e2) {
-          abort("{.code {arg_name}} must be a column name (quoted or unquoted)")
+          abort(
+          "{.code {arg_name}} must be a column name (quoted or unquoted)",
+          error_class = "halfmoon_type_error"
+        )
         }
       )
 
@@ -47,7 +70,10 @@ get_column_name <- function(quo, arg_name) {
       } else if (is.symbol(val)) {
         as.character(val)
       } else {
-        abort("{.code {arg_name}} must be a column name (quoted or unquoted)")
+        abort(
+          "{.code {arg_name}} must be a column name (quoted or unquoted)",
+          error_class = "halfmoon_type_error"
+        )
       }
     }
   )
@@ -79,6 +105,57 @@ utils::globalVariables(c(
   ".weights",
   "group_level"
 ))
+
+# Error Classes for halfmoon
+# These are used with abort() to provide consistent error handling
+#
+# Type errors
+# - halfmoon_type_error: Wrong input type (e.g., non-numeric when numeric expected)
+#
+# Column/variable errors  
+# - halfmoon_column_error: Column not found in data frame
+#
+# Length/size errors
+# - halfmoon_length_error: Length mismatch between vectors or wrong vector length
+#
+# Empty data errors
+# - halfmoon_empty_error: Empty data frame, vector, or no variables selected
+#
+# Value/range errors
+# - halfmoon_range_error: Values outside valid range (e.g., negative weights, invalid indices)
+#
+# Group/level errors
+# - halfmoon_group_error: Wrong number of groups/levels (e.g., need exactly 2 for binary)
+#
+# Reference errors
+# - halfmoon_reference_error: Reference group/value not found in data
+#
+# Missing value errors
+# - halfmoon_na_error: Missing values present when not allowed
+#
+# Argument errors
+# - halfmoon_arg_error: Invalid argument value or missing required argument
+#
+# Formula/model errors
+# - halfmoon_formula_error: Invalid formula or model specification
+#
+# Aesthetic errors
+# - halfmoon_aes_error: Missing required aesthetic mapping (for ggplot2 geoms)
+#
+# Selection errors
+# - halfmoon_select_error: tidyselect returned wrong number of variables
+
+# Warning Classes for halfmoon
+# These are used with warn() to provide consistent warning handling
+#
+# Convergence warnings
+# - halfmoon_convergence_warning: Model did not converge
+#
+# Data warnings
+# - halfmoon_data_warning: Issues with data (constant values, no events, etc.)
+#
+# Method warnings
+# - halfmoon_method_warning: Invalid or unsupported method specified
 
 #' Create dummy variables from categorical data
 #'

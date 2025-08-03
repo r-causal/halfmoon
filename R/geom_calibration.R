@@ -68,7 +68,10 @@ check_calibration <- function(
     (!is.numeric(bins) || bins < 2 || !isTRUE(all.equal(bins, round(bins)))))
 
   if (bins_are_not_correctly_specified) {
-    abort("{.code bins} must be an integer > 1.")
+    abort(
+      "{.code bins} must be an integer > 1.",
+      error_class = "halfmoon_arg_error"
+    )
   }
 
   fitted_quo <- rlang::enquo(.fitted)
@@ -139,7 +142,8 @@ check_treatment_level <- function(group_var, treatment_level) {
     unique_levels <- unique(group_var[!is.na(group_var)])
     if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
       abort(
-        "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable"
+        "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable",
+        error_class = "halfmoon_reference_error"
       )
     }
   }
@@ -151,11 +155,17 @@ check_treatment_level <- function(group_var, treatment_level) {
 check_columns <- function(data, fitted_name, group_name, treatment_level) {
   if (is.null(treatment_level)) {
     if (!fitted_name %in% names(data)) {
-      abort("Column {.code {fitted_name}} not found in data")
+      abort(
+        "Column {.code {fitted_name}} not found in data",
+        error_class = "halfmoon_column_error"
+      )
     }
 
     if (!group_name %in% names(data)) {
-      abort("Column {.code {group_name}} not found in data")
+      abort(
+        "Column {.code {group_name}} not found in data",
+        error_class = "halfmoon_column_error"
+      )
     }
   }
 }
@@ -232,7 +242,8 @@ compute_calibration_breaks_imp <- function(
     bins_list <- paste(warning_bins, collapse = ", ")
     counts_list <- paste(warning_counts, collapse = ", ")
     warn(
-      "Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method."
+      "Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.",
+      warning_class = "halfmoon_data_warning"
     )
   }
 
@@ -347,7 +358,8 @@ compute_calibration_windowed_imp <- function(
       windows_list <- paste(round(warning_windows, 3), collapse = ", ")
       counts_list <- paste(warning_counts, collapse = ", ")
       warn(
-        "Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method."
+        "Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.",
+        warning_class = "halfmoon_data_warning"
       )
     }
   }
@@ -583,7 +595,10 @@ compute_calibration_for_group <- function(
     )
   } else {
     # Invalid method - warn and return empty result
-    warn("Invalid calibration method: {method}")
+    warn(
+      "Invalid calibration method: {method}",
+      warning_class = "halfmoon_method_warning"
+    )
     tibble::tibble(
       predicted_rate = numeric(0),
       observed_rate = numeric(0),
