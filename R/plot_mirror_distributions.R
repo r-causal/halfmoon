@@ -138,10 +138,11 @@ plot_mirror_distributions <- function(
   group_var <- .data[[group_name]]
   
   # Check if we have a categorical exposure (>2 levels)
+  # Always use actual unique values in the data, not factor levels
+  group_levels <- sort(unique(group_var[!is.na(group_var)]))
   if (is.factor(group_var)) {
-    group_levels <- levels(group_var)
-  } else {
-    group_levels <- sort(unique(group_var[!is.na(group_var)]))
+    # Convert to character to ensure proper comparison
+    group_levels <- as.character(group_levels)
   }
   
   is_categorical <- length(group_levels) > 2

@@ -15,14 +15,18 @@ test_that("geom_mirrored_histogram works", {
   expect_doppelganger("layered (weighted and unweighted)", p)
 })
 
-test_that("geom_mirrored_histogram errors/warns correctly", {
+test_that("geom_mirrored_histogram errors correctly", {
   # group of 3 or more
   edu_group <- ggplot(nhefs_weights, aes(.fitted)) +
     geom_mirror_histogram(
       aes(group = education),
       bins = 50
     )
-  expect_snapshot_warning(print(edu_group))
+  
+  expect_error(
+    ggplot_build(edu_group),
+    "Groups of three or greater not supported"
+  )
 
   # no group
   no_group <- ggplot(nhefs_weights, aes(.fitted)) +

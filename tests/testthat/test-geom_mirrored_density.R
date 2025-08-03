@@ -108,7 +108,7 @@ test_that("geom_mirrored_density errors with 3+ groups", {
     )
 
   expect_error(
-    print(edu_group),
+    ggplot_build(edu_group),
     "Groups of three or greater not supported"
   )
 })
@@ -118,7 +118,7 @@ test_that("geom_mirrored_density errors with no group", {
     geom_mirror_density(bw = 0.02)
 
   expect_error(
-    print(no_group),
+    ggplot_build(no_group),
     "No group detected"
   )
 })

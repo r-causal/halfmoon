@@ -315,7 +315,7 @@ test_that("plot_mirror_distributions validates categorical reference group", {
       alcoholfreq_cat,
       reference_group = "invalid"
     ),
-    "Invalid reference_group"
+    "not found in grouping variable"
   )
   
   # Numeric reference out of range
@@ -326,6 +326,6 @@ test_that("plot_mirror_distributions validates categorical reference group", {
       alcoholfreq_cat,
       reference_group = 10
     ),
-    "out of range"
+    "out of bounds"
   )
 })
