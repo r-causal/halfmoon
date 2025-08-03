@@ -191,7 +191,7 @@ is included in the results.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic usage with all metrics</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic usage with binary exposure</span></span></span>
 <span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 21 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    variable group_level method   metric estimate</span>
@@ -217,8 +217,45 @@ is included in the results.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> wt71     0           observed smd      0.133 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> <span style="color: #BB0000;">NA</span>       <span style="color: #BB0000;">NA</span>          observed energy   0.050<span style="text-decoration: underline;">3</span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Categorical exposure</span></span></span>
+<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">alcoholfreq_cat</span>,</span></span>
+<span class="r-in"><span>              .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_cat_ate</span>, <span class="va">w_cat_att_2_3wk</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 75 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    variable group_level    method          metric estimate</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> age      lt_12_per_year observed        ks       0.196 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> age      1_4_per_month  observed        ks       0.291 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> age      2_3_per_week   observed        ks       0.264 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> age      daily          observed        ks       0.177 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> age      lt_12_per_year w_cat_ate       ks       0.069<span style="text-decoration: underline;">6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> age      1_4_per_month  w_cat_ate       ks       0.045<span style="text-decoration: underline;">5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> age      2_3_per_week   w_cat_ate       ks       0.050<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> age      daily          w_cat_ate       ks       0.047<span style="text-decoration: underline;">6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> age      lt_12_per_year w_cat_att_2_3wk ks       0.164 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> age      1_4_per_month  w_cat_att_2_3wk ks       0.137 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 65 more rows</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Specify reference group for categorical exposure</span></span></span>
+<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span>, <span class="va">sex</span><span class="op">)</span>, <span class="va">alcoholfreq_cat</span>,</span></span>
+<span class="r-in"><span>              reference_group <span class="op">=</span> <span class="st">"daily"</span>, .metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smd"</span>, <span class="st">"vr"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 24 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    variable group_level    method   metric estimate</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> age      none           observed smd     -<span style="color: #BB0000;">0.334</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> age      lt_12_per_year observed smd      0.072<span style="text-decoration: underline;">5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> age      1_4_per_month  observed smd      0.329 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> age      2_3_per_week   observed smd     -<span style="color: #BB0000;">0.265</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> age      none           observed vr       0.789 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> age      lt_12_per_year observed vr       1.00  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> age      1_4_per_month  observed vr       0.965 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> age      2_3_per_week   observed vr       1.02  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> sex      none           observed smd     -<span style="color: #BB0000;">0.494</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> sex      lt_12_per_year observed smd     -<span style="color: #BB0000;">0.826</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 14 more rows</span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Exclude observed results</span></span></span>
-<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="va">w_ate</span>, include_observed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="va">w_ate</span>,</span></span>
+<span class="r-in"><span>              include_observed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable group_level method metric estimate</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>

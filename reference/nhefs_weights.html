@@ -6,8 +6,10 @@
     }
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="NHEFS with various propensity score weights — nhefs_weights"><meta name="description" content="A dataset containing various propensity score weights for
-causaldata::nhefs_complete."><meta property="og:description" content="A dataset containing various propensity score weights for
-causaldata::nhefs_complete."><meta property="og:image" content="https://r-causal.github.io/halfmoon/logo.png"></head><body>
+causaldata::nhefs_complete, including weights for both binary (smoking
+cessation) and categorical (alcohol frequency) exposures."><meta property="og:description" content="A dataset containing various propensity score weights for
+causaldata::nhefs_complete, including weights for both binary (smoking
+cessation) and categorical (alcohol frequency) exposures."><meta property="og:image" content="https://r-causal.github.io/halfmoon/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -42,7 +44,8 @@ causaldata::nhefs_complete."><meta property="og:image" content="https://r-causal
 
     <div class="ref-description section level2">
     <p>A dataset containing various propensity score weights for
-<code>causaldata::nhefs_complete</code>.</p>
+<code>causaldata::nhefs_complete</code>, including weights for both binary (smoking
+cessation) and categorical (alcohol frequency) exposures.</p>
     </div>
 
     <div class="section level2">
@@ -52,9 +55,16 @@ causaldata::nhefs_complete."><meta property="og:image" content="https://r-causal
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data frame with 1566 rows and 18 variables:</p><dl><dt>qsmk</dt>
-<dd><p>Quit smoking</p></dd>
- <dt>race</dt>
+    <p>A data frame with 1566 rows and 30 variables:</p><dl><dt>qsmk</dt>
+<dd><p>Quit smoking (binary exposure)</p></dd>
+
+<dt>alcoholfreq</dt>
+<dd><p>Alcohol frequency (numeric 0-5)</p></dd>
+
+<dt>alcoholfreq_cat</dt>
+<dd><p>Alcohol frequency as categorical (factor with levels: none, lt_12_per_year, 1_4_per_month, 2_3_per_week, daily); NA for unknown alcohol frequency</p></dd>
+
+<dt>race</dt>
 <dd><p>Race</p></dd>
  <dt>age</dt>
 <dd><p>Age</p></dd>
@@ -74,27 +84,58 @@ causaldata::nhefs_complete."><meta property="og:image" content="https://r-causal
 <dt>active</dt>
 <dd><p>Daily activity level</p></dd>
  <dt>wt71</dt>
-<dd><p>Participant weight in 1971
-(baseline)</p></dd>
- <dt>wt82_71</dt>
+<dd><p>Participant weight in 1971 (baseline)</p></dd>
+
+<dt>wt82_71</dt>
 <dd><p>Weight change from 1971 to 1982</p></dd>
  <dt>death</dt>
 <dd><p>Death indicator</p></dd>
 
+<dt>wts</dt>
+<dd><p>Simple inverse probability weight for binary exposure</p></dd>
+
 <dt>w_ate</dt>
-<dd><p>ATE weight</p></dd>
+<dd><p>ATE weight for binary exposure</p></dd>
  <dt>w_att</dt>
-<dd><p>ATT weight</p></dd>
+<dd><p>ATT weight for binary exposure</p></dd>
 
 <dt>w_atc</dt>
-<dd><p>ATC weight</p></dd>
+<dd><p>ATC weight for binary exposure</p></dd>
  <dt>w_atm</dt>
-<dd><p>ATM weight</p></dd>
- <dt>w_ato</dt>
-<dd><p>ATO weight</p></dd>
+<dd><p>ATM weight for binary exposure</p></dd>
+
+<dt>w_ato</dt>
+<dd><p>ATO weight for binary exposure</p></dd>
+
+<dt>w_cat_ate</dt>
+<dd><p>ATE weight for categorical exposure (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_att_none</dt>
+<dd><p>ATT weight with "none" as focal category (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_att_lt12</dt>
+<dd><p>ATT weight with "lt_12_per_year" as focal category (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_att_1_4mo</dt>
+<dd><p>ATT weight with "1_4_per_month" as focal category (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_att_2_3wk</dt>
+<dd><p>ATT weight with "2_3_per_week" as focal category (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_att_daily</dt>
+<dd><p>ATT weight with "daily" as focal category (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_atu_none</dt>
+<dd><p>ATU weight with "none" as focal category (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_ato</dt>
+<dd><p>ATO weight for categorical exposure (NA for unknown alcohol frequency)</p></dd>
+
+<dt>w_cat_atm</dt>
+<dd><p>ATM weight for categorical exposure (NA for unknown alcohol frequency)</p></dd>
 
 <dt>.fitted</dt>
-<dd><p>Propensity score</p></dd>
+<dd><p>Propensity score for binary exposure</p></dd>
 
 
 </dl></div>

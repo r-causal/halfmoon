@@ -119,13 +119,37 @@ between groups.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">age</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Binary exposure</span></span></span>
+<span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">age</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1295593</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With weights</span></span></span>
 <span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">wt71</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span>,</span></span>
-<span class="r-in"><span>           weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_ate</span><span class="op">)</span></span></span>
+<span class="r-in"><span>       weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_ate</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.03583763</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Categorical exposure (returns named vector)</span></span></span>
+<span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">age</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">alcoholfreq_cat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              0.1956535              0.2913630              0.2637864 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          daily_vs_none </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              0.1774359 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Specify reference group</span></span></span>
+<span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">age</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">alcoholfreq_cat</span>,</span></span>
+<span class="r-in"><span>       reference_group <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              0.1956535              0.2913630              0.2637864 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          daily_vs_none </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              0.1774359 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With categorical weights</span></span></span>
+<span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">wt71</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">alcoholfreq_cat</span>,</span></span>
+<span class="r-in"><span>       weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_cat_ate</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             0.07483474             0.05665006             0.07013520 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          daily_vs_none </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             0.06446345 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
