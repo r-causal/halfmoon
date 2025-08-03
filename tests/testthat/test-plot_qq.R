@@ -48,26 +48,26 @@ test_that("plot_qq handles quoted column names", {
 })
 
 test_that("plot_qq validates missing arguments", {
-  expect_error(
+  expect_halfmoon_error(
     plot_qq(nhefs_weights),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
   
-  expect_error(
+  expect_halfmoon_error(
     plot_qq(nhefs_weights, age),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
 })
 
 test_that("plot_qq errors with missing columns", {
-  expect_error(
+  expect_halfmoon_error(
     plot_qq(nhefs_weights, missing_var, qsmk),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 
-  expect_error(
+  expect_halfmoon_error(
     plot_qq(nhefs_weights, age, missing_group),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 })
 
@@ -76,9 +76,9 @@ test_that("plot_qq errors with non-binary groups", {
   df <- nhefs_weights
   df$three_groups <- rep(1:3, length.out = nrow(df))
 
-  expect_error(
+  expect_halfmoon_error(
     plot_qq(df, age, three_groups),
-    class = "halfmoon_group_error"
+    "halfmoon_group_error"
   )
 })
 
@@ -111,7 +111,7 @@ test_that("plot_qq handles NA values", {
   expect_no_error(plot_qq(df, age, qsmk, na.rm = TRUE))
 
   # Should error with na.rm = FALSE (default) when NAs are present
-  expect_error(plot_qq(df, age, qsmk), class = "halfmoon_na_error")
+  expect_halfmoon_error(plot_qq(df, age, qsmk), "halfmoon_na_error")
 })
 
 # vdiffr tests

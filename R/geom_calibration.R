@@ -82,7 +82,7 @@ check_calibration <- function(
 
   group_var <- data[[group_name]]
 
-  check_columns(data, fitted_name, group_name, treatment_level)
+  check_columns(data, fitted_name, group_name, treatment_level, call = rlang::current_env())
 
   treatment_indicator <- check_treatment_level(group_var, treatment_level)
 
@@ -101,15 +101,16 @@ check_calibration <- function(
   }
 
   result <- if (method == "breaks") {
-    compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
+    compute_calibration_breaks_imp(df, bins, binning_method, conf_level, call = rlang::current_env())
   } else if (method == "logistic") {
-    compute_calibration_logistic_imp(df, smooth, conf_level, k = k)
+    compute_calibration_logistic_imp(df, smooth, conf_level, k = k, call = rlang::current_env())
   } else if (method == "windowed") {
     compute_calibration_windowed_imp(
       df,
       window_size,
       step_size,
-      conf_level
+      conf_level,
+      call = rlang::current_env()
     )
   }
 
@@ -152,19 +153,21 @@ check_treatment_level <- function(group_var, treatment_level) {
   create_treatment_indicator(group_var, treatment_level)
 }
 
-check_columns <- function(data, fitted_name, group_name, treatment_level) {
+check_columns <- function(data, fitted_name, group_name, treatment_level, call = rlang::caller_env()) {
   if (is.null(treatment_level)) {
     if (!fitted_name %in% names(data)) {
       abort(
         "Column {.code {fitted_name}} not found in data",
-        error_class = "halfmoon_column_error"
+        error_class = "halfmoon_column_error",
+        call = call
       )
     }
 
     if (!group_name %in% names(data)) {
       abort(
         "Column {.code {group_name}} not found in data",
-        error_class = "halfmoon_column_error"
+        error_class = "halfmoon_column_error",
+        call = call
       )
     }
   }
@@ -176,7 +179,8 @@ compute_calibration_breaks_imp <- function(
   df,
   bins,
   binning_method,
-  conf_level
+  conf_level,
+  call = rlang::caller_env()
 ) {
   # Determine breaks
   xs <- df$x_var
@@ -243,7 +247,8 @@ compute_calibration_breaks_imp <- function(
     counts_list <- paste(warning_counts, collapse = ", ")
     warn(
       "Small sample sizes or extreme proportions detected in bins {bins_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.",
-      warning_class = "halfmoon_data_warning"
+      warning_class = "halfmoon_data_warning",
+      call = call
     )
   }
 
@@ -287,7 +292,8 @@ compute_calibration_logistic_imp <- function(
   df,
   smooth,
   conf_level,
-  k = 10
+  k = 10,
+  call = rlang::caller_env()
 ) {
   # Fit model
   if (smooth) {
@@ -322,7 +328,8 @@ compute_calibration_windowed_imp <- function(
   df,
   window_size,
   step_size,
-  conf_level
+  conf_level,
+  call = rlang::caller_env()
 ) {
   steps <- seq(0, 1, by = step_size)
   n_steps <- length(steps)
@@ -359,7 +366,8 @@ compute_calibration_windowed_imp <- function(
       counts_list <- paste(warning_counts, collapse = ", ")
       warn(
         "Small sample sizes or extreme proportions detected in windows centered at {windows_list} (n = {counts_list}). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.",
-        warning_class = "halfmoon_data_warning"
+        warning_class = "halfmoon_data_warning",
+        call = call
       )
     }
   }
@@ -515,7 +523,8 @@ StatCalibration <- ggplot2::ggproto(
           step_size,
           k,
           na.rm,
-          group_id
+          group_id,
+          call = rlang::current_env()
         )
       })
 
@@ -534,7 +543,8 @@ StatCalibration <- ggplot2::ggproto(
         step_size,
         k,
         na.rm,
-        data$group[1]
+        data$group[1],
+        call = rlang::current_env()
       )
     }
   }
@@ -553,7 +563,8 @@ compute_calibration_for_group <- function(
   step_size,
   k,
   na.rm,
-  group_id
+  group_id,
+  call = rlang::caller_env()
 ) {
   # Convert to binary using helper function
   truth <- data$truth
@@ -583,21 +594,23 @@ compute_calibration_for_group <- function(
 
   # Compute calibration based on method
   calibration_result <- if (method == "breaks") {
-    compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
+    compute_calibration_breaks_imp(df, bins, binning_method, conf_level, call = call)
   } else if (method == "logistic") {
-    compute_calibration_logistic_imp(df, smooth, conf_level, k = k)
+    compute_calibration_logistic_imp(df, smooth, conf_level, k = k, call = call)
   } else if (method == "windowed") {
     compute_calibration_windowed_imp(
       df,
       window_size,
       step_size,
-      conf_level
+      conf_level,
+      call = call
     )
   } else {
     # Invalid method - warn and return empty result
     warn(
       "Invalid calibration method: {method}",
-      warning_class = "halfmoon_method_warning"
+      warning_class = "halfmoon_method_warning",
+      call = call
     )
     tibble::tibble(
       predicted_rate = numeric(0),

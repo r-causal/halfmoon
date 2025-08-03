@@ -93,19 +93,19 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   model <- lm(mpg ~ wt, data = mtcars)
 
   # Missing treatment
-  expect_error(
+  expect_halfmoon_error(
     plot_stratified_residuals(model),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
 
   # Wrong ps_model type
-  expect_error(
+  expect_halfmoon_error(
     plot_stratified_residuals(
       model,
       treatment = rep(0:1, 16),
       ps_model = "not a model"
     ),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 
   # Test data frame method validations
@@ -116,42 +116,42 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   )
 
   # Missing required arguments - need to provide all required args
-  expect_error(
+  expect_halfmoon_error(
     plot_stratified_residuals(df),
     class = "rlang_error"
   )
 
-  expect_error(
+  expect_halfmoon_error(
     plot_stratified_residuals(
       df,
       treatment = trt,
       residuals = resids
     ),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
 
   # Non-existent column
-  expect_error(
+  expect_halfmoon_error(
     plot_stratified_residuals(
       df,
       treatment = trt,
       residuals = resids,
       x_var = not_a_column
     ),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 
   # Wrong number of treatment levels
   df_wrong <- df
   df_wrong$trt <- rep(1:3, length.out = 10)
-  expect_error(
+  expect_halfmoon_error(
     plot_stratified_residuals(
       df_wrong,
       treatment = trt,
       residuals = resids,
       x_var = x
     ),
-    class = "halfmoon_group_error"
+    "halfmoon_group_error"
   )
 })
 

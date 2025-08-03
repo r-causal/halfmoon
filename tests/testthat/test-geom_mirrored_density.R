@@ -107,9 +107,9 @@ test_that("geom_mirrored_density errors with 3+ groups", {
       bw = 0.02
     )
 
-  expect_error(
+  expect_halfmoon_error(
     ggplot_build(edu_group),
-    class = "halfmoon_group_error"
+    "halfmoon_group_error"
   )
 })
 

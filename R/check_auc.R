@@ -49,7 +49,7 @@ check_auc <- function(
   na.rm = TRUE,
   treatment_level = NULL
 ) {
-  validate_data_frame(.data)
+  validate_data_frame(.data, call = rlang::current_env())
 
   roc_data <- roc_curve(
     .data,
@@ -118,7 +118,7 @@ roc_curve <- function(
   estimate_quo <- rlang::enquo(.estimate)
   wts_quo <- rlang::enquo(.wts)
 
-  validate_data_frame(.data)
+  validate_data_frame(.data, call = rlang::current_env())
 
   # Extract column names
   truth_name <- names(tidyselect::eval_select(truth_quo, .data))
@@ -127,13 +127,15 @@ roc_curve <- function(
   if (length(truth_name) != 1) {
     abort(
       "{.arg .truth} must select exactly one variable",
-      error_class = "halfmoon_select_error"
+      error_class = "halfmoon_select_error",
+      call = rlang::current_env()
     )
   }
   if (length(estimate_name) != 1) {
     abort(
       "{.arg .estimate} must select exactly one variable",
-      error_class = "halfmoon_select_error"
+      error_class = "halfmoon_select_error",
+      call = rlang::current_env()
     )
   }
 
@@ -173,11 +175,12 @@ roc_curve <- function(
   if (length(levels(truth)) != 2) {
     abort(
       "{.arg .truth} must have exactly 2 levels",
-      error_class = "halfmoon_group_error"
+      error_class = "halfmoon_group_error",
+      call = rlang::current_env()
     )
   }
 
-  validate_numeric(estimate, ".estimate")
+  validate_numeric(estimate, ".estimate", call = rlang::current_env())
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)
@@ -202,7 +205,8 @@ roc_curve <- function(
       truth,
       estimate,
       weights = NULL,
-      treatment_level = treatment_level
+      treatment_level = treatment_level,
+      call = rlang::current_env()
     )
     observed_curve$method <- "observed"
     results$observed <- observed_curve
@@ -216,7 +220,8 @@ roc_curve <- function(
     if (!is.numeric(weights)) {
       warn(
         "Skipping non-numeric weight variable: {wt_name}",
-        warning_class = "halfmoon_data_warning"
+        warning_class = "halfmoon_data_warning",
+        call = rlang::current_env()
       )
       next
     }
@@ -226,7 +231,8 @@ roc_curve <- function(
       n_zero_neg <- sum(weights <= 0, na.rm = TRUE)
       warn(
         "Removing {n_zero_neg} observations with zero or negative weights from {wt_name}",
-        warning_class = "halfmoon_data_warning"
+        warning_class = "halfmoon_data_warning",
+        call = rlang::current_env()
       )
 
       valid_weights <- weights > 0 & !is.na(weights)
@@ -243,7 +249,8 @@ roc_curve <- function(
       truth_wt,
       estimate_wt,
       weights = weights_wt,
-      treatment_level = treatment_level
+      treatment_level = treatment_level,
+      call = rlang::current_env()
     )
     weighted_curve$method <- wt_name
     results[[wt_name]] <- weighted_curve
@@ -264,7 +271,8 @@ compute_roc_curve_imp <- function(
   truth,
   estimate,
   weights = NULL,
-  treatment_level = NULL
+  treatment_level = NULL,
+  call = rlang::caller_env()
 ) {
   if (length(truth) == 0) {
     return(tibble::tibble(
@@ -278,7 +286,8 @@ compute_roc_curve_imp <- function(
   if (length(unique(estimate)) == 1) {
     warn(
       "Estimate variable is constant; ROC curve will be degenerate",
-      warning_class = "halfmoon_data_warning"
+      warning_class = "halfmoon_data_warning",
+      call = call
     )
     return(tibble::tibble(
       threshold = c(-Inf, unique(estimate), Inf),
@@ -354,7 +363,8 @@ compute_roc_curve_imp <- function(
   if (is.na(total_tp) || total_tp == 0) {
     warn(
       "No events found in truth variable",
-      warning_class = "halfmoon_data_warning"
+      warning_class = "halfmoon_data_warning",
+      call = call
     )
     sensitivity <- rep(0, length(tp))
   } else {
@@ -364,7 +374,8 @@ compute_roc_curve_imp <- function(
   if (is.na(total_fp) || total_fp == 0) {
     warn(
       "No non-events found in truth variable",
-      warning_class = "halfmoon_data_warning"
+      warning_class = "halfmoon_data_warning",
+      call = call
     )
     specificity <- rep(1, length(fp))
   } else {

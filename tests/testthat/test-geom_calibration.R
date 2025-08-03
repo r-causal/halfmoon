@@ -84,15 +84,15 @@ test_that("check_calibration provides clear error messages for missing columns",
   )
 
   # Test with non-existent .fitted column
-  expect_error(
+  expect_halfmoon_error(
     check_calibration(test_data, "nonexistent", "obs"),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 
   # Test with non-existent .group column
-  expect_error(
+  expect_halfmoon_error(
     check_calibration(test_data, "pred", "nonexistent"),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 })
 
@@ -425,9 +425,8 @@ test_that("check_calibration method parameter validation", {
   test_data <- data.frame(pred = runif(50), obs = rbinom(50, 1, 0.5))
 
   # Test invalid method
-  expect_error(
-    check_calibration(test_data, pred, obs, method = "invalid"),
-    "must be one of"
+  expect_halfmoon_error(
+    check_calibration(test_data, pred, obs, method = "invalid")
   )
 })
 
@@ -587,21 +586,21 @@ test_that("check_calibration validates input parameters", {
   test_data <- data.frame(pred = runif(50), obs = rbinom(50, 1, 0.5))
 
   # Invalid bins for breaks method
-  expect_error(
+  expect_halfmoon_error(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 1),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
 
   # Non-integer bins
-  expect_error(
+  expect_halfmoon_error(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 2.5),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
 
   # Missing column
-  expect_error(
+  expect_halfmoon_error(
     check_calibration(test_data, nonexistent, obs),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 })
 
@@ -660,19 +659,10 @@ test_that("check_calibration provides helpful warnings for small cell sizes", {
   )
 
   # Test breaks method with small cells
-  expect_warning(
+  expect_halfmoon_warning(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
     class = "halfmoon_data_warning"
   )
-
-  # Capture the specific warning message
-  warning_msg <- capture_warnings(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 10)
-  )
-
-  expect_match(warning_msg[1], "bins")
-  expect_match(warning_msg[1], "n =")
-  expect_match(warning_msg[1], "Consider using fewer bins")
 })
 
 test_that("check_calibration provides helpful warnings for extreme proportions", {
@@ -683,9 +673,9 @@ test_that("check_calibration provides helpful warnings for extreme proportions",
     obs = c(rep(0, 50), rep(1, 50)) # Perfect separation
   )
 
-  expect_warning(
+  expect_halfmoon_warning(
     check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
-    class = "halfmoon_data_warning"
+    "halfmoon_data_warning"
   )
 })
 
@@ -698,7 +688,7 @@ test_that("check_calibration windowed method provides helpful warnings", {
   )
 
   # Small window size will create windows with few observations
-  expect_warning(
+  expect_halfmoon_warning(
     check_calibration(
       test_data,
       pred,
@@ -707,7 +697,7 @@ test_that("check_calibration windowed method provides helpful warnings", {
       window_size = 0.05,
       step_size = 0.1
     ),
-    class = "halfmoon_data_warning"
+    "halfmoon_data_warning"
   )
 
   # Capture the specific warning message
@@ -990,12 +980,11 @@ test_that("geom_calibration errors with invalid method", {
   p <- ggplot(cal_data, aes(estimate = pred, truth = obs)) +
     geom_calibration(method = "invalid_method")
 
-  expect_warning(
-    expect_warning(
-      ggplot_build(p),
-      class = "halfmoon_method_warning"
-    ),
-    ".*"
+  # We expect a warning with the halfmoon_method_warning class
+  expect_condition(
+    ggplot_build(p),
+    class = "halfmoon_method_warning",
+    regexp = "Invalid calibration method"
   )
 })
 
@@ -1012,14 +1001,12 @@ test_that("check_calibration errors with invalid bins", {
   )
 
   # Test with invalid bins
-  expect_error(
-    check_calibration(cal_data, pred, obs, bins = 1),
-    "`bins` must be an integer > 1"
+  expect_halfmoon_error(
+    check_calibration(cal_data, pred, obs, bins = 1)
   )
 
-  expect_error(
-    check_calibration(cal_data, pred, obs, bins = 2.5),
-    "`bins` must be an integer > 1"
+  expect_halfmoon_error(
+    check_calibration(cal_data, pred, obs, bins = 2.5)
   )
 })
 

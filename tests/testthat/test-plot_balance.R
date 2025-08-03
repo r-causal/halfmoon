@@ -128,15 +128,15 @@ test_that("plot_balance adjusts x-axis for variance ratio", {
 
 test_that("plot_balance validates input", {
   # Test with invalid input
-  expect_error(
+  expect_halfmoon_error(
     plot_balance(data.frame(x = 1:5)),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 
   # Test with non-data frame
-  expect_error(
+  expect_halfmoon_error(
     plot_balance(list(variable = "x")),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 })
 

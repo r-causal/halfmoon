@@ -46,13 +46,13 @@ test_that("bal_prognostic_score works with formula interface", {
 })
 
 test_that("bal_prognostic_score validates treatment not in formula", {
-  expect_error(
+  expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
       treatment = qsmk,
       formula = wt82_71 ~ age + qsmk + wt71
     ),
-    class = "halfmoon_formula_error"
+    "halfmoon_formula_error"
   )
 })
 
@@ -173,36 +173,36 @@ test_that("bal_prognostic_score errors with no control observations", {
   # Create data with only treated units
   treated_only <- nhefs_weights[nhefs_weights$qsmk == 1, ]
 
-  expect_error(
+  expect_halfmoon_error(
     bal_prognostic_score(
       treated_only,
       outcome = wt82_71,
       treatment = qsmk,
       covariates = c(age, sex)
     ),
-    class = "halfmoon_reference_error"
+    "halfmoon_reference_error"
   )
 })
 
 test_that("bal_prognostic_score errors when required arguments missing", {
   # No outcome or formula
-  expect_error(
+  expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
       treatment = qsmk,
       covariates = c(age, sex)
     ),
-    class = "halfmoon_arg_error"
+    "halfmoon_arg_error"
   )
 
   # Invalid formula
-  expect_error(
+  expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
       treatment = qsmk,
       formula = "not a formula"
     ),
-    class = "halfmoon_formula_error"
+    "halfmoon_formula_error"
   )
 })
 

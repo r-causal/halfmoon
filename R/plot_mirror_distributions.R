@@ -123,18 +123,19 @@ plot_mirror_distributions <- function(
   group_quo <- rlang::enquo(.group)
   wts_quo <- rlang::enquo(.wts)
 
-  validate_data_frame(.data)
+  validate_data_frame(.data, call = rlang::current_env())
 
   var_name <- get_column_name(var_quo, ".var")
   group_name <- get_column_name(group_quo, ".group")
 
-  validate_column_exists(.data, var_name, ".var")
-  validate_column_exists(.data, group_name, ".group")
+  validate_column_exists(.data, var_name, ".var", call = rlang::current_env())
+  validate_column_exists(.data, group_name, ".group", call = rlang::current_env())
 
   if (!na.rm && any(is.na(.data[[var_name]]))) {
     abort(
       "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
-      error_class = "halfmoon_na_error"
+      error_class = "halfmoon_na_error",
+      call = rlang::current_env()
     )
   }
 

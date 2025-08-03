@@ -111,7 +111,7 @@ test_that("validation errors show correct function context", {
 
 test_that("errors have correct custom classes", {
   # Test reference error class
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(
       nhefs_weights,
       age,
@@ -122,7 +122,7 @@ test_that("errors have correct custom classes", {
   )
   
   # Test range error class
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(
       nhefs_weights,
       age,
@@ -133,13 +133,13 @@ test_that("errors have correct custom classes", {
   )
   
   # Test arg error class
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(nhefs_weights),
     class = "halfmoon_arg_error"
   )
   
   # Test column error class
-  expect_error(
+  expect_halfmoon_error(
     plot_mirror_distributions(
       nhefs_weights,
       missing_column,
@@ -149,7 +149,7 @@ test_that("errors have correct custom classes", {
   )
   
   # Test formula error class
-  expect_error(
+  expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
       treatment = qsmk,

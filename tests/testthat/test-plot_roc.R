@@ -60,25 +60,25 @@ test_that("plot functions handle invalid inputs", {
   # Test with wrong data structure
   bad_data <- data.frame(x = 1:10, y = 1:10)
 
-  expect_error(
+  expect_halfmoon_error(
     plot_roc_curve(bad_data),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 
-  expect_error(
+  expect_halfmoon_error(
     plot_roc_auc(bad_data),
-    class = "halfmoon_column_error"
+    "halfmoon_column_error"
   )
 
   # Test with non-data frame
-  expect_error(
+  expect_halfmoon_error(
     plot_roc_curve("not a data frame"),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 
-  expect_error(
+  expect_halfmoon_error(
     plot_roc_auc("not a data frame"),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 })
 

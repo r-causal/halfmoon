@@ -96,11 +96,11 @@ bal_prognostic_score <- function(
   na.rm = FALSE,
   ...
 ) {
-  validate_data_frame(.data)
+  validate_data_frame(.data, call = rlang::current_env())
 
   treatment_quo <- rlang::enquo(treatment)
   treatment_var <- get_column_name(treatment_quo, "treatment")
-  validate_column_exists(.data, treatment_var)
+  validate_column_exists(.data, treatment_var, call = rlang::current_env())
 
   # Handle formula vs tidyselect interface
   if (!is.null(formula)) {
@@ -108,7 +108,8 @@ bal_prognostic_score <- function(
     if (!inherits(formula, "formula")) {
       abort(
         "`formula` must be a formula object.",
-        error_class = "halfmoon_formula_error"
+        error_class = "halfmoon_formula_error",
+        call = rlang::current_env()
       )
     }
 
@@ -124,12 +125,13 @@ bal_prognostic_score <- function(
           treatment_var,
           "' should not be included in the outcome model formula."
         ),
-        error_class = "halfmoon_formula_error"
+        error_class = "halfmoon_formula_error",
+        call = rlang::current_env()
       )
     }
 
     # Validate outcome exists
-    validate_column_exists(.data, outcome_var)
+    validate_column_exists(.data, outcome_var, call = rlang::current_env())
 
     model_formula <- formula
   } else {
@@ -141,12 +143,13 @@ bal_prognostic_score <- function(
     if (rlang::quo_is_null(outcome_quo)) {
       abort(
         "Either `outcome` or `formula` must be provided.",
-        error_class = "halfmoon_arg_error"
+        error_class = "halfmoon_arg_error",
+        call = rlang::current_env()
       )
     }
 
     outcome_var <- get_column_name(outcome_quo, "outcome")
-    validate_column_exists(.data, outcome_var)
+    validate_column_exists(.data, outcome_var, call = rlang::current_env())
 
     # Get covariate names
     covariate_enquo <- rlang::enquo(covariates)
@@ -161,7 +164,8 @@ bal_prognostic_score <- function(
     if (length(covariate_names) == 0) {
       abort(
         "No covariates selected for the outcome model.",
-        error_class = "halfmoon_empty_error"
+        error_class = "halfmoon_empty_error",
+        call = rlang::current_env()
       )
     }
 
@@ -187,12 +191,12 @@ bal_prognostic_score <- function(
 
     if (!is.null(weights_var) && weights_var %in% names(.data)) {
       # It's a column reference
-      validate_column_exists(.data, weights_var)
+      validate_column_exists(.data, weights_var, call = rlang::current_env())
       model_weights <- .data[[weights_var]]
     } else {
       # It's a numeric vector
       model_weights <- rlang::eval_tidy(weights_enquo)
-      validate_weights(model_weights, nrow(.data))
+      validate_weights(model_weights, nrow(.data), call = rlang::current_env())
     }
   } else {
     model_weights <- NULL

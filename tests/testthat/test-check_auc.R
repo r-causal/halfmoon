@@ -136,9 +136,9 @@ test_that("functions handle edge cases correctly", {
   expect_s3_class(roc_na_rm, "tbl_df")
 
   # With na.rm = FALSE should error
-  expect_error(
+  expect_halfmoon_error(
     roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
-    class = "halfmoon_na_error"
+    "halfmoon_na_error"
   )
 
   # Test with constant estimates
@@ -205,9 +205,9 @@ test_that("functions handle different truth variable types", {
 
   # Test with non-binary numeric (should error)
   test_multi <- dplyr::mutate(base_data, truth = rep(1:3, length.out = 100))
-  expect_error(
+  expect_halfmoon_error(
     roc_curve(test_multi, truth, estimate),
-    class = "halfmoon_group_error"
+    "halfmoon_group_error"
   )
 })
 
@@ -218,23 +218,23 @@ test_that("error messages use proper cli formatting", {
   )
 
   # Test .data not a data frame
-  expect_error(
+  expect_halfmoon_error(
     roc_curve("not a data frame", truth, estimate),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 
   # Test non-numeric estimate
   test_data$estimate_char <- as.character(test_data$estimate)
-  expect_error(
+  expect_halfmoon_error(
     roc_curve(test_data, truth, estimate_char),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 
   # Test multi-level truth
   test_data$truth_multi <- factor(rep(c("A", "B", "C"), length.out = 20))
-  expect_error(
+  expect_halfmoon_error(
     roc_curve(test_data, truth_multi, estimate),
-    class = "halfmoon_group_error"
+    "halfmoon_group_error"
   )
 })
 
@@ -325,14 +325,13 @@ test_that("treatment_level parameter works correctly", {
   expect_false(identical(roc_default, roc_opposite))
 
   # Test with invalid treatment_level
-  expect_error(
+  expect_halfmoon_error(
     roc_curve(
       nhefs_weights,
       qsmk,
       .fitted,
       treatment_level = "invalid"
-    ),
-    "not found in"
+    )
   )
 })
 

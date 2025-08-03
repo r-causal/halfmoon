@@ -80,3 +80,43 @@
       ! Can't select columns that don't exist.
       x Column `age` doesn't exist.
 
+# errors have correct custom classes
+
+    Code
+      expr
+    Condition <halfmoon_reference_error>
+      Error in `plot_mirror_distributions()`:
+      ! `reference_group` "invalid" not found in grouping variable
+
+---
+
+    Code
+      expr
+    Condition <halfmoon_range_error>
+      Error in `plot_mirror_distributions()`:
+      ! Reference group index 10 out of bounds
+
+---
+
+    Code
+      expr
+    Condition <halfmoon_arg_error>
+      Error in `plot_mirror_distributions()`:
+      ! Argument `.var` is required
+
+---
+
+    Code
+      expr
+    Condition <halfmoon_column_error>
+      Error in `plot_mirror_distributions()`:
+      ! Column `missing_column` not found in `.var`
+
+---
+
+    Code
+      expr
+    Condition <halfmoon_formula_error>
+      Error in `bal_prognostic_score()`:
+      ! The treatment variable 'qsmk' should not be included in the outcome model formula.
+

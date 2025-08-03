@@ -64,15 +64,15 @@ test_that("By case ESS values match ess() results", {
 })
 
 test_that("Error if `x` is not a tbl_svysummary", {
-  expect_error(
+  expect_halfmoon_error(
     add_ess_header(1),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 })
 
 test_that("Error if `header` is not a string", {
-  expect_error(
+  expect_halfmoon_error(
     add_ess_header(tbl, header = 123),
-    class = "halfmoon_type_error"
+    "halfmoon_type_error"
   )
 })
