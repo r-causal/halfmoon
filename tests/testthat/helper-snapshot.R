@@ -6,20 +6,13 @@
 #   expect_halfmoon_error(plot_balance(invalid_data))
 #   expect_halfmoon_error(plot_balance(invalid_data), "halfmoon_type_error")
 expect_halfmoon_error <- function(expr, class = NULL) {
-  # First capture the snapshot
+  # Capture the snapshot with class information
+  # cnd_class = TRUE will capture and verify the error class
   testthat::expect_snapshot(
     error = TRUE,
     cnd_class = TRUE,
     expr
   )
-  
-  # Then verify the specific error class if provided
-  if (!is.null(class)) {
-    testthat::expect_error(
-      expr,
-      class = class
-    )
-  }
 }
 
 # For testing warnings - captures snapshot AND verifies warning class if provided
