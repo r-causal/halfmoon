@@ -11,6 +11,11 @@
 #' distributions and assess balance. The function supports both histogram and
 #' density plot types.
 #'
+#' For categorical exposures (>2 levels), the function creates a grid of
+#' pairwise comparisons against a reference group. Each panel shows one
+#' non-reference level compared to the reference level using the mirror
+#' distribution format.
+#'
 #' When using weights, the function can display both weighted and unweighted
 #' distributions for comparison. Multiple weighting schemes can be compared
 #' by providing multiple weight variables.
@@ -18,7 +23,8 @@
 #' @param .data A data frame containing the variables.
 #' @param .var The variable to plot. Supports tidyselect syntax. Can be unquoted.
 #' @param .group Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
-#'   Must have exactly 2 levels.
+#'   For binary variables, must have exactly 2 levels. For categorical variables (>2 levels),
+#'   creates pairwise comparisons against a reference group.
 #' @param .wts Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
@@ -35,6 +41,9 @@
 #'   distribution? Defaults to TRUE.
 #' @param alpha Numeric; transparency level for fills. Default is 0.6.
 #' @param na.rm Logical; if TRUE, drop NA values before plotting.
+#' @param reference_group The reference group level for categorical exposures (>2 levels).
+#'   Can be a string (group level) or numeric (position). Defaults to 1 (first level).
+#'   Only used when .group has more than 2 levels.
 #'
 #' @return A ggplot2 object.
 #'
@@ -73,6 +82,23 @@
 #'   .wts = w_ate,
 #'   include_unweighted = FALSE
 #' )
+#' 
+#' # Categorical exposure - creates grid of comparisons
+#' plot_mirror_distributions(
+#'   nhefs_weights, 
+#'   age, 
+#'   alcoholfreq_cat,
+#'   type = "density"
+#' )
+#' 
+#' # Categorical with weights
+#' plot_mirror_distributions(
+#'   nhefs_weights,
+#'   wt71,
+#'   alcoholfreq_cat,
+#'   .wts = w_cat_ate,
+#'   reference_group = "none"
+#' )
 #'
 #' @export
 plot_mirror_distributions <- function(
@@ -88,7 +114,8 @@ plot_mirror_distributions <- function(
   adjust = 1,
   include_unweighted = TRUE,
   alpha = 0.6,
-  na.rm = FALSE
+  na.rm = FALSE,
+  reference_group = 1L
 ) {
   type <- match.arg(type)
 
@@ -109,7 +136,40 @@ plot_mirror_distributions <- function(
   }
 
   group_var <- .data[[group_name]]
-  group_levels <- extract_group_levels(group_var, require_binary = TRUE)
+  
+  # Check if we have a categorical exposure (>2 levels)
+  if (is.factor(group_var)) {
+    group_levels <- levels(group_var)
+  } else {
+    group_levels <- sort(unique(group_var[!is.na(group_var)]))
+  }
+  
+  is_categorical <- length(group_levels) > 2
+  
+  if (is_categorical) {
+    # Categorical exposure
+    reference_group <- determine_reference_group(group_var, reference_group)
+    
+    # Create binary comparisons using purrr
+    comparison_levels <- setdiff(group_levels, reference_group)
+    
+    .data <- purrr::map_dfr(comparison_levels, \(level) {
+      comparison_df <- .data |>
+        dplyr::filter(.data[[group_name]] %in% c(reference_group, level)) |>
+        dplyr::mutate(comparison = paste0(level, " vs ", reference_group))
+      # Update the group factor to only have the two levels
+      comparison_df[[group_name]] <- factor(
+        comparison_df[[group_name]], 
+        levels = c(reference_group, level)
+      )
+      comparison_df
+    })
+  } else if (length(group_levels) == 2) {
+    # Binary exposure - no transformation needed
+    group_levels <- extract_group_levels(group_var, require_binary = TRUE)
+  } else {
+    abort("Group variable must have at least two levels")
+  }
 
   if (!rlang::quo_is_null(wts_quo)) {
     wts_cols <- tidyselect::eval_select(wts_quo, .data)
@@ -146,7 +206,11 @@ plot_mirror_distributions <- function(
           alpha = alpha,
           na.rm = na.rm
         ) +
-        ggplot2::facet_wrap(~method, scales = "free_y")
+        if (is_categorical) {
+          ggplot2::facet_grid(comparison ~ method, scales = "free_y")
+        } else {
+          ggplot2::facet_wrap(~method, scales = "free_y")
+        }
     } else {
       p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[var_name]])) +
         geom_mirror_histogram(
@@ -160,7 +224,11 @@ plot_mirror_distributions <- function(
           alpha = alpha,
           na.rm = na.rm
         ) +
-        ggplot2::facet_wrap(~method, scales = "free_y")
+        if (is_categorical) {
+          ggplot2::facet_grid(comparison ~ method, scales = "free_y")
+        } else {
+          ggplot2::facet_wrap(~method, scales = "free_y")
+        }
     }
   } else {
     if (type == "density") {
@@ -187,6 +255,11 @@ plot_mirror_distributions <- function(
           alpha = alpha,
           na.rm = na.rm
         )
+    }
+    
+    # Add faceting for categorical exposures without weights
+    if (is_categorical) {
+      p <- p + ggplot2::facet_wrap(~comparison, scales = "free_y")
     }
   }
 

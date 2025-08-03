@@ -160,10 +160,11 @@ test_that("plot_mirror_distributions validates inputs", {
     "not found in"
   )
 
-  # Group with >2 levels
+  # Group with <2 levels
+  df_one_level <- dplyr::filter(nhefs_weights, qsmk == 0)
   expect_error(
-    plot_mirror_distributions(nhefs_weights, age, education),
-    "exactly two levels"
+    plot_mirror_distributions(df_one_level, age, qsmk),
+    "at least two levels"
   )
 })
 
@@ -229,4 +230,102 @@ test_that("plot_mirror_distributions works with faceting", {
 
   # Should have multiple panels (facets)
   expect_true(length(built$layout$panel_params) > 1)
+})
+
+test_that("plot_mirror_distributions works with categorical exposures", {
+  # Basic categorical exposure
+  p_cat <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    type = "density"
+  )
+  
+  expect_s3_class(p_cat, "ggplot")
+  expect_doppelganger("categorical exposure density", p_cat)
+  
+  # Categorical with histogram
+  p_cat_hist <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    type = "histogram",
+    bins = 20
+  )
+  
+  expect_doppelganger("categorical exposure histogram", p_cat_hist)
+  
+  # Categorical with custom reference
+  p_cat_ref <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    reference_group = "daily",
+    type = "density"
+  )
+  
+  expect_doppelganger("categorical custom reference", p_cat_ref)
+})
+
+test_that("plot_mirror_distributions works with categorical exposures and weights", {
+  # Categorical with weights
+  p_cat_wt <- plot_mirror_distributions(
+    nhefs_weights,
+    wt71,
+    alcoholfreq_cat,
+    .wts = w_cat_ate,
+    reference_group = "none",
+    bins = 20
+  )
+  
+  expect_s3_class(p_cat_wt, "ggplot")
+  expect_doppelganger("categorical with weights", p_cat_wt)
+  
+  # Categorical with multiple weights
+  p_cat_multi <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    .wts = c(w_cat_ate, w_cat_att_2_3wk),
+    reference_group = "none",
+    type = "density"
+  )
+  
+  expect_doppelganger("categorical multiple weights", p_cat_multi)
+  
+  # Without unweighted
+  p_cat_no_obs <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    .wts = w_cat_ate,
+    include_unweighted = FALSE,
+    type = "density"
+  )
+  
+  expect_doppelganger("categorical no unweighted", p_cat_no_obs)
+})
+
+test_that("plot_mirror_distributions validates categorical reference group", {
+  # Invalid reference group
+  expect_error(
+    plot_mirror_distributions(
+      nhefs_weights,
+      age,
+      alcoholfreq_cat,
+      reference_group = "invalid"
+    ),
+    "Invalid reference_group"
+  )
+  
+  # Numeric reference out of range
+  expect_error(
+    plot_mirror_distributions(
+      nhefs_weights,
+      age,
+      alcoholfreq_cat,
+      reference_group = 10
+    ),
+    "out of range"
+  )
 })
