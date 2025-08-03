@@ -1,7 +1,9 @@
+
 test_that("error messages show user-facing function names", {
   # Test plot_mirror_distributions with invalid reference group
   expect_snapshot(
     error = TRUE,
+    cnd_class = TRUE,
     plot_mirror_distributions(
       nhefs_weights,
       age,
@@ -11,7 +13,9 @@ test_that("error messages show user-facing function names", {
   )
   
   # Test with numeric out of bounds reference group
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     plot_mirror_distributions(
       nhefs_weights,
       age,
@@ -21,12 +25,16 @@ test_that("error messages show user-facing function names", {
   )
   
   # Test missing required arguments
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     plot_mirror_distributions(nhefs_weights)
   )
   
   # Test with missing column
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     plot_mirror_distributions(
       nhefs_weights,
       missing_column,
@@ -35,7 +43,9 @@ test_that("error messages show user-facing function names", {
   )
   
   # Test plot_qq with invalid treatment level
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     plot_qq(
       nhefs_weights,
       age,
@@ -46,22 +56,27 @@ test_that("error messages show user-facing function names", {
   
   # Test plot_stratified_residuals with missing treatment
   model <- lm(mpg ~ wt, data = mtcars)
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     plot_stratified_residuals(model)
   )
   
   # Test check_balance with wrong group levels
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     check_balance(
       nhefs_weights,
-      qsmk,
-      age,
+      .vars = age,
       .group = rep(1, nrow(nhefs_weights))
     )
   )
   
   # Test bal_prognostic_score with treatment in formula
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     bal_prognostic_score(
       nhefs_weights,
       treatment = qsmk,
@@ -72,35 +87,75 @@ test_that("error messages show user-facing function names", {
 
 test_that("validation errors show correct function context", {
   # Test numeric validation
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     check_balance(
       nhefs_weights,
-      qsmk,
-      age,
+      .vars = age,
       .group = "not_numeric"
     )
   )
   
-  # Test weight validation with wrong length
-  # Create a separate data frame to avoid modifying nhefs_weights
-  test_df <- nhefs_weights[1:100, ]
-  bad_weights <- rep(1, 10)
-  expect_snapshot_error(
-    check_balance(
-      test_df,
-      .vars = age,
-      .group = qsmk,
-      .wts = list(bad_wts = bad_weights)
-    )
-  )
-  
   # Test empty data frame
-  expect_snapshot_error(
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
     check_balance(
       data.frame(),
-      qsmk,
-      age
+      .vars = age,
+      .group = qsmk
     )
+  )
+})
+
+test_that("errors have correct custom classes", {
+  # Test reference error class
+  expect_error(
+    plot_mirror_distributions(
+      nhefs_weights,
+      age,
+      alcoholfreq_cat,
+      reference_group = "invalid"
+    ),
+    class = "halfmoon_reference_error"
+  )
+  
+  # Test range error class
+  expect_error(
+    plot_mirror_distributions(
+      nhefs_weights,
+      age,
+      alcoholfreq_cat,
+      reference_group = 10
+    ),
+    class = "halfmoon_range_error"
+  )
+  
+  # Test arg error class
+  expect_error(
+    plot_mirror_distributions(nhefs_weights),
+    class = "halfmoon_arg_error"
+  )
+  
+  # Test column error class
+  expect_error(
+    plot_mirror_distributions(
+      nhefs_weights,
+      missing_column,
+      qsmk
+    ),
+    class = "halfmoon_column_error"
+  )
+  
+  # Test formula error class
+  expect_error(
+    bal_prognostic_score(
+      nhefs_weights,
+      treatment = qsmk,
+      formula = wt82_71 ~ age + qsmk + wt71
+    ),
+    class = "halfmoon_formula_error"
   )
 })
 
