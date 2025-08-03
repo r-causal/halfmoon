@@ -981,10 +981,13 @@ test_that("geom_calibration errors with invalid method", {
     geom_calibration(method = "invalid_method")
 
   # We expect a warning with the halfmoon_method_warning class
-  expect_condition(
-    ggplot_build(p),
-    class = "halfmoon_method_warning",
-    regexp = "Invalid calibration method"
+  # Use nested expect_warning to properly capture the warning without it leaking to test output
+  expect_warning(
+    expect_warning(
+      ggplot_build(p),
+      class = "halfmoon_method_warning",
+      regexp = "Invalid calibration method"
+    )
   )
 })
 

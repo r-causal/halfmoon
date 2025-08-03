@@ -400,9 +400,13 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .metrics = c("smd", "energy")
   )
   
-  expect_doppelganger(
-    "balance-plot-categorical-with-energy",
-    plot_balance(balance_cat_energy)
+  # Suppress ggplot2's "Removed 2 rows containing missing values" warning
+  # This happens when energy distance produces NA values for small sample sizes
+  suppressWarnings(
+    expect_doppelganger(
+      "balance-plot-categorical-with-energy",
+      plot_balance(balance_cat_energy)
+    )
   )
   
   # Categorical with fixed scales
