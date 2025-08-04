@@ -93,40 +93,40 @@ cat_ps <- as.data.frame(predict(
 # Calculate weights and join back to data
 nhefs_with_cat_weights <- nhefs_for_model %>%
   mutate(
-    # Convert psw objects to numeric using as.numeric
-    w_cat_ate = as.numeric(wt_ate(cat_ps, alcoholfreq_cat)),
-    w_cat_att_none = as.numeric(wt_att(
+    # Keep psw objects from propensity package
+    w_cat_ate = wt_ate(cat_ps, alcoholfreq_cat),
+    w_cat_att_none = wt_att(
       cat_ps,
       alcoholfreq_cat,
       focal = "none"
-    )),
-    w_cat_att_lt12 = as.numeric(wt_att(
+    ),
+    w_cat_att_lt12 = wt_att(
       cat_ps,
       alcoholfreq_cat,
       focal = "lt_12_per_year"
-    )),
-    w_cat_att_1_4mo = as.numeric(wt_att(
+    ),
+    w_cat_att_1_4mo = wt_att(
       cat_ps,
       alcoholfreq_cat,
       focal = "1_4_per_month"
-    )),
-    w_cat_att_2_3wk = as.numeric(wt_att(
+    ),
+    w_cat_att_2_3wk = wt_att(
       cat_ps,
       alcoholfreq_cat,
       focal = "2_3_per_week"
-    )),
-    w_cat_att_daily = as.numeric(wt_att(
+    ),
+    w_cat_att_daily = wt_att(
       cat_ps,
       alcoholfreq_cat,
       focal = "daily"
-    )),
-    w_cat_atu_none = as.numeric(wt_atu(
+    ),
+    w_cat_atu_none = wt_atu(
       cat_ps,
       alcoholfreq_cat,
       focal = "none"
-    )),
-    w_cat_ato = as.numeric(wt_ato(cat_ps, alcoholfreq_cat)),
-    w_cat_atm = as.numeric(wt_atm(cat_ps, alcoholfreq_cat))
+    ),
+    w_cat_ato = wt_ato(cat_ps, alcoholfreq_cat),
+    w_cat_atm = wt_atm(cat_ps, alcoholfreq_cat)
   )
 
 # Now combine with binary exposure weights, keeping all rows
@@ -134,15 +134,11 @@ nhefs_weights <- propensity_model %>%
   augment(type.predict = "response", data = nhefs_with_cat) %>%
   mutate(
     wts = 1 / ifelse(qsmk == 0, 1 - .fitted, .fitted),
-    w_ate = (qsmk / .fitted) +
-      ((1 - qsmk) / (1 - .fitted)),
-    w_att = ((.fitted * qsmk) / .fitted) +
-      ((.fitted * (1 - qsmk)) / (1 - .fitted)),
-    w_atc = (((1 - .fitted) * qsmk) / .fitted) +
-      (((1 - .fitted) * (1 - qsmk)) / (1 - .fitted)),
-    w_atm = pmin(.fitted, 1 - .fitted) /
-      (qsmk * .fitted + (1 - qsmk) * (1 - .fitted)),
-    w_ato = (1 - .fitted) * qsmk + .fitted * (1 - qsmk)
+    w_ate = wt_ate(.fitted, qsmk),
+    w_att = wt_att(.fitted, qsmk),
+    w_atc = wt_atu(.fitted, qsmk),
+    w_atm = wt_atm(.fitted, qsmk),
+    w_ato = wt_ato(.fitted, qsmk)
   ) %>%
   # Join categorical weights, they will be NA for unknown alcohol frequency
   left_join(

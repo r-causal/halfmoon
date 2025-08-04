@@ -16,9 +16,12 @@ validate_numeric <- function(x, arg_name = deparse(substitute(x)), call = rlang:
 validate_weights <- function(weights, n, arg_name = "weights", call = rlang::caller_env()) {
   if (is.null(weights)) return(invisible(weights))
 
-  if (!is.numeric(weights)) {
+  # Accept both numeric vectors and psw objects from propensity package
+  is_valid_weights <- is.numeric(weights) || inherits(weights, "psw")
+  
+  if (!is_valid_weights) {
     abort(
-      "{.arg {arg_name}} must be numeric or {.code NULL}",
+      "{.arg {arg_name}} must be numeric, a psw object, or {.code NULL}",
       error_class = "halfmoon_type_error",
       call = call
     )

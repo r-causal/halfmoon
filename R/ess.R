@@ -43,5 +43,7 @@
 #'
 #' @export
 ess <- function(wts) {
+  # Extract numeric data from psw weights if present
+  wts <- extract_weight_data(wts)
   sum(wts)^2 / sum(wts^2)
 }

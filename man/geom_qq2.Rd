@@ -84,8 +84,13 @@ ggplot(nhefs_weights, aes(sample = age, treatment = qsmk, weight = w_ate)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
 # Compare multiple weights using long format
+# TODO: Remove vec_data() workaround once propensity implements vctrs methods
+# Extract numeric data from psw objects first
+nhefs_for_pivot <- nhefs_weights
+nhefs_for_pivot$w_ate <- vctrs::vec_data(nhefs_weights$w_ate)
+nhefs_for_pivot$w_att <- vctrs::vec_data(nhefs_weights$w_att)
 long_data <- tidyr::pivot_longer(
-  nhefs_weights,
+  nhefs_for_pivot,
   cols = c(w_ate, w_att),
   names_to = "weight_type",
   values_to = "weight"
