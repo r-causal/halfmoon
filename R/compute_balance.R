@@ -699,11 +699,12 @@ bal_energy <- function(
   }
 
   # Normalize weights by group
-  weights_normalized <- extract_weight_data(weights)
+  weights_numeric <- extract_weight_data(weights)
+  weights_normalized <- weights_numeric
   for (g in unique_groups) {
     group_mask <- group == g
     if (any(group_mask)) {
-      group_weights <- weights_normalized[group_mask]
+      group_weights <- weights_numeric[group_mask]
       weights_normalized[group_mask] <- group_weights / mean(group_weights)
     }
   }
