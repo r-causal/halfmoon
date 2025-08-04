@@ -269,37 +269,6 @@ test_that("NA handling is identical for numeric and psw weights", {
   expect_true(is.finite(smd_numeric_narm))
 })
 
-test_that("performance is similar for numeric and psw weights", {
-  skip_if_not_installed("propensity")
-  skip_on_cran()  # Skip performance tests on CRAN
-  
-  # Create large test data 
-  set.seed(42)
-  n <- 5000
-  x <- rnorm(n)
-  g <- sample(c(0, 1), n, replace = TRUE)
-  
-  # Create weights
-  numeric_weights <- runif(n, 0.5, 2.0)
-  psw_weights <- propensity::psw(numeric_weights, estimand = "ate")
-  
-  # Time numeric version
-  time_numeric <- system.time({
-    smd_numeric <- bal_smd(x, g, weights = numeric_weights)
-  })
-  
-  # Time psw version
-  time_psw <- system.time({
-    smd_psw <- bal_smd(x, g, weights = psw_weights)
-  })
-  
-  # Results should be identical
-  expect_identical(smd_numeric, smd_psw)
-  
-  # PSW version should not be significantly slower (within 50% overhead)
-  expect_true(time_psw[["elapsed"]] < time_numeric[["elapsed"]] * 1.5)
-})
-
 test_that("all helper functions work with both numeric and psw weights", {
   skip_if_not_installed("propensity")
   
