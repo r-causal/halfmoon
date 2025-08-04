@@ -183,6 +183,11 @@ plot_mirror_distributions <- function(
     wts_cols <- tidyselect::eval_select(wts_quo, .data)
     wts_names <- names(wts_cols)
 
+    # Convert psw weight columns to numeric for compatibility with pivot_longer
+    for (wts_name in wts_names) {
+      .data[[wts_name]] <- extract_weight_data(.data[[wts_name]])
+    }
+
     if (include_unweighted) {
       .data$.observed <- 1
       wts_names <- c(".observed", wts_names)

@@ -112,6 +112,11 @@ StatMirrorCount <- ggplot2::ggproto(
     # Store mirroring flag
     should_mirror <- unique(data$.should_mirror)
     
+    # Extract numeric data from psw weights if present
+    if ("weight" %in% names(data)) {
+      data$weight <- extract_weight_data(data$weight)
+    }
+    
     data <- ggplot2::StatBin$compute_group(
       data = data,
       scales = scales,

@@ -257,6 +257,9 @@ compute_method_quantiles <- function(
 #'
 #' @export
 weighted_quantile <- function(values, quantiles, .wts) {
+  # Extract numeric data from weights (handles both numeric and psw objects)
+  .wts <- extract_weight_data(.wts)
+  
   # Remove NA values if present
   na_idx <- is.na(values) | is.na(.wts)
   if (any(na_idx)) {

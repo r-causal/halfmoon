@@ -225,6 +225,8 @@ roc_curve <- function(
       next
     }
 
+    weights <- extract_weight_data(weights)
+    
     # Handle zero and negative weights
     if (any(weights <= 0, na.rm = TRUE)) {
       n_zero_neg <- sum(weights <= 0, na.rm = TRUE)
@@ -297,6 +299,9 @@ compute_roc_curve_imp <- function(
   # Set default weights
   if (is.null(weights)) {
     weights <- rep(1, length(truth))
+  } else {
+    # Extract numeric data from psw weights if present
+    weights <- extract_weight_data(weights)
   }
 
   # Convert to binary (1 = event, 0 = non-event)

@@ -75,9 +75,14 @@ test_that("geom_roc visual regression", {
   )
 
   # Multiple groups with different weights
-  # First create long format data
+  # First create long format data - need to extract numeric data from psw columns
+  # TODO: Remove vec_data() workaround once propensity implements vctrs methods
+  nhefs_for_pivot <- nhefs_weights
+  nhefs_for_pivot$w_ate <- vctrs::vec_data(nhefs_weights$w_ate)
+  nhefs_for_pivot$w_att <- vctrs::vec_data(nhefs_weights$w_att)
+  
   long_data <- tidyr::pivot_longer(
-    nhefs_weights,
+    nhefs_for_pivot,
     cols = c(w_ate, w_att),
     names_to = "weight_type",
     values_to = "weight"

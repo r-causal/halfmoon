@@ -53,8 +53,13 @@
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 #'
 #' # Compare multiple weights using long format
+#' # TODO: Remove vec_data() workaround once propensity implements vctrs methods
+#' # Extract numeric data from psw objects first
+#' nhefs_for_pivot <- nhefs_weights
+#' nhefs_for_pivot$w_ate <- vctrs::vec_data(nhefs_weights$w_ate)
+#' nhefs_for_pivot$w_att <- vctrs::vec_data(nhefs_weights$w_att)
 #' long_data <- tidyr::pivot_longer(
-#'   nhefs_weights,
+#'   nhefs_for_pivot,
 #'   cols = c(w_ate, w_att),
 #'   names_to = "weight_type",
 #'   values_to = "weight"
@@ -184,7 +189,7 @@ process_aesthetic_group <- function(
 
   # Add weight if present
   if (!is.null(combined_data$weight) && all(!is.na(combined_data$weight))) {
-    temp_data$.wts <- combined_data$weight
+    temp_data$.wts <- extract_weight_data(combined_data$weight)
     wts_arg <- ".wts"
   } else {
     wts_arg <- NULL
@@ -308,7 +313,7 @@ StatQq2 <- ggplot2::ggproto(
 
       # Add weight if present
       if (!is.null(data$weight) && all(!is.na(data$weight))) {
-        temp_data$.wts <- data$weight
+        temp_data$.wts <- extract_weight_data(data$weight)
         wts_arg <- ".wts"
       } else {
         wts_arg <- NULL

@@ -76,6 +76,8 @@ StatWeightedECDF <- ggplot2::ggproto(
   ggplot2::StatEcdf,
   compute_group = function(data, scales, n = NULL, pad = NULL) {
     if ("weights" %in% names(data)) {
+      # Extract numeric data from psw weights if present
+      data$weights <- extract_weight_data(data$weights)
       data <- data[order(data$x), ]
       # ggplot2 3.4.1 changed this stat's name from `y` to `ecdf`
       if (packageVersion("ggplot2") >= "3.4.1") {

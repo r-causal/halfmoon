@@ -101,7 +101,7 @@ bal_smd <- function(
   res <- smd::smd(
     x = covariate,
     g = group,
-    w = weights,
+    w = extract_weight_data(weights),
     gref = gref_index,
     na.rm = na.rm
   )
@@ -195,7 +195,7 @@ bal_vr <- function(
     if (
       check_na_return(
         covariate[c(idx_ref, idx_other)],
-        weights[c(idx_ref, idx_other)] %||% NULL,
+        extract_weight_data(weights)[c(idx_ref, idx_other)] %||% NULL,
         na.rm = FALSE
       )
     ) {
@@ -214,7 +214,7 @@ bal_vr <- function(
       p <- mean(covariate[idx_ref])
       p * (1 - p)
     } else {
-      wr <- weights[idx_ref]
+      wr <- extract_weight_data(weights)[idx_ref]
       xr <- covariate[idx_ref]
       p <- sum(wr * xr) / sum(wr)
       p * (1 - p)
@@ -223,7 +223,7 @@ bal_vr <- function(
       p <- mean(covariate[idx_other])
       p * (1 - p)
     } else {
-      wo <- weights[idx_other]
+      wo <- extract_weight_data(weights)[idx_other]
       xo <- covariate[idx_other]
       p <- sum(wo * xo) / sum(wo)
       p * (1 - p)
@@ -233,7 +233,7 @@ bal_vr <- function(
     var_ref <- if (is.null(weights)) {
       stats::var(covariate[idx_ref])
     } else {
-      wr <- weights[idx_ref]
+      wr <- extract_weight_data(weights)[idx_ref]
       xr <- covariate[idx_ref]
       mr <- sum(wr * xr) / sum(wr)
       # Use Bessel's correction for weighted sample variance
@@ -244,7 +244,7 @@ bal_vr <- function(
     var_other <- if (is.null(weights)) {
       stats::var(covariate[idx_other])
     } else {
-      wo <- weights[idx_other]
+      wo <- extract_weight_data(weights)[idx_other]
       xo <- covariate[idx_other]
       mo <- sum(wo * xo) / sum(wo)
       # Use Bessel's correction for weighted sample variance
@@ -352,7 +352,7 @@ bal_ks <- function(
     if (
       check_na_return(
         covariate[c(idx_ref, idx_other)],
-        weights[c(idx_ref, idx_other)] %||% NULL,
+        extract_weight_data(weights)[c(idx_ref, idx_other)] %||% NULL,
         na.rm = FALSE
       )
     ) {
@@ -370,12 +370,12 @@ bal_ks <- function(
     p_ref <- if (is.null(weights)) {
       mean(covariate[idx_ref])
     } else {
-      sum(weights[idx_ref] * covariate[idx_ref]) / sum(weights[idx_ref])
+      sum(extract_weight_data(weights)[idx_ref] * covariate[idx_ref]) / sum(extract_weight_data(weights)[idx_ref])
     }
     p_other <- if (is.null(weights)) {
       mean(covariate[idx_other])
     } else {
-      sum(weights[idx_other] * covariate[idx_other]) / sum(weights[idx_other])
+      sum(extract_weight_data(weights)[idx_other] * covariate[idx_other]) / sum(extract_weight_data(weights)[idx_other])
     }
     return(abs(p_other - p_ref))
   }
@@ -384,9 +384,9 @@ bal_ks <- function(
   # Extract and weight
   x_ref <- covariate[idx_ref]
   x_other <- covariate[idx_other]
-  w_ref <- if (is.null(weights)) rep(1, length(x_ref)) else weights[idx_ref]
+  w_ref <- if (is.null(weights)) rep(1, length(x_ref)) else extract_weight_data(weights)[idx_ref]
   w_other <- if (is.null(weights)) rep(1, length(x_other)) else
-    weights[idx_other]
+    extract_weight_data(weights)[idx_other]
   w_ref <- w_ref / sum(w_ref)
   w_other <- w_other / sum(w_other)
   # Sort and CDF
@@ -458,8 +458,10 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
     }
     x <- x[idx]
     y <- y[idx]
-    if (!is.null(weights)) weights <- weights[idx]
+    if (!is.null(weights)) weights <- extract_weight_data(weights)[idx]
   } else {
+    # Extract weight data if needed
+    if (!is.null(weights)) weights <- extract_weight_data(weights)
     # Check for missing values
     if (is.null(weights)) {
       if (any(is.na(x) | is.na(y))) return(NA_real_)
@@ -643,7 +645,7 @@ bal_energy <- function(
     complete_cases <- stats::complete.cases(covariates, group)
     if (!is.null(weights)) {
       complete_cases <- complete_cases & !is.na(weights)
-      weights <- weights[complete_cases]
+      weights <- extract_weight_data(weights)[complete_cases]
     }
     covariates <- covariates[complete_cases, , drop = FALSE]
     group <- group[complete_cases]
@@ -697,11 +699,12 @@ bal_energy <- function(
   }
 
   # Normalize weights by group
-  weights_normalized <- weights
+  weights_numeric <- extract_weight_data(weights)
+  weights_normalized <- weights_numeric
   for (g in unique_groups) {
     group_mask <- group == g
     if (any(group_mask)) {
-      group_weights <- weights[group_mask]
+      group_weights <- weights_numeric[group_mask]
       weights_normalized[group_mask] <- group_weights / mean(group_weights)
     }
   }
@@ -980,7 +983,7 @@ bal_energy_att_atc <- function(
 
   # Identify focal group observations
   focal_mask <- group == treatment_level
-  focal_weights <- weights[focal_mask]
+  focal_weights <- extract_weight_data(weights)[focal_mask]
   focal_weights_norm <- focal_weights / sum(focal_weights)
 
   # Compute P matrix

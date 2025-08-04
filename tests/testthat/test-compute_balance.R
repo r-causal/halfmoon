@@ -1499,3 +1499,57 @@ test_that("bal_energy handles categorical covariates", {
 
   expect_equal(our_weighted, cobalt_weighted, tolerance = 1e-4)
 })
+
+test_that("balance functions work seamlessly with psw objects from propensity package", {
+  # This test ensures psw objects from the propensity package work throughout
+  # the halfmoon package without requiring explicit conversion
+  data(nhefs_weights)
+  
+  # Verify we have psw objects in the dataset
+  expect_true(inherits(nhefs_weights$w_cat_ate, "psw"))
+  expect_true(inherits(nhefs_weights$w_cat_att_none, "psw"))
+  
+  # Test that balance functions work directly with psw weights
+  result_smd <- bal_smd(
+    nhefs_weights$age, 
+    nhefs_weights$alcoholfreq_cat, 
+    weights = nhefs_weights$w_cat_ate
+  )
+  expect_true(all(is.finite(result_smd)))
+  
+  result_vr <- bal_vr(
+    nhefs_weights$wt71, 
+    nhefs_weights$alcoholfreq_cat, 
+    weights = nhefs_weights$w_cat_att_none
+  )
+  expect_true(all(is.finite(result_vr) & result_vr > 0))
+  
+  result_ks <- bal_ks(
+    nhefs_weights$age, 
+    nhefs_weights$alcoholfreq_cat, 
+    weights = nhefs_weights$w_cat_ato
+  )
+  expect_true(all(is.finite(result_ks) & result_ks >= 0 & result_ks <= 1))
+  
+  # Test check_balance works with psw weights
+  balance_results <- check_balance(
+    nhefs_weights, 
+    c(age, wt71), 
+    alcoholfreq_cat, 
+    .wts = w_cat_ate, 
+    .metrics = "smd",
+    include_observed = FALSE
+  )
+  expect_s3_class(balance_results, "data.frame")
+  expect_true(nrow(balance_results) > 0)
+  expect_true(all(is.finite(balance_results$estimate)))
+  
+  # Test weighted_quantile works with psw weights
+  quantiles <- weighted_quantile(
+    nhefs_weights$age,
+    c(0.25, 0.5, 0.75),
+    nhefs_weights$w_cat_ate
+  )
+  expect_length(quantiles, 3)
+  expect_true(all(is.finite(quantiles)))
+})

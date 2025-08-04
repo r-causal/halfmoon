@@ -256,3 +256,14 @@ create_group_signature <- function(group_data, aes_cols) {
     "no_aes"
   }
 }
+
+# Extract numeric data from weights (handles both numeric and psw objects)
+extract_weight_data <- function(weights) {
+  if (is.null(weights)) {
+    return(NULL)
+  } else {
+    # Use vctrs::vec_data to extract underlying numeric data
+    # This works for both numeric vectors and psw objects
+    vctrs::vec_data(weights)
+  }
+}

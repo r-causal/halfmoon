@@ -141,6 +141,11 @@ plot_qq <- function(
     wts_names <- names(wts_cols)
 
     # Create long format data
+    # Convert psw weight columns to numeric for compatibility with pivot_longer
+    for (wts_name in wts_names) {
+      .data[[wts_name]] <- extract_weight_data(.data[[wts_name]])
+    }
+    
     if (include_observed) {
       # Add observed as a weight column with value 1
       .data$.observed <- 1
