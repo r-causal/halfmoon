@@ -38,8 +38,6 @@ A tibble with columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
 \item{group}{Character. The group level (if \code{.group} is provided).}
 \item{n}{Integer. The number of observations in the group.}
-\item{sum_weights}{Numeric. The sum of weights.}
-\item{sum_weights_sq}{Numeric. The sum of squared weights.}
 \item{ess}{Numeric. The effective sample size.}
 \item{ess_pct}{Numeric. ESS as a percentage of the actual sample size.}
 }

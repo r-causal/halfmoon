@@ -33,6 +33,8 @@
 #' @param show_labels Logical. Show ESS percentage values as text labels on bars?
 #'   Default is TRUE.
 #' @param label_size Size of text labels. Default is 3.
+#' @param percent_scale Logical. Display ESS as percentage of sample size (TRUE)
+#'   or on original scale (FALSE)? Default is TRUE.
 #' @param reference_line_color Color for the 100% reference line. Default is "gray50".
 #' @param reference_line_type Line type for the reference line. Default is "dashed".
 #'
@@ -69,6 +71,9 @@
 #' # Using pre-computed ESS data
 #' ess_data <- check_ess(nhefs_weights, .wts = c(w_ate, w_att))
 #' plot_ess(ess_data)
+#' 
+#' # Show ESS on original scale instead of percentage
+#' plot_ess(nhefs_weights, .wts = c(w_ate, w_att), percent_scale = FALSE)
 #'
 #' @export
 plot_ess <- function(
@@ -82,6 +87,7 @@ plot_ess <- function(
   alpha = 0.8,
   show_labels = TRUE,
   label_size = 3,
+  percent_scale = TRUE,
   reference_line_color = "gray50",
   reference_line_type = "dashed"
 ) {
@@ -102,13 +108,16 @@ plot_ess <- function(
 
   # Determine if we have groups
   has_groups <- "group" %in% names(.data)
+  
+  # Choose which variable to plot
+  y_var <- if (percent_scale) "ess_pct" else "ess"
 
   # Create the base plot
   if (has_groups) {
     # Plot with groups
     p <- ggplot2::ggplot(
       .data,
-      ggplot2::aes(x = method, y = ess_pct, fill = group)
+      ggplot2::aes(x = method, y = .data[[y_var]], fill = group)
     ) +
       ggplot2::geom_col(
         position = ggplot2::position_dodge(width = 0.9),
@@ -119,7 +128,11 @@ plot_ess <- function(
       p <- p +
         ggplot2::geom_text(
           ggplot2::aes(
-            label = scales::percent(ess_pct / 100, accuracy = 0.1)
+            label = if (percent_scale) {
+              scales::percent(ess_pct / 100, accuracy = 0.1)
+            } else {
+              scales::number(ess, accuracy = 0.1)
+            }
           ),
           position = ggplot2::position_dodge(width = 0.9),
           vjust = -0.5,
@@ -130,7 +143,7 @@ plot_ess <- function(
     # Plot without groups
     p <- ggplot2::ggplot(
       .data,
-      ggplot2::aes(x = method, y = ess_pct)
+      ggplot2::aes(x = method, y = .data[[y_var]])
     ) +
       ggplot2::geom_col(
         fill = fill_color,
@@ -141,7 +154,11 @@ plot_ess <- function(
       p <- p +
         ggplot2::geom_text(
           ggplot2::aes(
-            label = scales::percent(ess_pct / 100, accuracy = 0.1)
+            label = if (percent_scale) {
+              scales::percent(ess_pct / 100, accuracy = 0.1)
+            } else {
+              scales::number(ess, accuracy = 0.1)
+            }
           ),
           vjust = -0.5,
           size = label_size
@@ -149,31 +166,38 @@ plot_ess <- function(
     }
   }
 
-  # Add reference line at 100%
-  p <- p +
-    ggplot2::geom_hline(
-      yintercept = 100,
-      color = reference_line_color,
-      linetype = reference_line_type,
-      alpha = 0.7
-    )
+  # Add reference line
+  if (percent_scale) {
+    p <- p +
+      ggplot2::geom_hline(
+        yintercept = 100,
+        color = reference_line_color,
+        linetype = reference_line_type,
+        alpha = 0.7
+      )
+  }
 
   # Determine y-axis limits
-  max_ess <- max(.data$ess_pct, na.rm = TRUE)
-  y_upper <- ifelse(show_labels, max_ess * 1.1, max_ess * 1.05)
-  y_upper <- max(y_upper, 105) # Ensure we show at least to 105%
+  if (percent_scale) {
+    max_ess <- max(.data$ess_pct, na.rm = TRUE)
+    y_upper <- ifelse(show_labels, max_ess * 1.1, max_ess * 1.05)
+    y_upper <- max(y_upper, 105) # Ensure we show at least to 105%
+  } else {
+    max_ess <- max(.data$ess, na.rm = TRUE)
+    y_upper <- ifelse(show_labels, max_ess * 1.1, max_ess * 1.05)
+  }
 
   # Add labels and formatting
   p <- p +
     ggplot2::labs(
       x = "method",
-      y = "effective sample size (%)",
+      y = if (percent_scale) "effective sample size (%)" else "effective sample size",
       subtitle = "Higher values indicate less weight variability"
     ) +
     ggplot2::scale_y_continuous(
       limits = c(0, y_upper),
       expand = c(0, 0),
-      labels = \(x) scales::percent(x / 100)
+      labels = if (percent_scale) \(x) scales::percent(x / 100) else scales::number
     )
 
   p

@@ -112,7 +112,12 @@ utils::globalVariables(c(
   "weight",
   ".var",
   ".weights",
-  "group_level"
+  "group_level",
+  "n",
+  ".ess_group",
+  "group",
+  "ess_pct",
+  "ess"
 ))
 
 # Error Classes for halfmoon

@@ -33,8 +33,6 @@
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{group}{Character. The group level (if `.group` is provided).}
 #'   \item{n}{Integer. The number of observations in the group.}
-#'   \item{sum_weights}{Numeric. The sum of weights.}
-#'   \item{sum_weights_sq}{Numeric. The sum of squared weights.}
 #'   \item{ess}{Numeric. The effective sample size.}
 #'   \item{ess_pct}{Numeric. ESS as a percentage of the actual sample size.}
 #'
@@ -158,9 +156,7 @@ check_ess <- function(
       dplyr::group_by(method, .data[[group_col]]) |>
       dplyr::summarise(
         n = dplyr::n(),
-        sum_weights = sum(weight, na.rm = TRUE),
-        sum_weights_sq = sum(weight^2, na.rm = TRUE),
-        ess = sum_weights^2 / sum_weights_sq,
+        ess = ess(weight, na.rm = TRUE),
         ess_pct = ess / n * 100,
         .groups = "drop"
       ) |>
@@ -171,9 +167,7 @@ check_ess <- function(
       dplyr::group_by(method) |>
       dplyr::summarise(
         n = dplyr::n(),
-        sum_weights = sum(weight, na.rm = TRUE),
-        sum_weights_sq = sum(weight^2, na.rm = TRUE),
-        ess = sum_weights^2 / sum_weights_sq,
+        ess = ess(weight, na.rm = TRUE),
         ess_pct = ess / n * 100,
         .groups = "drop"
       )

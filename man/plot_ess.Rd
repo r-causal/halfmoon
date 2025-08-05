@@ -15,6 +15,7 @@ plot_ess(
   alpha = 0.8,
   show_labels = TRUE,
   label_size = 3,
+  percent_scale = TRUE,
   reference_line_color = "gray50",
   reference_line_type = "dashed"
 )
@@ -52,6 +53,9 @@ Default is "#0172B1".}
 Default is TRUE.}
 
 \item{label_size}{Size of text labels. Default is 3.}
+
+\item{percent_scale}{Logical. Display ESS as percentage of sample size (TRUE)
+or on original scale (FALSE)? Default is TRUE.}
 
 \item{reference_line_color}{Color for the 100\% reference line. Default is "gray50".}
 
@@ -115,6 +119,9 @@ plot_ess(nhefs_weights, .wts = c(w_ate, w_att), .group = qsmk,
 # Using pre-computed ESS data
 ess_data <- check_ess(nhefs_weights, .wts = c(w_ate, w_att))
 plot_ess(ess_data)
+
+# Show ESS on original scale instead of percentage
+plot_ess(nhefs_weights, .wts = c(w_ate, w_att), percent_scale = FALSE)
 
 }
 \seealso{
