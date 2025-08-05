@@ -109,7 +109,6 @@ test_that("plot_ess has correct labels", {
   
   expect_equal(p$labels$x, "method")
   expect_equal(p$labels$y, "effective sample size (%)")
-  expect_equal(p$labels$subtitle, "Higher values indicate less weight variability")
 })
 
 test_that("plot_ess y-limits are appropriate", {

@@ -191,8 +191,7 @@ plot_ess <- function(
   p <- p +
     ggplot2::labs(
       x = "method",
-      y = if (percent_scale) "effective sample size (%)" else "effective sample size",
-      subtitle = "Higher values indicate less weight variability"
+      y = if (percent_scale) "effective sample size (%)" else "effective sample size"
     ) +
     ggplot2::scale_y_continuous(
       limits = c(0, y_upper),
