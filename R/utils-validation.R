@@ -17,7 +17,7 @@ validate_weights <- function(weights, n, arg_name = "weights", call = rlang::cal
   if (is.null(weights)) return(invisible(weights))
 
   # Accept both numeric vectors and psw objects from propensity package
-  is_valid_weights <- is.numeric(weights) || inherits(weights, "psw")
+  is_valid_weights <- is.numeric(weights) || propensity::is_psw(weights)
   
   if (!is_valid_weights) {
     abort(

@@ -1506,8 +1506,8 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
   data(nhefs_weights)
   
   # Verify we have psw objects in the dataset
-  expect_true(inherits(nhefs_weights$w_cat_ate, "psw"))
-  expect_true(inherits(nhefs_weights$w_cat_att_none, "psw"))
+  expect_true(propensity::is_psw(nhefs_weights$w_cat_ate))
+  expect_true(propensity::is_psw(nhefs_weights$w_cat_att_none))
   
   # Test that balance functions work directly with psw weights
   result_smd <- bal_smd(
