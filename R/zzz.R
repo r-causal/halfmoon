@@ -3,6 +3,6 @@
   # This is needed for psw objects in nhefs_weights to work properly without
   # users having to explicitly load propensity
   loadNamespace("propensity")
-  
+
   invisible()
 }

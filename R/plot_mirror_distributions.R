@@ -82,15 +82,15 @@
 #'   .wts = w_ate,
 #'   include_unweighted = FALSE
 #' )
-#' 
+#'
 #' # Categorical exposure - creates grid of comparisons
 #' plot_mirror_distributions(
-#'   nhefs_weights, 
-#'   age, 
+#'   nhefs_weights,
+#'   age,
 #'   alcoholfreq_cat,
 #'   type = "density"
 #' )
-#' 
+#'
 #' # Categorical with weights
 #' plot_mirror_distributions(
 #'   nhefs_weights,
@@ -140,7 +140,7 @@ plot_mirror_distributions <- function(
   }
 
   group_var <- .data[[group_name]]
-  
+
   # Check if we have a categorical exposure (>2 levels)
   # Always use actual unique values in the data, not factor levels
   group_levels <- sort(unique(group_var[!is.na(group_var)]))
@@ -148,23 +148,23 @@ plot_mirror_distributions <- function(
     # Convert to character to ensure proper comparison
     group_levels <- as.character(group_levels)
   }
-  
+
   is_categorical <- length(group_levels) > 2
-  
+
   if (is_categorical) {
     # Categorical exposure
     reference_group <- determine_reference_group(group_var, reference_group)
-    
+
     # Create binary comparisons using purrr
     comparison_levels <- setdiff(group_levels, reference_group)
-    
+
     .data <- purrr::map_dfr(comparison_levels, \(level) {
       comparison_df <- .data |>
         dplyr::filter(.data[[group_name]] %in% c(reference_group, level)) |>
         dplyr::mutate(comparison = paste0(level, " vs ", reference_group))
       # Update the group factor to only have the two levels
       comparison_df[[group_name]] <- factor(
-        comparison_df[[group_name]], 
+        comparison_df[[group_name]],
         levels = c(reference_group, level)
       )
       comparison_df
@@ -269,7 +269,7 @@ plot_mirror_distributions <- function(
           na.rm = na.rm
         )
     }
-    
+
     # Add faceting for categorical exposures without weights
     if (is_categorical) {
       p <- p + ggplot2::facet_wrap(~comparison, scales = "free_y")

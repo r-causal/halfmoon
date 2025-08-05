@@ -416,7 +416,10 @@ test_that("check_balance validates inputs correctly", {
   )
 
   # Test no variables selected
-  expect_halfmoon_error(check_balance_basic(data, c(), qsmk), "halfmoon_empty_error")
+  expect_halfmoon_error(
+    check_balance_basic(data, c(), qsmk),
+    "halfmoon_empty_error"
+  )
 
   # Test group with wrong number of levels - should error
   data_bad_group <- data

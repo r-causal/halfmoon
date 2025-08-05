@@ -189,13 +189,13 @@ test_that("plot_balance handles categorical exposures with facet_grid", {
     .wts = w_cat_ate,
     .metrics = c("smd", "vr")
   )
-  
+
   p <- plot_balance(balance_cat)
   expect_s3_class(p, "ggplot")
-  
+
   # Check that facet_grid was applied for categorical exposure
   expect_s3_class(p$facet, "FacetGrid")
-  
+
   # Check that both group_level and metric are in the facet
   facet_vars <- names(p$facet$params$rows)
   expect_true("group_level" %in% facet_vars)
@@ -212,10 +212,10 @@ test_that("plot_balance handles categorical exposures with single metric", {
     .wts = w_cat_ate,
     .metrics = "smd"
   )
-  
+
   p <- plot_balance(balance_cat_single)
   expect_s3_class(p, "ggplot")
-  
+
   # Should use facet_wrap for single metric
   expect_s3_class(p$facet, "FacetWrap")
 })
@@ -229,12 +229,12 @@ test_that("plot_balance correctly identifies categorical vs binary exposures", {
     .wts = w_ate,
     .metrics = c("smd", "vr")
   )
-  
+
   p_binary <- plot_balance(balance_binary)
-  
+
   # Should use facet_wrap for binary exposure
   expect_s3_class(p_binary$facet, "FacetWrap")
-  
+
   # Categorical exposure
   balance_cat <- check_balance(
     nhefs_weights,
@@ -242,9 +242,9 @@ test_that("plot_balance correctly identifies categorical vs binary exposures", {
     alcoholfreq_cat,
     .metrics = c("smd", "vr")
   )
-  
+
   p_cat <- plot_balance(balance_cat)
-  
+
   # Should use facet_grid for categorical exposure with multiple metrics
   expect_s3_class(p_cat$facet, "FacetGrid")
 })
@@ -331,7 +331,7 @@ test_that("plot_balance visual tests", {
       vlinewidth = 1
     )
   )
-  
+
   # Categorical exposure with multiple metrics
   balance_cat_multi <- check_balance(
     nhefs_weights,
@@ -340,12 +340,12 @@ test_that("plot_balance visual tests", {
     .wts = w_cat_ate,
     .metrics = c("smd", "vr", "ks")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-multi-metric",
     plot_balance(balance_cat_multi)
   )
-  
+
   # Categorical exposure with single metric
   balance_cat_single <- check_balance(
     nhefs_weights,
@@ -354,12 +354,12 @@ test_that("plot_balance visual tests", {
     .wts = c(w_cat_ate, w_cat_att_2_3wk),
     .metrics = "smd"
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-single-metric",
     plot_balance(balance_cat_single)
   )
-  
+
   # Categorical exposure without weights
   balance_cat_observed <- check_balance(
     nhefs_weights,
@@ -367,7 +367,7 @@ test_that("plot_balance visual tests", {
     alcoholfreq_cat,
     .metrics = c("smd", "vr")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-observed",
     plot_balance(balance_cat_observed)
@@ -385,12 +385,12 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = w_cat_ate,
     .metrics = c("smd", "vr")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-ref-daily",
     plot_balance(balance_cat_ref)
   )
-  
+
   # Categorical with energy metric included
   balance_cat_energy <- check_balance(
     nhefs_weights,
@@ -399,7 +399,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = w_cat_ate,
     .metrics = c("smd", "energy")
   )
-  
+
   # Suppress ggplot2's "Removed 2 rows containing missing values" warning
   # This happens when energy distance produces NA values for small sample sizes
   suppressWarnings(
@@ -408,7 +408,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
       plot_balance(balance_cat_energy)
     )
   )
-  
+
   # Categorical with fixed scales
   balance_cat_fixed <- check_balance(
     nhefs_weights,
@@ -417,12 +417,12 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = w_cat_ate,
     .metrics = c("smd", "vr", "ks")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-fixed-scales",
     plot_balance(balance_cat_fixed, facet_scales = "fixed")
   )
-  
+
   # Categorical without absolute SMD
   balance_cat_multi_test <- check_balance(
     nhefs_weights,
@@ -431,12 +431,12 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = w_cat_ate,
     .metrics = c("smd", "vr", "ks")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-no-abs-smd",
     plot_balance(balance_cat_multi_test, abs_smd = FALSE)
   )
-  
+
   # Categorical with multiple ATT weights
   balance_cat_multi_att <- check_balance(
     nhefs_weights,
@@ -445,12 +445,12 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = c(w_cat_att_none, w_cat_att_2_3wk, w_cat_att_daily),
     .metrics = "smd"
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-multi-att",
     plot_balance(balance_cat_multi_att)
   )
-  
+
   # Categorical with only KS metric
   balance_cat_ks <- check_balance(
     nhefs_weights,
@@ -459,12 +459,12 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = w_cat_ate,
     .metrics = "ks"
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-ks-only",
     plot_balance(balance_cat_ks)
   )
-  
+
   # Categorical with custom vline for SMD only
   balance_cat_vline <- check_balance(
     nhefs_weights,
@@ -473,26 +473,40 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = w_cat_ate,
     .metrics = "smd"
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-custom-vline",
-    plot_balance(balance_cat_vline, vline_xintercept = 0.05, vline_color = "red")
+    plot_balance(
+      balance_cat_vline,
+      vline_xintercept = 0.05,
+      vline_color = "red"
+    )
   )
-  
+
   # Categorical with many variables to test scrolling/layout
   balance_cat_many_vars <- check_balance(
     nhefs_weights,
-    c(age, wt71, sex, race, education, smokeintensity, smokeyrs, exercise, active),
+    c(
+      age,
+      wt71,
+      sex,
+      race,
+      education,
+      smokeintensity,
+      smokeyrs,
+      exercise,
+      active
+    ),
     alcoholfreq_cat,
     .wts = w_cat_ate,
     .metrics = c("smd", "vr")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-many-vars",
     plot_balance(balance_cat_many_vars)
   )
-  
+
   # Categorical comparing observed vs multiple weights
   balance_cat_compare <- check_balance(
     nhefs_weights,
@@ -501,7 +515,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     .wts = c(w_cat_ate, w_cat_ato, w_cat_atm),
     .metrics = c("smd", "vr")
   )
-  
+
   expect_doppelganger(
     "balance-plot-categorical-compare-weights",
     plot_balance(balance_cat_compare)

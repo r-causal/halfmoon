@@ -22,7 +22,7 @@ test_that("geom_mirrored_histogram errors correctly", {
       aes(group = education),
       bins = 50
     )
-  
+
   expect_error(
     ggplot_build(edu_group),
     class = "halfmoon_group_error"

@@ -159,12 +159,12 @@ test_that("plot_mirror_distributions validates inputs", {
     plot_mirror_distributions(nhefs_weights),
     "halfmoon_arg_error"
   )
-  
+
   expect_halfmoon_error(
     plot_mirror_distributions(nhefs_weights, age),
     "halfmoon_arg_error"
   )
-  
+
   # Non-existent column
   expect_halfmoon_error(
     plot_mirror_distributions(nhefs_weights, nonexistent, qsmk),
@@ -251,10 +251,10 @@ test_that("plot_mirror_distributions works with categorical exposures", {
     alcoholfreq_cat,
     type = "density"
   )
-  
+
   expect_s3_class(p_cat, "ggplot")
   expect_doppelganger("categorical exposure density", p_cat)
-  
+
   # Categorical with histogram
   p_cat_hist <- plot_mirror_distributions(
     nhefs_weights,
@@ -263,9 +263,9 @@ test_that("plot_mirror_distributions works with categorical exposures", {
     type = "histogram",
     bins = 20
   )
-  
+
   expect_doppelganger("categorical exposure histogram", p_cat_hist)
-  
+
   # Categorical with custom reference
   p_cat_ref <- plot_mirror_distributions(
     nhefs_weights,
@@ -274,7 +274,7 @@ test_that("plot_mirror_distributions works with categorical exposures", {
     reference_group = "daily",
     type = "density"
   )
-  
+
   expect_doppelganger("categorical custom reference", p_cat_ref)
 })
 
@@ -288,10 +288,10 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
     reference_group = "none",
     bins = 20
   )
-  
+
   expect_s3_class(p_cat_wt, "ggplot")
   expect_doppelganger("categorical with weights", p_cat_wt)
-  
+
   # Categorical with multiple weights
   p_cat_multi <- plot_mirror_distributions(
     nhefs_weights,
@@ -301,9 +301,9 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
     reference_group = "none",
     type = "density"
   )
-  
+
   expect_doppelganger("categorical multiple weights", p_cat_multi)
-  
+
   # Without unweighted
   p_cat_no_obs <- plot_mirror_distributions(
     nhefs_weights,
@@ -313,7 +313,7 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
     include_unweighted = FALSE,
     type = "density"
   )
-  
+
   expect_doppelganger("categorical no unweighted", p_cat_no_obs)
 })
 
@@ -328,7 +328,7 @@ test_that("plot_mirror_distributions validates categorical reference group", {
     ),
     "halfmoon_reference_error"
   )
-  
+
   # Numeric reference out of range
   expect_halfmoon_error(
     plot_mirror_distributions(

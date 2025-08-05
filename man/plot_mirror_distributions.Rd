@@ -116,8 +116,8 @@ plot_mirror_distributions(
 
 # Categorical exposure - creates grid of comparisons
 plot_mirror_distributions(
-  nhefs_weights, 
-  age, 
+  nhefs_weights,
+  age,
   alcoholfreq_cat,
   type = "density"
 )

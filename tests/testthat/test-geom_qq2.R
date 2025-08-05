@@ -143,7 +143,7 @@ test_that("geom_qq2 visual regression tests", {
   nhefs_for_pivot2 <- nhefs_weights
   nhefs_for_pivot2$w_ate <- vctrs::vec_data(nhefs_weights$w_ate)
   nhefs_for_pivot2$w_att <- vctrs::vec_data(nhefs_weights$w_att)
-  
+
   long_data <- tidyr::pivot_longer(
     nhefs_for_pivot2,
     cols = c(w_ate, w_att),

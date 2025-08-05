@@ -52,7 +52,7 @@ test_that("plot_qq validates missing arguments", {
     plot_qq(nhefs_weights),
     "halfmoon_arg_error"
   )
-  
+
   expect_halfmoon_error(
     plot_qq(nhefs_weights, age),
     "halfmoon_arg_error"

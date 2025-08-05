@@ -129,7 +129,7 @@ test_that("bal_smd error handling", {
     bal_smd(covariate = data$x_cont, group = rep(1, 100)),
     "halfmoon_group_error"
   )
-  
+
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_smd(
     covariate = data$x_cont,
@@ -144,7 +144,7 @@ test_that("bal_smd error handling", {
     ),
     "halfmoon_length_error"
   )
-  
+
   expect_halfmoon_error(
     bal_smd(
       covariate = data$x_cont,
@@ -269,7 +269,7 @@ test_that("bal_vr error handling", {
     ),
     "halfmoon_group_error"
   )
-  
+
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_vr(
     covariate = data$x_cont,
@@ -284,7 +284,7 @@ test_that("bal_vr error handling", {
     ),
     "halfmoon_length_error"
   )
-  
+
   expect_halfmoon_error(
     bal_vr(
       covariate = data$x_cont,
@@ -398,7 +398,7 @@ test_that("bal_ks error handling", {
     ),
     "halfmoon_length_error"
   )
-  
+
   expect_halfmoon_error(
     bal_ks(
       covariate = data$x_cont,
@@ -508,7 +508,7 @@ test_that("bal_corr error handling", {
     bal_corr(data$x_cont[1:50], data$x_skewed),
     "halfmoon_length_error"
   )
-  
+
   expect_halfmoon_error(
     bal_corr(
       data$x_cont,
@@ -1504,46 +1504,46 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
   # This test ensures psw objects from the propensity package work throughout
   # the halfmoon package without requiring explicit conversion
   data(nhefs_weights)
-  
+
   # Verify we have psw objects in the dataset
   expect_true(propensity::is_psw(nhefs_weights$w_cat_ate))
   expect_true(propensity::is_psw(nhefs_weights$w_cat_att_none))
-  
+
   # Test that balance functions work directly with psw weights
   result_smd <- bal_smd(
-    nhefs_weights$age, 
-    nhefs_weights$alcoholfreq_cat, 
+    nhefs_weights$age,
+    nhefs_weights$alcoholfreq_cat,
     weights = nhefs_weights$w_cat_ate
   )
   expect_true(all(is.finite(result_smd)))
-  
+
   result_vr <- bal_vr(
-    nhefs_weights$wt71, 
-    nhefs_weights$alcoholfreq_cat, 
+    nhefs_weights$wt71,
+    nhefs_weights$alcoholfreq_cat,
     weights = nhefs_weights$w_cat_att_none
   )
   expect_true(all(is.finite(result_vr) & result_vr > 0))
-  
+
   result_ks <- bal_ks(
-    nhefs_weights$age, 
-    nhefs_weights$alcoholfreq_cat, 
+    nhefs_weights$age,
+    nhefs_weights$alcoholfreq_cat,
     weights = nhefs_weights$w_cat_ato
   )
   expect_true(all(is.finite(result_ks) & result_ks >= 0 & result_ks <= 1))
-  
+
   # Test check_balance works with psw weights
   balance_results <- check_balance(
-    nhefs_weights, 
-    c(age, wt71), 
-    alcoholfreq_cat, 
-    .wts = w_cat_ate, 
+    nhefs_weights,
+    c(age, wt71),
+    alcoholfreq_cat,
+    .wts = w_cat_ate,
     .metrics = "smd",
     include_observed = FALSE
   )
   expect_s3_class(balance_results, "data.frame")
   expect_true(nrow(balance_results) > 0)
   expect_true(all(is.finite(balance_results$estimate)))
-  
+
   # Test weighted_quantile works with psw weights
   quantiles <- weighted_quantile(
     nhefs_weights$age,

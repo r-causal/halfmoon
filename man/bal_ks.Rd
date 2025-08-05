@@ -76,6 +76,7 @@ Other balance functions:
 \code{\link{bal_vr}()},
 \code{\link{check_auc}()},
 \code{\link{check_balance}()},
+\code{\link{check_ess}()},
 \code{\link{plot_balance}()}
 }
 \concept{balance functions}

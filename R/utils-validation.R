@@ -1,7 +1,11 @@
 # Validation helper functions for the halfmoon package
 
 # Numeric validation
-validate_numeric <- function(x, arg_name = deparse(substitute(x)), call = rlang::caller_env()) {
+validate_numeric <- function(
+  x,
+  arg_name = deparse(substitute(x)),
+  call = rlang::caller_env()
+) {
   if (!is.numeric(x)) {
     abort(
       "{.arg {arg_name}} must be numeric, got {.cls {class(x)[1]}}",
@@ -13,12 +17,17 @@ validate_numeric <- function(x, arg_name = deparse(substitute(x)), call = rlang:
 }
 
 # Weight validation
-validate_weights <- function(weights, n, arg_name = "weights", call = rlang::caller_env()) {
+validate_weights <- function(
+  weights,
+  n,
+  arg_name = "weights",
+  call = rlang::caller_env()
+) {
   if (is.null(weights)) return(invisible(weights))
 
   # Accept both numeric vectors and psw objects from propensity package
   is_valid_weights <- is.numeric(weights) || propensity::is_psw(weights)
-  
+
   if (!is_valid_weights) {
     abort(
       "{.arg {arg_name}} must be numeric, a psw object, or {.code NULL}",
@@ -44,7 +53,13 @@ validate_weights <- function(weights, n, arg_name = "weights", call = rlang::cal
 }
 
 # Length validation
-validate_equal_length <- function(x, y, x_name = NULL, y_name = NULL, call = rlang::caller_env()) {
+validate_equal_length <- function(
+  x,
+  y,
+  x_name = NULL,
+  y_name = NULL,
+  call = rlang::caller_env()
+) {
   x_name <- x_name %||% deparse(substitute(x))
   y_name <- y_name %||% deparse(substitute(y))
 
@@ -62,7 +77,11 @@ validate_equal_length <- function(x, y, x_name = NULL, y_name = NULL, call = rla
 }
 
 # Non-empty validation
-validate_not_empty <- function(x, arg_name = deparse(substitute(x)), call = rlang::caller_env()) {
+validate_not_empty <- function(
+  x,
+  arg_name = deparse(substitute(x)),
+  call = rlang::caller_env()
+) {
   if (length(x) == 0) {
     abort(
       "{.arg {arg_name}} cannot be empty",
@@ -74,7 +93,11 @@ validate_not_empty <- function(x, arg_name = deparse(substitute(x)), call = rlan
 }
 
 # Binary group validation
-validate_binary_group <- function(group, arg_name = "group", call = rlang::caller_env()) {
+validate_binary_group <- function(
+  group,
+  arg_name = "group",
+  call = rlang::caller_env()
+) {
   levels <- unique(stats::na.omit(group))
   if (length(levels) != 2) {
     abort(
@@ -104,7 +127,11 @@ validate_reference_group <- function(
 }
 
 # Data frame validation
-validate_data_frame <- function(data, arg_name = ".data", call = rlang::caller_env()) {
+validate_data_frame <- function(
+  data,
+  arg_name = ".data",
+  call = rlang::caller_env()
+) {
   if (!is.data.frame(data)) {
     abort(
       "{.arg {arg_name}} must be a data frame",
@@ -116,7 +143,12 @@ validate_data_frame <- function(data, arg_name = ".data", call = rlang::caller_e
 }
 
 # Column existence validation
-validate_column_exists <- function(data, column_name, arg_name = NULL, call = rlang::caller_env()) {
+validate_column_exists <- function(
+  data,
+  column_name,
+  arg_name = NULL,
+  call = rlang::caller_env()
+) {
   arg_name <- arg_name %||% column_name
   if (!column_name %in% names(data)) {
     abort(
@@ -178,7 +210,11 @@ get_exposure_type <- function(group, call = rlang::caller_env()) {
 }
 
 # Validate exposure type
-validate_exposure_type <- function(group, arg_name = "group", call = rlang::caller_env()) {
+validate_exposure_type <- function(
+  group,
+  arg_name = "group",
+  call = rlang::caller_env()
+) {
   exposure_type <- get_exposure_type(group, call = call)
 
   # For now, just return the type - validation happens in get_exposure_type
