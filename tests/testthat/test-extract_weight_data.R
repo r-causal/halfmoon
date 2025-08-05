@@ -36,7 +36,7 @@ test_that("extract_weight_data extracts data from psw objects", {
   expect_type(result, "double")
   
   # Should not have psw class anymore
-  expect_false(inherits(result, "psw"))
+  expect_false(propensity::is_psw(result))
 })
 
 test_that("extract_weight_data preserves values from different psw estimands", {

@@ -20,6 +20,7 @@ Imports:
     dplyr,
     ggplot2,
     gtsummary (>= 2.1.0),
+    propensity,
     purrr,
     rlang,
     smd,

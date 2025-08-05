@@ -43,14 +43,9 @@ test_that("geom_qq2 works with weights", {
 })
 
 test_that("geom_qq2 works with color aesthetic for multiple weights", {
-  # Create long format data - need to extract numeric data from psw columns first
-  # TODO: Remove vec_data() workaround once propensity implements vctrs methods
-  nhefs_for_pivot <- nhefs_weights
-  nhefs_for_pivot$w_ate <- vctrs::vec_data(nhefs_weights$w_ate)
-  nhefs_for_pivot$w_att <- vctrs::vec_data(nhefs_weights$w_att)
-  
+  # Create long format data
   long_data <- tidyr::pivot_longer(
-    nhefs_for_pivot,
+    nhefs_weights,
     cols = c(w_ate, w_att),
     names_to = "weight_type",
     values_to = "weight"
