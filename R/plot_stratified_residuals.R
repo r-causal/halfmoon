@@ -120,7 +120,7 @@ plot_stratified_residuals.lm <- function(
   ...
 ) {
   plot_type <- rlang::arg_match(plot_type)
-  
+
   # Validate required arguments
   if (missing(treatment)) {
     abort(

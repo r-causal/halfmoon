@@ -1,7 +1,11 @@
 # Group handling helper functions for the halfmoon package
 
 # Extract and validate group levels
-extract_group_levels <- function(group, require_binary = TRUE, call = rlang::caller_env()) {
+extract_group_levels <- function(
+  group,
+  require_binary = TRUE,
+  call = rlang::caller_env()
+) {
   levels <- if (is.factor(group)) {
     levels(group)
   } else {
@@ -23,7 +27,11 @@ extract_group_levels <- function(group, require_binary = TRUE, call = rlang::cal
 }
 
 # Determine reference group with consistent logic
-determine_reference_group <- function(group, reference_group = NULL, call = rlang::caller_env()) {
+determine_reference_group <- function(
+  group,
+  reference_group = NULL,
+  call = rlang::caller_env()
+) {
   levels <- extract_group_levels(group, require_binary = FALSE)
 
   if (is.null(reference_group)) {

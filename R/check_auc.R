@@ -226,7 +226,7 @@ roc_curve <- function(
     }
 
     weights <- extract_weight_data(weights)
-    
+
     # Handle zero and negative weights
     if (any(weights <= 0, na.rm = TRUE)) {
       n_zero_neg <- sum(weights <= 0, na.rm = TRUE)

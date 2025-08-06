@@ -267,7 +267,10 @@ test_that("categorical exposure validation works correctly", {
   # Test get_exposure_type
   expect_equal(get_exposure_type(data$exposure), "categorical")
   expect_equal(get_exposure_type(c(0, 1, 1, 0)), "binary")
-  expect_halfmoon_error(get_exposure_type(c(1, 1, 1, 1)), "halfmoon_group_error")
+  expect_halfmoon_error(
+    get_exposure_type(c(1, 1, 1, 1)),
+    "halfmoon_group_error"
+  )
 })
 
 test_that("categorical balance handles missing values correctly", {

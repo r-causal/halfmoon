@@ -53,7 +53,7 @@ get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
       call = call
     )
   }
-  
+
   # First try as_name (works for symbols and strings)
   tryCatch(
     {
@@ -67,9 +67,9 @@ get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
         },
         error = function(e2) {
           abort(
-          "{.code {arg_name}} must be a column name (quoted or unquoted)",
-          error_class = "halfmoon_type_error"
-        )
+            "{.code {arg_name}} must be a column name (quoted or unquoted)",
+            error_class = "halfmoon_type_error"
+          )
         }
       )
 
@@ -112,7 +112,12 @@ utils::globalVariables(c(
   "weight",
   ".var",
   ".weights",
-  "group_level"
+  "group_level",
+  "n",
+  ".ess_group",
+  "group",
+  "ess_pct",
+  "ess"
 ))
 
 # Error Classes for halfmoon
@@ -121,7 +126,7 @@ utils::globalVariables(c(
 # Type errors
 # - halfmoon_type_error: Wrong input type (e.g., non-numeric when numeric expected)
 #
-# Column/variable errors  
+# Column/variable errors
 # - halfmoon_column_error: Column not found in data frame
 #
 # Length/size errors

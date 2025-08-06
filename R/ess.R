@@ -6,6 +6,7 @@
 #'
 #' @param wts A numeric vector of weights (e.g., from survey or
 #'   inverse-probability weighting).
+#' @param na.rm Logical. Should missing values be removed? Default is FALSE.
 #'
 #' @return A single numeric value representing the effective sample size.
 #'
@@ -42,8 +43,8 @@
 #' ess(wts2)
 #'
 #' @export
-ess <- function(wts) {
+ess <- function(wts, na.rm = FALSE) {
   # Extract numeric data from psw weights if present
   wts <- extract_weight_data(wts)
-  sum(wts)^2 / sum(wts^2)
+  sum(wts, na.rm = na.rm)^2 / sum(wts^2, na.rm = na.rm)
 }

@@ -152,7 +152,13 @@ check_treatment_level <- function(group_var, treatment_level) {
   create_treatment_indicator(group_var, treatment_level)
 }
 
-check_columns <- function(data, fitted_name, group_name, treatment_level, call = rlang::caller_env()) {
+check_columns <- function(
+  data,
+  fitted_name,
+  group_name,
+  treatment_level,
+  call = rlang::caller_env()
+) {
   if (is.null(treatment_level)) {
     if (!fitted_name %in% names(data)) {
       abort(
@@ -591,7 +597,13 @@ compute_calibration_for_group <- function(
 
   # Compute calibration based on method
   calibration_result <- if (method == "breaks") {
-    compute_calibration_breaks_imp(df, bins, binning_method, conf_level, call = call)
+    compute_calibration_breaks_imp(
+      df,
+      bins,
+      binning_method,
+      conf_level,
+      call = call
+    )
   } else if (method == "logistic") {
     compute_calibration_logistic_imp(df, smooth, conf_level, k = k, call = call)
   } else if (method == "windowed") {

@@ -25,3 +25,12 @@ test_that("ess gives `NaN` if all weights are 0", {
   # sum(wts) = 0, sum(wts^2) = 0 -> 0/0 is NaN
   expect_true(is.nan(ess(wts_zero)))
 })
+
+test_that("ess handles NA values", {
+  # With na.rm = FALSE (default), should return NA
+  expect_true(is.na(ess(c(1, 2, NA, 3))))
+  
+  # With na.rm = TRUE, should calculate ESS on non-NA values
+  expect_equal(ess(c(1, 1, NA, 1), na.rm = TRUE), 3)
+  expect_true(ess(c(0.5, 2, NA, 0.1), na.rm = TRUE) < 3)
+})

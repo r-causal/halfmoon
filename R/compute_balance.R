@@ -370,12 +370,14 @@ bal_ks <- function(
     p_ref <- if (is.null(weights)) {
       mean(covariate[idx_ref])
     } else {
-      sum(extract_weight_data(weights)[idx_ref] * covariate[idx_ref]) / sum(extract_weight_data(weights)[idx_ref])
+      sum(extract_weight_data(weights)[idx_ref] * covariate[idx_ref]) /
+        sum(extract_weight_data(weights)[idx_ref])
     }
     p_other <- if (is.null(weights)) {
       mean(covariate[idx_other])
     } else {
-      sum(extract_weight_data(weights)[idx_other] * covariate[idx_other]) / sum(extract_weight_data(weights)[idx_other])
+      sum(extract_weight_data(weights)[idx_other] * covariate[idx_other]) /
+        sum(extract_weight_data(weights)[idx_other])
     }
     return(abs(p_other - p_ref))
   }
@@ -384,7 +386,8 @@ bal_ks <- function(
   # Extract and weight
   x_ref <- covariate[idx_ref]
   x_other <- covariate[idx_other]
-  w_ref <- if (is.null(weights)) rep(1, length(x_ref)) else extract_weight_data(weights)[idx_ref]
+  w_ref <- if (is.null(weights)) rep(1, length(x_ref)) else
+    extract_weight_data(weights)[idx_ref]
   w_other <- if (is.null(weights)) rep(1, length(x_other)) else
     extract_weight_data(weights)[idx_other]
   w_ref <- w_ref / sum(w_ref)

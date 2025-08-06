@@ -4,11 +4,13 @@
 \alias{ess}
 \title{Calculate the Effective Sample Size (ESS)}
 \usage{
-ess(wts)
+ess(wts, na.rm = FALSE)
 }
 \arguments{
 \item{wts}{A numeric vector of weights (e.g., from survey or
 inverse-probability weighting).}
+
+\item{na.rm}{Logical. Should missing values be removed? Default is FALSE.}
 }
 \value{
 A single numeric value representing the effective sample size.
