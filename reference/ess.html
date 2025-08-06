@@ -50,7 +50,7 @@ referred to as "Kish's effective sample size").</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ess</span><span class="op">(</span><span class="va">wts</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ess</span><span class="op">(</span><span class="va">wts</span>, na.rm <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,6 +60,10 @@ referred to as "Kish's effective sample size").</p>
 <dl><dt id="arg-wts">wts<a class="anchor" aria-label="anchor" href="#arg-wts"></a></dt>
 <dd><p>A numeric vector of weights (e.g., from survey or
 inverse-probability weighting).</p></dd>
+
+
+<dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
+<dd><p>Logical. Should missing values be removed? Default is FALSE.</p></dd>
 
 </dl></div>
     <div class="section level2">
