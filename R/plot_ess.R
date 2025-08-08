@@ -71,7 +71,7 @@
 #' # Using pre-computed ESS data
 #' ess_data <- check_ess(nhefs_weights, .wts = c(w_ate, w_att))
 #' plot_ess(ess_data)
-#' 
+#'
 #' # Show ESS on original scale instead of percentage
 #' plot_ess(nhefs_weights, .wts = c(w_ate, w_att), percent_scale = FALSE)
 #'
@@ -108,7 +108,7 @@ plot_ess <- function(
 
   # Determine if we have groups
   has_groups <- "group" %in% names(.data)
-  
+
   # Choose which variable to plot
   y_var <- if (percent_scale) "ess_pct" else "ess"
 
@@ -191,12 +191,14 @@ plot_ess <- function(
   p <- p +
     ggplot2::labs(
       x = "method",
-      y = if (percent_scale) "effective sample size (%)" else "effective sample size"
+      y = if (percent_scale) "effective sample size (%)" else
+        "effective sample size"
     ) +
     ggplot2::scale_y_continuous(
       limits = c(0, y_upper),
       expand = c(0, 0),
-      labels = if (percent_scale) \(x) scales::percent(x / 100) else scales::number
+      labels = if (percent_scale) \(x) scales::percent(x / 100) else
+        scales::number
     )
 
   p
