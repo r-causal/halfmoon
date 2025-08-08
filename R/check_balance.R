@@ -193,8 +193,11 @@ check_balance <- function(
             if (any(categorical_check)) {
               categorical_cols <- original_vars_data[categorical_check]
               binary_check <- purrr::map_lgl(categorical_cols, \(x) {
-                n_levels <- if (is.factor(x)) length(levels(x)) else
+                n_levels <- if (is.factor(x)) {
+                  length(levels(x))
+                } else {
                   length(unique(x))
+                }
                 n_levels == 2
               })
               binary_categorical_names <- names(categorical_cols)[binary_check]
@@ -511,8 +514,11 @@ compute_single_balance_metric <- function(
       } else {
         setdiff(
           group_levels,
-          if (reference_group %in% group_levels) reference_group else
+          if (reference_group %in% group_levels) {
+            reference_group
+          } else {
             group_levels[reference_group]
+          }
         )[1]
       }
 

@@ -191,14 +191,20 @@ plot_ess <- function(
   p <- p +
     ggplot2::labs(
       x = "method",
-      y = if (percent_scale) "effective sample size (%)" else
+      y = if (percent_scale) {
+        "effective sample size (%)"
+      } else {
         "effective sample size"
+      }
     ) +
     ggplot2::scale_y_continuous(
       limits = c(0, y_upper),
       expand = c(0, 0),
-      labels = if (percent_scale) \(x) scales::percent(x / 100) else
+      labels = if (percent_scale) {
+        \(x) scales::percent(x / 100)
+      } else {
         scales::number
+      }
     )
 
   p

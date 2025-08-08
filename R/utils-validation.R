@@ -23,7 +23,9 @@ validate_weights <- function(
   arg_name = "weights",
   call = rlang::caller_env()
 ) {
-  if (is.null(weights)) return(invisible(weights))
+  if (is.null(weights)) {
+    return(invisible(weights))
+  }
 
   # Accept both numeric vectors and psw objects from propensity package
   is_valid_weights <- is.numeric(weights) || propensity::is_psw(weights)
@@ -162,7 +164,9 @@ validate_column_exists <- function(
 
 # NA handling helpers
 check_na_return <- function(..., na.rm = FALSE) {
-  if (na.rm) return(FALSE)
+  if (na.rm) {
+    return(FALSE)
+  }
 
   values <- list(...)
   any(vapply(values, function(x) any(is.na(x)), logical(1)))
@@ -170,7 +174,9 @@ check_na_return <- function(..., na.rm = FALSE) {
 
 # Filter indices based on NA values
 filter_na_indices <- function(indices, data, weights = NULL, na.rm = FALSE) {
-  if (!na.rm) return(indices)
+  if (!na.rm) {
+    return(indices)
+  }
 
   if (is.null(weights)) {
     indices[!is.na(data[indices])]

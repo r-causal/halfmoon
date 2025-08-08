@@ -68,8 +68,9 @@ bal_smd <- function(
     if (is.null(weights)) {
       if (any(is.na(covariate) | is.na(group))) return(NA_real_)
     } else {
-      if (any(is.na(covariate) | is.na(group) | is.na(weights)))
+      if (any(is.na(covariate) | is.na(group) | is.na(weights))) {
         return(NA_real_)
+      }
     }
   }
 
@@ -238,8 +239,11 @@ bal_vr <- function(
       mr <- sum(wr * xr) / sum(wr)
       # Use Bessel's correction for weighted sample variance
       denom <- sum(wr) - sum(wr^2) / sum(wr)
-      if (denom <= 0) sum(wr * (xr - mr)^2) / sum(wr) else
+      if (denom <= 0) {
+        sum(wr * (xr - mr)^2) / sum(wr)
+      } else {
         sum(wr * (xr - mr)^2) / denom
+      }
     }
     var_other <- if (is.null(weights)) {
       stats::var(covariate[idx_other])
@@ -249,8 +253,11 @@ bal_vr <- function(
       mo <- sum(wo * xo) / sum(wo)
       # Use Bessel's correction for weighted sample variance
       denom <- sum(wo) - sum(wo^2) / sum(wo)
-      if (denom <= 0) sum(wo * (xo - mo)^2) / sum(wo) else
+      if (denom <= 0) {
+        sum(wo * (xo - mo)^2) / sum(wo)
+      } else {
         sum(wo * (xo - mo)^2) / denom
+      }
     }
   }
   # Return ratio
@@ -386,10 +393,16 @@ bal_ks <- function(
   # Extract and weight
   x_ref <- covariate[idx_ref]
   x_other <- covariate[idx_other]
-  w_ref <- if (is.null(weights)) rep(1, length(x_ref)) else
+  w_ref <- if (is.null(weights)) {
+    rep(1, length(x_ref))
+  } else {
     extract_weight_data(weights)[idx_ref]
-  w_other <- if (is.null(weights)) rep(1, length(x_other)) else
+  }
+  w_other <- if (is.null(weights)) {
+    rep(1, length(x_other))
+  } else {
     extract_weight_data(weights)[idx_other]
+  }
   w_ref <- w_ref / sum(w_ref)
   w_other <- w_other / sum(w_other)
   # Sort and CDF
@@ -464,7 +477,9 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
     if (!is.null(weights)) weights <- extract_weight_data(weights)[idx]
   } else {
     # Extract weight data if needed
-    if (!is.null(weights)) weights <- extract_weight_data(weights)
+    if (!is.null(weights)) {
+      weights <- extract_weight_data(weights)
+    }
     # Check for missing values
     if (is.null(weights)) {
       if (any(is.na(x) | is.na(y))) return(NA_real_)
@@ -1053,7 +1068,9 @@ bal_energy_continuous <- function(
 
   # Avoid division by zero
   covariate_vars[covariate_vars == 0] <- 1
-  if (treatment_var == 0) treatment_var <- 1
+  if (treatment_var == 0) {
+    treatment_var <- 1
+  }
 
   # Scale covariates and treatment
   scaled_covariates <- scale(covariates, scale = sqrt(covariate_vars))
