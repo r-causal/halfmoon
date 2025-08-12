@@ -116,6 +116,7 @@ test_that("plot_qq and geom_qq2 produce equivalent results", {
 
 # vdiffr visual regression tests
 test_that("geom_qq2 visual regression tests", {
+  withr::local_seed(123)
   # Basic geom_qq2
   expect_doppelganger(
     "geom_qq2 basic",
