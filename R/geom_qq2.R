@@ -37,7 +37,7 @@
 #' @seealso
 #' - [`geom_ecdf()`] for an alternative visualization of distributional differences
 #' - [`plot_qq()`] for a complete plotting function with reference line and labels
-#' - [`qq()`] for the underlying data computation
+#' - [`check_qq()`] for the underlying data computation
 #'
 #' @examples
 #' library(ggplot2)
@@ -190,7 +190,7 @@ process_aesthetic_group <- function(
     wts_arg <- NULL
   }
 
-  qq_result <- qq(
+  qq_result <- check_qq(
     .data = temp_data,
     .var = .var,
     .group = .group,

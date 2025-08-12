@@ -100,7 +100,7 @@ ggplot(long_data, aes(color = weight_type)) +
 \itemize{
 \item \code{\link[=geom_ecdf]{geom_ecdf()}} for an alternative visualization of distributional differences
 \item \code{\link[=plot_qq]{plot_qq()}} for a complete plotting function with reference line and labels
-\item \code{\link[=qq]{qq()}} for the underlying data computation
+\item \code{\link[=check_qq]{check_qq()}} for the underlying data computation
 }
 
 Other ggplot2 functions: 

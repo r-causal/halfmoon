@@ -1,6 +1,6 @@
 library(ggplot2)
 
-test_that("check_calibration works with basic input", {
+test_that("check_model_calibration works with basic input", {
   # Create simple test data with larger sample size
   set.seed(123)
   n <- 500
@@ -13,7 +13,7 @@ test_that("check_calibration works with basic input", {
   )
 
   # Test basic functionality
-  result <- suppress_calibration_warnings(check_calibration(
+  result <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs
@@ -30,7 +30,7 @@ test_that("check_calibration works with basic input", {
   expect_true(all(result$count > 0))
 })
 
-test_that("check_calibration works with quoted column names", {
+test_that("check_model_calibration works with quoted column names", {
   # Create simple test data
   set.seed(123)
   n <- 500
@@ -43,7 +43,7 @@ test_that("check_calibration works with quoted column names", {
   )
 
   # Test with quoted column names
-  result <- suppress_calibration_warnings(check_calibration(
+  result <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs
@@ -53,7 +53,7 @@ test_that("check_calibration works with quoted column names", {
   expect_true(nrow(result) > 0)
 })
 
-test_that("check_calibration works with unquoted column names", {
+test_that("check_model_calibration works with unquoted column names", {
   # Create simple test data
   set.seed(123)
   n <- 500
@@ -65,7 +65,7 @@ test_that("check_calibration works with unquoted column names", {
     obs = actual
   )
 
-  result <- suppress_calibration_warnings(check_calibration(
+  result <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     "pred",
     "obs"
@@ -75,7 +75,7 @@ test_that("check_calibration works with unquoted column names", {
   expect_true(nrow(result) > 0)
 })
 
-test_that("check_calibration provides clear error messages for missing columns", {
+test_that("check_model_calibration provides clear error messages for missing columns", {
   # Create test data
   set.seed(123)
   test_data <- data.frame(
@@ -85,18 +85,18 @@ test_that("check_calibration provides clear error messages for missing columns",
 
   # Test with non-existent .fitted column
   expect_halfmoon_error(
-    check_calibration(test_data, "nonexistent", "obs"),
+    check_model_calibration(test_data, "nonexistent", "obs"),
     "halfmoon_column_error"
   )
 
   # Test with non-existent .group column
   expect_halfmoon_error(
-    check_calibration(test_data, "pred", "nonexistent"),
+    check_model_calibration(test_data, "pred", "nonexistent"),
     "halfmoon_column_error"
   )
 })
 
-test_that("check_calibration handles different binning methods", {
+test_that("check_model_calibration handles different binning methods", {
   # Create test data
   set.seed(123)
   n <- 500
@@ -109,7 +109,7 @@ test_that("check_calibration handles different binning methods", {
   )
 
   # Test equal_width binning
-  result_eq <- suppress_calibration_warnings(check_calibration(
+  result_eq <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     "pred",
     "obs",
@@ -117,7 +117,7 @@ test_that("check_calibration handles different binning methods", {
   ))
 
   # Test quantile binning
-  result_qt <- suppress_calibration_warnings(check_calibration(
+  result_qt <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     "pred",
     "obs",
@@ -130,17 +130,17 @@ test_that("check_calibration handles different binning methods", {
   expect_true(nrow(result_qt) > 0)
 })
 
-test_that("check_calibration handles edge cases", {
+test_that("check_model_calibration handles edge cases", {
   # Test empty data
   empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
-  result_empty <- check_calibration(empty_data, pred, obs)
+  result_empty <- check_model_calibration(empty_data, pred, obs)
 
   expect_s3_class(result_empty, "tbl_df")
   expect_equal(nrow(result_empty), 0)
 
   # Test all zeros (treatment level 0, so observed_rate should be 1)
   all_zeros <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
-  result_zeros <- suppress_calibration_warnings(check_calibration(
+  result_zeros <- suppress_calibration_warnings(check_model_calibration(
     all_zeros,
     pred,
     obs
@@ -151,7 +151,7 @@ test_that("check_calibration handles edge cases", {
 
   # Test all ones (treatment level 1, so observed_rate should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
-  result_ones <- suppress_calibration_warnings(check_calibration(
+  result_ones <- suppress_calibration_warnings(check_model_calibration(
     all_ones,
     pred,
     obs
@@ -161,7 +161,7 @@ test_that("check_calibration handles edge cases", {
   expect_true(all(result_ones$observed_rate == 1)) # All obs are 1, which becomes the treatment level
 })
 
-test_that("check_calibration handles NA values", {
+test_that("check_model_calibration handles NA values", {
   # Create test data with NAs
   set.seed(123)
   n <- 100
@@ -178,7 +178,7 @@ test_that("check_calibration handles NA values", {
   )
 
   # Test with na.rm = TRUE
-  result_na_rm <- suppress_calibration_warnings(check_calibration(
+  result_na_rm <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -189,7 +189,7 @@ test_that("check_calibration handles NA values", {
   expect_true(nrow(result_na_rm) > 0)
 
   # Test with na.rm = FALSE (should have fewer complete cases)
-  result_na_keep <- suppress_calibration_warnings(check_calibration(
+  result_na_keep <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -199,7 +199,7 @@ test_that("check_calibration handles NA values", {
   expect_s3_class(result_na_keep, "tbl_df")
 })
 
-test_that("check_calibration works with logistic method", {
+test_that("check_model_calibration works with logistic method", {
   # Create test data
   set.seed(123)
   n <- 200
@@ -212,7 +212,7 @@ test_that("check_calibration works with logistic method", {
   )
 
   # Test logistic without smoothing
-  result_logistic <- check_calibration(
+  result_logistic <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -238,7 +238,7 @@ test_that("check_calibration works with logistic method", {
   expect_true(all(result_logistic$upper >= result_logistic$observed_rate))
 
   # Test logistic with smoothing
-  result_smooth <- suppress_calibration_warnings(check_calibration(
+  result_smooth <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -256,7 +256,7 @@ test_that("check_calibration works with logistic method", {
   expect_equal(max(result_logistic$predicted_rate), max(test_data$pred))
 })
 
-test_that("check_calibration logistic method handles different confidence levels", {
+test_that("check_model_calibration logistic method handles different confidence levels", {
   set.seed(123)
   test_data <- data.frame(
     pred = runif(100, 0, 1),
@@ -264,7 +264,7 @@ test_that("check_calibration logistic method handles different confidence levels
   )
 
   # Test with 90% confidence
-  result_90 <- suppress_calibration_warnings(check_calibration(
+  result_90 <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -273,7 +273,7 @@ test_that("check_calibration logistic method handles different confidence levels
   ))
 
   # Test with 99% confidence
-  result_99 <- suppress_calibration_warnings(check_calibration(
+  result_99 <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -288,7 +288,7 @@ test_that("check_calibration logistic method handles different confidence levels
   )
 })
 
-test_that("check_calibration logistic method handles perfect separation", {
+test_that("check_model_calibration logistic method handles perfect separation", {
   # Create data with perfect separation
   test_data <- data.frame(
     pred = c(rep(0.1, 50), rep(0.9, 50)),
@@ -297,7 +297,7 @@ test_that("check_calibration logistic method handles perfect separation", {
 
   # Should not error with perfect separation
   expect_no_error({
-    result <- check_calibration(
+    result <- check_model_calibration(
       test_data,
       pred,
       obs,
@@ -307,7 +307,7 @@ test_that("check_calibration logistic method handles perfect separation", {
   })
 })
 
-test_that("check_calibration works with windowed method", {
+test_that("check_model_calibration works with windowed method", {
   # Create test data
   set.seed(123)
   n <- 200
@@ -320,7 +320,7 @@ test_that("check_calibration works with windowed method", {
   )
 
   # Test windowed method
-  result_windowed <- suppress_calibration_warnings(check_calibration(
+  result_windowed <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -347,7 +347,7 @@ test_that("check_calibration works with windowed method", {
   expect_true(all(result_windowed$upper >= result_windowed$observed_rate))
 
   # Test with different window sizes
-  result_small_window <- suppress_calibration_warnings(check_calibration(
+  result_small_window <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -363,7 +363,7 @@ test_that("check_calibration works with windowed method", {
   expect_equal(result_windowed$predicted_rate, expected_centers)
 })
 
-test_that("check_calibration windowed method handles edge cases", {
+test_that("check_model_calibration windowed method handles edge cases", {
   set.seed(123)
 
   # Test with data concentrated at edges
@@ -372,7 +372,7 @@ test_that("check_calibration windowed method handles edge cases", {
     obs = rbinom(100, 1, 0.5)
   )
 
-  result <- check_calibration(
+  result <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -385,7 +385,7 @@ test_that("check_calibration windowed method handles edge cases", {
   expect_true(nrow(result) > 0)
 
   # Test with very small window
-  result_tiny <- suppress_calibration_warnings(check_calibration(
+  result_tiny <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -398,14 +398,14 @@ test_that("check_calibration windowed method handles edge cases", {
   expect_true(nrow(result_tiny) <= length(seq(0, 1, by = 0.1)))
 })
 
-test_that("check_calibration windowed method respects window boundaries", {
+test_that("check_model_calibration windowed method respects window boundaries", {
   # Create data only in middle range
   test_data <- data.frame(
     pred = runif(100, 0.4, 0.6),
     obs = rbinom(100, 1, 0.5)
   )
 
-  result <- check_calibration(
+  result <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -421,25 +421,30 @@ test_that("check_calibration windowed method respects window boundaries", {
   expect_true(center_window$observed_rate >= 0)
 })
 
-test_that("check_calibration method parameter validation", {
+test_that("check_model_calibration method parameter validation", {
   test_data <- data.frame(pred = runif(50), obs = rbinom(50, 1, 0.5))
 
   # Test invalid method
   expect_halfmoon_error(
-    check_calibration(test_data, pred, obs, method = "invalid")
+    check_model_calibration(test_data, pred, obs, method = "invalid")
   )
 })
 
-test_that("check_calibration handles edge cases with all methods", {
+test_that("check_model_calibration handles edge cases with all methods", {
   # Empty data
   empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
 
-  result_breaks <- check_calibration(empty_data, pred, obs, method = "breaks")
+  result_breaks <- check_model_calibration(
+    empty_data,
+    pred,
+    obs,
+    method = "breaks"
+  )
   expect_equal(nrow(result_breaks), 0)
   expect_true("count" %in% names(result_breaks))
   expect_true(".bin" %in% names(result_breaks))
 
-  result_logistic <- check_calibration(
+  result_logistic <- check_model_calibration(
     empty_data,
     pred,
     obs,
@@ -449,7 +454,7 @@ test_that("check_calibration handles edge cases with all methods", {
   expect_false("count" %in% names(result_logistic))
   expect_false(".bin" %in% names(result_logistic))
 
-  result_windowed <- check_calibration(
+  result_windowed <- check_model_calibration(
     empty_data,
     pred,
     obs,
@@ -460,7 +465,7 @@ test_that("check_calibration handles edge cases with all methods", {
   expect_false(".bin" %in% names(result_windowed))
 })
 
-test_that("check_calibration handles all zeros and all ones", {
+test_that("check_model_calibration handles all zeros and all ones", {
   set.seed(123)
 
   # All zeros - when treatment_level is not specified, 0 becomes the treatment level
@@ -472,7 +477,7 @@ test_that("check_calibration handles all zeros and all ones", {
 
   # When all observations are 0, default treatment_level will be 0
   # Test the actual behavior
-  result_breaks_zeros_default <- suppress_calibration_warnings(check_calibration(
+  result_breaks_zeros_default <- suppress_calibration_warnings(check_model_calibration(
     zeros_data,
     pred,
     obs,
@@ -487,7 +492,7 @@ test_that("check_calibration handles all zeros and all ones", {
     obs = c(rep(0, 25), rep(1, 25))
   )
 
-  result_mixed <- suppress_calibration_warnings(check_calibration(
+  result_mixed <- suppress_calibration_warnings(check_model_calibration(
     mixed_data,
     pred,
     obs,
@@ -505,7 +510,7 @@ test_that("check_calibration handles all zeros and all ones", {
     obs = rep(1, 50)
   )
 
-  result_breaks_ones <- suppress_calibration_warnings(check_calibration(
+  result_breaks_ones <- suppress_calibration_warnings(check_model_calibration(
     ones_data,
     pred,
     obs,
@@ -513,7 +518,7 @@ test_that("check_calibration handles all zeros and all ones", {
   ))
   expect_true(all(result_breaks_ones$observed_rate == 1))
 
-  result_windowed_ones <- suppress_calibration_warnings(check_calibration(
+  result_windowed_ones <- suppress_calibration_warnings(check_model_calibration(
     ones_data,
     pred,
     obs,
@@ -522,7 +527,7 @@ test_that("check_calibration handles all zeros and all ones", {
   expect_true(all(result_windowed_ones$observed_rate == 1))
 
   # Test the default behavior with all zeros
-  result_default_zeros <- suppress_calibration_warnings(check_calibration(
+  result_default_zeros <- suppress_calibration_warnings(check_model_calibration(
     zeros_data,
     pred,
     obs,
@@ -532,7 +537,7 @@ test_that("check_calibration handles all zeros and all ones", {
   expect_true(all(result_default_zeros$observed_rate == 1))
 })
 
-test_that("check_calibration handles NA values correctly", {
+test_that("check_model_calibration handles NA values correctly", {
   # Create data with NAs
   set.seed(123)
   test_data <- data.frame(
@@ -541,7 +546,7 @@ test_that("check_calibration handles NA values correctly", {
   )
 
   # Test with na.rm = FALSE (default)
-  result_false <- suppress_calibration_warnings(check_calibration(
+  result_false <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -550,7 +555,7 @@ test_that("check_calibration handles NA values correctly", {
   ))
 
   # Test with na.rm = TRUE
-  result_true <- suppress_calibration_warnings(check_calibration(
+  result_true <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -562,7 +567,7 @@ test_that("check_calibration handles NA values correctly", {
   expect_true(sum(result_true$count) == 45)
 })
 
-test_that("check_calibration handles factor treatment variables", {
+test_that("check_model_calibration handles factor treatment variables", {
   set.seed(123)
   test_data <- data.frame(
     pred = runif(100, 0, 1),
@@ -570,7 +575,7 @@ test_that("check_calibration handles factor treatment variables", {
   )
 
   # Should work with factor
-  result <- suppress_calibration_warnings(check_calibration(
+  result <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -582,29 +587,35 @@ test_that("check_calibration handles factor treatment variables", {
   expect_true(all(result$observed_rate >= 0 & result$observed_rate <= 1))
 })
 
-test_that("check_calibration validates input parameters", {
+test_that("check_model_calibration validates input parameters", {
   test_data <- data.frame(pred = runif(50), obs = rbinom(50, 1, 0.5))
 
   # Invalid bins for breaks method
   expect_halfmoon_error(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 1),
+    check_model_calibration(test_data, pred, obs, method = "breaks", bins = 1),
     "halfmoon_arg_error"
   )
 
   # Non-integer bins
   expect_halfmoon_error(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 2.5),
+    check_model_calibration(
+      test_data,
+      pred,
+      obs,
+      method = "breaks",
+      bins = 2.5
+    ),
     "halfmoon_arg_error"
   )
 
   # Missing column
   expect_halfmoon_error(
-    check_calibration(test_data, nonexistent, obs),
+    check_model_calibration(test_data, nonexistent, obs),
     "halfmoon_column_error"
   )
 })
 
-test_that("check_calibration produces consistent results across methods", {
+test_that("check_model_calibration produces consistent results across methods", {
   # Create well-calibrated data
   set.seed(123)
   n <- 500
@@ -614,20 +625,20 @@ test_that("check_calibration produces consistent results across methods", {
   test_data <- data.frame(pred = pred, obs = obs)
 
   # Get results from all methods
-  result_breaks <- check_calibration(
+  result_breaks <- check_model_calibration(
     test_data,
     pred,
     obs,
     method = "breaks",
     bins = 5
   )
-  result_logistic <- suppress_calibration_warnings(check_calibration(
+  result_logistic <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
     method = "logistic"
   ))
-  result_windowed <- suppress_calibration_warnings(check_calibration(
+  result_windowed <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -649,7 +660,7 @@ test_that("check_calibration produces consistent results across methods", {
   expect_true(windowed_diff < 0.2)
 })
 
-test_that("check_calibration provides helpful warnings for small cell sizes", {
+test_that("check_model_calibration provides helpful warnings for small cell sizes", {
   # Create test data with imbalanced distribution to create small cells
   set.seed(123)
   n <- 100
@@ -660,12 +671,12 @@ test_that("check_calibration provides helpful warnings for small cell sizes", {
 
   # Test breaks method with small cells
   expect_halfmoon_warning(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
+    check_model_calibration(test_data, pred, obs, method = "breaks", bins = 10),
     class = "halfmoon_data_warning"
   )
 })
 
-test_that("check_calibration provides helpful warnings for extreme proportions", {
+test_that("check_model_calibration provides helpful warnings for extreme proportions", {
   # Create data where some bins have all 0s or all 1s
   set.seed(123)
   test_data <- data.frame(
@@ -674,12 +685,12 @@ test_that("check_calibration provides helpful warnings for extreme proportions",
   )
 
   expect_halfmoon_warning(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 10),
+    check_model_calibration(test_data, pred, obs, method = "breaks", bins = 10),
     "halfmoon_data_warning"
   )
 })
 
-test_that("check_calibration windowed method provides helpful warnings", {
+test_that("check_model_calibration windowed method provides helpful warnings", {
   # Create sparse data
   set.seed(123)
   test_data <- data.frame(
@@ -689,7 +700,7 @@ test_that("check_calibration windowed method provides helpful warnings", {
 
   # Small window size will create windows with few observations
   expect_halfmoon_warning(
-    check_calibration(
+    check_model_calibration(
       test_data,
       pred,
       obs,
@@ -702,7 +713,7 @@ test_that("check_calibration windowed method provides helpful warnings", {
 
   # Capture the specific warning message
   warning_msg <- capture_warnings(
-    check_calibration(
+    check_model_calibration(
       test_data,
       pred,
       obs,
@@ -716,7 +727,7 @@ test_that("check_calibration windowed method provides helpful warnings", {
   expect_match(warning_msg[1], "Consider using a larger window size")
 })
 
-test_that("check_calibration doesn't warn for adequate sample sizes", {
+test_that("check_model_calibration doesn't warn for adequate sample sizes", {
   # Create well-distributed data
   set.seed(123)
   n <- 1000
@@ -727,11 +738,11 @@ test_that("check_calibration doesn't warn for adequate sample sizes", {
 
   # Should not produce warnings
   expect_no_warning(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 10)
+    check_model_calibration(test_data, pred, obs, method = "breaks", bins = 10)
   )
 
   expect_no_warning(
-    check_calibration(
+    check_model_calibration(
       test_data,
       pred,
       obs,
@@ -751,7 +762,7 @@ test_that("warnings include specific bin/window information", {
   )
 
   warning_msg <- capture_warnings(
-    check_calibration(test_data, pred, obs, method = "breaks", bins = 10)
+    check_model_calibration(test_data, pred, obs, method = "breaks", bins = 10)
   )
 
   # Should mention specific bins
@@ -764,7 +775,7 @@ test_that("warnings include specific bin/window information", {
   )
 
   warning_msg2 <- capture_warnings(
-    check_calibration(
+    check_model_calibration(
       test_data2,
       pred,
       obs,
@@ -784,11 +795,11 @@ test_that("warnings handle edge case with no valid results gracefully", {
 
   # Should not produce warnings for empty data
   expect_no_warning(
-    check_calibration(empty_data, pred, obs, method = "breaks")
+    check_model_calibration(empty_data, pred, obs, method = "breaks")
   )
 
   expect_no_warning(
-    check_calibration(empty_data, pred, obs, method = "windowed")
+    check_model_calibration(empty_data, pred, obs, method = "windowed")
   )
 })
 
@@ -991,7 +1002,7 @@ test_that("geom_calibration errors with invalid method", {
   )
 })
 
-test_that("check_calibration errors with invalid bins", {
+test_that("check_model_calibration errors with invalid bins", {
   # Create test data
   set.seed(123)
   n <- 50
@@ -1005,11 +1016,11 @@ test_that("check_calibration errors with invalid bins", {
 
   # Test with invalid bins
   expect_halfmoon_error(
-    check_calibration(cal_data, pred, obs, bins = 1)
+    check_model_calibration(cal_data, pred, obs, bins = 1)
   )
 
   expect_halfmoon_error(
-    check_calibration(cal_data, pred, obs, bins = 2.5)
+    check_model_calibration(cal_data, pred, obs, bins = 2.5)
   )
 })
 
@@ -1051,7 +1062,7 @@ test_that("k parameter works in check_calibration", {
   )
 
   # Test with default k = 10
-  result_k10 <- check_calibration(
+  result_k10 <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1061,7 +1072,7 @@ test_that("k parameter works in check_calibration", {
   )
 
   # Test with smaller k = 5
-  result_k5 <- check_calibration(
+  result_k5 <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1071,7 +1082,7 @@ test_that("k parameter works in check_calibration", {
   )
 
   # Test with larger k = 20
-  result_k20 <- check_calibration(
+  result_k20 <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1113,7 +1124,7 @@ test_that("k parameter is ignored when smooth = FALSE", {
   )
 
   # Results should be identical when smooth = FALSE
-  result1 <- check_calibration(
+  result1 <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1122,7 +1133,7 @@ test_that("k parameter is ignored when smooth = FALSE", {
     k = 5
   )
 
-  result2 <- check_calibration(
+  result2 <- check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1149,7 +1160,7 @@ test_that("k parameter is ignored for non-logistic methods", {
   )
 
   # k should be ignored for breaks method
-  result1 <- suppress_calibration_warnings(check_calibration(
+  result1 <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1157,7 +1168,7 @@ test_that("k parameter is ignored for non-logistic methods", {
     k = 5
   ))
 
-  result2 <- suppress_calibration_warnings(check_calibration(
+  result2 <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1169,7 +1180,7 @@ test_that("k parameter is ignored for non-logistic methods", {
   expect_equal(result1$observed_rate, result2$observed_rate)
 
   # k should be ignored for windowed method
-  result3 <- suppress_calibration_warnings(check_calibration(
+  result3 <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1177,7 +1188,7 @@ test_that("k parameter is ignored for non-logistic methods", {
     k = 5
   ))
 
-  result4 <- suppress_calibration_warnings(check_calibration(
+  result4 <- suppress_calibration_warnings(check_model_calibration(
     test_data,
     pred,
     obs,
@@ -1241,9 +1252,27 @@ test_that("k parameter works in plot_calibration", {
   )
 
   # Create plots with different k values
-  p_k5 <- plot_calibration(test_data, pred, obs, method = "logistic", k = 5)
-  p_k10 <- plot_calibration(test_data, pred, obs, method = "logistic", k = 10)
-  p_k20 <- plot_calibration(test_data, pred, obs, method = "logistic", k = 20)
+  p_k5 <- plot_model_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    k = 5
+  )
+  p_k10 <- plot_model_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    k = 10
+  )
+  p_k20 <- plot_model_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    k = 20
+  )
 
   # Test with vdiffr
   expect_doppelganger("plot_calibration k=5", p_k5)

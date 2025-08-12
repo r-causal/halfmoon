@@ -44,12 +44,16 @@ test_that("geom_qq2 works with weights", {
 
 test_that("geom_qq2 works with color aesthetic for multiple weights", {
   # Create long format data
-  long_data <- tidyr::pivot_longer(
-    nhefs_weights,
-    cols = c(w_ate, w_att),
-    names_to = "weight_type",
-    values_to = "weight"
-  )
+  long_data <- nhefs_weights |>
+    dplyr::mutate(
+      w_ate_num = as.numeric(w_ate),
+      w_att_num = as.numeric(w_att)
+    ) |>
+    tidyr::pivot_longer(
+      cols = c(w_ate_num, w_att_num),
+      names_to = "weight_type",
+      values_to = "weight"
+    )
 
   p <- ggplot2::ggplot(
     long_data,
@@ -116,6 +120,7 @@ test_that("plot_qq and geom_qq2 produce equivalent results", {
 
 # vdiffr visual regression tests
 test_that("geom_qq2 visual regression tests", {
+  withr::local_seed(123)
   # Basic geom_qq2
   expect_doppelganger(
     "geom_qq2 basic",
@@ -139,17 +144,13 @@ test_that("geom_qq2 visual regression tests", {
   )
 
   # With color for multiple weights
-  # TODO: Remove vec_data() workaround once propensity implements vctrs methods
-  nhefs_for_pivot2 <- nhefs_weights
-  nhefs_for_pivot2$w_ate <- vctrs::vec_data(nhefs_weights$w_ate)
-  nhefs_for_pivot2$w_att <- vctrs::vec_data(nhefs_weights$w_att)
-
-  long_data <- tidyr::pivot_longer(
-    nhefs_for_pivot2,
-    cols = c(w_ate, w_att),
-    names_to = "weight_type",
-    values_to = "weight"
-  )
+  long_data <- nhefs_weights |>
+    dplyr::mutate(dplyr::across(c(w_ate, w_att), as.numeric)) |>
+    tidyr::pivot_longer(
+      cols = c(w_ate, w_att),
+      names_to = "weight_type",
+      values_to = "weight"
+    )
 
   expect_doppelganger(
     "geom_qq2 multiple weights",

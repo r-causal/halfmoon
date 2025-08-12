@@ -81,17 +81,18 @@ ggplot(
 ``` r
 
 # weighted SMDs
-plot_df <- tidy_smd(
+plot_df <- check_balance(
   nhefs_weights,
   race:active,
   .group = qsmk,
-  .wts = starts_with("w_")
+  .wts = c(w_ate, w_att, w_atm, w_ato),
+  .metrics = "smd"
 )
 
 ggplot(
   plot_df,
   aes(
-    x = abs(smd),
+    x = abs(estimate),
     y = variable,
     group = method,
     color = method
@@ -116,22 +117,22 @@ about 0.5 (what you would observe from a randomized experiment):
 
 ``` r
 # Check AUC across different weighting methods
-roc_results <- roc_curve(
+roc_results <- check_model_roc_curve(
   nhefs_weights,
   .truth = qsmk,
   .estimate = .fitted,
-  .wts = starts_with("w_")
+  .wts = c(w_ate, w_att, w_atm, w_ato)
 )
 
-auc_results <- check_auc(
+auc_results <- check_model_auc(
   nhefs_weights,
   .truth = qsmk,
   .estimate = .fitted,
-  .wts = starts_with("w_")
+  .wts = c(w_ate, w_att, w_atm, w_ato)
 )
 
 # Plot ROC curves
-plot_roc_curve(roc_results)
+plot_model_roc_curve(roc_results)
 ```
 
 <img src="man/figures/README-roc-example-1.png" width="100%" />
@@ -139,7 +140,7 @@ plot_roc_curve(roc_results)
 ``` r
 
 # Display AUC values
-plot_roc_auc(auc_results)
+plot_model_auc(auc_results)
 ```
 
 <img src="man/figures/README-roc-example-2.png" width="100%" />
@@ -150,7 +151,7 @@ Evaluate whether predicted probabilities align with observed treatment
 frequencies:
 
 ``` r
-plot_calibration(nhefs_weights, .fitted, qsmk)
+plot_model_calibration(nhefs_weights, .fitted, qsmk)
 ```
 
 <img src="man/figures/README-calibration-example-1.png" width="100%" />
@@ -165,7 +166,7 @@ balance_results <- check_balance(
   nhefs_weights,
   .vars = race:active,
   .group = qsmk,
-  .wts = starts_with("w_"),
+  .wts = c(w_ate, w_att, w_atm, w_ato),
   .metrics = c("smd", "vr", "ks", "energy")
 )
 
@@ -213,13 +214,14 @@ One option is to just look at the matched dataset with halfmoon:
 ``` r
 matched_data <- get_matches(m.out1)
 
-match_smd <- tidy_smd(
+match_smd <- check_balance(
   matched_data,
-  c(age, educ, race, nodegree, married, re74, re75), 
-  .group = treat
+  c(age, educ, race, nodegree, married, re74, re75),
+  .group = treat,
+  .metrics = "smd"
 )
 
-love_plot(match_smd)
+plot_balance(match_smd)
 ```
 
 <img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
@@ -248,14 +250,15 @@ matches, we can more easily compare multiple matched datasets with
 `.wts`:
 
 ``` r
-many_matched_smds <- tidy_smd(
+many_matched_smds <- check_balance(
   matches,
-  c(age, educ, race, nodegree, married, re74, re75), 
-  .group = treat, 
-  .wts = c(m.out1, m.out2)
-) 
+  c(age, educ, race, nodegree, married, re74, re75),
+  .group = treat,
+  .wts = c(m.out1, m.out2),
+  .metrics = "smd"
+)
 
-love_plot(many_matched_smds)
+plot_balance(many_matched_smds)
 ```
 
 <img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />

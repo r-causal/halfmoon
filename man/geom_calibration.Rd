@@ -74,7 +74,7 @@ A ggplot2 layer or list of layers
 \description{
 \code{geom_calibration()} creates calibration plots to assess the agreement between predicted
 probabilities and observed binary outcomes. It supports three methods:
-binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with \code{\link[=check_calibration]{check_calibration()}}.
+binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with \code{\link[=check_model_calibration]{check_model_calibration()}}.
 }
 \details{
 This geom provides a ggplot2 layer for creating calibration plots with confidence
@@ -121,7 +121,7 @@ ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 }
 \seealso{
-\code{\link[=check_calibration]{check_calibration()}} for computing calibration statistics
+\code{\link[=check_model_calibration]{check_model_calibration()}} for computing calibration statistics
 
 Other ggplot2 functions: 
 \code{\link{geom_ecdf}()},
