@@ -76,12 +76,16 @@ test_that("geom_roc visual regression", {
 
   # Multiple groups with different weights
   # Create long format data
-  long_data <- tidyr::pivot_longer(
-    nhefs_weights,
-    cols = c(w_ate, w_att),
-    names_to = "weight_type",
-    values_to = "weight"
-  )
+  long_data <- nhefs_weights |>
+    dplyr::mutate(
+      w_ate_num = as.numeric(w_ate),
+      w_att_num = as.numeric(w_att)
+    ) |>
+    tidyr::pivot_longer(
+      cols = c(w_ate_num, w_att_num),
+      names_to = "weight_type",
+      values_to = "weight"
+    )
 
   expect_doppelganger(
     "geom-roc-multiple-groups",

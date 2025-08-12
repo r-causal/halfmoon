@@ -434,7 +434,12 @@ test_that("check_model_calibration handles edge cases with all methods", {
   # Empty data
   empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
 
-  result_breaks <- check_model_calibration(empty_data, pred, obs, method = "breaks")
+  result_breaks <- check_model_calibration(
+    empty_data,
+    pred,
+    obs,
+    method = "breaks"
+  )
   expect_equal(nrow(result_breaks), 0)
   expect_true("count" %in% names(result_breaks))
   expect_true(".bin" %in% names(result_breaks))
@@ -593,7 +598,13 @@ test_that("check_model_calibration validates input parameters", {
 
   # Non-integer bins
   expect_halfmoon_error(
-    check_model_calibration(test_data, pred, obs, method = "breaks", bins = 2.5),
+    check_model_calibration(
+      test_data,
+      pred,
+      obs,
+      method = "breaks",
+      bins = 2.5
+    ),
     "halfmoon_arg_error"
   )
 
@@ -1241,9 +1252,27 @@ test_that("k parameter works in plot_calibration", {
   )
 
   # Create plots with different k values
-  p_k5 <- plot_model_calibration(test_data, pred, obs, method = "logistic", k = 5)
-  p_k10 <- plot_model_calibration(test_data, pred, obs, method = "logistic", k = 10)
-  p_k20 <- plot_model_calibration(test_data, pred, obs, method = "logistic", k = 20)
+  p_k5 <- plot_model_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    k = 5
+  )
+  p_k10 <- plot_model_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    k = 10
+  )
+  p_k20 <- plot_model_calibration(
+    test_data,
+    pred,
+    obs,
+    method = "logistic",
+    k = 20
+  )
 
   # Test with vdiffr
   expect_doppelganger("plot_calibration k=5", p_k5)

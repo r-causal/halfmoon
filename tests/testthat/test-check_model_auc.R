@@ -137,7 +137,13 @@ test_that("functions handle edge cases correctly", {
 
   # With na.rm = FALSE should error
   expect_halfmoon_error(
-    check_model_roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
+    check_model_roc_curve(
+      test_data_na,
+      truth,
+      estimate,
+      weight1,
+      na.rm = FALSE
+    ),
     "halfmoon_na_error"
   )
 
@@ -162,7 +168,12 @@ test_that("functions handle edge cases correctly", {
   )
 
   expect_warning(
-    roc_zero <- check_model_roc_curve(test_data_zero, truth, estimate, weight_zero),
+    roc_zero <- check_model_roc_curve(
+      test_data_zero,
+      truth,
+      estimate,
+      weight_zero
+    ),
     class = "halfmoon_data_warning"
   )
   expect_s3_class(roc_zero, "tbl_df")
@@ -175,7 +186,12 @@ test_that("functions handle edge cases correctly", {
   )
 
   expect_warning(
-    roc_neg <- check_model_roc_curve(test_data_neg, truth, estimate, weight_neg),
+    roc_neg <- check_model_roc_curve(
+      test_data_neg,
+      truth,
+      estimate,
+      weight_neg
+    ),
     class = "halfmoon_data_warning"
   )
   expect_s3_class(roc_neg, "tbl_df")

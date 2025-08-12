@@ -21,7 +21,12 @@ test_that("plot_model_calibration works with quoted column names", {
 
 test_that("plot_model_calibration works with different methods", {
   # Test breaks method
-  p_breaks <- plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "breaks")
+  p_breaks <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    method = "breaks"
+  )
   expect_s3_class(p_breaks, "ggplot")
 
   # Test logistic method
@@ -45,7 +50,12 @@ test_that("plot_model_calibration works with different methods", {
 
 test_that("plot_model_calibration works with treatment level specification", {
   # Test with explicit treatment level
-  p <- plot_model_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+  p <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    treatment_level = "1"
+  )
 
   expect_s3_class(p, "ggplot")
   expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
@@ -62,7 +72,12 @@ test_that("plot_model_calibration works with rug option", {
   expect_s3_class(p_no_rug, "ggplot")
 
   # Test with rug enabled
-  p_rug <- plot_model_calibration(nhefs_weights, .fitted, qsmk, include_rug = TRUE)
+  p_rug <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    include_rug = TRUE
+  )
   expect_s3_class(p_rug, "ggplot")
 
   # Rug plot should have one more layer
@@ -110,10 +125,20 @@ test_that("plot_model_calibration works with different bin counts", {
 
 test_that("plot_model_calibration works with different confidence levels", {
   # Test with different confidence levels
-  p_90 <- plot_model_calibration(nhefs_weights, .fitted, qsmk, conf_level = 0.90)
+  p_90 <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    conf_level = 0.90
+  )
   expect_s3_class(p_90, "ggplot")
 
-  p_99 <- plot_model_calibration(nhefs_weights, .fitted, qsmk, conf_level = 0.99)
+  p_99 <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    conf_level = 0.99
+  )
   expect_s3_class(p_99, "ggplot")
 })
 
@@ -238,15 +263,30 @@ test_that("plot_model_calibration visual snapshot tests", {
   expect_doppelganger("plot_calibration with rug", p2)
 
   # Logistic method
-  p3 <- plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
+  p3 <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    method = "logistic"
+  )
   expect_doppelganger("plot_calibration logistic", p3)
 
   # Windowed method
-  p4 <- plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
+  p4 <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    method = "windowed"
+  )
   expect_doppelganger("plot_calibration windowed", p4)
 
   # With explicit treatment level
-  p5 <- plot_model_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+  p5 <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    treatment_level = "1"
+  )
   expect_doppelganger("plot_calibration explicit treatment", p5)
 
   # GLM model tests
@@ -293,6 +333,10 @@ test_that("plot_model_calibration visual snapshot tests", {
   p13 <- plot_model_calibration(lpm_model)
   expect_doppelganger("plot_calibration lm basic", p13)
 
-  p14 <- plot_model_calibration(lpm_model, method = "logistic", include_rug = TRUE)
+  p14 <- plot_model_calibration(
+    lpm_model,
+    method = "logistic",
+    include_rug = TRUE
+  )
   expect_doppelganger("plot_calibration lm logistic with rug", p14)
 })

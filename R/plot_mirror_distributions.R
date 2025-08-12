@@ -108,7 +108,7 @@ plot_mirror_distributions <- function(
   .wts = NULL,
   type = c("histogram", "density"),
   mirror_axis = "y",
-  bins = NULL,
+  bins = 30,
   binwidth = NULL,
   bw = "nrd0",
   adjust = 1,

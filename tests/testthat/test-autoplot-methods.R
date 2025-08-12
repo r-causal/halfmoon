@@ -4,10 +4,7 @@ test_that("autoplot works for halfmoon_balance", {
   p <- autoplot(balance_data)
   expect_s3_class(p, "ggplot")
 
-  expect_doppelganger(
-    "autoplot-halfmoon-balance",
-    autoplot(balance_data)
-  )
+  expect_doppelganger("autoplot-halfmoon-balance", p)
 })
 
 test_that("autoplot works for halfmoon_auc", {
@@ -16,10 +13,7 @@ test_that("autoplot works for halfmoon_auc", {
   p <- autoplot(auc_data)
   expect_s3_class(p, "ggplot")
 
-  expect_doppelganger(
-    "autoplot-halfmoon-auc",
-    autoplot(auc_data)
-  )
+  expect_doppelganger("autoplot-halfmoon-auc", p)
 })
 
 test_that("autoplot works for halfmoon_ess", {
@@ -28,34 +22,34 @@ test_that("autoplot works for halfmoon_ess", {
   p <- autoplot(ess_data)
   expect_s3_class(p, "ggplot")
 
-  expect_doppelganger(
-    "autoplot-halfmoon-ess",
-    autoplot(ess_data)
-  )
+  expect_doppelganger("autoplot-halfmoon-ess", p)
 })
 
 test_that("autoplot works for halfmoon_calibration", {
-  cal_data <- check_model_calibration(nhefs_weights, .fitted, qsmk)
+  cal_data <- suppress_calibration_warnings(check_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk
+  ))
 
   p <- autoplot(cal_data)
   expect_s3_class(p, "ggplot")
 
-  expect_doppelganger(
-    "autoplot-halfmoon-calibration",
-    autoplot(cal_data)
-  )
+  expect_doppelganger("autoplot-halfmoon-calibration", p)
 })
 
 test_that("autoplot works for halfmoon_roc", {
-  roc_data <- check_model_roc_curve(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))
+  roc_data <- check_model_roc_curve(
+    nhefs_weights,
+    qsmk,
+    .fitted,
+    c(w_ate, w_att)
+  )
 
   p <- autoplot(roc_data)
   expect_s3_class(p, "ggplot")
 
-  expect_doppelganger(
-    "autoplot-halfmoon-roc",
-    autoplot(roc_data)
-  )
+  expect_doppelganger("autoplot-halfmoon-roc", p)
 })
 
 test_that("autoplot works for halfmoon_qq", {
@@ -64,18 +58,19 @@ test_that("autoplot works for halfmoon_qq", {
   p <- autoplot(qq_data)
   expect_s3_class(p, "ggplot")
 
-  expect_doppelganger(
-    "autoplot-halfmoon-qq",
-    autoplot(qq_data)
-  )
+  expect_doppelganger("autoplot-halfmoon-qq", p)
 })
 
 test_that("plot methods work for all halfmoon classes", {
   # Create all data types
-  balance_data <- check_balance(nhefs_weights, age, qsmk, .wts = w_ate)
+  balance_data <- check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate)
   auc_data <- check_model_auc(nhefs_weights, qsmk, .fitted, w_ate)
   ess_data <- check_ess(nhefs_weights, .wts = w_ate)
-  cal_data <- check_model_calibration(nhefs_weights, .fitted, qsmk)
+  cal_data <- suppress_calibration_warnings(check_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk
+  ))
   roc_data <- check_model_roc_curve(nhefs_weights, qsmk, .fitted, w_ate)
   qq_data <- check_qq(nhefs_weights, age, qsmk, .wts = w_ate)
 

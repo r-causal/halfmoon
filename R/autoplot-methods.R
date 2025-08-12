@@ -70,41 +70,35 @@ NULL
 #' @rdname plot-halfmoon
 #' @export
 plot.halfmoon_balance <- function(x, ...) {
-  print(autoplot(x, ...))
-  invisible(autoplot(x, ...))
+  autoplot(x, ...)
 }
 
 #' @rdname plot-halfmoon
 #' @export
 plot.halfmoon_ess <- function(x, ...) {
-  print(autoplot(x, ...))
-  invisible(autoplot(x, ...))
+  autoplot(x, ...)
 }
 
 #' @rdname plot-halfmoon
 #' @export
 plot.halfmoon_calibration <- function(x, ...) {
-  print(autoplot(x, ...))
-  invisible(autoplot(x, ...))
+  autoplot(x, ...)
 }
 
 #' @rdname plot-halfmoon
 #' @export
 plot.halfmoon_roc <- function(x, ...) {
-  print(autoplot(x, ...))
-  invisible(autoplot(x, ...))
+  autoplot(x, ...)
 }
 
 #' @rdname plot-halfmoon
 #' @export
 plot.halfmoon_auc <- function(x, ...) {
-  print(autoplot(x, ...))
-  invisible(autoplot(x, ...))
+  autoplot(x, ...)
 }
 
 #' @rdname plot-halfmoon
 #' @export
 plot.halfmoon_qq <- function(x, ...) {
-  print(autoplot(x, ...))
-  invisible(autoplot(x, ...))
+  autoplot(x, ...)
 }
