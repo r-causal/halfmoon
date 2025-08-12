@@ -78,17 +78,18 @@ ggplot(
   ylab("Proportion <= x")
 
 # weighted SMDs
-plot_df <- tidy_smd(
+plot_df <- check_balance(
   nhefs_weights,
   race:active,
   .group = qsmk,
-  .wts = starts_with("w_")
+  .wts = c(w_ate, w_att, w_atm, w_ato),
+  .metrics = "smd"
 )
 
 ggplot(
   plot_df,
   aes(
-    x = abs(smd),
+    x = abs(estimate),
     y = variable,
     group = method,
     color = method
@@ -107,25 +108,25 @@ Assess how well your propensity score model discriminates between treatment grou
 
 ```{r roc-example}
 # Check AUC across different weighting methods
-roc_results <- roc_curve(
+roc_results <- check_model_roc_curve(
   nhefs_weights,
   .truth = qsmk,
   .estimate = .fitted,
-  .wts = starts_with("w_")
+  .wts = c(w_ate, w_att, w_atm, w_ato)
 )
 
-auc_results <- check_auc(
+auc_results <- check_model_auc(
   nhefs_weights,
   .truth = qsmk,
   .estimate = .fitted,
-  .wts = starts_with("w_")
+  .wts = c(w_ate, w_att, w_atm, w_ato)
 )
 
 # Plot ROC curves
-plot_roc_curve(roc_results)
+plot_model_roc_curve(roc_results)
 
 # Display AUC values
-plot_roc_auc(auc_results)
+plot_model_auc(auc_results)
 ```
 
 ### Calibration Assessment
@@ -134,7 +135,7 @@ Evaluate whether predicted probabilities align with observed treatment frequenci
 
 ```{r calibration-example}
 #| warning: false
-plot_calibration(nhefs_weights, .fitted, qsmk)
+plot_model_calibration(nhefs_weights, .fitted, qsmk)
 ```
 
 ### Comprehensive Balance Checking
@@ -147,7 +148,7 @@ balance_results <- check_balance(
   nhefs_weights,
   .vars = race:active,
   .group = qsmk,
-  .wts = starts_with("w_"),
+  .wts = c(w_ate, w_att, w_atm, w_ato),
   .metrics = c("smd", "vr", "ks", "energy")
 )
 
@@ -189,13 +190,14 @@ One option is to just look at the matched dataset with halfmoon:
 ```{r}
 matched_data <- get_matches(m.out1)
 
-match_smd <- tidy_smd(
+match_smd <- check_balance(
   matched_data,
-  c(age, educ, race, nodegree, married, re74, re75), 
-  .group = treat
+  c(age, educ, race, nodegree, married, re74, re75),
+  .group = treat,
+  .metrics = "smd"
 )
 
-love_plot(match_smd)
+plot_balance(match_smd)
 ```
 
 The downside here is that you can't compare multiple matching strategies to the observed dataset; the label on the plot is also wrong. halfmoon comes with a helper function, `bind_matches()`, that creates a dataset more appropriate for this task:
@@ -208,14 +210,15 @@ head(matches)
 `matches` includes an binary variable for each `matchit` object which indicates if the row was included in the match or not. Since downweighting to 0 is equivalent to filtering the datasets to the matches, we can more easily compare multiple matched datasets with `.wts`:
 
 ```{r}
-many_matched_smds <- tidy_smd(
+many_matched_smds <- check_balance(
   matches,
-  c(age, educ, race, nodegree, married, re74, re75), 
-  .group = treat, 
-  .wts = c(m.out1, m.out2)
-) 
+  c(age, educ, race, nodegree, married, re74, re75),
+  .group = treat,
+  .wts = c(m.out1, m.out2),
+  .metrics = "smd"
+)
 
-love_plot(many_matched_smds)
+plot_balance(many_matched_smds)
 ```
 
 We can also extend the idea that matching indicators are weights to weighted mirrored histograms, giving us a good idea of the range of propensity scores that are being removed from the dataset.
@@ -235,5 +238,3 @@ ggplot(matches, aes(ps)) +
         alpha = 0.5
     ) + scale_y_continuous(labels = abs)
 ```
-
-
