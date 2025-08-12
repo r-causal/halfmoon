@@ -115,17 +115,18 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># weighted SMDs</span></span>
-<span><span class="va">plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-causal.github.io/tidysmd/reference/tidy_smd.html" class="external-link">tidy_smd</a></span><span class="op">(</span></span>
+<span><span class="va">plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_balance.html">check_balance</a></span><span class="op">(</span></span>
 <span>  <span class="va">nhefs_weights</span>,</span>
 <span>  <span class="va">race</span><span class="op">:</span><span class="va">active</span>,</span>
 <span>  .group <span class="op">=</span> <span class="va">qsmk</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"w_"</span><span class="op">)</span></span>
+<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span>, <span class="va">w_atm</span>, <span class="va">w_ato</span><span class="op">)</span>,</span>
+<span>  .metrics <span class="op">=</span> <span class="st">"smd"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span></span>
 <span>  <span class="va">plot_df</span>,</span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
-<span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">smd</span><span class="op">)</span>,</span>
+<span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">estimate</span><span class="op">)</span>,</span>
 <span>    y <span class="op">=</span> <span class="va">variable</span>,</span>
 <span>    group <span class="op">=</span> <span class="va">method</span>,</span>
 <span>    color <span class="op">=</span> <span class="va">method</span></span>
@@ -144,27 +145,27 @@
 <p>Assess how well your propensity score model discriminates between treatment groups, as well as whether or not the weights create an AUC of about 0.5 (what you would observe from a randomized experiment):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check AUC across different weighting methods</span></span>
-<span><span class="va">roc_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/roc_curve.html">roc_curve</a></span><span class="op">(</span></span>
+<span><span class="va">roc_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_model_roc_curve.html">check_model_roc_curve</a></span><span class="op">(</span></span>
 <span>  <span class="va">nhefs_weights</span>,</span>
 <span>  .truth <span class="op">=</span> <span class="va">qsmk</span>,</span>
 <span>  .estimate <span class="op">=</span> <span class="va">.fitted</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"w_"</span><span class="op">)</span></span>
+<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span>, <span class="va">w_atm</span>, <span class="va">w_ato</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">auc_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_auc.html">check_auc</a></span><span class="op">(</span></span>
+<span><span class="va">auc_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_model_auc.html">check_model_auc</a></span><span class="op">(</span></span>
 <span>  <span class="va">nhefs_weights</span>,</span>
 <span>  .truth <span class="op">=</span> <span class="va">qsmk</span>,</span>
 <span>  .estimate <span class="op">=</span> <span class="va">.fitted</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"w_"</span><span class="op">)</span></span>
+<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span>, <span class="va">w_atm</span>, <span class="va">w_ato</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Plot ROC curves</span></span>
-<span><span class="fu"><a href="reference/plot_roc_curve.html">plot_roc_curve</a></span><span class="op">(</span><span class="va">roc_results</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/plot_model_roc_curve.html">plot_model_roc_curve</a></span><span class="op">(</span><span class="va">roc_results</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-roc-example-1.png" width="100%"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Display AUC values</span></span>
-<span><span class="fu"><a href="reference/plot_roc_auc.html">plot_roc_auc</a></span><span class="op">(</span><span class="va">auc_results</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/plot_model_auc.html">plot_model_auc</a></span><span class="op">(</span><span class="va">auc_results</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-roc-example-2.png" width="100%"></p>
 </div>
 <div class="section level3">
@@ -172,7 +173,7 @@
 </h3>
 <p>Evaluate whether predicted probabilities align with observed treatment frequencies:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/plot_calibration.html">plot_calibration</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/plot_model_calibration.html">plot_model_calibration</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-calibration-example-1.png" width="100%"></p>
 </div>
 <div class="section level3">
@@ -185,7 +186,7 @@
 <span>  <span class="va">nhefs_weights</span>,</span>
 <span>  .vars <span class="op">=</span> <span class="va">race</span><span class="op">:</span><span class="va">active</span>,</span>
 <span>  .group <span class="op">=</span> <span class="va">qsmk</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"w_"</span><span class="op">)</span>,</span>
+<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span>, <span class="va">w_atm</span>, <span class="va">w_ato</span><span class="op">)</span>,</span>
 <span>  .metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smd"</span>, <span class="st">"vr"</span>, <span class="st">"ks"</span>, <span class="st">"energy"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -225,13 +226,14 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">matched_data</span> <span class="op">&lt;-</span> <span class="fu">get_matches</span><span class="op">(</span><span class="va">m.out1</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">match_smd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-causal.github.io/tidysmd/reference/tidy_smd.html" class="external-link">tidy_smd</a></span><span class="op">(</span></span>
+<span><span class="va">match_smd</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_balance.html">check_balance</a></span><span class="op">(</span></span>
 <span>  <span class="va">matched_data</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">educ</span>, <span class="va">race</span>, <span class="va">nodegree</span>, <span class="va">married</span>, <span class="va">re74</span>, <span class="va">re75</span><span class="op">)</span>, </span>
-<span>  .group <span class="op">=</span> <span class="va">treat</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">educ</span>, <span class="va">race</span>, <span class="va">nodegree</span>, <span class="va">married</span>, <span class="va">re74</span>, <span class="va">re75</span><span class="op">)</span>,</span>
+<span>  .group <span class="op">=</span> <span class="va">treat</span>,</span>
+<span>  .metrics <span class="op">=</span> <span class="st">"smd"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://r-causal.github.io/tidysmd/reference/geom_love.html" class="external-link">love_plot</a></span><span class="op">(</span><span class="va">match_smd</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/plot_balance.html">plot_balance</a></span><span class="op">(</span><span class="va">match_smd</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-3-1.png" width="100%"></p>
 <p>The downside here is that you can’t compare multiple matching strategies to the observed dataset; the label on the plot is also wrong. halfmoon comes with a helper function, <code><a href="https://r-causal.github.io/tidysmd/reference/bind_matches.html" class="external-link">bind_matches()</a></code>, that creates a dataset more appropriate for this task:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -246,14 +248,15 @@
 <span><span class="co">#&gt; NSW6     1  22    9  black       0        1    0    0  4056.4940      1      1</span></span></code></pre></div>
 <p><code>matches</code> includes an binary variable for each <code>matchit</code> object which indicates if the row was included in the match or not. Since downweighting to 0 is equivalent to filtering the datasets to the matches, we can more easily compare multiple matched datasets with <code>.wts</code>:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">many_matched_smds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-causal.github.io/tidysmd/reference/tidy_smd.html" class="external-link">tidy_smd</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">many_matched_smds</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_balance.html">check_balance</a></span><span class="op">(</span></span>
 <span>  <span class="va">matches</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">educ</span>, <span class="va">race</span>, <span class="va">nodegree</span>, <span class="va">married</span>, <span class="va">re74</span>, <span class="va">re75</span><span class="op">)</span>, </span>
-<span>  .group <span class="op">=</span> <span class="va">treat</span>, </span>
-<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">m.out1</span>, <span class="va">m.out2</span><span class="op">)</span></span>
-<span><span class="op">)</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">educ</span>, <span class="va">race</span>, <span class="va">nodegree</span>, <span class="va">married</span>, <span class="va">re74</span>, <span class="va">re75</span><span class="op">)</span>,</span>
+<span>  .group <span class="op">=</span> <span class="va">treat</span>,</span>
+<span>  .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">m.out1</span>, <span class="va">m.out2</span><span class="op">)</span>,</span>
+<span>  .metrics <span class="op">=</span> <span class="st">"smd"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://r-causal.github.io/tidysmd/reference/geom_love.html" class="external-link">love_plot</a></span><span class="op">(</span><span class="va">many_matched_smds</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/plot_balance.html">plot_balance</a></span><span class="op">(</span><span class="va">many_matched_smds</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-5-1.png" width="100%"></p>
 <p>We can also extend the idea that matching indicators are weights to weighted mirrored histograms, giving us a good idea of the range of propensity scores that are being removed from the dataset.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">

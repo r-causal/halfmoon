@@ -53,7 +53,10 @@ groups.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_qq</span><span class="op">(</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_qq</span><span class="op">(</span><span class="va">.data</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Default S3 method</span></span>
+<span><span class="fu">plot_qq</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
 <span>  <span class="va">.var</span>,</span>
 <span>  <span class="va">.group</span>,</span>
@@ -61,8 +64,12 @@ groups.</p>
 <span>  quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span>, <span class="fl">0.01</span><span class="op">)</span>,</span>
 <span>  include_observed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'halfmoon_qq'</span></span>
+<span><span class="fu">plot_qq</span><span class="op">(</span><span class="va">.data</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,7 +77,11 @@ groups.</p>
 
 
 <dl><dt id="arg--data">.data<a class="anchor" aria-label="anchor" href="#arg--data"></a></dt>
-<dd><p>A data frame containing the variables.</p></dd>
+<dd><p>A data frame containing the variables or a halfmoon_qq object.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Arguments passed to methods (see Methods section).</p></dd>
 
 
 <dt id="arg--var">.var<a class="anchor" aria-label="anchor" href="#arg--var"></a></dt>
@@ -120,11 +131,23 @@ appropriate axis labels.</p>
 which shows the empirical cumulative distribution functions directly.</p>
     </div>
     <div class="section level2">
+    <h2 id="methods">Methods<a class="anchor" aria-label="anchor" href="#methods"></a></h2>
+
+
+<dl><dt><code>plot_qq.default</code></dt>
+<dd><p>For data frames. Accepts all documented parameters.</p></dd>
+
+<dt><code>plot_qq.halfmoon_qq</code></dt>
+<dd><p>For halfmoon_qq objects from <code><a href="check_qq.html">check_qq()</a></code>. Only uses <code>.data</code> and <code>...</code> parameters.</p></dd>
+
+
+</dl></div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index">
 <ul><li><p><code><a href="geom_ecdf.html">geom_ecdf()</a></code> for ECDF plots, an alternative distributional visualization</p></li>
 <li><p><code><a href="geom_qq2.html">geom_qq2()</a></code> for the underlying geom used by this function</p></li>
-<li><p><code><a href="qq.html">qq()</a></code> for computing QQ data without plotting</p></li>
+<li><p><code><a href="check_qq.html">check_qq()</a></code> for computing QQ data without plotting</p></li>
 </ul></div>
     </div>
 

@@ -60,7 +60,7 @@ the distributions side-by-side with one group mirrored below the axis.</p>
 <span>  .wts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"histogram"</span>, <span class="st">"density"</span><span class="op">)</span>,</span>
 <span>  mirror_axis <span class="op">=</span> <span class="st">"y"</span>,</span>
-<span>  bins <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bins <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>  binwidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  bw <span class="op">=</span> <span class="st">"nrd0"</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -175,7 +175,6 @@ by providing multiple weight variables.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic histogram (unweighted)</span></span></span>
 <span class="r-in"><span><span class="fu">plot_mirror_distributions</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_mirror_count()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="plot_mirror_distributions-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Density plot instead of histogram</span></span></span>
@@ -184,12 +183,10 @@ by providing multiple weight variables.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With weighting</span></span></span>
 <span class="r-in"><span><span class="fu">plot_mirror_distributions</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_mirror_count()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="plot_mirror_distributions-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compare multiple weighting schemes</span></span></span>
 <span class="r-in"><span><span class="fu">plot_mirror_distributions</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_mirror_count()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="plot_mirror_distributions-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Customize appearance</span></span></span>
@@ -207,7 +204,6 @@ by providing multiple weight variables.</p>
 <span class="r-in"><span>  .wts <span class="op">=</span> <span class="va">w_ate</span>,</span></span>
 <span class="r-in"><span>  include_unweighted <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_mirror_count()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="plot_mirror_distributions-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Categorical exposure - creates grid of comparisons</span></span></span>
@@ -227,7 +223,6 @@ by providing multiple weight variables.</p>
 <span class="r-in"><span>  .wts <span class="op">=</span> <span class="va">w_cat_ate</span>,</span></span>
 <span class="r-in"><span>  reference_group <span class="op">=</span> <span class="st">"none"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_mirror_count()` using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="plot_mirror_distributions-8.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

@@ -55,6 +55,12 @@
         <dd>Add ESS Table Header</dd>
       </dl><dl><dt>
 
+          <code><a href="autoplot-halfmoon.html">autoplot(<i>&lt;halfmoon_balance&gt;</i>)</a></code> <code><a href="autoplot-halfmoon.html">autoplot(<i>&lt;halfmoon_ess&gt;</i>)</a></code> <code><a href="autoplot-halfmoon.html">autoplot(<i>&lt;halfmoon_calibration&gt;</i>)</a></code> <code><a href="autoplot-halfmoon.html">autoplot(<i>&lt;halfmoon_roc&gt;</i>)</a></code> <code><a href="autoplot-halfmoon.html">autoplot(<i>&lt;halfmoon_auc&gt;</i>)</a></code> <code><a href="autoplot-halfmoon.html">autoplot(<i>&lt;halfmoon_qq&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Autoplot Methods for halfmoon Objects</dd>
+      </dl><dl><dt>
+
           <code><a href="bal_corr.html">bal_corr()</a></code>
 
         </dt>
@@ -67,16 +73,40 @@
         <dd>Balance Energy Distance</dd>
       </dl><dl><dt>
 
+          <code><a href="bal_ess.html">bal_ess()</a></code>
+
+        </dt>
+        <dd>Calculate Effective Sample Size for Single Weight Vector</dd>
+      </dl><dl><dt>
+
           <code><a href="bal_ks.html">bal_ks()</a></code>
 
         </dt>
         <dd>Balance Kolmogorov-Smirnov (KS) Statistic for Two Groups</dd>
       </dl><dl><dt>
 
+          <code><a href="bal_model_auc.html">bal_model_auc()</a></code>
+
+        </dt>
+        <dd>Calculate Single AUC for Model Balance Assessment</dd>
+      </dl><dl><dt>
+
+          <code><a href="bal_model_roc_curve.html">bal_model_roc_curve()</a></code>
+
+        </dt>
+        <dd>Calculate Single ROC Curve for Model Balance Assessment</dd>
+      </dl><dl><dt>
+
           <code><a href="bal_prognostic_score.html">bal_prognostic_score()</a></code>
 
         </dt>
         <dd>Compute Prognostic Scores for Balance Assessment</dd>
+      </dl><dl><dt>
+
+          <code><a href="bal_qq.html">bal_qq()</a></code>
+
+        </dt>
+        <dd>Compute QQ Data for Single Variable and Weight</dd>
       </dl><dl><dt>
 
           <code><a href="bal_smd.html">bal_smd()</a></code>
@@ -91,28 +121,40 @@
         <dd>Balance Variance Ratio for Two Groups</dd>
       </dl><dl><dt>
 
-          <code><a href="check_auc.html">check_auc()</a></code>
-
-        </dt>
-        <dd>Check Balance Using Weighted ROC Curves</dd>
-      </dl><dl><dt>
-
           <code><a href="check_balance.html">check_balance()</a></code>
 
         </dt>
         <dd>Check Balance Across Multiple Metrics</dd>
       </dl><dl><dt>
 
-          <code><a href="check_calibration.html">check_calibration()</a></code>
+          <code><a href="check_ess.html">check_ess()</a></code>
+
+        </dt>
+        <dd>Check Effective Sample Size</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_model_auc.html">check_model_auc()</a></code>
+
+        </dt>
+        <dd>Check Balance Using Weighted ROC Curves</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_model_calibration.html">check_model_calibration()</a></code>
 
         </dt>
         <dd>Compute calibration data for binary outcomes</dd>
       </dl><dl><dt>
 
-          <code><a href="check_ess.html">check_ess()</a></code>
+          <code><a href="check_model_roc_curve.html">check_model_roc_curve()</a></code>
 
         </dt>
-        <dd>Check Effective Sample Size</dd>
+        <dd>Check ROC Curves for Multiple Weights</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_qq.html">check_qq()</a></code>
+
+        </dt>
+        <dd>Check QQ Data for Multiple Weights</dd>
       </dl><dl><dt>
 
           <code><a href="ess.html">ess()</a></code>
@@ -163,16 +205,16 @@
         <dd>NHEFS with various propensity score weights</dd>
       </dl><dl><dt>
 
+          <code><a href="plot-halfmoon.html">plot(<i>&lt;halfmoon_balance&gt;</i>)</a></code> <code><a href="plot-halfmoon.html">plot(<i>&lt;halfmoon_ess&gt;</i>)</a></code> <code><a href="plot-halfmoon.html">plot(<i>&lt;halfmoon_calibration&gt;</i>)</a></code> <code><a href="plot-halfmoon.html">plot(<i>&lt;halfmoon_roc&gt;</i>)</a></code> <code><a href="plot-halfmoon.html">plot(<i>&lt;halfmoon_auc&gt;</i>)</a></code> <code><a href="plot-halfmoon.html">plot(<i>&lt;halfmoon_qq&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot Methods for halfmoon Objects</dd>
+      </dl><dl><dt>
+
           <code><a href="plot_balance.html">plot_balance()</a></code>
 
         </dt>
         <dd>Create balance plot from check_balance output</dd>
-      </dl><dl><dt>
-
-          <code><a href="plot_calibration.html">plot_calibration()</a></code>
-
-        </dt>
-        <dd>Create calibration plot</dd>
       </dl><dl><dt>
 
           <code><a href="plot_ess.html">plot_ess()</a></code>
@@ -187,40 +229,34 @@
         <dd>Create mirror distribution plots</dd>
       </dl><dl><dt>
 
+          <code><a href="plot_model_auc.html">plot_model_auc()</a></code>
+
+        </dt>
+        <dd>Plot ROC AUC Values for Balance Assessment</dd>
+      </dl><dl><dt>
+
+          <code><a href="plot_model_calibration.html">plot_model_calibration()</a></code>
+
+        </dt>
+        <dd>Create calibration plot</dd>
+      </dl><dl><dt>
+
+          <code><a href="plot_model_roc_curve.html">plot_model_roc_curve()</a></code>
+
+        </dt>
+        <dd>Plot weighted ROC Curves for Balance Assessment</dd>
+      </dl><dl><dt>
+
           <code><a href="plot_qq.html">plot_qq()</a></code>
 
         </dt>
         <dd>Create QQ plots for weighted and unweighted samples</dd>
       </dl><dl><dt>
 
-          <code><a href="plot_roc_auc.html">plot_roc_auc()</a></code>
-
-        </dt>
-        <dd>Plot ROC AUC Values for Balance Assessment</dd>
-      </dl><dl><dt>
-
-          <code><a href="plot_roc_curve.html">plot_roc_curve()</a></code>
-
-        </dt>
-        <dd>Plot weighted ROC Curves for Balance Assessment</dd>
-      </dl><dl><dt>
-
           <code><a href="plot_stratified_residuals.html">plot_stratified_residuals()</a></code>
 
         </dt>
         <dd>Create stratified residual diagnostic plots</dd>
-      </dl><dl><dt>
-
-          <code><a href="qq.html">qq()</a></code>
-
-        </dt>
-        <dd>Compute QQ plot data for weighted and unweighted samples</dd>
-      </dl><dl><dt>
-
-          <code><a href="roc_curve.html">roc_curve()</a></code>
-
-        </dt>
-        <dd>ROC Curve for Causal Inference</dd>
       </dl><dl><dt>
 
           <code><a href="stat_qq2.html">stat_qq2()</a></code>
