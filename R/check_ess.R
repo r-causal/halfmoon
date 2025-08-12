@@ -178,5 +178,8 @@ check_ess <- function(
     ess_data <- dplyr::select(ess_data, -.ess_group)
   }
 
+  # Add halfmoon_ess class
+  class(ess_data) <- c("halfmoon_ess", class(ess_data))
+
   ess_data
 }

@@ -167,8 +167,8 @@ A Visual Diagnostic Tool for Causal Inference. Observational Studies,
 }
 \seealso{
 \itemize{
-\item \code{\link[=plot_calibration]{plot_calibration()}} for calibration plots
-\item \code{\link[=plot_roc_curve]{plot_roc_curve()}} for ROC curves
+\item \code{\link[=plot_model_calibration]{plot_model_calibration()}} for calibration plots
+\item \code{\link[=plot_model_roc_curve]{plot_model_roc_curve()}} for ROC curves
 \item \code{\link[=plot_qq]{plot_qq()}} for QQ plots
 }
 }

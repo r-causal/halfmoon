@@ -128,15 +128,22 @@ check_balance(nhefs_weights, c(age, sex, race), qsmk)
 check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = FALSE)
 }
 \seealso{
-\code{\link[=bal_smd]{bal_smd()}}, \code{\link[=bal_vr]{bal_vr()}}, \code{\link[=bal_ks]{bal_ks()}}, \code{\link[=bal_corr]{bal_corr()}}, \code{\link[=bal_energy]{bal_energy()}} for individual metric functions
+\code{\link[=bal_smd]{bal_smd()}}, \code{\link[=bal_vr]{bal_vr()}}, \code{\link[=bal_ks]{bal_ks()}}, \code{\link[=bal_corr]{bal_corr()}}, \code{\link[=bal_energy]{bal_energy()}} for individual metric functions,
+\code{\link[=plot_balance]{plot_balance()}} for visualization
 
 Other balance functions: 
 \code{\link{bal_corr}()},
+\code{\link{bal_ess}()},
 \code{\link{bal_ks}()},
+\code{\link{bal_model_auc}()},
+\code{\link{bal_model_roc_curve}()},
+\code{\link{bal_qq}()},
 \code{\link{bal_smd}()},
 \code{\link{bal_vr}()},
-\code{\link{check_auc}()},
 \code{\link{check_ess}()},
+\code{\link{check_model_auc}()},
+\code{\link{check_model_roc_curve}()},
+\code{\link{check_qq}()},
 \code{\link{plot_balance}()}
 }
 \concept{balance functions}

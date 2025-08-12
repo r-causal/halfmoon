@@ -1,6 +1,6 @@
 #' Compute calibration data for binary outcomes
 #'
-#' `check_calibration()` summarizes predicted probabilities and observed outcomes,
+#' `check_model_calibration()` summarizes predicted probabilities and observed outcomes,
 #' computing mean prediction, observed rate, counts, and confidence intervals.
 #' Calibration represents the agreement between predicted probabilities and observed outcomes.
 #' Supports multiple methods for calibration assessment.
@@ -37,17 +37,17 @@
 #' @examples
 #' # Using the included `nhefs_weights` dataset
 #' # `.fitted` contains propensity scores, and `qsmk` is the treatment variable
-#' check_calibration(nhefs_weights, .fitted, qsmk)
+#' check_model_calibration(nhefs_weights, .fitted, qsmk)
 #'
 #' # Logistic method with smoothing
-#' check_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
+#' check_model_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
 #'
 #' # Windowed method
-#' check_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
+#' check_model_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 #'
 #' @importFrom stats prop.test quantile glm binomial predict plogis qnorm
 #' @export
-check_calibration <- function(
+check_model_calibration <- function(
   data,
   .fitted,
   .group,
@@ -112,6 +112,9 @@ check_calibration <- function(
       conf_level
     )
   }
+
+  # Add halfmoon_calibration class
+  class(result) <- c("halfmoon_calibration", class(result))
 
   result
 }
@@ -689,7 +692,7 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'
 #' `geom_calibration()` creates calibration plots to assess the agreement between predicted
 #' probabilities and observed binary outcomes. It supports three methods:
-#' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with [`check_calibration()`].
+#' binning ("breaks"), logistic regression ("logistic"), and windowed ("windowed"), all computed with [`check_model_calibration()`].
 #'
 #' @details
 #' This geom provides a ggplot2 layer for creating calibration plots with confidence
@@ -724,7 +727,7 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #' @inheritParams ggplot2_params
 #' @return A ggplot2 layer or list of layers
 #' @family ggplot2 functions
-#' @seealso [check_calibration()] for computing calibration statistics
+#' @seealso [check_model_calibration()] for computing calibration statistics
 #' @examples
 #' library(ggplot2)
 #'

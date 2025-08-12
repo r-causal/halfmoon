@@ -30,17 +30,18 @@
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{auc}{Numeric. The ROC AUC value.}
 #' @family balance functions
-#' @seealso [check_balance()] for other balance metrics, [geom_roc()] for plotting ROC curves
+#' @seealso [bal_model_auc()] for single AUC values, [plot_model_auc()] for visualization,
+#'   [check_balance()] for other balance metrics
 #'
 #' @examples
 #' # Check balance for propensity scores
-#' check_auc(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))
+#' check_model_auc(nhefs_weights, qsmk, .fitted, c(w_ate, w_att))
 #'
 #' # Without observed results
-#' check_auc(nhefs_weights, qsmk, .fitted, w_ate, include_observed = FALSE)
+#' check_model_auc(nhefs_weights, qsmk, .fitted, w_ate, include_observed = FALSE)
 #'
 #' @export
-check_auc <- function(
+check_model_auc <- function(
   .data,
   .truth,
   .estimate,
@@ -51,7 +52,7 @@ check_auc <- function(
 ) {
   validate_data_frame(.data)
 
-  roc_data <- roc_curve(
+  roc_data <- check_model_roc_curve(
     .data,
     {{ .truth }},
     {{ .estimate }},
@@ -68,6 +69,9 @@ check_auc <- function(
     compute_method_auc,
     roc_data = roc_data
   )
+
+  # Add halfmoon_auc class
+  class(auc_results) <- c("halfmoon_auc", class(auc_results))
 
   auc_results
 }
@@ -88,7 +92,7 @@ compute_method_auc <- function(method, roc_data) {
 }
 
 
-#' ROC Curve for Causal Inference
+#' Check ROC Curves for Multiple Weights
 #'
 #' Computes ROC curves (weighted or unweighted) for evaluating propensity score balance.
 #' In causal inference, an ROC curve near the diagonal (AUC around 0.5)
@@ -103,9 +107,11 @@ compute_method_auc <- function(method, roc_data) {
 #' @param treatment_level The level of `.truth` to consider as the treatment/event.
 #'   Default is NULL, which uses the second level.
 #'
-#' @return A tibble with ROC curve data.
+#' @return A tibble with class "halfmoon_roc" containing ROC curve data.
+#' @family balance functions
+#' @seealso [check_model_auc()] for AUC summaries, [bal_model_roc_curve()] for single ROC curves
 #' @export
-roc_curve <- function(
+check_model_roc_curve <- function(
   .data,
   .truth,
   .estimate,
@@ -264,7 +270,12 @@ roc_curve <- function(
     )
   }
 
-  dplyr::bind_rows(results)
+  result <- dplyr::bind_rows(results)
+
+  # Add halfmoon_roc class
+  class(result) <- c("halfmoon_roc", class(result))
+
+  result
 }
 
 compute_roc_curve_imp <- function(

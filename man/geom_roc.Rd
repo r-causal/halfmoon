@@ -72,7 +72,7 @@ ggplot(long_data, aes(estimate = .fitted, truth = qsmk, weight = weight)) +
 
 }
 \seealso{
-\code{\link[=check_auc]{check_auc()}} for computing AUC values, \code{\link[=stat_roc]{stat_roc()}} for the underlying stat
+\code{\link[=check_model_auc]{check_model_auc()}} for computing AUC values, \code{\link[=stat_roc]{stat_roc()}} for the underlying stat
 
 Other ggplot2 functions: 
 \code{\link{geom_calibration}()},

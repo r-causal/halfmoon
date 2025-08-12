@@ -34,17 +34,17 @@
 #' library(ggplot2)
 #'
 #' # Method 1: Using data frame
-#' plot_calibration(nhefs_weights, .fitted, qsmk)
+#' plot_model_calibration(nhefs_weights, .fitted, qsmk)
 #'
 #' # With rug plot
-#' plot_calibration(nhefs_weights, .fitted, qsmk, include_rug = TRUE)
+#' plot_model_calibration(nhefs_weights, .fitted, qsmk, include_rug = TRUE)
 #'
 #' # Different methods
-#' plot_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
-#' plot_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
+#' plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
+#' plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 #'
 #' # Specify treatment level explicitly
-#' plot_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+#' plot_model_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
 #'
 #' # Method 2: Using model objects
 #' # Fit a propensity score model
@@ -53,21 +53,21 @@
 #'                 family = binomial())
 #'
 #' # Plot calibration from the model
-#' plot_calibration(ps_model)
+#' plot_model_calibration(ps_model)
 #'
 #' @seealso
 #' - [`geom_calibration()`] for the underlying geom
-#' - [`check_calibration()`] for numerical calibration metrics
+#' - [`check_model_calibration()`] for numerical calibration metrics
 #' - [`plot_stratified_residuals()`] for residual diagnostic plots
-#' - [`plot_roc_curve()`] for ROC curves
+#' - [`plot_model_roc_curve()`] for ROC curves
 #' - [`plot_qq()`] for QQ plots
 #'
 #' @export
-plot_calibration <- function(x, ...) {
-  UseMethod("plot_calibration")
+plot_model_calibration <- function(x, ...) {
+  UseMethod("plot_model_calibration")
 }
 
-#' @rdname plot_calibration
+#' @rdname plot_model_calibration
 #' @param .fitted Column name of predicted probabilities (propensity scores).
 #'   Can be unquoted (e.g., `.fitted`) or quoted (e.g., `".fitted"`).
 #' @param .group Column name of treatment/group variable.
@@ -86,7 +86,7 @@ plot_calibration <- function(x, ...) {
 #' @param include_points Logical; show points (only for "breaks" and "windowed" methods).
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #' @export
-plot_calibration.data.frame <- function(
+plot_model_calibration.data.frame <- function(
   x,
   .fitted,
   .group,
@@ -168,9 +168,9 @@ plot_calibration.data.frame <- function(
   p
 }
 
-#' @rdname plot_calibration
+#' @rdname plot_model_calibration
 #' @export
-plot_calibration.glm <- function(
+plot_model_calibration.glm <- function(
   x,
   treatment_level = NULL,
   method = "breaks",
@@ -202,7 +202,7 @@ plot_calibration.glm <- function(
   )
 
   # Call the data frame method
-  plot_calibration.data.frame(
+  plot_model_calibration.data.frame(
     plot_data,
     .fitted = .fitted,
     .group = .group,
@@ -222,6 +222,91 @@ plot_calibration.glm <- function(
   )
 }
 
-#' @rdname plot_calibration
+#' @rdname plot_model_calibration
 #' @export
-plot_calibration.lm <- plot_calibration.glm
+plot_model_calibration.lm <- plot_model_calibration.glm
+
+#' @rdname plot_model_calibration
+#' @export
+plot_model_calibration.halfmoon_calibration <- function(
+  x,
+  include_rug = FALSE,
+  include_ribbon = TRUE,
+  include_points = TRUE,
+  ...
+) {
+  # Determine method from the data structure
+  method <- if (".bin" %in% names(x)) {
+    "breaks"
+  } else {
+    # Could be logistic or windowed - both have similar structure
+    # Default to logistic as it's more common
+    "logistic"
+  }
+
+  # Create the base plot
+  p <- ggplot2::ggplot(
+    x,
+    ggplot2::aes(x = .data$predicted_rate, y = .data$observed_rate)
+  )
+
+  if (method == "breaks") {
+    # For breaks method, plot points with error bars
+    if (include_points) {
+      p <- p + ggplot2::geom_point(size = 3)
+    }
+
+    if (include_ribbon) {
+      p <- p +
+        ggplot2::geom_errorbar(
+          ggplot2::aes(ymin = .data$lower, ymax = .data$upper),
+          width = 0.02,
+          alpha = 0.5
+        )
+    }
+  } else {
+    # For logistic/windowed methods, plot as line
+    p <- p + ggplot2::geom_line(color = "steelblue", linewidth = 1)
+
+    if (include_ribbon) {
+      p <- p +
+        ggplot2::geom_ribbon(
+          ggplot2::aes(ymin = .data$lower, ymax = .data$upper),
+          alpha = 0.2,
+          fill = "steelblue"
+        )
+    }
+
+    if (include_points) {
+      p <- p + ggplot2::geom_point(alpha = 0.5, size = 1)
+    }
+  }
+
+  # Add perfect calibration line
+  p <- p +
+    ggplot2::geom_abline(
+      intercept = 0,
+      slope = 1,
+      linetype = "dashed",
+      color = "gray50",
+      alpha = 0.8
+    )
+
+  # Add labels and formatting
+  p <- p +
+    ggplot2::labs(
+      x = "predicted probability",
+      y = "observed rate"
+    ) +
+    ggplot2::xlim(0, 1) +
+    ggplot2::coord_cartesian(ylim = c(0, 1)) +
+    ggplot2::theme_minimal()
+
+  # Add rug if requested and we have the original data
+  # Note: This won't work with pre-computed calibration data
+  if (include_rug) {
+    warning("Rug plot not available for pre-computed calibration data")
+  }
+
+  p
+}

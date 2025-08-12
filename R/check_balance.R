@@ -56,7 +56,8 @@
 #'   \item{metric}{Character. The balance metric computed ("smd", "vr", "ks").}
 #'   \item{estimate}{Numeric. The computed balance statistic.}
 #' @family balance functions
-#' @seealso [bal_smd()], [bal_vr()], [bal_ks()], [bal_corr()], [bal_energy()] for individual metric functions
+#' @seealso [bal_smd()], [bal_vr()], [bal_ks()], [bal_corr()], [bal_energy()] for individual metric functions,
+#'   [plot_balance()] for visualization
 #'
 #' @examples
 #' # Basic usage with binary exposure
@@ -378,6 +379,9 @@ check_balance <- function(
   if (nrow(results) > 0) {
     results <- dplyr::arrange(results, variable, metric, method)
   }
+
+  # Add halfmoon_balance class
+  class(results) <- c("halfmoon_balance", class(results))
 
   return(results)
 }

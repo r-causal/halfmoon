@@ -14,7 +14,7 @@
 #'
 #' @return A ggplot2 layer.
 #' @family ggplot2 functions
-#' @seealso [check_auc()] for computing AUC values, [stat_roc()] for the underlying stat
+#' @seealso [check_model_auc()] for computing AUC values, [stat_roc()] for the underlying stat
 #'
 #' @examples
 #' # Basic usage

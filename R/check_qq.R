@@ -1,4 +1,4 @@
-#' Compute QQ plot data for weighted and unweighted samples
+#' Check QQ Data for Multiple Weights
 #'
 #' Calculate quantile-quantile data comparing the distribution of a variable
 #' between treatment groups. This function computes the quantiles for both
@@ -24,24 +24,26 @@
 #'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
-#' @return A tibble with columns:
+#' @return A tibble with class "halfmoon_qq" containing columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
 #'   \item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
 #'   \item{untreated_quantiles}{Numeric. The quantile value for the control group.}
 #'
+#' @family balance functions
+#' @seealso [bal_qq()] for single weight QQ data, [plot_qq()] for visualization
 #' @examples
 #' # Basic QQ data (observed only)
-#' qq(nhefs_weights, age, qsmk)
+#' check_qq(nhefs_weights, age, qsmk)
 #'
 #' # With weighting
-#' qq(nhefs_weights, age, qsmk, .wts = w_ate)
+#' check_qq(nhefs_weights, age, qsmk, .wts = w_ate)
 #'
 #' # Compare multiple weighting schemes
-#' qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+#' check_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
 #'
 #' @export
-qq <- function(
+check_qq <- function(
   .data,
   .var,
   .group,
@@ -160,6 +162,9 @@ qq <- function(
 
   # Format method labels
   qq_data$method <- factor(qq_data$method, levels = methods)
+
+  # Add halfmoon_qq class
+  class(qq_data) <- c("halfmoon_qq", class(qq_data))
 
   qq_data
 }

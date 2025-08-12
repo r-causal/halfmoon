@@ -2,9 +2,13 @@
 % Please edit documentation in R/plot_qq.R
 \name{plot_qq}
 \alias{plot_qq}
+\alias{plot_qq.default}
+\alias{plot_qq.halfmoon_qq}
 \title{Create QQ plots for weighted and unweighted samples}
 \usage{
-plot_qq(
+plot_qq(.data, ...)
+
+\method{plot_qq}{default}(
   .data,
   .var,
   .group,
@@ -12,11 +16,16 @@ plot_qq(
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
   treatment_level = NULL,
-  na.rm = FALSE
+  na.rm = FALSE,
+  ...
 )
+
+\method{plot_qq}{halfmoon_qq}(.data, ...)
 }
 \arguments{
-\item{.data}{A data frame containing the variables.}
+\item{.data}{A data frame containing the variables or a halfmoon_qq object.}
+
+\item{...}{Arguments passed to methods (see Methods section).}
 
 \item{.var}{Variable to plot. Can be unquoted (e.g., \code{age}) or quoted (e.g., \code{"age"}).}
 
@@ -55,6 +64,14 @@ appropriate axis labels.
 For an alternative visualization of the same information, see \code{\link[=geom_ecdf]{geom_ecdf()}},
 which shows the empirical cumulative distribution functions directly.
 }
+\section{Methods}{
+
+\describe{
+\item{\code{plot_qq.default}}{For data frames. Accepts all documented parameters.}
+\item{\code{plot_qq.halfmoon_qq}}{For halfmoon_qq objects from \code{check_qq()}. Only uses \code{.data} and \code{...} parameters.}
+}
+}
+
 \examples{
 library(ggplot2)
 
@@ -78,6 +95,6 @@ plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
 \itemize{
 \item \code{\link[=geom_ecdf]{geom_ecdf()}} for ECDF plots, an alternative distributional visualization
 \item \code{\link[=geom_qq2]{geom_qq2()}} for the underlying geom used by this function
-\item \code{\link[=qq]{qq()}} for computing QQ data without plotting
+\item \code{\link[=check_qq]{check_qq()}} for computing QQ data without plotting
 }
 }

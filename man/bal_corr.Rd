@@ -36,12 +36,18 @@ bal_corr(nhefs_weights$age, nhefs_weights$wt71)
 \code{\link[=check_balance]{check_balance()}} for computing multiple balance metrics at once
 
 Other balance functions: 
+\code{\link{bal_ess}()},
 \code{\link{bal_ks}()},
+\code{\link{bal_model_auc}()},
+\code{\link{bal_model_roc_curve}()},
+\code{\link{bal_qq}()},
 \code{\link{bal_smd}()},
 \code{\link{bal_vr}()},
-\code{\link{check_auc}()},
 \code{\link{check_balance}()},
 \code{\link{check_ess}()},
+\code{\link{check_model_auc}()},
+\code{\link{check_model_roc_curve}()},
+\code{\link{check_qq}()},
 \code{\link{plot_balance}()}
 }
 \concept{balance functions}

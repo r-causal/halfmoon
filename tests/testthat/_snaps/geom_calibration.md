@@ -1,9 +1,9 @@
-# check_calibration provides clear error messages for missing columns
+# check_model_calibration provides clear error messages for missing columns
 
     Code
       expr
     Condition <halfmoon_column_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! Column `nonexistent` not found in data
 
 ---
@@ -11,23 +11,23 @@
     Code
       expr
     Condition <halfmoon_column_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! Column `nonexistent` not found in data
 
-# check_calibration method parameter validation
+# check_model_calibration method parameter validation
 
     Code
       expr
     Condition <rlang_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! `method` must be one of "breaks", "logistic", or "windowed", not "invalid".
 
-# check_calibration validates input parameters
+# check_model_calibration validates input parameters
 
     Code
       expr
     Condition <halfmoon_arg_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
 
 ---
@@ -35,7 +35,7 @@
     Code
       expr
     Condition <halfmoon_arg_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
 
 ---
@@ -43,15 +43,15 @@
     Code
       expr
     Condition <halfmoon_column_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! Column `nonexistent` not found in data
 
-# check_calibration provides helpful warnings for small cell sizes
+# check_model_calibration provides helpful warnings for small cell sizes
 
     Code
       expr
     Condition <halfmoon_data_warning>
-      Warning in `check_calibration()`:
+      Warning in `check_model_calibration()`:
       Small sample sizes or extreme proportions detected in bins 6, 10 (n = 2, 10). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.
     Output
       # A tibble: 7 x 6
@@ -65,12 +65,12 @@
       6     6         0.495          0         2 0      0    
       7    10         0.941          0.2      10 0.0354 0.558
 
-# check_calibration provides helpful warnings for extreme proportions
+# check_model_calibration provides helpful warnings for extreme proportions
 
     Code
       expr
     Condition <halfmoon_data_warning>
-      Warning in `check_calibration()`:
+      Warning in `check_model_calibration()`:
       Small sample sizes or extreme proportions detected in bins 1, 2, 3, 8, 9, 10 (n = 17, 16, 17, 16, 17, 17). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.
     Output
       # A tibble: 6 x 6
@@ -83,12 +83,12 @@
       5     9         0.840              1    17     1     1
       6    10         0.938              1    17     1     1
 
-# check_calibration windowed method provides helpful warnings
+# check_model_calibration windowed method provides helpful warnings
 
     Code
       expr
     Condition <halfmoon_data_warning>
-      Warning in `check_calibration()`:
+      Warning in `check_model_calibration()`:
       Small sample sizes or extreme proportions detected in windows centered at 0.4, 0.5, 0.6 (n = 3, 6, 6). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.
     Output
       # A tibble: 3 x 4
@@ -98,12 +98,12 @@
       2            0.5         0.667 0.241  0.940
       3            0.6         0.667 0.241  0.940
 
-# check_calibration errors with invalid bins
+# check_model_calibration errors with invalid bins
 
     Code
       expr
     Condition <halfmoon_arg_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
 
 ---
@@ -111,6 +111,6 @@
     Code
       expr
     Condition <halfmoon_arg_error>
-      Error in `check_calibration()`:
+      Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
 

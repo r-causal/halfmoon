@@ -1,4 +1,4 @@
-test_that("roc_curve works with basic inputs", {
+test_that("check_model_roc_curve works with basic inputs", {
   # Create simple test data
   set.seed(42)
   test_data <- tibble::tibble(
@@ -9,7 +9,7 @@ test_that("roc_curve works with basic inputs", {
   )
 
   # Test unweighted ROC curve
-  roc_basic <- roc_curve(
+  roc_basic <- check_model_roc_curve(
     test_data,
     truth,
     estimate,
@@ -25,11 +25,11 @@ test_that("roc_curve works with basic inputs", {
   expect_true(all(roc_basic$specificity >= 0 & roc_basic$specificity <= 1))
 
   # Test with single weight
-  roc_weighted <- roc_curve(test_data, truth, estimate, weight1)
+  roc_weighted <- check_model_roc_curve(test_data, truth, estimate, weight1)
   expect_equal(sort(unique(roc_weighted$method)), c("observed", "weight1"))
 
   # Test with multiple weights
-  roc_multi <- roc_curve(
+  roc_multi <- check_model_roc_curve(
     test_data,
     truth,
     estimate,
@@ -41,7 +41,7 @@ test_that("roc_curve works with basic inputs", {
   )
 
   # Test without observed
-  roc_no_obs <- roc_curve(
+  roc_no_obs <- check_model_roc_curve(
     test_data,
     truth,
     estimate,
@@ -64,7 +64,7 @@ test_that("check_auc computes correct AUC values", {
   )
 
   # Test good separation
-  auc_good <- check_auc(
+  auc_good <- check_model_auc(
     test_data,
     truth,
     estimate_good,
@@ -77,7 +77,7 @@ test_that("check_auc computes correct AUC values", {
   expect_true(abs(auc_good$auc[auc_good$method == "observed"] - 0.5) > 0.4)
 
   # Test random separation
-  auc_random <- check_auc(
+  auc_random <- check_model_auc(
     test_data,
     truth,
     estimate_random,
@@ -86,13 +86,13 @@ test_that("check_auc computes correct AUC values", {
   expect_true(abs(auc_random$auc[auc_random$method == "observed"] - 0.5) < 0.1)
 
   # Test with weights
-  auc_weighted <- check_auc(test_data, truth, estimate_good, weight1)
+  auc_weighted <- check_model_auc(test_data, truth, estimate_good, weight1)
   expect_equal(nrow(auc_weighted), 2) # observed + weight1
 })
 
 test_that("check_auc returns correct structure", {
   # Test basic functionality
-  balance_check <- check_auc(
+  balance_check <- check_model_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -106,7 +106,7 @@ test_that("check_auc returns correct structure", {
   expect_true(all(balance_check$auc >= 0 & balance_check$auc <= 1))
 
   # Test without observed
-  balance_no_obs <- check_auc(
+  balance_no_obs <- check_model_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -126,7 +126,7 @@ test_that("functions handle edge cases correctly", {
   )
 
   # With na.rm = TRUE
-  roc_na_rm <- suppressMessages(roc_curve(
+  roc_na_rm <- suppressMessages(check_model_roc_curve(
     test_data_na,
     truth,
     estimate,
@@ -137,7 +137,7 @@ test_that("functions handle edge cases correctly", {
 
   # With na.rm = FALSE should error
   expect_halfmoon_error(
-    roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
+    check_model_roc_curve(test_data_na, truth, estimate, weight1, na.rm = FALSE),
     "halfmoon_na_error"
   )
 
@@ -149,7 +149,7 @@ test_that("functions handle edge cases correctly", {
   )
 
   expect_warning(
-    roc_const <- roc_curve(test_data_const, truth, estimate),
+    roc_const <- check_model_roc_curve(test_data_const, truth, estimate),
     class = "halfmoon_data_warning"
   )
   expect_equal(nrow(roc_const), 3) # Should have 3 points for degenerate curve
@@ -162,7 +162,7 @@ test_that("functions handle edge cases correctly", {
   )
 
   expect_warning(
-    roc_zero <- roc_curve(test_data_zero, truth, estimate, weight_zero),
+    roc_zero <- check_model_roc_curve(test_data_zero, truth, estimate, weight_zero),
     class = "halfmoon_data_warning"
   )
   expect_s3_class(roc_zero, "tbl_df")
@@ -175,7 +175,7 @@ test_that("functions handle edge cases correctly", {
   )
 
   expect_warning(
-    roc_neg <- roc_curve(test_data_neg, truth, estimate, weight_neg),
+    roc_neg <- check_model_roc_curve(test_data_neg, truth, estimate, weight_neg),
     class = "halfmoon_data_warning"
   )
   expect_s3_class(roc_neg, "tbl_df")
@@ -190,23 +190,23 @@ test_that("functions handle different truth variable types", {
 
   # Test with character
   test_char <- dplyr::mutate(base_data, truth = rep(c("Yes", "No"), 50))
-  roc_char <- roc_curve(test_char, truth, estimate)
+  roc_char <- check_model_roc_curve(test_char, truth, estimate)
   expect_s3_class(roc_char, "tbl_df")
 
   # Test with logical
   test_logical <- dplyr::mutate(base_data, truth = rep(c(TRUE, FALSE), 50))
-  roc_logical <- roc_curve(test_logical, truth, estimate)
+  roc_logical <- check_model_roc_curve(test_logical, truth, estimate)
   expect_s3_class(roc_logical, "tbl_df")
 
   # Test with binary numeric
   test_numeric <- dplyr::mutate(base_data, truth = rep(c(0, 1), 50))
-  roc_numeric <- roc_curve(test_numeric, truth, estimate)
+  roc_numeric <- check_model_roc_curve(test_numeric, truth, estimate)
   expect_s3_class(roc_numeric, "tbl_df")
 
   # Test with non-binary numeric (should error)
   test_multi <- dplyr::mutate(base_data, truth = rep(1:3, length.out = 100))
   expect_halfmoon_error(
-    roc_curve(test_multi, truth, estimate),
+    check_model_roc_curve(test_multi, truth, estimate),
     "halfmoon_group_error"
   )
 })
@@ -219,21 +219,21 @@ test_that("error messages use proper cli formatting", {
 
   # Test .data not a data frame
   expect_halfmoon_error(
-    roc_curve("not a data frame", truth, estimate),
+    check_model_roc_curve("not a data frame", truth, estimate),
     "halfmoon_type_error"
   )
 
   # Test non-numeric estimate
   test_data$estimate_char <- as.character(test_data$estimate)
   expect_halfmoon_error(
-    roc_curve(test_data, truth, estimate_char),
+    check_model_roc_curve(test_data, truth, estimate_char),
     "halfmoon_type_error"
   )
 
   # Test multi-level truth
   test_data$truth_multi <- factor(rep(c("A", "B", "C"), length.out = 20))
   expect_halfmoon_error(
-    roc_curve(test_data, truth_multi, estimate),
+    check_model_roc_curve(test_data, truth_multi, estimate),
     "halfmoon_group_error"
   )
 })
@@ -249,7 +249,7 @@ test_that("tidyselect works for weight selection", {
   )
 
   # Test starts_with
-  roc_starts <- roc_curve(
+  roc_starts <- check_model_roc_curve(
     test_data,
     truth,
     estimate,
@@ -261,7 +261,7 @@ test_that("tidyselect works for weight selection", {
   )
 
   # Test specific selection
-  roc_specific <- roc_curve(test_data, truth, estimate, c(w_1, w_3))
+  roc_specific <- check_model_roc_curve(test_data, truth, estimate, c(w_1, w_3))
   expect_equal(sort(unique(roc_specific$method)), c("observed", "w_1", "w_3"))
 })
 
@@ -275,7 +275,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
     .metrics = "smd"
   )
 
-  balance_roc <- check_auc(
+  balance_roc <- check_model_auc(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -293,7 +293,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
 
 test_that("treatment_level parameter works correctly", {
   # Test with default (second level)
-  roc_default <- roc_curve(
+  roc_default <- check_model_roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -301,7 +301,7 @@ test_that("treatment_level parameter works correctly", {
   )
 
   # Test with explicit treatment_level = "1" (same as default)
-  roc_explicit <- roc_curve(
+  roc_explicit <- check_model_roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -313,7 +313,7 @@ test_that("treatment_level parameter works correctly", {
   expect_equal(roc_default, roc_explicit)
 
   # Test with treatment_level = "0" (opposite)
-  roc_opposite <- roc_curve(
+  roc_opposite <- check_model_roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
@@ -326,7 +326,7 @@ test_that("treatment_level parameter works correctly", {
 
   # Test with invalid treatment_level
   expect_halfmoon_error(
-    roc_curve(
+    check_model_roc_curve(
       nhefs_weights,
       qsmk,
       .fitted,

@@ -14,7 +14,8 @@
 #' For an alternative visualization of the same information, see [`geom_ecdf()`],
 #' which shows the empirical cumulative distribution functions directly.
 #'
-#' @param .data A data frame containing the variables.
+#' @param .data A data frame containing the variables or a halfmoon_qq object.
+#' @param ... Arguments passed to methods (see Methods section).
 #' @param .var Variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
 #' @param .group Column name of treatment/group variable. Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
 #' @param .wts Optional weighting variable(s). Can be unquoted variable names,
@@ -30,10 +31,16 @@
 #'
 #' @return A ggplot2 object.
 #'
+#' @section Methods:
+#' \describe{
+#'   \item{`plot_qq.default`}{For data frames. Accepts all documented parameters.}
+#'   \item{`plot_qq.halfmoon_qq`}{For halfmoon_qq objects from `check_qq()`. Only uses `.data` and `...` parameters.}
+#' }
+#'
 #' @seealso
 #' - [`geom_ecdf()`] for ECDF plots, an alternative distributional visualization
 #' - [`geom_qq2()`] for the underlying geom used by this function
-#' - [`qq()`] for computing QQ data without plotting
+#' - [`check_qq()`] for computing QQ data without plotting
 #'
 #' @examples
 #' library(ggplot2)
@@ -54,7 +61,13 @@
 #' plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
 #'
 #' @export
-plot_qq <- function(
+plot_qq <- function(.data, ...) {
+  UseMethod("plot_qq")
+}
+
+#' @rdname plot_qq
+#' @export
+plot_qq.default <- function(
   .data,
   .var,
   .group,
@@ -62,7 +75,8 @@ plot_qq <- function(
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
   treatment_level = NULL,
-  na.rm = FALSE
+  na.rm = FALSE,
+  ...
 ) {
   # Basic validation
   var_quo <- rlang::enquo(.var)
@@ -207,4 +221,48 @@ plot_qq <- function(
       x = paste0(var_name, " (", group_name, " = ", ref_group, ")"),
       y = paste0(var_name, " (", group_name, " = ", comp_group, ")")
     )
+}
+
+#' @rdname plot_qq
+#' @export
+plot_qq.halfmoon_qq <- function(.data, ...) {
+  # Check if we have multiple methods
+  has_multiple_methods <- length(unique(.data$method)) > 1
+
+  # Create the base plot
+  if (has_multiple_methods) {
+    p <- ggplot2::ggplot(
+      .data,
+      ggplot2::aes(
+        x = .data$untreated_quantiles,
+        y = .data$treated_quantiles,
+        color = .data$method
+      )
+    ) +
+      ggplot2::geom_line(linewidth = 1) +
+      ggplot2::geom_point(size = 0.5, alpha = 0.7)
+  } else {
+    p <- ggplot2::ggplot(
+      .data,
+      ggplot2::aes(x = .data$untreated_quantiles, y = .data$treated_quantiles)
+    ) +
+      ggplot2::geom_line(linewidth = 1) +
+      ggplot2::geom_point(size = 0.5, alpha = 0.7)
+  }
+
+  # Add reference line and formatting
+  p +
+    ggplot2::geom_abline(
+      intercept = 0,
+      slope = 1,
+      linetype = "dashed",
+      color = "gray50",
+      alpha = 0.8
+    ) +
+    ggplot2::labs(
+      x = "Control group quantiles",
+      y = "Treatment group quantiles"
+    ) +
+    ggplot2::theme_minimal() +
+    ggplot2::coord_equal()
 }

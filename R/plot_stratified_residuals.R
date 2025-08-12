@@ -84,8 +84,8 @@
 #'   9(1), 87-95.
 #'
 #' @seealso
-#' - [`plot_calibration()`] for calibration plots
-#' - [`plot_roc_curve()`] for ROC curves
+#' - [`plot_model_calibration()`] for calibration plots
+#' - [`plot_model_roc_curve()`] for ROC curves
 #' - [`plot_qq()`] for QQ plots
 #'
 #' @export
