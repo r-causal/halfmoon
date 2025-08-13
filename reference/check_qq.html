@@ -53,11 +53,11 @@ groups and returns a tidy data frame suitable for plotting or further analysis.<
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_qq</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
 <span>  <span class="va">.var</span>,</span>
-<span>  <span class="va">.group</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span>, <span class="fl">0.01</span><span class="op">)</span>,</span>
 <span>  include_observed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .reference_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -74,11 +74,11 @@ groups and returns a tidy data frame suitable for plotting or further analysis.<
 <dd><p>Variable to compute quantiles for. Supports tidyselect syntax.</p></dd>
 
 
-<dt id="arg--group">.group<a class="anchor" aria-label="anchor" href="#arg--group"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>Column name of treatment/group variable. Supports tidyselect syntax.</p></dd>
 
 
-<dt id="arg--wts">.wts<a class="anchor" aria-label="anchor" href="#arg--wts"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).</p></dd>
@@ -90,11 +90,11 @@ different weighting schemes. Default is NULL (unweighted).</p></dd>
 
 
 <dt id="arg-include-observed">include_observed<a class="anchor" aria-label="anchor" href="#arg-include-observed"></a></dt>
-<dd><p>Logical. If using <code>.wts</code>, also compute observed
+<dd><p>Logical. If using <code>.weights</code>, also compute observed
 (unweighted) quantiles? Defaults to TRUE.</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
+<dt id="arg--reference-level">.reference_level<a class="anchor" aria-label="anchor" href="#arg--reference-level"></a></dt>
 <dd><p>The reference treatment level to use for comparisons.
 If <code>NULL</code> (default), uses the last level for factors or the maximum value for numeric variables.</p></dd>
 
@@ -112,11 +112,11 @@ If <code>NULL</code> (default), uses the last level for factors or the maximum v
 <dt>quantile</dt>
 <dd><p>Numeric. The quantile probability (0-1).</p></dd>
 
-<dt>treated_quantiles</dt>
-<dd><p>Numeric. The quantile value for the treatment group.</p></dd>
+<dt>exposed_quantiles</dt>
+<dd><p>Numeric. The quantile value for the exposed group.</p></dd>
 
-<dt>untreated_quantiles</dt>
-<dd><p>Numeric. The quantile value for the control group.</p></dd>
+<dt>unexposed_quantiles</dt>
+<dd><p>Numeric. The quantile value for the unexposed group.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -150,7 +150,7 @@ it first computes the weighted ECDF and then inverts it to obtain quantiles.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic QQ data (observed only)</span></span></span>
 <span class="r-in"><span><span class="fu">check_qq</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 99 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    method   quantile treated_quantiles untreated_quantiles</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    method   quantile exposed_quantiles unexposed_quantiles</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> observed     0.01                25                25  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> observed     0.02                25                25  </span>
@@ -165,9 +165,9 @@ it first computes the weighted ECDF and then inverts it to obtain quantiles.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 89 more rows</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With weighting</span></span></span>
-<span class="r-in"><span><span class="fu">check_qq</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_qq</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span>, .weights <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 198 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    method   quantile treated_quantiles untreated_quantiles</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    method   quantile exposed_quantiles unexposed_quantiles</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> observed     0.01                25                25  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> observed     0.02                25                25  </span>
@@ -182,9 +182,9 @@ it first computes the weighted ECDF and then inverts it to obtain quantiles.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 188 more rows</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compare multiple weighting schemes</span></span></span>
-<span class="r-in"><span><span class="fu">check_qq</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_qq</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">qsmk</span>, .weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 297 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    method   quantile treated_quantiles untreated_quantiles</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    method   quantile exposed_quantiles unexposed_quantiles</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> observed     0.01                25                25  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> observed     0.02                25                25  </span>

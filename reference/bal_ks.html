@@ -53,28 +53,34 @@ difference between empirical CDFs.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">covariate</span>, <span class="va">group</span>, weights <span class="op">=</span> <span class="cn">NULL</span>, reference_group <span class="op">=</span> <span class="cn">NULL</span>, na.rm <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bal_ks</span><span class="op">(</span></span>
+<span>  <span class="va">.covariate</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .reference_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-covariate">covariate<a class="anchor" aria-label="anchor" href="#arg-covariate"></a></dt>
+<dl><dt id="arg--covariate">.covariate<a class="anchor" aria-label="anchor" href="#arg--covariate"></a></dt>
 <dd><p>A numeric vector containing the covariate values to compare.</p></dd>
 
 
-<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>A vector (factor or numeric) indicating group membership. Must
 have exactly two unique levels.</p></dd>
 
 
-<dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>An optional numeric vector of case weights. If provided, must
 have the same length as other input vectors. All weights must be non-negative.</p></dd>
 
 
-<dt id="arg-reference-group">reference_group<a class="anchor" aria-label="anchor" href="#arg-reference-group"></a></dt>
+<dt id="arg--reference-level">.reference_level<a class="anchor" aria-label="anchor" href="#arg--reference-level"></a></dt>
 <dd><p>The reference group level for comparisons. Can be either
 a group level value or a numeric index. If <code>NULL</code> (default), uses the first level.</p></dd>
 
@@ -132,7 +138,7 @@ between groups.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With weights</span></span></span>
 <span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">wt71</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span>,</span></span>
-<span class="r-in"><span>       weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_ate</span><span class="op">)</span></span></span>
+<span class="r-in"><span>       .weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_ate</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.03583763</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Categorical exposure (returns named vector)</span></span></span>
@@ -142,9 +148,9 @@ between groups.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          daily_vs_none </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              0.1774359 </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Specify reference group</span></span></span>
+<span class="r-in"><span><span class="co"># Specify reference level</span></span></span>
 <span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">age</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">alcoholfreq_cat</span>,</span></span>
-<span class="r-in"><span>       reference_group <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>       .reference_level <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              0.1956535              0.2913630              0.2637864 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          daily_vs_none </span>
@@ -152,7 +158,7 @@ between groups.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With categorical weights</span></span></span>
 <span class="r-in"><span><span class="fu">bal_ks</span><span class="op">(</span><span class="va">nhefs_weights</span><span class="op">$</span><span class="va">wt71</span>, <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">alcoholfreq_cat</span>,</span></span>
-<span class="r-in"><span>       weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_cat_ate</span><span class="op">)</span></span></span>
+<span class="r-in"><span>       .weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_cat_ate</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             0.07483474             0.05665006             0.07013520 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          daily_vs_none </span>

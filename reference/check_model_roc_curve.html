@@ -52,12 +52,12 @@ indicates good balance between treatment groups.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_model_roc_curve</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
-<span>  <span class="va">.truth</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  <span class="va">.estimate</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  include_observed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,7 +69,7 @@ indicates good balance between treatment groups.</p>
 <dd><p>A data frame containing the variables.</p></dd>
 
 
-<dt id="arg--truth">.truth<a class="anchor" aria-label="anchor" href="#arg--truth"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>The treatment/outcome variable (unquoted).</p></dd>
 
 
@@ -77,7 +77,7 @@ indicates good balance between treatment groups.</p>
 <dd><p>The propensity score or covariate (unquoted).</p></dd>
 
 
-<dt id="arg--wts">.wts<a class="anchor" aria-label="anchor" href="#arg--wts"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>Optional weighting variables (unquoted, can be multiple).</p></dd>
 
 
@@ -89,8 +89,8 @@ indicates good balance between treatment groups.</p>
 <dd><p>Remove missing values? Default TRUE.</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
-<dd><p>The level of <code>.truth</code> to consider as the treatment/event.
+<dt id="arg--focal-level">.focal_level<a class="anchor" aria-label="anchor" href="#arg--focal-level"></a></dt>
+<dd><p>The level of <code>.exposure</code> to consider as the treatment/event.
 Default is NULL, which uses the second level.</p></dd>
 
 </dl></div>

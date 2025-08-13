@@ -68,7 +68,7 @@ treatment vs. control.</p>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span>, <span class="fl">0.01</span><span class="op">)</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .reference_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -115,10 +115,10 @@ combining with them.</p></dd>
 <code>seq(0.01, 0.99, 0.01)</code> for 99 quantiles.</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
-<dd><p>The level of the outcome variable to consider as the
-treatment/event. If <code>NULL</code> (default), uses the last level for factors or
-the maximum value for numeric variables.</p></dd>
+<dt id="arg--reference-level">.reference_level<a class="anchor" aria-label="anchor" href="#arg--reference-level"></a></dt>
+<dd><p>The reference treatment level to use for comparisons.
+If <code>NULL</code> (default), uses the first level for factors or the minimum value
+for numeric variables.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

@@ -5,13 +5,13 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Create stratified residual diagnostic plots — plot_stratified_residuals"><meta name="description" content="Create diagnostic plots to assess differences between treatment group after adjustment.
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Create stratified residual diagnostic plots — plot_stratified_residuals"><meta name="description" content="Create diagnostic plots to assess differences between .exposure group after adjustment.
 This function plots residuals
 from an outcome model against propensity scores (or fitted values),
-stratified by treatment group, to reveal model mis-specification."><meta property="og:description" content="Create diagnostic plots to assess differences between treatment group after adjustment.
+stratified by .exposure group, to reveal model mis-specification."><meta property="og:description" content="Create diagnostic plots to assess differences between .exposure group after adjustment.
 This function plots residuals
 from an outcome model against propensity scores (or fitted values),
-stratified by treatment group, to reveal model mis-specification."><meta property="og:image" content="https://r-causal.github.io/halfmoon/logo.png"></head><body>
+stratified by .exposure group, to reveal model mis-specification."><meta property="og:image" content="https://r-causal.github.io/halfmoon/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -45,10 +45,10 @@ stratified by treatment group, to reveal model mis-specification."><meta propert
     </div>
 
     <div class="ref-description section level2">
-    <p>Create diagnostic plots to assess differences between treatment group after adjustment.
+    <p>Create diagnostic plots to assess differences between .exposure group after adjustment.
 This function plots residuals
 from an outcome model against propensity scores (or fitted values),
-stratified by treatment group, to reveal model mis-specification.</p>
+stratified by .exposure group, to reveal model mis-specification.</p>
     </div>
 
     <div class="section level2">
@@ -58,7 +58,7 @@ stratified by treatment group, to reveal model mis-specification.</p>
 <span><span class="co"># S3 method for class 'lm'</span></span>
 <span><span class="fu">plot_stratified_residuals</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  <span class="va">treatment</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  ps_model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"facet"</span>, <span class="st">"both"</span><span class="op">)</span>,</span>
 <span>  smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -71,7 +71,7 @@ stratified by treatment group, to reveal model mis-specification.</p>
 <span><span class="co"># S3 method for class 'glm'</span></span>
 <span><span class="fu">plot_stratified_residuals</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  <span class="va">treatment</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  ps_model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"facet"</span>, <span class="st">"both"</span><span class="op">)</span>,</span>
 <span>  smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -84,7 +84,7 @@ stratified by treatment group, to reveal model mis-specification.</p>
 <span><span class="co"># S3 method for class 'data.frame'</span></span>
 <span><span class="fu">plot_stratified_residuals</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  <span class="va">treatment</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  <span class="va">residuals</span>,</span>
 <span>  <span class="va">x_var</span>,</span>
 <span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"facet"</span>, <span class="st">"both"</span><span class="op">)</span>,</span>
@@ -108,8 +108,8 @@ stratified by treatment group, to reveal model mis-specification.</p>
 <dd><p>Additional arguments passed to methods</p></dd>
 
 
-<dt id="arg-treatment">treatment<a class="anchor" aria-label="anchor" href="#arg-treatment"></a></dt>
-<dd><p>A vector indicating treatment group membership.
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
+<dd><p>A vector indicating .exposure group membership.
 Must have exactly two unique levels. For data frames, can be
 an unquoted column name.</p></dd>
 
@@ -120,8 +120,8 @@ If provided, uses propensity scores instead of fitted values.</p></dd>
 
 
 <dt id="arg-plot-type">plot_type<a class="anchor" aria-label="anchor" href="#arg-plot-type"></a></dt>
-<dd><p>Character; type of plot - "color" (default), "facet", or "both".</p><ul><li><p>"color": Single plot with points colored by treatment</p></li>
-<li><p>"facet": Separate facets for each treatment group</p></li>
+<dd><p>Character; type of plot - "color" (default), "facet", or "both".</p><ul><li><p>"color": Single plot with points colored by .exposure</p></li>
+<li><p>"facet": Separate facets for each .exposure group</p></li>
 <li><p>"both": Both color and faceting</p></li>
 </ul></dd>
 
@@ -160,11 +160,11 @@ Supports tidyselect syntax.</p></dd>
     <p>This diagnostic plot was originally suggested by Rosenbaum and Rubin (1983)
 and revisited by D'Agostino McGowan, D'Agostino, and D'Agostino (2023).
 The key idea is that plotting residuals against propensity scores
-or fitted values by treatment group can reveal non-linear relationships or
-heterogeneous treatment effects that might be obscured in standard
+or fitted values by .exposure group can reveal non-linear relationships or
+heterogeneous .exposure effects that might be obscured in standard
 residuals-vs-fitted plots.</p>
 <p>The function supports two approaches:</p><ul><li><p>For regression models (lm/glm): Extracts residuals and fitted values automatically</p></li>
-<li><p>For data frames: Uses specified columns for residuals, treatment, and x-axis values</p></li>
+<li><p>For data frames: Uses specified columns for residuals, .exposure, and x-axis values</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -190,33 +190,33 @@ A Visual Diagnostic Tool for Causal Inference. Observational Studies,
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Simulate data with treatment effect heterogeneity</span></span></span>
+<span class="r-in"><span><span class="co"># Simulate data with .exposure effect heterogeneity</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span></span>
 <span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>  <span class="co"># True propensity score</span></span></span>
-<span class="r-in"><span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="va">ps</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">.exposure</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="va">ps</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y1</span> <span class="op">&lt;-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y0</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">treatment</span> <span class="op">*</span> <span class="va">y1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">treatment</span><span class="op">)</span> <span class="op">*</span> <span class="va">y0</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">.exposure</span> <span class="op">*</span> <span class="va">y1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">.exposure</span><span class="op">)</span> <span class="op">*</span> <span class="va">y0</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Method 1: Using model objects</span></span></span>
 <span class="r-in"><span><span class="co"># Fit misspecified model (missing interaction)</span></span></span>
-<span class="r-in"><span><span class="va">model_wrong</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">model_wrong</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.exposure</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot with fitted values</span></span></span>
 <span class="r-in"><span><span class="fu">plot_stratified_residuals</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">model_wrong</span>,</span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">treatment</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">.exposure</span>,</span></span>
 <span class="r-in"><span>  plot_type <span class="op">=</span> <span class="st">"both"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot with propensity scores</span></span></span>
-<span class="r-in"><span><span class="va">ps_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">treatment</span> <span class="op">~</span> <span class="va">x</span>, family <span class="op">=</span> <span class="va">binomial</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ps_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">.exposure</span> <span class="op">~</span> <span class="va">x</span>, family <span class="op">=</span> <span class="va">binomial</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">plot_stratified_residuals</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">model_wrong</span>,</span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">treatment</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">.exposure</span>,</span></span>
 <span class="r-in"><span>  ps_model <span class="op">=</span> <span class="va">ps_model</span>,</span></span>
 <span class="r-in"><span>  plot_type <span class="op">=</span> <span class="st">"color"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -224,7 +224,7 @@ A Visual Diagnostic Tool for Causal Inference. Observational Studies,
 <span class="r-in"><span><span class="co"># Method 2: Using data frame</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">treatment</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">.exposure</span>,</span></span>
 <span class="r-in"><span>  residuals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">model_wrong</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  fitted_values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">model_wrong</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  propensity_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">ps_model</span><span class="op">)</span></span></span>
@@ -232,7 +232,7 @@ A Visual Diagnostic Tool for Causal Inference. Observational Studies,
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">plot_stratified_residuals</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">plot_data</span>,</span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">treatment</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">.exposure</span>,</span></span>
 <span class="r-in"><span>  residuals <span class="op">=</span> <span class="va">residuals</span>,</span></span>
 <span class="r-in"><span>  x_var <span class="op">=</span> <span class="va">propensity_score</span>,</span></span>
 <span class="r-in"><span>  plot_type <span class="op">=</span> <span class="st">"facet"</span></span></span>

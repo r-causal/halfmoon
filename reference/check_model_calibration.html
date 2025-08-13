@@ -57,7 +57,7 @@ Supports multiple methods for calibration assessment.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">.fitted</span>,</span>
 <span>  <span class="va">.group</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"breaks"</span>, <span class="st">"logistic"</span>, <span class="st">"windowed"</span><span class="op">)</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  binning_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"equal_width"</span>, <span class="st">"quantile"</span><span class="op">)</span>,</span>
@@ -88,7 +88,7 @@ Can be unquoted (e.g., <code>p</code>) or quoted (e.g., <code>"p"</code>).</p></
 Can be unquoted (e.g., <code>g</code>) or quoted (e.g., <code>"g"</code>).</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
+<dt id="arg--focal-level">.focal_level<a class="anchor" aria-label="anchor" href="#arg--focal-level"></a></dt>
 <dd><p>The level of the outcome variable to consider as the
 treatment/event. If <code>NULL</code> (default), uses the last level for factors or
 the maximum value for numeric variables.</p></dd>

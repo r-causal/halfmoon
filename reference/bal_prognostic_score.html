@@ -59,12 +59,12 @@ variables.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bal_prognostic_score</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  covariates <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  <span class="va">treatment</span>,</span>
+<span>  .covariates <span class="op">=</span> <span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .reference_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -83,24 +83,24 @@ variables.</p>
 character string. Ignored if <code>formula</code> is provided.</p></dd>
 
 
-<dt id="arg-covariates">covariates<a class="anchor" aria-label="anchor" href="#arg-covariates"></a></dt>
+<dt id="arg--covariates">.covariates<a class="anchor" aria-label="anchor" href="#arg--covariates"></a></dt>
 <dd><p>Variables to include in the outcome model. Defaults to
 <code><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything()</a></code> which includes all variables except the outcome and treatment.
 Supports tidyselect syntax. Ignored if <code>formula</code> is provided.</p></dd>
 
 
-<dt id="arg-treatment">treatment<a class="anchor" aria-label="anchor" href="#arg-treatment"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>The treatment variable. Can be specified as a bare name or
 character string.</p></dd>
 
 
 <dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
 <dd><p>Optional formula for the outcome model. If provided, <code>outcome</code>
-and <code>covariates</code> arguments are ignored. The formula should not include the
+and <code>.covariates</code> arguments are ignored. The formula should not include the
 treatment variable.</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
+<dt id="arg--reference-level">.reference_level<a class="anchor" aria-label="anchor" href="#arg--reference-level"></a></dt>
 <dd><p>The level of treatment that represents the control group.
 If NULL (default), the first level is used as control.</p></dd>
 
@@ -110,7 +110,7 @@ If NULL (default), the first level is used as control.</p></dd>
 continuous outcomes. Use <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> for binary outcomes.</p></dd>
 
 
-<dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>Optional weights for the outcome model. Can be a numeric vector
 or bare name of a variable in <code>.data</code>.</p></dd>
 
@@ -155,21 +155,21 @@ research. J Clin Epidemiol. 2013;66(8):S84-S90.</p>
 <span class="r-in"><span><span class="va">prog_scores</span> <span class="op">&lt;-</span> <span class="fu">bal_prognostic_score</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">nhefs_weights</span>,</span></span>
 <span class="r-in"><span>  outcome <span class="op">=</span> <span class="va">wt82_71</span>,</span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
-<span class="r-in"><span>  covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">sex</span>, <span class="va">race</span>, <span class="va">wt71</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
+<span class="r-in"><span>  .covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">sex</span>, <span class="va">race</span>, <span class="va">wt71</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using formula interface</span></span></span>
 <span class="r-in"><span><span class="va">prog_scores_formula</span> <span class="op">&lt;-</span> <span class="fu">bal_prognostic_score</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">nhefs_weights</span>,</span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
 <span class="r-in"><span>  formula <span class="op">=</span> <span class="va">wt82_71</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">sex</span> <span class="op">+</span> <span class="va">race</span> <span class="op">+</span> <span class="va">wt71</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">age</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add to data and check balance</span></span></span>
 <span class="r-in"><span><span class="va">nhefs_with_prog</span> <span class="op">&lt;-</span> <span class="va">nhefs_weights</span></span></span>
 <span class="r-in"><span><span class="va">nhefs_with_prog</span><span class="op">$</span><span class="va">prog_score</span> <span class="op">&lt;-</span> <span class="va">prog_scores</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="check_balance.html">check_balance</a></span><span class="op">(</span><span class="va">nhefs_with_prog</span>, <span class="va">prog_score</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="check_balance.html">check_balance</a></span><span class="op">(</span><span class="va">nhefs_with_prog</span>, <span class="va">prog_score</span>, <span class="va">qsmk</span>, .weights <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 8 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable   group_level method   metric  estimate</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -186,7 +186,7 @@ research. J Clin Epidemiol. 2013;66(8):S84-S90.</p>
 <span class="r-in"><span><span class="va">prog_scores_binary</span> <span class="op">&lt;-</span> <span class="fu">bal_prognostic_score</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">nhefs_weights</span>,</span></span>
 <span class="r-in"><span>  outcome <span class="op">=</span> <span class="va">death</span>,</span></span>
-<span class="r-in"><span>  treatment <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases</span>

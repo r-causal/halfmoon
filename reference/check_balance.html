@@ -56,11 +56,11 @@ returns results in a tidy format.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_balance</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
 <span>  <span class="va">.vars</span>,</span>
-<span>  <span class="va">.group</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  .metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smd"</span>, <span class="st">"vr"</span>, <span class="st">"ks"</span>, <span class="st">"energy"</span><span class="op">)</span>,</span>
 <span>  include_observed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  reference_group <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  .reference_level <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  make_dummy_vars <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  squares <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -82,11 +82,11 @@ returns results in a tidy format.</p>
 variable names, a character vector, or a tidyselect expression.</p></dd>
 
 
-<dt id="arg--group">.group<a class="anchor" aria-label="anchor" href="#arg--group"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>Grouping variable, e.g., treatment or exposure group.</p></dd>
 
 
-<dt id="arg--wts">.wts<a class="anchor" aria-label="anchor" href="#arg--wts"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>Optional weighting variables. Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.</p></dd>
@@ -100,11 +100,11 @@ Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 
 
 <dt id="arg-include-observed">include_observed<a class="anchor" aria-label="anchor" href="#arg-include-observed"></a></dt>
-<dd><p>Logical. If using <code>.wts</code>, also calculate observed
+<dd><p>Logical. If using <code>.weights</code>, also calculate observed
 (unweighted) metrics? Defaults to TRUE.</p></dd>
 
 
-<dt id="arg-reference-group">reference_group<a class="anchor" aria-label="anchor" href="#arg-reference-group"></a></dt>
+<dt id="arg--reference-level">.reference_level<a class="anchor" aria-label="anchor" href="#arg--reference-level"></a></dt>
 <dd><p>The reference group level to use for comparisons.
 Defaults to 1 (first level).</p></dd>
 
@@ -200,7 +200,7 @@ is included in the results.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic usage with binary exposure</span></span></span>
-<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 21 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    variable group_level method   metric estimate</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -227,7 +227,7 @@ is included in the results.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Categorical exposure</span></span></span>
 <span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">alcoholfreq_cat</span>,</span></span>
-<span class="r-in"><span>              .wts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_cat_ate</span>, <span class="va">w_cat_att_2_3wk</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>              .weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_cat_ate</span>, <span class="va">w_cat_att_2_3wk</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 75 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    variable group_level    method          metric estimate</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -245,7 +245,7 @@ is included in the results.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify reference group for categorical exposure</span></span></span>
 <span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span>, <span class="va">sex</span><span class="op">)</span>, <span class="va">alcoholfreq_cat</span>,</span></span>
-<span class="r-in"><span>              reference_group <span class="op">=</span> <span class="st">"daily"</span>, .metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smd"</span>, <span class="st">"vr"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>              .reference_level <span class="op">=</span> <span class="st">"daily"</span>, .metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smd"</span>, <span class="st">"vr"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 24 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    variable group_level    method   metric estimate</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -262,7 +262,7 @@ is included in the results.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 14 more rows</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Exclude observed results</span></span></span>
-<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .wts <span class="op">=</span> <span class="va">w_ate</span>,</span></span>
+<span class="r-in"><span><span class="fu">check_balance</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">wt71</span><span class="op">)</span>, <span class="va">qsmk</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>,</span></span>
 <span class="r-in"><span>              include_observed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable group_level method metric estimate</span>

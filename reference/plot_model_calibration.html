@@ -57,7 +57,7 @@ probabilities and observed treatment rates. This function wraps
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">.fitted</span>,</span>
 <span>  <span class="va">.group</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"breaks"</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -75,7 +75,7 @@ probabilities and observed treatment rates. This function wraps
 <span><span class="co"># S3 method for class 'glm'</span></span>
 <span><span class="fu">plot_model_calibration</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"breaks"</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -93,7 +93,7 @@ probabilities and observed treatment rates. This function wraps
 <span><span class="co"># S3 method for class 'lm'</span></span>
 <span><span class="fu">plot_model_calibration</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"breaks"</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -140,7 +140,7 @@ Can be unquoted (e.g., <code>.fitted</code>) or quoted (e.g., <code>".fitted"</c
 Can be unquoted (e.g., <code>qsmk</code>) or quoted (e.g., <code>"qsmk"</code>).</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
+<dt id="arg--focal-level">.focal_level<a class="anchor" aria-label="anchor" href="#arg--focal-level"></a></dt>
 <dd><p>Value indicating which level of <code>.group</code> represents treatment.
 If NULL (default), uses the last level for factors or max value for numeric.</p></dd>
 
@@ -268,7 +268,7 @@ smooth calibration curves</p></li>
 <span class="r-plt img"><img src="plot_model_calibration-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Specify treatment level explicitly</span></span></span>
-<span class="r-in"><span><span class="fu">plot_model_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, treatment_level <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">plot_model_calibration</span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">.fitted</span>, <span class="va">qsmk</span>, .focal_level <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Small sample sizes or extreme proportions detected in bins 9, 10 (n = 8, 3).</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Confidence intervals may be unreliable. Consider using fewer bins or a</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> different calibration method.</span>

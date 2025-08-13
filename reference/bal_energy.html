@@ -7,10 +7,10 @@
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Balance Energy Distance — bal_energy"><meta name="description" content="Computes the energy distance as a multivariate measure of covariate balance
 between groups. Energy distance captures the similarity between distributions
-across the entire joint distribution of covariates, making it more comprehensive
+across the entire joint distribution of .covariates, making it more comprehensive
 than univariate balance measures."><meta property="og:description" content="Computes the energy distance as a multivariate measure of covariate balance
 between groups. Energy distance captures the similarity between distributions
-across the entire joint distribution of covariates, making it more comprehensive
+across the entire joint distribution of .covariates, making it more comprehensive
 than univariate balance measures."><meta property="og:image" content="https://r-causal.github.io/halfmoon/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -47,18 +47,18 @@ than univariate balance measures."><meta property="og:image" content="https://r-
     <div class="ref-description section level2">
     <p>Computes the energy distance as a multivariate measure of covariate balance
 between groups. Energy distance captures the similarity between distributions
-across the entire joint distribution of covariates, making it more comprehensive
+across the entire joint distribution of .covariates, making it more comprehensive
 than univariate balance measures.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bal_energy</span><span class="op">(</span></span>
-<span>  <span class="va">covariates</span>,</span>
-<span>  <span class="va">group</span>,</span>
-<span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">.covariates</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  estimand <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_improved <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  standardized <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -69,34 +69,34 @@ than univariate balance measures.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-covariates">covariates<a class="anchor" aria-label="anchor" href="#arg-covariates"></a></dt>
-<dd><p>A data frame or matrix containing the covariates to compare.</p></dd>
+<dl><dt id="arg--covariates">.covariates<a class="anchor" aria-label="anchor" href="#arg--covariates"></a></dt>
+<dd><p>A data frame or matrix containing the .covariates to compare.</p></dd>
 
 
-<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>A vector (factor or numeric) indicating group membership. For
 binary and multi-category treatments, must have 2+ unique levels. For
 continuous treatments, should be numeric.</p></dd>
 
 
-<dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>An optional numeric vector of weights. If provided, must
-have the same length as rows in <code>covariates</code>. All weights must be non-negative.</p></dd>
+have the same length as rows in <code>.covariates</code>. All weights must be non-negative.</p></dd>
 
 
 <dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
 <dd><p>Character string specifying the estimand. Options are:</p><ul><li><p>NULL (default): Pure between-group energy distance comparing distributions</p></li>
 <li><p>"ATE": Energy distance weighted to reflect balance for estimating average
 treatment effects across the entire population</p></li>
-<li><p>"ATT": Energy distance weighted to reflect balance for the treated group,
+<li><p>"ATT": Energy distance weighted to reflect balance for the treated .exposure,
 measuring how well controls match the treated distribution</p></li>
-<li><p>"ATC": Energy distance weighted to reflect balance for the control group,
+<li><p>"ATC": Energy distance weighted to reflect balance for the control .exposure,
 measuring how well treated units match the control distribution
 For continuous treatments, only NULL is supported.</p></li>
 </ul></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
+<dt id="arg--focal-level">.focal_level<a class="anchor" aria-label="anchor" href="#arg--focal-level"></a></dt>
 <dd><p>The treatment level for ATT/ATC. If <code>NULL</code> (default),
 automatically determined based on estimand.</p></dd>
 
@@ -130,10 +130,10 @@ coefficient (0 = independence, 1 = perfect dependence).</p>
 and implemented following Huling &amp; Mak (2024) and Huling et al. (2024).
 The calculation uses a quadratic form: \(w^T P w + q^T w + k\),
 where the components depend on the estimand.</p>
-<p>For binary variables in the covariates, variance is calculated as p(1-p)
+<p>For binary variables in the .covariates, variance is calculated as p(1-p)
 rather than sample variance to prevent over-weighting.</p>
 <p>For continuous treatments, the function uses distance correlation instead of
-traditional energy distance, measuring independence between treatment and covariates.</p>
+traditional energy distance, measuring independence between treatment and .covariates.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -151,24 +151,24 @@ high dimension. InterStat, 5.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Binary treatment</span></span></span>
 <span class="r-in"><span><span class="fu">bal_energy</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  covariates <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">wt71</span>, <span class="va">smokeyrs</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  group <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span></span></span>
+<span class="r-in"><span>  .covariates <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">wt71</span>, <span class="va">smokeyrs</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.05159867</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With weights</span></span></span>
 <span class="r-in"><span><span class="fu">bal_energy</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  covariates <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">wt71</span>, <span class="va">smokeyrs</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  group <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span>,</span></span>
-<span class="r-in"><span>  weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_ate</span></span></span>
+<span class="r-in"><span>  .covariates <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">wt71</span>, <span class="va">smokeyrs</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span>,</span></span>
+<span class="r-in"><span>  .weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_ate</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.002998391</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ATT estimand</span></span></span>
 <span class="r-in"><span><span class="fu">bal_energy</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  covariates <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">wt71</span>, <span class="va">smokeyrs</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  group <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span>,</span></span>
-<span class="r-in"><span>  weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_att</span>,</span></span>
+<span class="r-in"><span>  .covariates <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">nhefs_weights</span>, <span class="va">age</span>, <span class="va">wt71</span>, <span class="va">smokeyrs</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .exposure <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">qsmk</span>,</span></span>
+<span class="r-in"><span>  .weights <span class="op">=</span> <span class="va">nhefs_weights</span><span class="op">$</span><span class="va">w_att</span>,</span></span>
 <span class="r-in"><span>  estimand <span class="op">=</span> <span class="st">"ATT"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.003318796</span>

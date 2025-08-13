@@ -52,11 +52,11 @@ balance between treatment groups.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bal_model_auc</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
-<span>  <span class="va">.truth</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  <span class="va">.estimate</span>,</span>
-<span>  .wts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  treatment_level <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -68,7 +68,7 @@ balance between treatment groups.</p>
 <dd><p>A data frame containing the variables.</p></dd>
 
 
-<dt id="arg--truth">.truth<a class="anchor" aria-label="anchor" href="#arg--truth"></a></dt>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
 <dd><p>The treatment/outcome variable (unquoted).</p></dd>
 
 
@@ -76,7 +76,7 @@ balance between treatment groups.</p>
 <dd><p>The propensity score or fitted values (unquoted).</p></dd>
 
 
-<dt id="arg--wts">.wts<a class="anchor" aria-label="anchor" href="#arg--wts"></a></dt>
+<dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>
 <dd><p>Optional single weight variable (unquoted). If NULL, computes
 unweighted AUC.</p></dd>
 
@@ -87,7 +87,7 @@ before computation. If <code>FALSE</code> (default), missing values in the input
 will produce <code>NA</code> in the output.</p></dd>
 
 
-<dt id="arg-treatment-level">treatment_level<a class="anchor" aria-label="anchor" href="#arg-treatment-level"></a></dt>
+<dt id="arg--focal-level">.focal_level<a class="anchor" aria-label="anchor" href="#arg--focal-level"></a></dt>
 <dd><p>The level of the outcome variable to consider as the
 treatment/event. If <code>NULL</code> (default), uses the last level for factors or
 the maximum value for numeric variables.</p></dd>
