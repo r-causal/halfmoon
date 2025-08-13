@@ -31,7 +31,13 @@ test_that("plot_qq works with multiple weights", {
 })
 
 test_that("plot_qq works without observed", {
-  p <- plot_qq(nhefs_weights, age, qsmk, .weights = w_ate, include_observed = FALSE)
+  p <- plot_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .weights = w_ate,
+    include_observed = FALSE
+  )
 
   expect_s3_class(p, "ggplot")
 
@@ -137,7 +143,13 @@ test_that("plot_qq visual regression tests", {
   # Without observed
   expect_doppelganger(
     "qq plot no observed",
-    plot_qq(nhefs_weights, age, qsmk, .weights = w_ate, include_observed = FALSE)
+    plot_qq(
+      nhefs_weights,
+      age,
+      qsmk,
+      .weights = w_ate,
+      include_observed = FALSE
+    )
   )
 
   # With propensity score

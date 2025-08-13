@@ -29,8 +29,8 @@
 #' @inheritParams ggplot2_params
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @param .reference_level The reference treatment level to use for comparisons. 
-#'   If `NULL` (default), uses the first level for factors or the minimum value 
+#' @param .reference_level The reference treatment level to use for comparisons.
+#'   If `NULL` (default), uses the first level for factors or the minimum value
 #'   for numeric variables.
 #'
 #' @return A ggplot2 layer.

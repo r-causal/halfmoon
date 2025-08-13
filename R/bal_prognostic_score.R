@@ -280,15 +280,15 @@ bal_prognostic_fit_model <- function(
         data = control_data,
         family = family
       )
-      
+
       # Add weights if provided
       if (!is.null(.weights)) {
         glm_args$weights <- .weights
       }
-      
+
       # Add any additional arguments
       glm_args <- c(glm_args, list(...))
-      
+
       # Use do.call to bypass non-standard evaluation
       do.call(stats::glm, glm_args)
     },

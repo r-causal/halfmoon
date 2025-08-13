@@ -44,7 +44,11 @@ test_that("check_ess works with binary groups", {
 })
 
 test_that("check_ess works with categorical groups", {
-  result <- check_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
+  result <- check_ess(
+    nhefs_weights,
+    .weights = w_cat_ate,
+    .group = alcoholfreq_cat
+  )
 
   expect_s3_class(result, "tbl_df")
   expect_true("group" %in% names(result))
@@ -52,7 +56,12 @@ test_that("check_ess works with categorical groups", {
 })
 
 test_that("check_ess works with continuous groups", {
-  result <- check_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
+  result <- check_ess(
+    nhefs_weights,
+    .weights = w_ate,
+    .group = age,
+    n_tiles = 4
+  )
 
   expect_s3_class(result, "tbl_df")
   expect_true("group" %in% names(result))
@@ -123,7 +132,11 @@ test_that("ESS calculation is correct", {
     wts2 = c(4, 0, 0, 0) # All weight on one obs -> ESS = 1
   )
 
-  result <- check_ess(test_df, .weights = c(wts, wts2), include_observed = FALSE)
+  result <- check_ess(
+    test_df,
+    .weights = c(wts, wts2),
+    include_observed = FALSE
+  )
 
   expect_equal(result$ess[result$method == "wts"], 4)
   expect_equal(result$ess[result$method == "wts2"], 1)

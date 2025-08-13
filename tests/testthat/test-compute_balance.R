@@ -114,7 +114,11 @@ test_that("bal_smd handles missing values", {
   w_na <- data$w_uniform
 
   # Should return NA when na.rm = FALSE
-  expect_true(is.na(bal_smd(.covariate = x_na, .exposure = g_na, na.rm = FALSE)))
+  expect_true(is.na(bal_smd(
+    .covariate = x_na,
+    .exposure = g_na,
+    na.rm = FALSE
+  )))
 
   # Should work when na.rm = TRUE
   smd_na.rm <- bal_smd(.covariate = x_na, .exposure = g_na, na.rm = TRUE)
@@ -612,7 +616,10 @@ test_that("functions handle unbalanced groups", {
 
   # Test with very unbalanced groups
   expect_no_error({
-    smd_unbal <- bal_smd(.covariate = data$x_cont, .exposure = data$g_unbalanced)
+    smd_unbal <- bal_smd(
+      .covariate = data$x_cont,
+      .exposure = data$g_unbalanced
+    )
     vr_unbal <- bal_vr(
       .covariate = data$x_cont,
       .exposure = data$g_unbalanced

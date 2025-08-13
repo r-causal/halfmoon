@@ -36,7 +36,10 @@ test_that("geom_roc and stat_roc work", {
   expect_no_error(ggplot_build(p_stat))
 
   # Test with .focal_level parameter
-  p_treatment <- ggplot(nhefs_weights, aes(estimate = .fitted, exposure = qsmk)) +
+  p_treatment <- ggplot(
+    nhefs_weights,
+    aes(estimate = .fitted, exposure = qsmk)
+  ) +
     geom_roc(.focal_level = "1")
   expect_s3_class(p_treatment, "gg")
   expect_no_error(ggplot_build(p_treatment))

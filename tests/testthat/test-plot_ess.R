@@ -59,7 +59,11 @@ test_that("plot_ess includes reference line", {
 
 test_that("plot_ess labels work correctly", {
   p_with_labels <- plot_ess(nhefs_weights, .weights = w_ate, show_labels = TRUE)
-  p_without_labels <- plot_ess(nhefs_weights, .weights = w_ate, show_labels = FALSE)
+  p_without_labels <- plot_ess(
+    nhefs_weights,
+    .weights = w_ate,
+    show_labels = FALSE
+  )
 
   # Check for text layer
   text_layer_with <- sapply(
