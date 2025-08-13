@@ -110,7 +110,7 @@ test_that("check_balance works with single weight", {
     data,
     age,
     qsmk,
-    .wts = w_test1,
+    .weights = w_test1,
     .metrics = "smd"
   )
 
@@ -128,7 +128,7 @@ test_that("check_balance works with multiple weights", {
     data,
     age,
     qsmk,
-    .wts = c(w_test1, w_test2),
+    .weights = c(w_test1, w_test2),
     .metrics = "smd"
   )
 
@@ -146,7 +146,7 @@ test_that("check_balance respects include_observed = FALSE", {
     data,
     age,
     qsmk,
-    .wts = w_test1,
+    .weights = w_test1,
     .metrics = "smd",
     include_observed = FALSE
   )
@@ -167,7 +167,7 @@ test_that("check_balance produces expected structure with multiple vars, weights
     data,
     c(age, wt71),
     qsmk,
-    .wts = c(w_test1, w_test2),
+    .weights = c(w_test1, w_test2),
     .metrics = c("smd", "ks")
   )
 
@@ -198,9 +198,9 @@ test_that("check_balance SMD matches bal_smd", {
 
   # Get result from bal_smd directly
   direct_smd <- bal_smd(
-    covariate = data$age,
-    group = data$qsmk,
-    reference_group = 1L
+    .covariate = data$age,
+    .exposure = data$qsmk,
+    .reference_level = 1L
   )
 
   expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
@@ -218,9 +218,9 @@ test_that("check_balance vr matches bal_vr", {
   # Get result from bal_vr directly
   # check_balance uses reference_group=1L which maps to first level (0) for bal_vr
   direct_vr <- bal_vr(
-    covariate = data$age,
-    group = data$qsmk,
-    reference_group = 0 # First level of qsmk (group_levels[1])
+    .covariate = data$age,
+    .exposure = data$qsmk,
+    .reference_level = 0 # First level of qsmk (group_levels[1])
   )
 
   expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
@@ -237,9 +237,9 @@ test_that("check_balance KS matches bal_ks", {
 
   # Get result from bal_ks directly
   direct_ks <- bal_ks(
-    covariate = data$age,
-    group = data$qsmk,
-    reference_group = 0 # First level of qsmk
+    .covariate = data$age,
+    .exposure = data$qsmk,
+    .reference_level = 0 # First level of qsmk
   )
 
   expect_equal(balance_ks, direct_ks, tolerance = 1e-10)
@@ -253,7 +253,7 @@ test_that("check_balance weighted results match individual weighted functions", 
     data,
     age,
     qsmk,
-    .wts = w_test1,
+    .weights = w_test1,
     .metrics = "smd"
   )
   balance_smd <- result$estimate[
@@ -261,10 +261,10 @@ test_that("check_balance weighted results match individual weighted functions", 
   ]
 
   direct_smd <- bal_smd(
-    covariate = data$age,
-    group = data$qsmk,
-    weights = data$w_test1,
-    reference_group = 1L
+    .covariate = data$age,
+    .exposure = data$qsmk,
+    .weights = data$w_test1,
+    .reference_level = 1L
   )
 
   expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
@@ -274,7 +274,7 @@ test_that("check_balance weighted results match individual weighted functions", 
     data,
     age,
     qsmk,
-    .wts = w_test1,
+    .weights = w_test1,
     .metrics = "vr"
   )
   balance_vr <- result_vr$estimate[
@@ -282,10 +282,10 @@ test_that("check_balance weighted results match individual weighted functions", 
   ]
 
   direct_vr <- bal_vr(
-    covariate = data$age,
-    group = data$qsmk,
-    weights = data$w_test1,
-    reference_group = 0 # First level (group_levels[1])
+    .covariate = data$age,
+    .exposure = data$qsmk,
+    .weights = data$w_test1,
+    .reference_level = 0 # First level (group_levels[1])
   )
 
   expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
@@ -304,14 +304,14 @@ test_that("check_balance handles different reference groups correctly", {
     age,
     qsmk,
     .metrics = "smd",
-    reference_group = 0
+    .reference_level = 0
   )
   result2 <- check_balance_basic(
     data,
     age,
     qsmk,
     .metrics = "smd",
-    reference_group = 1
+    .reference_level = 1
   )
 
   # SMDs should be negatives of each other
@@ -331,14 +331,14 @@ test_that("check_balance handles factor reference groups", {
     age,
     sex,
     .metrics = "smd",
-    reference_group = "0"
+    .reference_level = "0"
   )
   result2 <- check_balance_basic(
     data,
     age,
     sex,
     .metrics = "smd",
-    reference_group = "1"
+    .reference_level = "1"
   )
 
   # SMDs should be negatives of each other
@@ -382,9 +382,9 @@ test_that("check_balance handles missing values correctly", {
 
   # Verify the na.rm = TRUE result matches direct computation
   direct_smd <- bal_smd(
-    covariate = data_na$age,
-    group = data_na$qsmk,
-    reference_group = 1L,
+    .covariate = data_na$age,
+    .exposure = data_na$qsmk,
+    .reference_level = 1L,
     na.rm = TRUE
   )
   expect_equal(result_na_true$estimate, direct_smd, tolerance = 1e-10)
@@ -434,7 +434,7 @@ test_that("check_balance validates inputs correctly", {
     data,
     age,
     qsmk,
-    .wts = w_test1,
+    .weights = w_test1,
     include_observed = FALSE,
     .metrics = character(0)
   )
@@ -467,7 +467,7 @@ test_that("check_balance handles binary variables correctly", {
   # For binary variables, KS should equal absolute difference in proportions
   # Verify this matches the direct computation
   ks_result <- result$estimate[result$metric == "ks"]
-  direct_ks <- bal_ks(data$qsmk_num, data$sex_num, reference_group = 0)
+  direct_ks <- bal_ks(data$qsmk_num, data$sex_num, .reference_level = 0)
   expect_equal(ks_result, direct_ks, tolerance = 1e-10)
 })
 
@@ -479,7 +479,7 @@ test_that("check_balance handles extreme weights", {
     data,
     age,
     qsmk,
-    .wts = w_extreme,
+    .weights = w_extreme,
     .metrics = "smd"
   )
 
@@ -491,8 +491,8 @@ test_that("check_balance handles extreme weights", {
   direct_smd <- bal_smd(
     data$age,
     data$qsmk,
-    weights = data$w_extreme,
-    reference_group = 1L
+    .weights = data$w_extreme,
+    .reference_level = 1L
   )
   expect_equal(weighted_estimate, direct_smd, tolerance = 1e-10)
 })
@@ -504,7 +504,7 @@ test_that("check_balance output is properly arranged", {
     data,
     c(age, wt71),
     qsmk,
-    .wts = c(w_test1, w_test2),
+    .weights = c(w_test1, w_test2),
     .metrics = c("smd", "ks")
   )
 
@@ -591,7 +591,7 @@ test_that("check_balance handles realistic smoking cessation balance assessment"
     data,
     all_of(covariates),
     qsmk,
-    .wts = c(w_test1, w_test2),
+    .weights = c(w_test1, w_test2),
     .metrics = c("smd", "ks")
   )
 
@@ -619,7 +619,7 @@ test_that("check_balance handles full NHEFS dataset efficiently", {
       nhefs_weights,
       c(age, wt71, smokeintensity),
       qsmk,
-      .wts = c(w_ate, w_att),
+      .weights = c(w_ate, w_att),
       .metrics = c("smd", "vr", "ks")
     )
   })
@@ -666,7 +666,7 @@ test_that("check_balance works with real propensity score weights", {
     data,
     c(age, wt71, smokeintensity),
     qsmk,
-    .wts = c(w_ate, w_att, w_atc),
+    .weights = c(w_ate, w_att, w_atc),
     .metrics = "smd"
   )
 
@@ -711,7 +711,7 @@ test_that("check_balance correlation works with weights", {
     data,
     c(wt71, smokeintensity),
     age,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "correlation"
   )
 
@@ -785,7 +785,7 @@ test_that("check_balance correlation handles missing values", {
   expect_true(is.finite(result_na_true$estimate))
 })
 
-test_that("check_balance supports both quoted and unquoted .wts", {
+test_that("check_balance supports both quoted and unquoted .weights", {
   data <- get_nhefs_test_data()
 
   # Test unquoted weight
@@ -793,7 +793,7 @@ test_that("check_balance supports both quoted and unquoted .wts", {
     data,
     age,
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "smd"
   )
 
@@ -802,7 +802,7 @@ test_that("check_balance supports both quoted and unquoted .wts", {
     data,
     age,
     qsmk,
-    .wts = "w_ate",
+    .weights = "w_ate",
     .metrics = "smd"
   )
 
@@ -818,7 +818,7 @@ test_that("check_balance supports multiple weight selection with c()", {
     data,
     age,
     qsmk,
-    .wts = c(w_ate, w_att),
+    .weights = c(w_ate, w_att),
     .metrics = "smd"
   )
 
@@ -827,7 +827,7 @@ test_that("check_balance supports multiple weight selection with c()", {
     data,
     age,
     qsmk,
-    .wts = c("w_ate", "w_att"),
+    .weights = c("w_ate", "w_att"),
     .metrics = "smd"
   )
 
@@ -1099,7 +1099,7 @@ test_that("transformations work with weights", {
     data,
     c(age, wt71),
     qsmk,
-    .wts = w_test1,
+    .weights = w_test1,
     .metrics = "smd",
     squares = TRUE,
     cubes = FALSE,
@@ -1178,7 +1178,7 @@ test_that("edge cases handled correctly", {
   expect_true(any(grepl("_x_", var_names))) # Interaction indicator
 })
 
-test_that("check_balance works with tidyselect helpers in .wts parameter", {
+test_that("check_balance works with tidyselect helpers in .weights parameter", {
   data <- get_nhefs_test_data()
 
   # Test with starts_with()
@@ -1186,7 +1186,7 @@ test_that("check_balance works with tidyselect helpers in .wts parameter", {
     data,
     c(age, wt71),
     qsmk,
-    .wts = starts_with("w_test")
+    .weights = starts_with("w_test")
   )
 
   expect_s3_class(result1, "data.frame")
@@ -1202,7 +1202,7 @@ test_that("check_balance works with tidyselect helpers in .wts parameter", {
     data,
     c(age, wt71),
     qsmk,
-    .wts = ends_with("_test1")
+    .weights = ends_with("_test1")
   )
 
   expect_s3_class(result2, "data.frame")
@@ -1213,7 +1213,7 @@ test_that("check_balance works with tidyselect helpers in .wts parameter", {
     data,
     c(age, wt71),
     qsmk,
-    .wts = contains("extreme")
+    .weights = contains("extreme")
   )
 
   expect_s3_class(result3, "data.frame")
@@ -1519,7 +1519,7 @@ test_that("check_balance works with energy metric", {
     data,
     c(age, wt71, smokeyrs),
     qsmk,
-    .wts = c(w_ate, w_att),
+    .weights = c(w_ate, w_att),
     .metrics = "energy"
   )
 

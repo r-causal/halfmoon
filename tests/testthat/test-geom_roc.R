@@ -2,7 +2,7 @@ library(ggplot2)
 
 test_that("geom_roc and stat_roc work", {
   # Basic usage with factor outcome (qsmk is already a factor)
-  p <- ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+  p <- ggplot(nhefs_weights, aes(estimate = .fitted, exposure = qsmk)) +
     geom_roc()
   expect_s3_class(p, "gg")
   expect_no_error(ggplot_build(p))
@@ -11,7 +11,7 @@ test_that("geom_roc and stat_roc work", {
   qsmk_numeric <- as.numeric(nhefs_weights$qsmk) - 1 # Convert to 0/1
   p_numeric <- ggplot(
     nhefs_weights,
-    aes(estimate = .fitted, truth = qsmk_numeric)
+    aes(estimate = .fitted, exposure = qsmk_numeric)
   ) +
     geom_roc()
   expect_s3_class(p_numeric, "gg")
@@ -20,7 +20,7 @@ test_that("geom_roc and stat_roc work", {
   # With weights
   p_weighted <- ggplot(
     nhefs_weights,
-    aes(estimate = .fitted, truth = qsmk, weight = w_ate)
+    aes(estimate = .fitted, exposure = qsmk, weight = w_ate)
   ) +
     geom_roc()
   expect_s3_class(p_weighted, "gg")
@@ -29,24 +29,27 @@ test_that("geom_roc and stat_roc work", {
   # Test stat_roc directly
   p_stat <- ggplot(
     nhefs_weights,
-    aes(estimate = .fitted, truth = qsmk)
+    aes(estimate = .fitted, exposure = qsmk)
   ) +
     stat_roc()
   expect_s3_class(p_stat, "gg")
   expect_no_error(ggplot_build(p_stat))
 
-  # Test with treatment_level parameter
-  p_treatment <- ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
-    geom_roc(treatment_level = "1")
+  # Test with .focal_level parameter
+  p_treatment <- ggplot(
+    nhefs_weights,
+    aes(estimate = .fitted, exposure = qsmk)
+  ) +
+    geom_roc(.focal_level = "1")
   expect_s3_class(p_treatment, "gg")
   expect_no_error(ggplot_build(p_treatment))
 
-  # Test stat_roc with treatment_level
+  # Test stat_roc with .focal_level
   p_stat_treatment <- ggplot(
     nhefs_weights,
-    aes(estimate = .fitted, truth = qsmk)
+    aes(estimate = .fitted, exposure = qsmk)
   ) +
-    stat_roc(treatment_level = "0")
+    stat_roc(.focal_level = "0")
   expect_s3_class(p_stat_treatment, "gg")
   expect_no_error(ggplot_build(p_stat_treatment))
 })
@@ -59,7 +62,7 @@ test_that("geom_roc visual regression", {
     "geom-roc-basic",
     ggplot(
       nhefs_weights,
-      aes(estimate = .fitted, truth = qsmk)
+      aes(estimate = .fitted, exposure = qsmk)
     ) +
       geom_roc()
   )
@@ -69,7 +72,7 @@ test_that("geom_roc visual regression", {
     "geom-roc-weighted",
     ggplot(
       nhefs_weights,
-      aes(estimate = .fitted, truth = as.numeric(qsmk), weight = w_ate)
+      aes(estimate = .fitted, exposure = as.numeric(qsmk), weight = w_ate)
     ) +
       geom_roc(linewidth = 1.5, color = "blue")
   )
@@ -93,7 +96,7 @@ test_that("geom_roc visual regression", {
       long_data,
       aes(
         estimate = .fitted,
-        truth = qsmk,
+        exposure = qsmk,
         weight = weight,
         color = weight_type
       )
@@ -102,25 +105,25 @@ test_that("geom_roc visual regression", {
       labs(color = "Weight Type")
   )
 
-  # Test with treatment_level parameter
+  # Test with .focal_level parameter
   expect_doppelganger(
     "geom-roc-treatment-level-1",
     ggplot(
       nhefs_weights,
-      aes(estimate = .fitted, truth = qsmk)
+      aes(estimate = .fitted, exposure = qsmk)
     ) +
-      geom_roc(treatment_level = "1", color = "red") +
-      labs(title = "ROC with treatment_level = '1'")
+      geom_roc(.focal_level = "1", color = "red") +
+      labs(title = "ROC with .focal_level = '1'")
   )
 
   expect_doppelganger(
     "geom-roc-treatment-level-0",
     ggplot(
       nhefs_weights,
-      aes(estimate = .fitted, truth = qsmk)
+      aes(estimate = .fitted, exposure = qsmk)
     ) +
-      geom_roc(treatment_level = "0", color = "blue") +
-      labs(title = "ROC with treatment_level = '0'")
+      geom_roc(.focal_level = "0", color = "blue") +
+      labs(title = "ROC with .focal_level = '0'")
   )
 })
 
@@ -128,7 +131,7 @@ test_that("geom_roc works with both numeric and factor outcomes - visual", {
   skip_on_ci()
 
   # Test with factor outcome (qsmk is already a factor)
-  p_factor <- ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+  p_factor <- ggplot(nhefs_weights, aes(estimate = .fitted, exposure = qsmk)) +
     geom_roc() +
     labs(title = "ROC with factor outcome")
 
@@ -136,7 +139,7 @@ test_that("geom_roc works with both numeric and factor outcomes - visual", {
   qsmk_numeric <- as.numeric(nhefs_weights$qsmk) - 1 # Convert to 0/1
   p_numeric <- ggplot(
     nhefs_weights,
-    aes(estimate = .fitted, truth = qsmk_numeric)
+    aes(estimate = .fitted, exposure = qsmk_numeric)
   ) +
     geom_roc() +
     labs(title = "ROC with numeric outcome")

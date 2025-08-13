@@ -4,14 +4,14 @@
 \alias{weighted_quantile}
 \title{Compute weighted quantiles}
 \usage{
-weighted_quantile(values, quantiles, .wts)
+weighted_quantile(values, quantiles, .weights)
 }
 \arguments{
 \item{values}{Numeric vector of values to compute quantiles for.}
 
 \item{quantiles}{Numeric vector of probabilities with values between 0 and 1.}
 
-\item{.wts}{Numeric vector of non-negative weights, same length as \code{values}.}
+\item{.weights}{Numeric vector of non-negative weights, same length as \code{values}.}
 }
 \value{
 Numeric vector of weighted quantiles corresponding to the requested probabilities.

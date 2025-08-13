@@ -11,21 +11,21 @@ test_that("plot_stratified_residuals.lm works with model input", {
   # Basic plot should work
   p <- plot_stratified_residuals(
     model,
-    treatment = treatment
+    .exposure = treatment
   )
   expect_s3_class(p, "gg")
 
   # Different plot types
   p_facet <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     plot_type = "facet"
   )
   expect_s3_class(p_facet, "gg")
 
   p_both <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     plot_type = "both"
   )
   expect_s3_class(p_both, "gg")
@@ -34,7 +34,7 @@ test_that("plot_stratified_residuals.lm works with model input", {
   ps_model <- glm(treatment ~ x, family = binomial)
   p_ps <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     ps_model = ps_model
   )
   expect_s3_class(p_ps, "gg")
@@ -62,7 +62,7 @@ test_that("plot_stratified_residuals.data.frame works", {
   # Test with fitted values
   p <- plot_stratified_residuals(
     plot_data,
-    treatment = trt,
+    .exposure = trt,
     residuals = resids,
     x_var = fitted_vals
   )
@@ -71,7 +71,7 @@ test_that("plot_stratified_residuals.data.frame works", {
   # Test with propensity scores
   p_ps <- plot_stratified_residuals(
     plot_data,
-    treatment = trt,
+    .exposure = trt,
     residuals = resids,
     x_var = ps
   )
@@ -81,7 +81,7 @@ test_that("plot_stratified_residuals.data.frame works", {
   # Test with string column names
   p_string <- plot_stratified_residuals(
     plot_data,
-    treatment = "trt",
+    .exposure = "trt",
     residuals = "resids",
     x_var = "ps"
   )
@@ -102,7 +102,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   expect_halfmoon_error(
     plot_stratified_residuals(
       model,
-      treatment = rep(0:1, 16),
+      .exposure = rep(0:1, 16),
       ps_model = "not a model"
     ),
     "halfmoon_type_error"
@@ -124,7 +124,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   expect_halfmoon_error(
     plot_stratified_residuals(
       df,
-      treatment = trt,
+      .exposure = trt,
       residuals = resids
     ),
     "halfmoon_arg_error"
@@ -134,7 +134,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   expect_halfmoon_error(
     plot_stratified_residuals(
       df,
-      treatment = trt,
+      .exposure = trt,
       residuals = resids,
       x_var = not_a_column
     ),
@@ -147,7 +147,7 @@ test_that("plot_stratified_residuals validates inputs correctly", {
   expect_halfmoon_error(
     plot_stratified_residuals(
       df_wrong,
-      treatment = trt,
+      .exposure = trt,
       residuals = resids,
       x_var = x
     ),
@@ -170,7 +170,7 @@ test_that("plot_stratified_residuals handles NA values correctly", {
   # Should work with na.rm = TRUE
   p <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     na.rm = TRUE
   )
   expect_s3_class(p, "gg")
@@ -188,7 +188,7 @@ test_that("plot_stratified_residuals customization options work", {
   # Test smooth = FALSE
   p_no_smooth <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     smooth = FALSE
   )
   expect_s3_class(p_no_smooth, "gg")
@@ -196,7 +196,7 @@ test_that("plot_stratified_residuals customization options work", {
   # Test custom alpha
   p_alpha <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     alpha = 0.5
   )
   expect_s3_class(p_alpha, "gg")
@@ -205,7 +205,7 @@ test_that("plot_stratified_residuals customization options work", {
   ps_model <- glm(treatment ~ x, family = binomial)
   p_ps <- plot_stratified_residuals(
     model,
-    treatment = treatment,
+    .exposure = treatment,
     ps_model = ps_model
   )
   expect_s3_class(p_ps, "gg")
@@ -236,7 +236,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr lm color wrong",
     plot_stratified_residuals(
       model_wrong,
-      treatment = treatment,
+      .exposure = treatment,
       plot_type = "color"
     )
   )
@@ -245,7 +245,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr lm facet wrong",
     plot_stratified_residuals(
       model_wrong,
-      treatment = treatment,
+      .exposure = treatment,
       plot_type = "facet"
     )
   )
@@ -254,7 +254,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr lm both wrong",
     plot_stratified_residuals(
       model_wrong,
-      treatment = treatment,
+      .exposure = treatment,
       plot_type = "both"
     )
   )
@@ -263,7 +263,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr lm correct",
     plot_stratified_residuals(
       model_correct,
-      treatment = treatment,
+      .exposure = treatment,
       plot_type = "both"
     )
   )
@@ -275,7 +275,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr lm ps wrong",
     plot_stratified_residuals(
       model_wrong,
-      treatment = treatment,
+      .exposure = treatment,
       ps_model = ps_model,
       plot_type = "color"
     )
@@ -293,7 +293,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr df fitted wrong",
     plot_stratified_residuals(
       plot_df,
-      treatment = trt,
+      .exposure = trt,
       residuals = resids,
       x_var = fitted_vals,
       plot_type = "color"
@@ -304,7 +304,7 @@ test_that("plot_stratified_residuals visual regression tests", {
     "sr df ps facet wrong",
     plot_stratified_residuals(
       plot_df,
-      treatment = trt,
+      .exposure = trt,
       residuals = resids,
       x_var = ps,
       plot_type = "facet"

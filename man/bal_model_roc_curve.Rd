@@ -6,28 +6,28 @@
 \usage{
 bal_model_roc_curve(
   .data,
-  .truth,
+  .exposure,
   .estimate,
-  .wts = NULL,
+  .weights = NULL,
   na.rm = TRUE,
-  treatment_level = NULL
+  .focal_level = NULL
 )
 }
 \arguments{
 \item{.data}{A data frame containing the variables.}
 
-\item{.truth}{The treatment/outcome variable (unquoted).}
+\item{.exposure}{The treatment/outcome variable (unquoted).}
 
 \item{.estimate}{The propensity score or fitted values (unquoted).}
 
-\item{.wts}{Optional single weight variable (unquoted). If NULL, computes
+\item{.weights}{Optional single weight variable (unquoted). If NULL, computes
 unweighted ROC curve.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input
 will produce \code{NA} in the output.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
+\item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
 the maximum value for numeric variables.}
 }

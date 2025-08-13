@@ -20,7 +20,7 @@
       expr
     Condition <halfmoon_column_error>
       Error:
-      ! Column `nonexistent` not found in `.group`
+      ! Column `nonexistent` not found in `.exposure`
 
 ---
 
@@ -28,7 +28,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `bal_qq()`:
-      ! Group variable must have exactly two levels, got 5
+      ! Exposure variable must have exactly two levels, got 5
 
 ---
 
@@ -36,7 +36,7 @@
       expr
     Condition <halfmoon_arg_error>
       Error in `bal_qq()`:
-      ! `.wts` must select exactly one variable or be NULL
+      ! `.weights` must select exactly one variable or be NULL
 
 # bal_qq works with different treatment levels
 
@@ -44,5 +44,5 @@
       expr
     Condition <halfmoon_reference_error>
       Error in `bal_qq()`:
-      ! `treatment_level` '2' not found in `.group` levels: "0" and "1"
+      ! `.reference_level` '2' not found in `.exposure` levels: "0" and "1"
 

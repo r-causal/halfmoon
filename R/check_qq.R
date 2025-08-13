@@ -12,23 +12,23 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to compute quantiles for. Supports tidyselect syntax.
-#' @param .group Column name of treatment/group variable. Supports tidyselect syntax.
-#' @param .wts Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
+#' @param .exposure Column name of treatment/group variable. Supports tidyselect syntax.
+#' @param .weights Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @param include_observed Logical. If using `.wts`, also compute observed
+#' @param include_observed Logical. If using `.weights`, also compute observed
 #'   (unweighted) quantiles? Defaults to TRUE.
-#' @param treatment_level The reference treatment level to use for comparisons.
+#' @param .reference_level The reference treatment level to use for comparisons.
 #'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
 #' @return A tibble with class "halfmoon_qq" containing columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
-#'   \item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-#'   \item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+#'   \item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+#'   \item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 #'
 #' @family balance functions
 #' @seealso [bal_qq()] for single weight QQ data, [plot_qq()] for visualization
@@ -37,29 +37,29 @@
 #' check_qq(nhefs_weights, age, qsmk)
 #'
 #' # With weighting
-#' check_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+#' check_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 #'
 #' # Compare multiple weighting schemes
-#' check_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+#' check_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 #'
 #' @export
 check_qq <- function(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 ) {
   # Handle both quoted and unquoted column names
   var_quo <- rlang::enquo(.var)
-  group_quo <- rlang::enquo(.group)
-  wts_quo <- rlang::enquo(.wts)
+  exposure_quo <- rlang::enquo(.exposure)
+  wts_quo <- rlang::enquo(.weights)
 
   var_name <- get_column_name(var_quo, ".var")
-  group_name <- get_column_name(group_quo, ".group")
+  exposure_name <- get_column_name(exposure_quo, ".exposure")
 
   # Validate inputs
   if (!var_name %in% names(.data)) {
@@ -69,9 +69,9 @@ check_qq <- function(
     )
   }
 
-  if (!group_name %in% names(.data)) {
+  if (!exposure_name %in% names(.data)) {
     abort(
-      "Column {.code {group_name}} not found in data",
+      "Column {.code {exposure_name}} not found in data",
       error_class = "halfmoon_column_error"
     )
   }
@@ -84,16 +84,16 @@ check_qq <- function(
   }
 
   # Get group levels
-  group_var <- .data[[group_name]]
-  group_levels <- if (is.factor(group_var)) {
-    levels(group_var)
+  exposure_var <- .data[[exposure_name]]
+  exposure_levels <- if (is.factor(exposure_var)) {
+    levels(exposure_var)
   } else {
-    sort(unique(group_var[!is.na(group_var)]))
+    sort(unique(exposure_var[!is.na(exposure_var)]))
   }
 
-  if (length(group_levels) != 2) {
+  if (length(exposure_levels) != 2) {
     abort(
-      "Group variable must have exactly 2 levels",
+      "Exposure variable must have exactly 2 levels",
       error_class = "halfmoon_group_error"
     )
   }
@@ -107,36 +107,36 @@ check_qq <- function(
         error_class = "halfmoon_na_error"
       )
     }
-    if (any(is.na(group_var))) {
+    if (any(is.na(exposure_var))) {
       abort(
-        "Group variable {.code {group_name}} contains missing values and {.arg na.rm = FALSE}",
+        "Exposure variable {.code {exposure_name}} contains missing values and {.arg na.rm = FALSE}",
         error_class = "halfmoon_na_error"
       )
     }
   }
 
-  # Handle NULL treatment_level
-  if (is.null(treatment_level)) {
-    if (is.factor(group_var)) {
+  # Handle NULL .reference_level
+  if (is.null(.reference_level)) {
+    if (is.factor(exposure_var)) {
       # For factors, use the last level
-      treatment_level <- group_levels[length(group_levels)]
+      .reference_level <- exposure_levels[length(exposure_levels)]
     } else {
       # For numeric, use the maximum value
-      treatment_level <- max(group_levels)
+      .reference_level <- max(exposure_levels)
     }
   }
 
-  # Validate treatment_level exists
-  if (!treatment_level %in% group_levels) {
+  # Validate .reference_level exists
+  if (!.reference_level %in% exposure_levels) {
     abort(
-      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}",
+      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .group} levels: {.val {exposure_levels}}",
       error_class = "halfmoon_reference_error"
     )
   }
 
   # Determine reference and comparison groups
-  ref_group <- treatment_level
-  comp_group <- setdiff(group_levels, treatment_level)
+  ref_group <- .reference_level
+  comp_group <- setdiff(exposure_levels, .reference_level)
 
   # Create list of methods to compute
   methods <- character(0)
@@ -153,7 +153,7 @@ check_qq <- function(
     compute_method_quantiles,
     .data = .data,
     var_name = var_name,
-    group_name = group_name,
+    exposure_name = exposure_name,
     ref_group = ref_group,
     comp_group = comp_group,
     quantiles = quantiles,
@@ -176,7 +176,7 @@ check_qq <- function(
 #' @param method Character string indicating the method ("observed" or weight column name)
 #' @param .data Data frame
 #' @param var_name Variable name to compute quantiles for
-#' @param group_name Group variable name
+#' @param exposure_name Group variable name
 #' @param ref_group Reference group level
 #' @param comp_group Comparison group level
 #' @param quantiles Numeric vector of quantiles
@@ -189,15 +189,15 @@ compute_method_quantiles <- function(
   method,
   .data,
   var_name,
-  group_name,
+  exposure_name,
   ref_group,
   comp_group,
   quantiles,
   na.rm
 ) {
   # Filter data by group
-  ref_data <- .data[.data[[group_name]] == ref_group, ]
-  comp_data <- .data[.data[[group_name]] == comp_group, ]
+  ref_data <- .data[.data[[exposure_name]] == ref_group, ]
+  comp_data <- .data[.data[[exposure_name]] == comp_group, ]
 
   if (na.rm) {
     ref_data <- ref_data[!is.na(ref_data[[var_name]]), ]
@@ -229,15 +229,15 @@ compute_method_quantiles <- function(
       comp_wts <- comp_wts[!is.na(comp_data[[var_name]])]
     }
 
-    ref_q <- weighted_quantile(ref_vals, quantiles, .wts = ref_wts)
-    comp_q <- weighted_quantile(comp_vals, quantiles, .wts = comp_wts)
+    ref_q <- weighted_quantile(ref_vals, quantiles, .weights = ref_wts)
+    comp_q <- weighted_quantile(comp_vals, quantiles, .weights = comp_wts)
   }
 
   dplyr::tibble(
     method = method,
     quantile = quantiles,
-    treated_quantiles = ref_q,
-    untreated_quantiles = comp_q
+    exposed_quantiles = ref_q,
+    unexposed_quantiles = comp_q
   )
 }
 
@@ -249,7 +249,7 @@ compute_method_quantiles <- function(
 #'
 #' @param values Numeric vector of values to compute quantiles for.
 #' @param quantiles Numeric vector of probabilities with values between 0 and 1.
-#' @param .wts Numeric vector of non-negative weights, same length as `values`.
+#' @param .weights Numeric vector of non-negative weights, same length as `values`.
 #'
 #' @return Numeric vector of weighted quantiles corresponding to the requested probabilities.
 #'
@@ -261,9 +261,9 @@ compute_method_quantiles <- function(
 #' weighted_quantile(1:10, c(0.25, 0.5, 0.75), 1:10)
 #'
 #' @export
-weighted_quantile <- function(values, quantiles, .wts) {
+weighted_quantile <- function(values, quantiles, .weights) {
   # Extract numeric data from weights (handles both numeric and psw objects)
-  .wts <- extract_weight_data(.wts)
+  .wts <- extract_weight_data(.weights)
 
   # Remove NA values if present
   na_idx <- is.na(values) | is.na(.wts)

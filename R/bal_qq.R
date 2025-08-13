@@ -17,8 +17,8 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to compute quantiles for (unquoted).
-#' @param .group Column name of treatment/group variable (unquoted).
-#' @param .wts Optional single weight variable (unquoted). If NULL, computes
+#' @param .exposure Column name of treatment/group variable (unquoted).
+#' @param .weights Optional single weight variable (unquoted). If NULL, computes
 #'   unweighted quantiles.
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
@@ -27,8 +27,8 @@
 #'
 #' @return A tibble with columns:
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
-#'   \item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-#'   \item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+#'   \item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+#'   \item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 #'
 #' @family balance functions
 #' @seealso [check_qq()] for computing QQ data across multiple weights,
@@ -39,37 +39,37 @@
 #' bal_qq(nhefs_weights, age, qsmk)
 #'
 #' # Weighted QQ data
-#' bal_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+#' bal_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 #'
 #' # Custom quantiles
-#' bal_qq(nhefs_weights, age, qsmk, .wts = w_ate,
+#' bal_qq(nhefs_weights, age, qsmk, .weights = w_ate,
 #'        quantiles = seq(0.1, 0.9, 0.1))
 #'
 #' @export
 bal_qq <- function(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 ) {
   # Handle column names
   var_quo <- rlang::enquo(.var)
-  group_quo <- rlang::enquo(.group)
-  wts_quo <- rlang::enquo(.wts)
+  exposure_quo <- rlang::enquo(.exposure)
+  wts_quo <- rlang::enquo(.weights)
 
   var_name <- get_column_name(var_quo, ".var")
-  group_name <- get_column_name(group_quo, ".group")
+  exposure_name <- get_column_name(exposure_quo, ".exposure")
 
   # Validate inputs
   validate_data_frame(.data, call = rlang::caller_env())
   validate_column_exists(.data, var_name, ".var", call = rlang::caller_env())
   validate_column_exists(
     .data,
-    group_name,
-    ".group",
+    exposure_name,
+    ".exposure",
     call = rlang::caller_env()
   )
 
@@ -79,7 +79,7 @@ bal_qq <- function(
     wt_names <- names(tidyselect::eval_select(wts_quo, .data))
     if (length(wt_names) != 1) {
       abort(
-        "{.arg .wts} must select exactly one variable or be NULL",
+        "{.arg .weights} must select exactly one variable or be NULL",
         error_class = "halfmoon_arg_error",
         call = rlang::current_env()
       )
@@ -87,12 +87,16 @@ bal_qq <- function(
     wt_name <- wt_names[1]
   }
 
-  # Get group levels
-  group_var <- .data[[group_name]]
-  group_levels <- extract_group_levels(group_var)
+  # Get exposure levels
+  exposure_var <- .data[[exposure_name]]
+  exposure_levels <- extract_group_levels(exposure_var)
 
-  # Validate binary group
-  validate_binary_group(group_levels, group_name, call = rlang::caller_env())
+  # Validate binary exposure
+  validate_binary_group(
+    exposure_levels,
+    exposure_name,
+    call = rlang::caller_env()
+  )
 
   # Check for missing values if na.rm = FALSE
   if (!na.rm) {
@@ -104,42 +108,42 @@ bal_qq <- function(
         call = rlang::current_env()
       )
     }
-    if (any(is.na(group_var))) {
+    if (any(is.na(exposure_var))) {
       abort(
-        "Group variable {.code {group_name}} contains missing values and {.arg na.rm = FALSE}",
+        "Exposure variable {.code {exposure_name}} contains missing values and {.arg na.rm = FALSE}",
         error_class = "halfmoon_na_error",
         call = rlang::current_env()
       )
     }
   }
 
-  # Handle NULL treatment_level - use same logic as check_qq
-  if (is.null(treatment_level)) {
-    if (is.factor(group_var)) {
+  # Handle NULL .reference_level - use same logic as check_qq
+  if (is.null(.reference_level)) {
+    if (is.factor(exposure_var)) {
       # For factors, use the last level
-      treatment_level <- group_levels[length(group_levels)]
+      .reference_level <- exposure_levels[length(exposure_levels)]
     } else {
       # For numeric, use the maximum value
-      treatment_level <- max(group_levels)
+      .reference_level <- max(exposure_levels)
     }
   }
 
-  # Validate treatment_level exists
-  if (!treatment_level %in% group_levels) {
+  # Validate .reference_level exists
+  if (!.reference_level %in% exposure_levels) {
     abort(
-      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}",
+      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .exposure} levels: {.val {exposure_levels}}",
       error_class = "halfmoon_reference_error",
       call = rlang::current_env()
     )
   }
 
-  # Use treatment_level as reference group (same as check_qq)
-  ref_group <- treatment_level
-  comp_group <- setdiff(group_levels, treatment_level)
+  # Use .reference_level as reference group (same as check_qq)
+  ref_group <- .reference_level
+  comp_group <- setdiff(exposure_levels, .reference_level)
 
   # Filter data by group
-  ref_data <- .data[group_var == ref_group, ]
-  comp_data <- .data[group_var == comp_group, ]
+  ref_data <- .data[exposure_var == ref_group, ]
+  comp_data <- .data[exposure_var == comp_group, ]
 
   if (na.rm) {
     ref_data <- ref_data[!is.na(ref_data[[var_name]]), ]
@@ -165,14 +169,14 @@ bal_qq <- function(
       comp_wts <- comp_wts[!is.na(comp_data[[var_name]])]
     }
 
-    ref_q <- weighted_quantile(ref_vals, quantiles, .wts = ref_wts)
-    comp_q <- weighted_quantile(comp_vals, quantiles, .wts = comp_wts)
+    ref_q <- weighted_quantile(ref_vals, quantiles, .weights = ref_wts)
+    comp_q <- weighted_quantile(comp_vals, quantiles, .weights = comp_wts)
   }
 
   # Return tibble
   tibble::tibble(
     quantile = quantiles,
-    treated_quantiles = ref_q,
-    untreated_quantiles = comp_q
+    exposed_quantiles = ref_q,
+    unexposed_quantiles = comp_q
   )
 }

@@ -6,7 +6,7 @@
 \usage{
 check_ess(
   .data,
-  .wts = NULL,
+  .weights = NULL,
   .group = NULL,
   include_observed = TRUE,
   n_tiles = 4,
@@ -16,7 +16,7 @@ check_ess(
 \arguments{
 \item{.data}{A data frame containing the variables to analyze.}
 
-\item{.wts}{Optional weighting variables. Can be unquoted variable names,
+\item{.weights}{Optional weighting variables. Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
@@ -24,7 +24,7 @@ different weighting schemes.}
 separately for each group level. For continuous variables, groups are
 created using quantiles.}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
 \item{n_tiles}{For continuous \code{.group} variables, the number of quantile
@@ -66,23 +66,23 @@ further analysis.
 }
 \examples{
 # Overall ESS for different weighting schemes
-check_ess(nhefs_weights, .wts = c(w_ate, w_att, w_atm))
+check_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 
 # ESS by treatment group (binary exposure)
-check_ess(nhefs_weights, .wts = c(w_ate, w_att), .group = qsmk)
+check_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
 
 # ESS by treatment group (categorical exposure)
-check_ess(nhefs_weights, .wts = w_cat_ate, .group = alcoholfreq_cat)
+check_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
 
 # ESS by quartiles of a continuous variable
-check_ess(nhefs_weights, .wts = w_ate, .group = age, n_tiles = 4)
+check_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
 
 # Custom labels for continuous groups
-check_ess(nhefs_weights, .wts = w_ate, .group = age,
+check_ess(nhefs_weights, .weights = w_ate, .group = age,
           n_tiles = 3, tile_labels = c("Young", "Middle", "Older"))
 
 # Without unweighted comparison
-check_ess(nhefs_weights, .wts = w_ate, .group = qsmk,
+check_ess(nhefs_weights, .weights = w_ate, .group = qsmk,
           include_observed = FALSE)
 
 }

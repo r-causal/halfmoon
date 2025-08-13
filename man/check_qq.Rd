@@ -7,11 +7,11 @@
 check_qq(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 )
 }
@@ -20,19 +20,19 @@ check_qq(
 
 \item{.var}{Variable to compute quantiles for. Supports tidyselect syntax.}
 
-\item{.group}{Column name of treatment/group variable. Supports tidyselect syntax.}
+\item{.exposure}{Column name of treatment/group variable. Supports tidyselect syntax.}
 
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
+\item{.weights}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{include_observed}{Logical. If using \code{.wts}, also compute observed
+\item{include_observed}{Logical. If using \code{.weights}, also compute observed
 (unweighted) quantiles? Defaults to TRUE.}
 
-\item{treatment_level}{The reference treatment level to use for comparisons.
+\item{.reference_level}{The reference treatment level to use for comparisons.
 If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before computation.}
@@ -41,8 +41,8 @@ If \code{NULL} (default), uses the last level for factors or the maximum value f
 A tibble with class "halfmoon_qq" containing columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-\item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+\item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable
@@ -60,10 +60,10 @@ it first computes the weighted ECDF and then inverts it to obtain quantiles.
 check_qq(nhefs_weights, age, qsmk)
 
 # With weighting
-check_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+check_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 
 # Compare multiple weighting schemes
-check_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+check_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 
 }
 \seealso{

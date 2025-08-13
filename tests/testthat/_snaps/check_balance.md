@@ -37,7 +37,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `check_balance()`:
-      ! Group variable must have at least two levels for metrics: "smd", "vr", "ks", and "energy". Got 1 level.
+      ! Exposure variable must have at least two levels for metrics: "smd", "vr", "ks", and "energy". Got 1 level.
 
 # check_balance correlation requires numeric group variable
 
@@ -45,7 +45,7 @@
       expr
     Condition <halfmoon_type_error>
       Error in `check_balance()`:
-      ! Group variable must be numeric when using correlation metric
+      ! Exposure variable must be numeric when using correlation metric
 
 # check_balance handles mixed metrics with correlation
 
@@ -53,5 +53,5 @@
       expr
     Condition <halfmoon_type_error>
       Error in `check_balance()`:
-      ! Group variable must be numeric when using correlation metric
+      ! Exposure variable must be numeric when using correlation metric
 

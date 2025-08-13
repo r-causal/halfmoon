@@ -4,5 +4,5 @@
       expr
     Condition <halfmoon_group_error>
       Error:
-      ! Group variable has only one level
+      ! Exposure variable has only one level
 

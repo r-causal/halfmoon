@@ -6,28 +6,28 @@
 \usage{
 check_model_roc_curve(
   .data,
-  .truth,
+  .exposure,
   .estimate,
-  .wts = NULL,
+  .weights = NULL,
   include_observed = TRUE,
   na.rm = TRUE,
-  treatment_level = NULL
+  .focal_level = NULL
 )
 }
 \arguments{
 \item{.data}{A data frame containing the variables.}
 
-\item{.truth}{The treatment/outcome variable (unquoted).}
+\item{.exposure}{The treatment/outcome variable (unquoted).}
 
 \item{.estimate}{The propensity score or covariate (unquoted).}
 
-\item{.wts}{Optional weighting variables (unquoted, can be multiple).}
+\item{.weights}{Optional weighting variables (unquoted, can be multiple).}
 
 \item{include_observed}{Include unweighted results? Default TRUE.}
 
 \item{na.rm}{Remove missing values? Default TRUE.}
 
-\item{treatment_level}{The level of \code{.truth} to consider as the treatment/event.
+\item{.focal_level}{The level of \code{.exposure} to consider as the treatment/event.
 Default is NULL, which uses the second level.}
 }
 \value{

@@ -4,7 +4,7 @@
       expr
     Condition <halfmoon_arg_error>
       Error in `plot_stratified_residuals()`:
-      ! Argument `treatment` is required
+      ! Argument `.exposure` is required
 
 ---
 
@@ -20,7 +20,7 @@
       expr
     Condition <halfmoon_arg_error>
       Error in `plot_stratified_residuals()`:
-      ! Argument `treatment` is required
+      ! Argument `.exposure` is required
 
 ---
 
@@ -43,6 +43,6 @@
     Code
       expr
     Condition <halfmoon_group_error>
-      Error in `plot_stratified_residuals_impl()`:
-      ! `.treatment` must have exactly two levels, got 3
+      Error in `plot_stratified_residuals()`:
+      ! `.exposure` must have exactly two levels, got 3
 

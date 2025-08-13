@@ -7,11 +7,11 @@
 check_balance(
   .data,
   .vars,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   .metrics = c("smd", "vr", "ks", "energy"),
   include_observed = TRUE,
-  reference_group = 1L,
+  .reference_level = 1L,
   na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
@@ -25,9 +25,9 @@ check_balance(
 \item{.vars}{Variables for which to calculate metrics. Can be unquoted
 variable names, a character vector, or a tidyselect expression.}
 
-\item{.group}{Grouping variable, e.g., treatment or exposure group.}
+\item{.exposure}{Grouping variable, e.g., treatment or exposure group.}
 
-\item{.wts}{Optional weighting variables. Can be unquoted variable names,
+\item{.weights}{Optional weighting variables. Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
@@ -36,10 +36,10 @@ Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
 "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
-\item{reference_group}{The reference group level to use for comparisons.
+\item{.reference_level}{The reference group level to use for comparisons.
 Defaults to 1 (first level).}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
@@ -101,21 +101,21 @@ is included in the results.
 }
 \examples{
 # Basic usage with binary exposure
-check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
+check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = c(w_ate, w_att))
 
 # With specific metrics only
 check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 
 # Categorical exposure
 check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
-              .wts = c(w_cat_ate, w_cat_att_2_3wk))
+              .weights = c(w_cat_ate, w_cat_att_2_3wk))
 
 # Specify reference group for categorical exposure
 check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
-              reference_group = "daily", .metrics = c("smd", "vr"))
+              .reference_level = "daily", .metrics = c("smd", "vr"))
 
 # Exclude observed results
-check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate,
+check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = w_ate,
               include_observed = FALSE)
 
 # Use correlation for continuous exposure

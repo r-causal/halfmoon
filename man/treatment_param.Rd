@@ -4,7 +4,7 @@
 \alias{treatment_param}
 \title{Parameter Documentation for Treatment Level}
 \arguments{
-\item{treatment_level}{The level of the outcome variable to consider as the
+\item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
 the maximum value for numeric variables.}
 }

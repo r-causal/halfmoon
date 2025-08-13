@@ -14,7 +14,7 @@ stat_roc(
   na.rm = TRUE,
   show.legend = NA,
   inherit.aes = TRUE,
-  treatment_level = NULL,
+  .focal_level = NULL,
   ...
 )
 }
@@ -39,7 +39,7 @@ If \code{TRUE}, missing values are silently removed.}
 \item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics, rather than
 combining with them.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
+\item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
 the maximum value for numeric variables.}
 

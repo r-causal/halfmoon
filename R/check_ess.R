@@ -41,29 +41,29 @@
 #'
 #' @examples
 #' # Overall ESS for different weighting schemes
-#' check_ess(nhefs_weights, .wts = c(w_ate, w_att, w_atm))
+#' check_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 #'
 #' # ESS by treatment group (binary exposure)
-#' check_ess(nhefs_weights, .wts = c(w_ate, w_att), .group = qsmk)
+#' check_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
 #'
 #' # ESS by treatment group (categorical exposure)
-#' check_ess(nhefs_weights, .wts = w_cat_ate, .group = alcoholfreq_cat)
+#' check_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
 #'
 #' # ESS by quartiles of a continuous variable
-#' check_ess(nhefs_weights, .wts = w_ate, .group = age, n_tiles = 4)
+#' check_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
 #'
 #' # Custom labels for continuous groups
-#' check_ess(nhefs_weights, .wts = w_ate, .group = age,
+#' check_ess(nhefs_weights, .weights = w_ate, .group = age,
 #'           n_tiles = 3, tile_labels = c("Young", "Middle", "Older"))
 #'
 #' # Without unweighted comparison
-#' check_ess(nhefs_weights, .wts = w_ate, .group = qsmk,
+#' check_ess(nhefs_weights, .weights = w_ate, .group = qsmk,
 #'           include_observed = FALSE)
 #'
 #' @export
 check_ess <- function(
   .data,
-  .wts = NULL,
+  .weights = NULL,
   .group = NULL,
   include_observed = TRUE,
   n_tiles = 4,
@@ -113,7 +113,7 @@ check_ess <- function(
   }
 
   # Handle weights
-  wts_quo <- rlang::enquo(.wts)
+  wts_quo <- rlang::enquo(.weights)
 
   if (rlang::quo_is_null(wts_quo)) {
     # No weights provided, just use observed

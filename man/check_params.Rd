@@ -9,13 +9,13 @@
 \item{.vars}{Variables for which to calculate metrics. Can be unquoted
 variable names, a character vector, or a tidyselect expression.}
 
-\item{.group}{Grouping variable, e.g., treatment or exposure group.}
+\item{.exposure}{Grouping variable, e.g., treatment or exposure group.}
 
-\item{.wts}{Optional weighting variables. Can be unquoted variable names,
+\item{.weights}{Optional weighting variables. Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 }
 \description{

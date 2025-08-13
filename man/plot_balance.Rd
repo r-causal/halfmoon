@@ -76,7 +76,7 @@ balance_data <- check_balance(
   nhefs_weights,
   c(age, education, race),
   qsmk,
-  .wts = c(w_ate, w_att)
+  .weights = c(w_ate, w_att)
 )
 
 # Create balance plot
@@ -97,7 +97,7 @@ balance_cat <- check_balance(
   nhefs_weights,
   c(age, wt71, sex),
   alcoholfreq_cat,
-  .wts = w_cat_ate,
+  .weights = w_cat_ate,
   .metrics = c("smd", "vr")
 )
 plot_balance(balance_cat)

@@ -51,7 +51,7 @@ check_model_calibration <- function(
   data,
   .fitted,
   .group,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = c("breaks", "logistic", "windowed"),
   bins = 10,
   binning_method = c("equal_width", "quantile"),
@@ -82,9 +82,9 @@ check_model_calibration <- function(
 
   group_var <- data[[group_name]]
 
-  check_columns(data, fitted_name, group_name, treatment_level)
+  check_columns(data, fitted_name, group_name, .focal_level)
 
-  treatment_indicator <- check_treatment_level(group_var, treatment_level)
+  treatment_indicator <- check_treatment_level(group_var, .focal_level)
 
   df <- tibble::tibble(
     x_var = data[[fitted_name]],
@@ -139,30 +139,30 @@ empty_calibration <- function(method = "breaks") {
   }
 }
 
-check_treatment_level <- function(group_var, treatment_level) {
+check_treatment_level <- function(group_var, .focal_level) {
   # Validate treatment level exists if provided
-  if (!is.null(treatment_level)) {
+  if (!is.null(.focal_level)) {
     unique_levels <- unique(group_var[!is.na(group_var)])
-    if (length(unique_levels) > 0 && !treatment_level %in% unique_levels) {
+    if (length(unique_levels) > 0 && !.focal_level %in% unique_levels) {
       abort(
-        "{.code treatment_level} {.code {treatment_level}} not found in {.code .group} variable",
+        "{.code .focal_level} {.code {.focal_level}} not found in {.code .group} variable",
         error_class = "halfmoon_reference_error"
       )
     }
   }
 
   # Use the helper function to create treatment indicator
-  create_treatment_indicator(group_var, treatment_level)
+  create_treatment_indicator(group_var, .focal_level)
 }
 
 check_columns <- function(
   data,
   fitted_name,
   group_name,
-  treatment_level,
+  .focal_level,
   call = rlang::caller_env()
 ) {
-  if (is.null(treatment_level)) {
+  if (is.null(.focal_level)) {
     if (!fitted_name %in% names(data)) {
       abort(
         "Column {.code {fitted_name}} not found in data",
@@ -474,7 +474,7 @@ StatCalibration <- ggplot2::ggproto(
     params$conf_level <- params$conf_level %||% 0.95
     params$window_size <- params$window_size %||% 0.1
     params$step_size <- params$step_size %||% (params$window_size / 2)
-    params$treatment_level <- params$treatment_level %||% NULL
+    params$.focal_level <- params$.focal_level %||% NULL
     params$k <- params$k %||% 10
     params
   },
@@ -487,7 +487,7 @@ StatCalibration <- ggplot2::ggproto(
     conf_level = 0.95,
     window_size = 0.1,
     step_size = window_size / 2,
-    treatment_level = NULL,
+    .focal_level = NULL,
     k = 10,
     binning_method = "equal_width",
     na.rm = FALSE
@@ -521,7 +521,7 @@ StatCalibration <- ggplot2::ggproto(
         # Process the combined data
         compute_calibration_for_group(
           combined_data,
-          treatment_level,
+          .focal_level,
           method,
           bins,
           binning_method,
@@ -540,7 +540,7 @@ StatCalibration <- ggplot2::ggproto(
       # Single group or no groups
       compute_calibration_for_group(
         data,
-        treatment_level,
+        .focal_level,
         method,
         bins,
         binning_method,
@@ -559,7 +559,7 @@ StatCalibration <- ggplot2::ggproto(
 # Helper function to compute calibration for a single group
 compute_calibration_for_group <- function(
   data,
-  treatment_level,
+  .focal_level,
   method,
   bins,
   binning_method,
@@ -574,7 +574,7 @@ compute_calibration_for_group <- function(
 ) {
   # Convert to binary using helper function
   truth <- data$truth
-  treatment_indicator <- create_treatment_indicator(truth, treatment_level)
+  treatment_indicator <- create_treatment_indicator(truth, .focal_level)
 
   # Create data frame for calibration computation
   df <- tibble::tibble(
@@ -746,7 +746,7 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'
 #' # Specify treatment level explicitly
 #' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
-#'   geom_calibration(treatment_level = "1") +
+#'   geom_calibration(.focal_level = "1") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
@@ -767,7 +767,7 @@ geom_calibration <- function(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size / 2,
-  treatment_level = NULL,
+  .focal_level = NULL,
   k = 10,
   show_ribbon = TRUE,
   show_points = TRUE,
@@ -797,7 +797,7 @@ geom_calibration <- function(
         conf_level = conf_level,
         window_size = window_size,
         step_size = step_size,
-        treatment_level = treatment_level,
+        .focal_level = .focal_level,
         k = k,
         na.rm = na.rm
       )
@@ -821,7 +821,7 @@ geom_calibration <- function(
       conf_level = conf_level,
       window_size = window_size,
       step_size = step_size,
-      treatment_level = treatment_level,
+      .focal_level = .focal_level,
       k = k,
       na.rm = na.rm,
       ...
@@ -847,7 +847,7 @@ geom_calibration <- function(
         conf_level = conf_level,
         window_size = window_size,
         step_size = step_size,
-        treatment_level = treatment_level,
+        .focal_level = .focal_level,
         k = k,
         na.rm = na.rm
       )

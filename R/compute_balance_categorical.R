@@ -186,18 +186,18 @@ compute_pairwise_balance <- function(
   # Calculate balance statistic using provided function
   if (is.null(weights)) {
     balance_fn(
-      covariate = covariate[keep_idx],
-      group = binary_group[keep_idx],
-      weights = NULL,
-      reference_group = 0, # ref_group mapped to 0
+      .covariate = covariate[keep_idx],
+      .exposure = binary_group[keep_idx],
+      .weights = NULL,
+      .reference_level = 0, # ref_group mapped to 0
       na.rm = na.rm
     )
   } else {
     balance_fn(
-      covariate = covariate[keep_idx],
-      group = binary_group[keep_idx],
-      weights = weights[keep_idx],
-      reference_group = 0,
+      .covariate = covariate[keep_idx],
+      .exposure = binary_group[keep_idx],
+      .weights = weights[keep_idx],
+      .reference_level = 0,
       na.rm = na.rm
     )
   }

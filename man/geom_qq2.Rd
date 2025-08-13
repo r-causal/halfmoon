@@ -13,7 +13,7 @@ geom_qq2(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   ...
 )
 }
@@ -40,9 +40,9 @@ combining with them.}
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
-treatment/event. If \code{NULL} (default), uses the last level for factors or
-the maximum value for numeric variables.}
+\item{.reference_level}{The reference treatment level to use for comparisons.
+If \code{NULL} (default), uses the first level for factors or the minimum value
+for numeric variables.}
 
 \item{...}{Other arguments passed on to layer().}
 }

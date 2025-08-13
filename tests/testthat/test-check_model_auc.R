@@ -287,7 +287,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
     nhefs_weights,
     c(age, wt71),
     qsmk,
-    .wts = c(w_ate, w_att),
+    .weights = c(w_ate, w_att),
     .metrics = "smd"
   )
 
@@ -316,13 +316,13 @@ test_that("treatment_level parameter works correctly", {
     include_observed = TRUE
   )
 
-  # Test with explicit treatment_level = "1" (same as default)
+  # Test with explicit focal level = "1" (same as default)
   roc_explicit <- check_model_roc_curve(
     nhefs_weights,
     qsmk,
     .fitted,
     include_observed = TRUE,
-    treatment_level = "1"
+    .focal_level = "1"
   )
 
   # Should be identical
@@ -334,7 +334,7 @@ test_that("treatment_level parameter works correctly", {
     qsmk,
     .fitted,
     include_observed = TRUE,
-    treatment_level = "0"
+    .focal_level = "0"
   )
 
   # ROC curves should be different
@@ -346,7 +346,7 @@ test_that("treatment_level parameter works correctly", {
       nhefs_weights,
       qsmk,
       .fitted,
-      treatment_level = "invalid"
+      .focal_level = "invalid"
     )
   )
 })

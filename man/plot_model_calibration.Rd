@@ -14,7 +14,7 @@ plot_model_calibration(x, ...)
   x,
   .fitted,
   .group,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = "breaks",
   bins = 10,
   smooth = TRUE,
@@ -31,7 +31,7 @@ plot_model_calibration(x, ...)
 
 \method{plot_model_calibration}{glm}(
   x,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = "breaks",
   bins = 10,
   smooth = TRUE,
@@ -48,7 +48,7 @@ plot_model_calibration(x, ...)
 
 \method{plot_model_calibration}{lm}(
   x,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = "breaks",
   bins = 10,
   smooth = TRUE,
@@ -82,7 +82,7 @@ Can be unquoted (e.g., \code{.fitted}) or quoted (e.g., \code{".fitted"}).}
 \item{.group}{Column name of treatment/group variable.
 Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
 
-\item{treatment_level}{Value indicating which level of \code{.group} represents treatment.
+\item{.focal_level}{Value indicating which level of \code{.group} represents treatment.
 If NULL (default), uses the last level for factors or max value for numeric.}
 
 \item{method}{Character; calibration method - "breaks", "logistic", or "windowed".}
@@ -154,7 +154,7 @@ plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
 plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 
 # Specify treatment level explicitly
-plot_model_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+plot_model_calibration(nhefs_weights, .fitted, qsmk, .focal_level = "1")
 
 # Method 2: Using model objects
 # Fit a propensity score model

@@ -12,7 +12,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `check_model_roc_curve()`:
-      ! `.truth` must have exactly 2 unique values
+      ! `.exposure` must have exactly 2 unique values
 
 # error messages use proper cli formatting
 
@@ -36,7 +36,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `check_model_roc_curve()`:
-      ! `.truth` must have exactly 2 levels
+      ! `.exposure` must have exactly 2 levels
 
 # treatment_level parameter works correctly
 
@@ -44,5 +44,5 @@
       expr
     Condition <halfmoon_reference_error>
       Error in `compute_roc_curve_imp()`:
-      ! `treatment_level` 'invalid' not found in `truth` levels: "0" and "1"
+      ! `.focal_level` 'invalid' not found in `truth` levels: "0" and "1"
 

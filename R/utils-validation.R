@@ -20,7 +20,7 @@ validate_numeric <- function(
 validate_weights <- function(
   weights,
   n,
-  arg_name = "weights",
+  arg_name = ".weights",
   call = rlang::caller_env()
 ) {
   if (is.null(weights)) {
@@ -202,13 +202,13 @@ get_exposure_type <- function(group, call = rlang::caller_env()) {
     "categorical"
   } else if (n_levels == 1) {
     abort(
-      "Group variable has only one level",
+      "Exposure variable has only one level",
       error_class = "halfmoon_group_error",
       call = call
     )
   } else {
     abort(
-      "Group variable has no non-missing values",
+      "Exposure variable has no non-missing values",
       error_class = "halfmoon_empty_error",
       call = call
     )

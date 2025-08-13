@@ -4,7 +4,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `bal_smd()`:
-      ! Group variable must have exactly two levels, got 1
+      ! Exposure variable must have exactly two levels, got 1
 
 ---
 
@@ -12,7 +12,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_smd()`:
-      ! `covariate` and `group` must have the same length
+      ! `.covariate` and `.exposure` must have the same length
 
 ---
 
@@ -20,7 +20,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_smd()`:
-      ! `weights` must have length 100, got 50
+      ! `.weights` must have length 100, got 50
 
 # bal_vr error handling
 
@@ -28,7 +28,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `split_by_group()`:
-      ! Group variable must have exactly two levels, got 1
+      ! Exposure variable must have exactly two levels, got 1
 
 ---
 
@@ -36,7 +36,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_vr()`:
-      ! `covariate` and `group` must have the same length
+      ! `.covariate` and `.exposure` must have the same length
 
 ---
 
@@ -44,7 +44,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_vr()`:
-      ! `weights` must have length 100, got 50
+      ! `.weights` must have length 100, got 50
 
 # bal_ks error handling
 
@@ -52,7 +52,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `split_by_group()`:
-      ! Group variable must have exactly two levels, got 1
+      ! Exposure variable must have exactly two levels, got 1
 
 ---
 
@@ -60,7 +60,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_ks()`:
-      ! `covariate` and `group` must have the same length
+      ! `.covariate` and `.exposure` must have the same length
 
 ---
 
@@ -68,7 +68,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_ks()`:
-      ! `weights` must have length 100, got 50
+      ! `.weights` must have length 100, got 50
 
 # bal_corr handles edge cases
 
@@ -92,7 +92,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_corr()`:
-      ! `x` and `y` must have the same length
+      ! `.x` and `.y` must have the same length
 
 ---
 
@@ -100,7 +100,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_corr()`:
-      ! `weights` must have length 100, got 50
+      ! `.weights` must have length 100, got 50
 
 # bal_energy handles continuous treatments
 
@@ -116,7 +116,7 @@
       expr
     Condition <halfmoon_na_error>
       Error in `bal_energy()`:
-      ! Energy distance cannot be computed with missing values in `covariates`. Set `na.rm = TRUE` or remove missing values.
+      ! Energy distance cannot be computed with missing values in `.covariates`. Set `na.rm = TRUE` or remove missing values.
 
 # bal_energy error handling
 
@@ -124,7 +124,7 @@
       expr
     Condition <halfmoon_length_error>
       Error in `bal_energy()`:
-      ! `group` and `covariates` must have the same length
+      ! `.exposure` and `.covariates` must have the same length
 
 ---
 
@@ -132,7 +132,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `bal_energy()`:
-      ! Group variable must have at least two levels
+      ! Exposure variable must have at least two levels
 
 ---
 
@@ -140,5 +140,5 @@
       expr
     Condition <halfmoon_range_error>
       Error in `bal_energy()`:
-      ! `weights` cannot contain negative values
+      ! `.weights` cannot contain negative values
 

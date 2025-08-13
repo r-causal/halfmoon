@@ -7,10 +7,10 @@
 bal_qq(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 )
 }
@@ -19,17 +19,16 @@ bal_qq(
 
 \item{.var}{Variable to compute quantiles for (unquoted).}
 
-\item{.group}{Column name of treatment/group variable (unquoted).}
+\item{.exposure}{Column name of treatment/group variable (unquoted).}
 
-\item{.wts}{Optional single weight variable (unquoted). If NULL, computes
+\item{.weights}{Optional single weight variable (unquoted). If NULL, computes
 unweighted quantiles.}
 
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
-treatment/event. If \code{NULL} (default), uses the last level for factors or
-the maximum value for numeric variables.}
+\item{.reference_level}{The reference group level for comparisons. Can be either
+a group level value or a numeric index. If \code{NULL} (default), uses the first level.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input
@@ -38,8 +37,8 @@ will produce \code{NA} in the output.}
 \value{
 A tibble with columns:
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-\item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+\item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable
@@ -62,10 +61,10 @@ line y = x.
 bal_qq(nhefs_weights, age, qsmk)
 
 # Weighted QQ data
-bal_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+bal_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 
 # Custom quantiles
-bal_qq(nhefs_weights, age, qsmk, .wts = w_ate,
+bal_qq(nhefs_weights, age, qsmk, .weights = w_ate,
        quantiles = seq(0.1, 0.9, 0.1))
 
 }

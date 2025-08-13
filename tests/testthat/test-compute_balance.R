@@ -45,7 +45,7 @@ test_that("bal_smd matches smd::smd estimate", {
   x <- rnorm(100)
   g <- factor(sample(c(0, 1), 100, replace = TRUE))
 
-  out_pkg <- bal_smd(covariate = x, group = g, reference_group = 1)
+  out_pkg <- bal_smd(.covariate = x, .exposure = g, .reference_level = 1)
   out_base <- smd::smd(x, g, gref = 1)$estimate
 
   expect_equal(out_pkg, out_base)
@@ -56,28 +56,28 @@ test_that("bal_smd handles different reference groups", {
 
   # Test with numeric reference groups
   smd_ref0 <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    reference_group = 0
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .reference_level = 0
   )
   smd_ref1 <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    reference_group = 1
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .reference_level = 1
   )
 
   expect_equal(smd_ref0, -smd_ref1, tolerance = 1e-10)
 
   # Test with factor reference groups
   smd_control <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_factor,
-    reference_group = "control"
+    .covariate = data$x_cont,
+    .exposure = data$g_factor,
+    .reference_level = "control"
   )
   smd_treated <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_factor,
-    reference_group = "treated"
+    .covariate = data$x_cont,
+    .exposure = data$g_factor,
+    .reference_level = "treated"
   )
 
   expect_equal(smd_control, -smd_treated, tolerance = 1e-10)
@@ -88,13 +88,13 @@ test_that("bal_smd handles weights", {
 
   # Weighted vs unweighted should generally be different
   smd_unweighted <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_balanced
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced
   )
   smd_weighted <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
 
   expect_false(identical(smd_unweighted, smd_weighted))
@@ -114,10 +114,14 @@ test_that("bal_smd handles missing values", {
   w_na <- data$w_uniform
 
   # Should return NA when na.rm = FALSE
-  expect_true(is.na(bal_smd(covariate = x_na, group = g_na, na.rm = FALSE)))
+  expect_true(is.na(bal_smd(
+    .covariate = x_na,
+    .exposure = g_na,
+    na.rm = FALSE
+  )))
 
   # Should work when na.rm = TRUE
-  smd_na.rm <- bal_smd(covariate = x_na, group = g_na, na.rm = TRUE)
+  smd_na.rm <- bal_smd(.covariate = x_na, .exposure = g_na, na.rm = TRUE)
   expect_true(is.finite(smd_na.rm))
 })
 
@@ -126,30 +130,30 @@ test_that("bal_smd error handling", {
 
   # Should error with wrong number of groups
   expect_halfmoon_error(
-    bal_smd(covariate = data$x_cont, group = rep(1, 100)),
+    bal_smd(.covariate = data$x_cont, .exposure = rep(1, 100)),
     "halfmoon_group_error"
   )
 
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_smd(
-    covariate = data$x_cont,
-    group = c(rep(1, 50), rep(2, 25), rep(3, 25))
+    .covariate = data$x_cont,
+    .exposure = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
 
   # Should error with mismatched lengths
   expect_halfmoon_error(
     bal_smd(
-      covariate = data$x_cont[1:50],
-      group = data$g_balanced
+      .covariate = data$x_cont[1:50],
+      .exposure = data$g_balanced
     ),
     "halfmoon_length_error"
   )
 
   expect_halfmoon_error(
     bal_smd(
-      covariate = data$x_cont,
-      group = data$g_balanced,
-      weights = data$w_uniform[1:50]
+      .covariate = data$x_cont,
+      .exposure = data$g_balanced,
+      .weights = data$w_uniform[1:50]
     ),
     "halfmoon_length_error"
   )
@@ -163,15 +167,15 @@ test_that("bal_vr handles basic cases", {
   data <- create_test_data()
 
   # Basic functionality
-  vr <- bal_vr(covariate = data$x_cont, group = data$g_balanced)
+  vr <- bal_vr(.covariate = data$x_cont, .exposure = data$g_balanced)
   expect_true(is.finite(vr))
   expect_true(vr > 0)
 
   # With weights
   vr_weighted <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   expect_true(is.finite(vr_weighted))
   expect_true(vr_weighted > 0)
@@ -182,14 +186,14 @@ test_that("bal_vr handles reference groups", {
 
   # Different reference groups should give reciprocal results
   vr_ref0 <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    reference_group = 0
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .reference_level = 0
   )
   vr_ref1 <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    reference_group = 1
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .reference_level = 1
   )
 
   expect_equal(vr_ref0, 1 / vr_ref1, tolerance = 1e-10)
@@ -200,17 +204,17 @@ test_that("bal_vr handles binary variables", {
 
   # Binary variables should use p*(1-p) variance formula
   vr_binary <- bal_vr(
-    covariate = data$x_binary,
-    group = data$g_balanced
+    .covariate = data$x_binary,
+    .exposure = data$g_balanced
   )
   expect_true(is.finite(vr_binary))
   expect_true(vr_binary > 0)
 
   # With weights
   vr_binary_weighted <- bal_vr(
-    covariate = data$x_binary,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_binary,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   expect_true(is.finite(vr_binary_weighted))
   expect_true(vr_binary_weighted > 0)
@@ -223,12 +227,12 @@ test_that("bal_vr handles edge cases", {
   x_zero <- c(rep(1, 50), rep(1, 50))
   g <- c(rep(0, 50), rep(1, 50))
 
-  vr_zero_both <- bal_vr(covariate = x_zero, group = g)
+  vr_zero_both <- bal_vr(.covariate = x_zero, .exposure = g)
   expect_equal(vr_zero_both, 1)
 
   # One group with zero variance
   x_mixed <- c(rep(1, 50), rnorm(50))
-  vr_zero_one <- bal_vr(covariate = x_mixed, group = g)
+  vr_zero_one <- bal_vr(.covariate = x_mixed, .exposure = g)
   expect_true(vr_zero_one == 0 || vr_zero_one == Inf)
 })
 
@@ -242,8 +246,8 @@ test_that("bal_vr handles missing values", {
   # Should return NA when na.rm = FALSE
   expect_equal(
     bal_vr(
-      covariate = x_na,
-      group = data$g_balanced,
+      .covariate = x_na,
+      .exposure = data$g_balanced,
       na.rm = FALSE
     ),
     NA_real_
@@ -251,8 +255,8 @@ test_that("bal_vr handles missing values", {
 
   # Should work when na.rm = TRUE if enough data remains
   vr_na.rm <- bal_vr(
-    covariate = x_na,
-    group = data$g_balanced,
+    .covariate = x_na,
+    .exposure = data$g_balanced,
     na.rm = TRUE
   )
   expect_true(is.finite(vr_na.rm) || is.na(vr_na.rm))
@@ -264,32 +268,32 @@ test_that("bal_vr error handling", {
   # Should error with wrong number of groups
   expect_halfmoon_error(
     bal_vr(
-      covariate = data$x_cont,
-      group = rep(1, 100)
+      .covariate = data$x_cont,
+      .exposure = rep(1, 100)
     ),
     "halfmoon_group_error"
   )
 
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_vr(
-    covariate = data$x_cont,
-    group = c(rep(1, 50), rep(2, 25), rep(3, 25))
+    .covariate = data$x_cont,
+    .exposure = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
 
   # Should error with mismatched lengths
   expect_halfmoon_error(
     bal_vr(
-      covariate = data$x_cont[1:50],
-      group = data$g_balanced
+      .covariate = data$x_cont[1:50],
+      .exposure = data$g_balanced
     ),
     "halfmoon_length_error"
   )
 
   expect_halfmoon_error(
     bal_vr(
-      covariate = data$x_cont,
-      group = data$g_balanced,
-      weights = data$w_uniform[1:50]
+      .covariate = data$x_cont,
+      .exposure = data$g_balanced,
+      .weights = data$w_uniform[1:50]
     ),
     "halfmoon_length_error"
   )
@@ -303,16 +307,16 @@ test_that("bal_ks handles basic cases", {
   data <- create_test_data()
 
   # Basic functionality
-  ks <- bal_ks(covariate = data$x_cont, group = data$g_balanced)
+  ks <- bal_ks(.covariate = data$x_cont, .exposure = data$g_balanced)
   expect_true(is.finite(ks))
   expect_true(ks >= 0)
   expect_true(ks <= 1)
 
   # With weights
   ks_weighted <- bal_ks(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   expect_true(is.finite(ks_weighted))
   expect_true(ks_weighted >= 0)
@@ -324,7 +328,7 @@ test_that("bal_ks gives 0 for identical distributions", {
   x <- c(1, 2, 3, 1, 2, 3)
   g <- c(0, 0, 0, 1, 1, 1)
 
-  ks_identical <- bal_ks(covariate = x, group = g)
+  ks_identical <- bal_ks(.covariate = x, .exposure = g)
   expect_equal(ks_identical, 0)
 })
 
@@ -333,7 +337,7 @@ test_that("bal_ks gives >0 for different distributions", {
   x <- c(1, 2, 3, 4, 5, 6)
   g <- c(0, 0, 0, 1, 1, 1)
 
-  ks_different <- bal_ks(covariate = x, group = g)
+  ks_different <- bal_ks(.covariate = x, .exposure = g)
   expect_true(ks_different > 0)
 })
 
@@ -341,7 +345,7 @@ test_that("bal_ks handles binary variables", {
   data <- create_test_data()
 
   # Binary variables should return difference in proportions
-  ks_binary <- bal_ks(covariate = data$x_binary, group = data$g_balanced)
+  ks_binary <- bal_ks(.covariate = data$x_binary, .exposure = data$g_balanced)
   expect_true(is.finite(ks_binary))
   expect_true(ks_binary >= 0)
   expect_true(ks_binary <= 1)
@@ -363,14 +367,14 @@ test_that("bal_ks handles missing values", {
 
   # Should return NA when na.rm = FALSE
   expect_equal(
-    bal_ks(covariate = x_na, group = data$g_balanced, na.rm = FALSE),
+    bal_ks(.covariate = x_na, .exposure = data$g_balanced, na.rm = FALSE),
     NA_real_
   )
 
   # Should work when na.rm = TRUE if enough data remains
   ks_na.rm <- bal_ks(
-    covariate = x_na,
-    group = data$g_balanced,
+    .covariate = x_na,
+    .exposure = data$g_balanced,
     na.rm = TRUE
   )
   expect_true(is.finite(ks_na.rm) || is.na(ks_na.rm))
@@ -381,29 +385,29 @@ test_that("bal_ks error handling", {
 
   # Should error with wrong number of groups
   expect_halfmoon_error(
-    bal_ks(covariate = data$x_cont, group = rep(1, 100)),
+    bal_ks(.covariate = data$x_cont, .exposure = rep(1, 100)),
     "halfmoon_group_error"
   )
   # Now supports 3+ groups (categorical)
   expect_no_error(bal_ks(
-    covariate = data$x_cont,
-    group = c(rep(1, 50), rep(2, 25), rep(3, 25))
+    .covariate = data$x_cont,
+    .exposure = c(rep(1, 50), rep(2, 25), rep(3, 25))
   ))
 
   # Should error with mismatched lengths
   expect_halfmoon_error(
     bal_ks(
-      covariate = data$x_cont[1:50],
-      group = data$g_balanced
+      .covariate = data$x_cont[1:50],
+      .exposure = data$g_balanced
     ),
     "halfmoon_length_error"
   )
 
   expect_halfmoon_error(
     bal_ks(
-      covariate = data$x_cont,
-      group = data$g_balanced,
-      weights = data$w_uniform[1:50]
+      .covariate = data$x_cont,
+      .exposure = data$g_balanced,
+      .weights = data$w_uniform[1:50]
     ),
     "halfmoon_length_error"
   )
@@ -429,7 +433,7 @@ test_that("bal_corr handles weights correctly", {
   w <- c(1, 0, 0, 1)
 
   # Weighted on matching pairs (0,0) and (1,1) -> perfect correlation
-  cor_weighted <- bal_corr(x, y, weights = w)
+  cor_weighted <- bal_corr(x, y, .weights = w)
   expect_equal(cor_weighted, 1)
 })
 
@@ -445,7 +449,7 @@ test_that("bal_corr handles various scenarios", {
   cor_weighted <- bal_corr(
     data$x_cont,
     data$x_skewed,
-    weights = data$w_uniform
+    .weights = data$w_uniform
   )
   expect_true(is.finite(cor_weighted))
   expect_true(cor_weighted >= -1 && cor_weighted <= 1)
@@ -513,7 +517,7 @@ test_that("bal_corr error handling", {
     bal_corr(
       data$x_cont,
       data$x_skewed,
-      weights = data$w_uniform[1:50]
+      .weights = data$w_uniform[1:50]
     ),
     "halfmoon_length_error"
   )
@@ -558,16 +562,16 @@ test_that("functions handle large datasets", {
   # Test all functions with large data
   expect_no_error({
     smd_large <- bal_smd(
-      covariate = data_large$x_cont,
-      group = data_large$g_balanced
+      .covariate = data_large$x_cont,
+      .exposure = data_large$g_balanced
     )
     vr_large <- bal_vr(
-      covariate = data_large$x_cont,
-      group = data_large$g_balanced
+      .covariate = data_large$x_cont,
+      .exposure = data_large$g_balanced
     )
     ks_large <- bal_ks(
-      covariate = data_large$x_cont,
-      group = data_large$g_balanced
+      .covariate = data_large$x_cont,
+      .exposure = data_large$g_balanced
     )
     cor_large <- bal_corr(data_large$x_cont, data_large$x_skewed)
   })
@@ -579,24 +583,24 @@ test_that("functions handle extreme weights", {
   # Test with extreme weights
   expect_no_error({
     smd_extreme <- bal_smd(
-      covariate = data$x_cont,
-      group = data$g_balanced,
-      weights = data$w_extreme
+      .covariate = data$x_cont,
+      .exposure = data$g_balanced,
+      .weights = data$w_extreme
     )
     vr_extreme <- bal_vr(
-      covariate = data$x_cont,
-      group = data$g_balanced,
-      weights = data$w_extreme
+      .covariate = data$x_cont,
+      .exposure = data$g_balanced,
+      .weights = data$w_extreme
     )
     ks_extreme <- bal_ks(
-      covariate = data$x_cont,
-      group = data$g_balanced,
-      weights = data$w_extreme
+      .covariate = data$x_cont,
+      .exposure = data$g_balanced,
+      .weights = data$w_extreme
     )
     cor_extreme <- bal_corr(
       data$x_cont,
       data$x_skewed,
-      weights = data$w_extreme
+      .weights = data$w_extreme
     )
   })
 
@@ -612,12 +616,15 @@ test_that("functions handle unbalanced groups", {
 
   # Test with very unbalanced groups
   expect_no_error({
-    smd_unbal <- bal_smd(covariate = data$x_cont, group = data$g_unbalanced)
-    vr_unbal <- bal_vr(
-      covariate = data$x_cont,
-      group = data$g_unbalanced
+    smd_unbal <- bal_smd(
+      .covariate = data$x_cont,
+      .exposure = data$g_unbalanced
     )
-    ks_unbal <- bal_ks(covariate = data$x_cont, group = data$g_unbalanced)
+    vr_unbal <- bal_vr(
+      .covariate = data$x_cont,
+      .exposure = data$g_unbalanced
+    )
+    ks_unbal <- bal_ks(.covariate = data$x_cont, .exposure = data$g_unbalanced)
   })
 
   # Results should be finite
@@ -637,9 +644,9 @@ test_that("bal_vr matches cobalt::col_w_vr", {
 
   # Continuous variables
   our_vr_cont <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   cobalt_vr_cont <- cobalt::col_w_vr(
     matrix(data$x_cont, ncol = 1),
@@ -650,9 +657,9 @@ test_that("bal_vr matches cobalt::col_w_vr", {
 
   # Binary variables
   our_vr_bin <- bal_vr(
-    covariate = data$x_binary,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_binary,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   cobalt_vr_bin <- cobalt::col_w_vr(
     matrix(data$x_binary, ncol = 1),
@@ -664,8 +671,8 @@ test_that("bal_vr matches cobalt::col_w_vr", {
 
   # Unweighted
   our_vr_unw <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced
   )
   cobalt_vr_unw <- cobalt::col_w_vr(
     matrix(data$x_cont, ncol = 1),
@@ -681,9 +688,9 @@ test_that("bal_ks matches cobalt::col_w_ks", {
 
   # Continuous variables
   our_ks_cont <- bal_ks(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   cobalt_ks_cont <- cobalt::col_w_ks(
     matrix(data$x_cont, ncol = 1),
@@ -694,9 +701,9 @@ test_that("bal_ks matches cobalt::col_w_ks", {
 
   # Binary variables
   our_ks_bin <- bal_ks(
-    covariate = data$x_binary,
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariate = data$x_binary,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   cobalt_ks_bin <- cobalt::col_w_ks(
     matrix(data$x_binary, ncol = 1),
@@ -707,7 +714,7 @@ test_that("bal_ks matches cobalt::col_w_ks", {
   expect_equal(our_ks_bin, cobalt_ks_bin, tolerance = 1e-10)
 
   # Unweighted
-  our_ks_unw <- bal_ks(covariate = data$x_cont, group = data$g_balanced)
+  our_ks_unw <- bal_ks(.covariate = data$x_cont, .exposure = data$g_balanced)
   cobalt_ks_unw <- cobalt::col_w_ks(
     matrix(data$x_cont, ncol = 1),
     treat = data$g_balanced
@@ -724,10 +731,10 @@ test_that("bal_smd matches cobalt::col_w_smd for binary variables", {
   # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
   # to match cobalt's behavior for this test
   our_smd_bin <- bal_smd(
-    covariate = data$x_binary,
-    group = data$g_balanced,
-    weights = data$w_uniform,
-    reference_group = 1
+    .covariate = data$x_binary,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform,
+    .reference_level = 1
   )
   cobalt_smd_bin <- cobalt::col_w_smd(
     matrix(data$x_binary, ncol = 1),
@@ -748,10 +755,10 @@ test_that("bal_smd is close to cobalt::col_w_smd for continuous variables", {
   # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
   # to match cobalt's behavior for this test
   our_smd_cont <- bal_smd(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    weights = data$w_uniform,
-    reference_group = 1
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform,
+    .reference_level = 1
   )
   cobalt_smd_cont <- cobalt::col_w_smd(
     matrix(data$x_cont, ncol = 1),
@@ -776,8 +783,8 @@ test_that("cobalt comparison with missing values", {
 
   # Both should handle missing values similarly
   our_vr_na <- bal_vr(
-    covariate = x_na,
-    group = data$g_balanced,
+    .covariate = x_na,
+    .exposure = data$g_balanced,
     na.rm = TRUE
   )
   cobalt_vr_na <- cobalt::col_w_vr(
@@ -788,8 +795,8 @@ test_that("cobalt comparison with missing values", {
   expect_equal(our_vr_na, cobalt_vr_na, tolerance = 1e-10)
 
   our_ks_na <- bal_ks(
-    covariate = x_na,
-    group = data$g_balanced,
+    .covariate = x_na,
+    .exposure = data$g_balanced,
     na.rm = TRUE
   )
   cobalt_ks_na <- cobalt::col_w_ks(
@@ -815,14 +822,14 @@ test_that("cobalt comparison with different reference groups", {
 
   # Test variance ratio with different reference groups
   our_vr_ref0 <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    reference_group = 0
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .reference_level = 0
   )
   our_vr_ref1 <- bal_vr(
-    covariate = data$x_cont,
-    group = data$g_balanced,
-    reference_group = 1
+    .covariate = data$x_cont,
+    .exposure = data$g_balanced,
+    .reference_level = 1
   )
 
   # Cobalt always uses first group as reference
@@ -883,7 +890,7 @@ test_that("bal_vr works with NHEFS data", {
   vr_weighted <- bal_vr(
     data$age,
     data$qsmk,
-    weights = data$w_uniform
+    .weights = data$w_uniform
   )
   expect_true(is.finite(vr_weighted))
   expect_true(vr_weighted > 0)
@@ -902,12 +909,12 @@ test_that("bal_ks works with NHEFS data", {
   expect_true(ks_wt >= 0 && ks_wt <= 1)
 
   # Test with weights
-  ks_weighted <- bal_ks(data$age, data$qsmk, weights = data$w_uniform)
+  ks_weighted <- bal_ks(data$age, data$qsmk, .weights = data$w_uniform)
   expect_true(is.finite(ks_weighted))
   expect_true(ks_weighted >= 0 && ks_weighted <= 1)
 
   # Test with real propensity score weights
-  ks_ps_weighted <- bal_ks(data$age, data$qsmk, weights = data$w_ate)
+  ks_ps_weighted <- bal_ks(data$age, data$qsmk, .weights = data$w_ate)
   expect_true(is.finite(ks_ps_weighted))
   expect_true(ks_ps_weighted >= 0 && ks_ps_weighted <= 1)
 })
@@ -928,7 +935,7 @@ test_that("bal_corr works with NHEFS data", {
   cor_weighted <- bal_corr(
     data$age,
     data$wt71,
-    weights = data$w_uniform
+    .weights = data$w_uniform
   )
   expect_true(is.finite(cor_weighted))
   expect_true(cor_weighted >= -1 && cor_weighted <= 1)
@@ -1007,17 +1014,17 @@ test_that("compute functions work with NHEFS extreme cases", {
   data <- get_nhefs_compute_data()
 
   # Test with extreme weights
-  smd_extreme <- bal_smd(data$age, data$qsmk, weights = data$w_extreme)
+  smd_extreme <- bal_smd(data$age, data$qsmk, .weights = data$w_extreme)
   expect_true(is.finite(smd_extreme))
 
   vr_extreme <- bal_vr(
     data$age,
     data$qsmk,
-    weights = data$w_extreme
+    .weights = data$w_extreme
   )
   expect_true(is.finite(vr_extreme) && vr_extreme > 0)
 
-  ks_extreme <- bal_ks(data$age, data$qsmk, weights = data$w_extreme)
+  ks_extreme <- bal_ks(data$age, data$qsmk, .weights = data$w_extreme)
   expect_true(is.finite(ks_extreme) && ks_extreme >= 0 && ks_extreme <= 1)
 })
 
@@ -1045,23 +1052,23 @@ test_that("compute functions work with real propensity score weights from nhefs_
   data <- get_nhefs_compute_data()
 
   # Test all functions with ATE weights
-  smd_ate <- bal_smd(data$age, data$qsmk, weights = data$w_ate)
+  smd_ate <- bal_smd(data$age, data$qsmk, .weights = data$w_ate)
   expect_true(is.finite(smd_ate))
 
-  vr_ate <- bal_vr(data$age, data$qsmk, weights = data$w_ate)
+  vr_ate <- bal_vr(data$age, data$qsmk, .weights = data$w_ate)
   expect_true(is.finite(vr_ate) && vr_ate > 0)
 
-  ks_ate <- bal_ks(data$age, data$qsmk, weights = data$w_ate)
+  ks_ate <- bal_ks(data$age, data$qsmk, .weights = data$w_ate)
   expect_true(is.finite(ks_ate) && ks_ate >= 0 && ks_ate <= 1)
 
   # Test all functions with ATT weights
-  smd_att <- bal_smd(data$age, data$qsmk, weights = data$w_att)
+  smd_att <- bal_smd(data$age, data$qsmk, .weights = data$w_att)
   expect_true(is.finite(smd_att))
 
-  vr_att <- bal_vr(data$age, data$qsmk, weights = data$w_att)
+  vr_att <- bal_vr(data$age, data$qsmk, .weights = data$w_att)
   expect_true(is.finite(vr_att) && vr_att > 0)
 
-  ks_att <- bal_ks(data$age, data$qsmk, weights = data$w_att)
+  ks_att <- bal_ks(data$age, data$qsmk, .weights = data$w_att)
   expect_true(is.finite(ks_att) && ks_att >= 0 && ks_att <= 1)
 
   # ATE and ATT estimates should generally be different
@@ -1078,17 +1085,17 @@ test_that("bal_energy handles basic binary treatment cases", {
 
   # Basic functionality
   energy <- bal_energy(
-    covariates = data.frame(x = data$x_cont, y = data$x_skewed),
-    group = data$g_balanced
+    .covariates = data.frame(x = data$x_cont, y = data$x_skewed),
+    .exposure = data$g_balanced
   )
   expect_true(is.finite(energy))
   expect_true(energy >= 0)
 
   # With weights
   energy_weighted <- bal_energy(
-    covariates = data.frame(x = data$x_cont, y = data$x_skewed),
-    group = data$g_balanced,
-    weights = data$w_uniform
+    .covariates = data.frame(x = data$x_cont, y = data$x_skewed),
+    .exposure = data$g_balanced,
+    .weights = data$w_uniform
   )
   expect_true(is.finite(energy_weighted))
   expect_true(energy_weighted >= 0)
@@ -1100,29 +1107,29 @@ test_that("bal_energy handles different estimands", {
 
   # ATE
   energy_ate <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     estimand = "ATE"
   )
 
   # ATT
   energy_att <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     estimand = "ATT"
   )
 
   # ATC
   energy_atc <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     estimand = "ATC"
   )
 
   # Between-group only
   energy_between <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     estimand = NULL
   )
 
@@ -1149,8 +1156,8 @@ test_that("bal_energy handles multi-category treatments", {
 
   # Should work with multi-category treatment
   energy_multi <- bal_energy(
-    covariates = covs,
-    group = multi_group,
+    .covariates = covs,
+    .exposure = multi_group,
     estimand = "ATE"
   )
   expect_true(is.finite(energy_multi))
@@ -1168,8 +1175,8 @@ test_that("bal_energy handles continuous treatments", {
 
   # Should work with continuous treatment (uses distance correlation)
   energy_cont <- bal_energy(
-    covariates = covs,
-    group = continuous_treatment,
+    .covariates = covs,
+    .exposure = continuous_treatment,
     estimand = NULL # Must be NULL for continuous
   )
   expect_true(is.finite(energy_cont))
@@ -1179,8 +1186,8 @@ test_that("bal_energy handles continuous treatments", {
   # Should error if estimand is not NULL for continuous treatment
   expect_halfmoon_error(
     bal_energy(
-      covariates = covs,
-      group = continuous_treatment,
+      .covariates = covs,
+      .exposure = continuous_treatment,
       estimand = "ATE"
     ),
     "halfmoon_arg_error"
@@ -1196,8 +1203,8 @@ test_that("bal_energy handles perfect balance", {
   group <- c(rep(0, n), rep(1, n))
 
   energy_perfect <- bal_energy(
-    covariates = covs,
-    group = group,
+    .covariates = covs,
+    .exposure = group,
     estimand = "ATE"
   )
 
@@ -1216,8 +1223,8 @@ test_that("bal_energy handles binary variables", {
 
   # Should identify and handle binary variables correctly
   energy <- bal_energy(
-    covariates = covs,
-    group = group
+    .covariates = covs,
+    .exposure = group
   )
   expect_true(is.finite(energy))
   expect_true(energy >= 0)
@@ -1233,8 +1240,8 @@ test_that("bal_energy handles missing values", {
   # Should error when na.rm = FALSE
   expect_halfmoon_error(
     bal_energy(
-      covariates = covs,
-      group = data$g_balanced,
+      .covariates = covs,
+      .exposure = data$g_balanced,
       na.rm = FALSE
     ),
     "halfmoon_na_error"
@@ -1242,8 +1249,8 @@ test_that("bal_energy handles missing values", {
 
   # Should work when na.rm = TRUE
   energy_na.rm <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     na.rm = TRUE
   )
   expect_true(is.finite(energy_na.rm) || is.na(energy_na.rm))
@@ -1255,15 +1262,15 @@ test_that("bal_energy use_improved parameter works", {
 
   # Improved vs standard for ATE
   energy_improved <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     estimand = "ATE",
     use_improved = TRUE
   )
 
   energy_standard <- bal_energy(
-    covariates = covs,
-    group = data$g_balanced,
+    .covariates = covs,
+    .exposure = data$g_balanced,
     estimand = "ATE",
     use_improved = FALSE
   )
@@ -1281,15 +1288,15 @@ test_that("bal_energy error handling", {
 
   # Should now handle non-numeric covariates by converting to dummy variables
   expect_no_error(bal_energy(
-    covariates = data.frame(x = as.character(data$x_cont)),
-    group = data$g_balanced
+    .covariates = data.frame(x = as.character(data$x_cont)),
+    .exposure = data$g_balanced
   ))
 
   # Should error with mismatched dimensions
   expect_halfmoon_error(
     bal_energy(
-      covariates = data.frame(x = data$x_cont[1:50]),
-      group = data$g_balanced
+      .covariates = data.frame(x = data$x_cont[1:50]),
+      .exposure = data$g_balanced
     ),
     "halfmoon_length_error"
   )
@@ -1297,8 +1304,8 @@ test_that("bal_energy error handling", {
   # Should error with wrong number of groups (only 1)
   expect_halfmoon_error(
     bal_energy(
-      covariates = data.frame(x = data$x_cont),
-      group = rep(1, 100)
+      .covariates = data.frame(x = data$x_cont),
+      .exposure = rep(1, 100)
     ),
     "halfmoon_group_error"
   )
@@ -1306,9 +1313,9 @@ test_that("bal_energy error handling", {
   # Should error with negative weights
   expect_halfmoon_error(
     bal_energy(
-      covariates = data.frame(x = data$x_cont),
-      group = data$g_balanced,
-      weights = c(-1, rep(1, 99))
+      .covariates = data.frame(x = data$x_cont),
+      .exposure = data$g_balanced,
+      .weights = c(-1, rep(1, 99))
     ),
     "halfmoon_range_error"
   )
@@ -1322,17 +1329,17 @@ test_that("bal_energy handles NHEFS data", {
 
   # Basic energy distance
   energy <- bal_energy(
-    covariates = covs,
-    group = data$qsmk
+    .covariates = covs,
+    .exposure = data$qsmk
   )
   expect_true(is.finite(energy))
   expect_true(energy >= 0)
 
   # With ATE weights
   energy_ate <- bal_energy(
-    covariates = covs,
-    group = data$qsmk,
-    weights = data$w_ate,
+    .covariates = covs,
+    .exposure = data$qsmk,
+    .weights = data$w_ate,
     estimand = "ATE"
   )
   expect_true(is.finite(energy_ate))
@@ -1340,9 +1347,9 @@ test_that("bal_energy handles NHEFS data", {
 
   # With ATT weights
   energy_att <- bal_energy(
-    covariates = covs,
-    group = data$qsmk,
-    weights = data$w_att,
+    .covariates = covs,
+    .exposure = data$qsmk,
+    .weights = data$w_att,
     estimand = "ATT"
   )
   expect_true(is.finite(energy_att))
@@ -1369,9 +1376,9 @@ test_that("bal_energy comparison with cobalt package", {
 
   # Our implementation - using default estimand (NULL)
   our_energy <- bal_energy(
-    covariates = covariates,
-    group = treatment,
-    weights = weights
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights
   )
 
   # Cobalt implementation
@@ -1401,8 +1408,8 @@ test_that("bal_energy multi-category comparison with cobalt", {
 
   # Our implementation
   our_energy <- bal_energy(
-    covariates = covariates,
-    group = treatment
+    .covariates = covariates,
+    .exposure = treatment
   )
 
   # Cobalt implementation
@@ -1431,8 +1438,8 @@ test_that("bal_energy continuous treatment comparison with cobalt", {
 
   # Our implementation (distance correlation)
   our_dcor <- bal_energy(
-    covariates = covariates,
-    group = treatment,
+    .covariates = covariates,
+    .exposure = treatment,
     estimand = NULL,
     standardized = TRUE
   )
@@ -1467,8 +1474,8 @@ test_that("bal_energy handles categorical covariates", {
 
   # Our implementation with categorical variables
   our_result <- bal_energy(
-    covariates = covariates,
-    group = treatment
+    .covariates = covariates,
+    .exposure = treatment
   )
 
   # Cobalt with same data
@@ -1485,9 +1492,9 @@ test_that("bal_energy handles categorical covariates", {
   weights <- runif(n, 0.5, 1.5)
 
   our_weighted <- bal_energy(
-    covariates = covariates,
-    group = treatment,
-    weights = weights
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights
   )
 
   cobalt_weighted <- cobalt::bal.compute(
@@ -1513,21 +1520,21 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
   result_smd <- bal_smd(
     nhefs_weights$age,
     nhefs_weights$alcoholfreq_cat,
-    weights = nhefs_weights$w_cat_ate
+    .weights = nhefs_weights$w_cat_ate
   )
   expect_true(all(is.finite(result_smd)))
 
   result_vr <- bal_vr(
     nhefs_weights$wt71,
     nhefs_weights$alcoholfreq_cat,
-    weights = nhefs_weights$w_cat_att_none
+    .weights = nhefs_weights$w_cat_att_none
   )
   expect_true(all(is.finite(result_vr) & result_vr > 0))
 
   result_ks <- bal_ks(
     nhefs_weights$age,
     nhefs_weights$alcoholfreq_cat,
-    weights = nhefs_weights$w_cat_ato
+    .weights = nhefs_weights$w_cat_ato
   )
   expect_true(all(is.finite(result_ks) & result_ks >= 0 & result_ks <= 1))
 
@@ -1536,7 +1543,7 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = "smd",
     include_observed = FALSE
   )

@@ -13,13 +13,13 @@ geom_roc(
   show.legend = NA,
   inherit.aes = TRUE,
   linewidth = 0.5,
-  treatment_level = NULL,
+  .focal_level = NULL,
   ...
 )
 }
 \arguments{
 \item{mapping}{Set of aesthetic mappings. Must include \code{estimate} (propensity scores/predictions)
-and \code{truth} (treatment/outcome variable). If specified, inherits from the plot.}
+and \code{exposure} (treatment/outcome variable). If specified, inherits from the plot.}
 
 \item{data}{Data frame to use. If not specified, inherits from the plot.}
 
@@ -38,7 +38,7 @@ combining with them.}
 
 \item{linewidth}{Width of the ROC curve line. Default is 0.5.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
+\item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
 the maximum value for numeric variables.}
 
@@ -54,7 +54,7 @@ Emphasizes the balance interpretation where AUC around 0.5 indicates good balanc
 \examples{
 # Basic usage
 library(ggplot2)
-ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+ggplot(nhefs_weights, aes(estimate = .fitted, exposure = qsmk)) +
   geom_roc() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
@@ -66,7 +66,7 @@ long_data <- tidyr::pivot_longer(
   values_to = "weight"
 )
 
-ggplot(long_data, aes(estimate = .fitted, truth = qsmk, weight = weight)) +
+ggplot(long_data, aes(estimate = .fitted, exposure = qsmk, weight = weight)) +
   geom_roc(aes(color = weight_type)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 

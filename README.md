@@ -52,7 +52,7 @@ library(ggplot2)
 # weighted mirrored histograms
 ggplot(nhefs_weights, aes(.fitted)) +
   geom_mirror_histogram(
-    aes(group = qsmk),
+    aes(exposure = qsmk),
     bins = 50
   ) +
   geom_mirror_histogram(
@@ -60,6 +60,8 @@ ggplot(nhefs_weights, aes(.fitted)) +
     bins = 50,
     alpha = 0.5
   ) + scale_y_continuous(labels = abs)
+#> Warning in ggplot2::geom_histogram(mapping = mapping, data = data, stat =
+#> StatMirrorCount, : Ignoring unknown aesthetics: exposure
 ```
 
 <img src="man/figures/README-example-1.png" width="100%" />
@@ -84,8 +86,8 @@ ggplot(
 plot_df <- check_balance(
   nhefs_weights,
   race:active,
-  .group = qsmk,
-  .wts = c(w_ate, w_att, w_atm, w_ato),
+  .exposure = qsmk,
+  .weights = c(w_ate, w_att, w_atm, w_ato),
   .metrics = "smd"
 )
 
@@ -119,16 +121,16 @@ about 0.5 (what you would observe from a randomized experiment):
 # Check AUC across different weighting methods
 roc_results <- check_model_roc_curve(
   nhefs_weights,
-  .truth = qsmk,
+  .exposure = qsmk,
   .estimate = .fitted,
-  .wts = c(w_ate, w_att, w_atm, w_ato)
+  .weights = c(w_ate, w_att, w_atm, w_ato)
 )
 
 auc_results <- check_model_auc(
   nhefs_weights,
-  .truth = qsmk,
+  .exposure = qsmk,
   .estimate = .fitted,
-  .wts = c(w_ate, w_att, w_atm, w_ato)
+  .weights = c(w_ate, w_att, w_atm, w_ato)
 )
 
 # Plot ROC curves
@@ -165,8 +167,8 @@ Assess balance across multiple metrics simultaneously:
 balance_results <- check_balance(
   nhefs_weights,
   .vars = race:active,
-  .group = qsmk,
-  .wts = c(w_ate, w_att, w_atm, w_ato),
+  .exposure = qsmk,
+  .weights = c(w_ate, w_att, w_atm, w_ato),
   .metrics = c("smd", "vr", "ks", "energy")
 )
 
@@ -184,7 +186,7 @@ ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
 Assess distributional balance between treatment groups:
 
 ``` r
-plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 ```
 
 <img src="man/figures/README-qq-example-1.png" width="100%" />
@@ -217,7 +219,7 @@ matched_data <- get_matches(m.out1)
 match_smd <- check_balance(
   matched_data,
   c(age, educ, race, nodegree, married, re74, re75),
-  .group = treat,
+  .exposure = treat,
   .metrics = "smd"
 )
 
@@ -253,8 +255,8 @@ matches, we can more easily compare multiple matched datasets with
 many_matched_smds <- check_balance(
   matches,
   c(age, educ, race, nodegree, married, re74, re75),
-  .group = treat,
-  .wts = c(m.out1, m.out2),
+  .exposure = treat,
+  .weights = c(m.out1, m.out2),
   .metrics = "smd"
 )
 
@@ -273,7 +275,7 @@ matches$ps <- m.out1$distance
 
 ggplot(matches, aes(ps)) +
     geom_mirror_histogram(
-        aes(group = factor(treat)),
+        aes(exposure = factor(treat)),
         bins = 50
     ) +
     geom_mirror_histogram(
@@ -281,6 +283,8 @@ ggplot(matches, aes(ps)) +
         bins = 50,
         alpha = 0.5
     ) + scale_y_continuous(labels = abs)
+#> Warning in ggplot2::geom_histogram(mapping = mapping, data = data, stat =
+#> StatMirrorCount, : Ignoring unknown aesthetics: exposure
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />

@@ -20,7 +20,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `check_qq()`:
-      ! Group variable must have exactly 2 levels
+      ! Exposure variable must have exactly 2 levels
 
 # check_qq handles NA values correctly
 

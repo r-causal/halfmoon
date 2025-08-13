@@ -4,10 +4,10 @@
 \alias{bal_ess}
 \title{Calculate Effective Sample Size for Single Weight Vector}
 \usage{
-bal_ess(.wts, na.rm = FALSE)
+bal_ess(.weights, na.rm = FALSE)
 }
 \arguments{
-\item{.wts}{A numeric vector of weights or a single weight column from a data frame.}
+\item{.weights}{A numeric vector of weights or a single weight column from a data frame.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input

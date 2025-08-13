@@ -5,23 +5,23 @@
 \title{Balance Standardized Mean Difference (SMD)}
 \usage{
 bal_smd(
-  covariate,
-  group,
-  weights = NULL,
-  reference_group = NULL,
+  .covariate,
+  .exposure,
+  .weights = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 )
 }
 \arguments{
-\item{covariate}{A numeric vector containing the covariate values to compare.}
+\item{.covariate}{A numeric vector containing the covariate values to compare.}
 
-\item{group}{A vector (factor or numeric) indicating group membership. Must
+\item{.exposure}{A vector (factor or numeric) indicating group membership. Must
 have exactly two unique levels.}
 
-\item{weights}{An optional numeric vector of case weights. If provided, must
+\item{.weights}{An optional numeric vector of case weights. If provided, must
 have the same length as other input vectors. All weights must be non-negative.}
 
-\item{reference_group}{The reference group level for comparisons. Can be either
+\item{.reference_level}{The reference group level for comparisons. Can be either
 a group level value or a numeric index. If \code{NULL} (default), uses the first level.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
@@ -53,18 +53,18 @@ bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 
 # With weights
 bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
-        weights = nhefs_weights$w_ate)
+        .weights = nhefs_weights$w_ate)
 
 # Categorical exposure (returns named vector)
 bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 
-# Specify reference group
+# Specify reference level
 bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-        reference_group = "daily")
+        .reference_level = "daily")
 
 # With categorical weights
 bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-        weights = nhefs_weights$w_cat_ate)
+        .weights = nhefs_weights$w_cat_ate)
 
 }
 \seealso{

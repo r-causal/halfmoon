@@ -6,31 +6,31 @@
 \usage{
 check_model_auc(
   .data,
-  .truth,
+  .exposure,
   .estimate,
-  .wts,
+  .weights,
   include_observed = TRUE,
   na.rm = TRUE,
-  treatment_level = NULL
+  .focal_level = NULL
 )
 }
 \arguments{
 \item{.data}{A data frame containing the variables.}
 
-\item{.truth}{The treatment/outcome variable.}
+\item{.exposure}{The treatment/outcome variable.}
 
 \item{.estimate}{The propensity score or fitted values.}
 
-\item{.wts}{Weighting variables (supports tidyselect).}
+\item{.weights}{Weighting variables (supports tidyselect).}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input
 will produce \code{NA} in the output.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
+\item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
 the maximum value for numeric variables.}
 }

@@ -44,7 +44,7 @@
 #' plot_model_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 #'
 #' # Specify treatment level explicitly
-#' plot_model_calibration(nhefs_weights, .fitted, qsmk, treatment_level = "1")
+#' plot_model_calibration(nhefs_weights, .fitted, qsmk, .focal_level = "1")
 #'
 #' # Method 2: Using model objects
 #' # Fit a propensity score model
@@ -72,7 +72,7 @@ plot_model_calibration <- function(x, ...) {
 #'   Can be unquoted (e.g., `.fitted`) or quoted (e.g., `".fitted"`).
 #' @param .group Column name of treatment/group variable.
 #'   Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
-#' @param treatment_level Value indicating which level of `.group` represents treatment.
+#' @param .focal_level Value indicating which level of `.group` represents treatment.
 #'   If NULL (default), uses the last level for factors or max value for numeric.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
@@ -90,7 +90,7 @@ plot_model_calibration.data.frame <- function(
   x,
   .fitted,
   .group,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = "breaks",
   bins = 10,
   smooth = TRUE,
@@ -123,7 +123,7 @@ plot_model_calibration.data.frame <- function(
       conf_level = conf_level,
       window_size = window_size,
       step_size = step_size,
-      treatment_level = treatment_level,
+      .focal_level = .focal_level,
       k = k,
       show_ribbon = include_ribbon,
       show_points = include_points,
@@ -172,7 +172,7 @@ plot_model_calibration.data.frame <- function(
 #' @export
 plot_model_calibration.glm <- function(
   x,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = "breaks",
   bins = 10,
   smooth = TRUE,
@@ -206,7 +206,7 @@ plot_model_calibration.glm <- function(
     plot_data,
     .fitted = .fitted,
     .group = .group,
-    treatment_level = treatment_level,
+    .focal_level = .focal_level,
     method = method,
     bins = bins,
     smooth = smooth,
