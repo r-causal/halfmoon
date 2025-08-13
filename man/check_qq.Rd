@@ -41,8 +41,8 @@ If \code{NULL} (default), uses the last level for factors or the maximum value f
 A tibble with class "halfmoon_qq" containing columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-\item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+\item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable

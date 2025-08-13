@@ -234,8 +234,8 @@ plot_qq.halfmoon_qq <- function(.data, ...) {
     p <- ggplot2::ggplot(
       .data,
       ggplot2::aes(
-        x = .data$untreated_quantiles,
-        y = .data$treated_quantiles,
+        x = .data$unexposed_quantiles,
+        y = .data$exposed_quantiles,
         color = .data$method
       )
     ) +
@@ -244,7 +244,7 @@ plot_qq.halfmoon_qq <- function(.data, ...) {
   } else {
     p <- ggplot2::ggplot(
       .data,
-      ggplot2::aes(x = .data$untreated_quantiles, y = .data$treated_quantiles)
+      ggplot2::aes(x = .data$unexposed_quantiles, y = .data$exposed_quantiles)
     ) +
       ggplot2::geom_line(linewidth = 1) +
       ggplot2::geom_point(size = 0.5, alpha = 0.7)
@@ -260,8 +260,8 @@ plot_qq.halfmoon_qq <- function(.data, ...) {
       alpha = 0.8
     ) +
     ggplot2::labs(
-      x = "Control group quantiles",
-      y = "Treatment group quantiles"
+      x = "Unexposed group quantiles",
+      y = "Exposed group quantiles"
     ) +
     ggplot2::theme_minimal() +
     ggplot2::coord_equal()

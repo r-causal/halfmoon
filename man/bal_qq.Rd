@@ -37,8 +37,8 @@ will produce \code{NA} in the output.}
 \value{
 A tibble with columns:
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-\item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+\item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable

@@ -27,8 +27,8 @@
 #'
 #' @return A tibble with columns:
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
-#'   \item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-#'   \item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+#'   \item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+#'   \item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 #'
 #' @family balance functions
 #' @seealso [check_qq()] for computing QQ data across multiple weights,
@@ -176,7 +176,7 @@ bal_qq <- function(
   # Return tibble
   tibble::tibble(
     quantile = quantiles,
-    treated_quantiles = ref_q,
-    untreated_quantiles = comp_q
+    exposed_quantiles = ref_q,
+    unexposed_quantiles = comp_q
   )
 }

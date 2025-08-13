@@ -267,8 +267,8 @@
 <text x='363.52' y='556.10' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='9.79px' lengthAdjust='spacingAndGlyphs'>50</text>
 <text x='464.55' y='556.10' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='9.79px' lengthAdjust='spacingAndGlyphs'>60</text>
 <text x='565.58' y='556.10' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='9.79px' lengthAdjust='spacingAndGlyphs'>70</text>
-<text x='333.21' y='568.24' text-anchor='middle' style='font-size: 11.00px; font-family: sans;' textLength='113.74px' lengthAdjust='spacingAndGlyphs'>Control group quantiles</text>
-<text transform='translate(68.97,283.95) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: sans;' textLength='128.42px' lengthAdjust='spacingAndGlyphs'>Treatment group quantiles</text>
+<text x='333.21' y='568.24' text-anchor='middle' style='font-size: 11.00px; font-family: sans;' textLength='133.95px' lengthAdjust='spacingAndGlyphs'>Unexposed group quantiles</text>
+<text transform='translate(68.97,283.95) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: sans;' textLength='121.10px' lengthAdjust='spacingAndGlyphs'>Exposed group quantiles</text>
 <text x='594.15' y='267.71' style='font-size: 11.00px; font-family: sans;' textLength='36.70px' lengthAdjust='spacingAndGlyphs'>method</text>
 <line x1='595.87' y1='282.97' x2='609.70' y2='282.97' style='stroke-width: 2.13; stroke: #F8766D; stroke-linecap: butt;' />
 <circle cx='602.79' cy='282.97' r='0.89' style='stroke-width: 0.71; stroke: #F8766D; stroke-opacity: 0.70; fill: #F8766D; fill-opacity: 0.70;' />

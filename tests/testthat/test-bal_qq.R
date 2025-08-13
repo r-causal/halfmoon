@@ -4,15 +4,15 @@ test_that("bal_qq works with unweighted data", {
   expect_s3_class(qq_data, "tbl_df")
   expect_named(
     qq_data,
-    c("quantile", "treated_quantiles", "untreated_quantiles")
+    c("quantile", "exposed_quantiles", "unexposed_quantiles")
   )
 
   # Default should be 99 quantiles
   expect_equal(nrow(qq_data), 99)
 
   # Quantiles should be in order
-  expect_true(all(diff(qq_data$treated_quantiles) >= 0))
-  expect_true(all(diff(qq_data$untreated_quantiles) >= 0))
+  expect_true(all(diff(qq_data$exposed_quantiles) >= 0))
+  expect_true(all(diff(qq_data$unexposed_quantiles) >= 0))
 })
 
 test_that("bal_qq works with weighted data", {
@@ -21,14 +21,14 @@ test_that("bal_qq works with weighted data", {
   expect_s3_class(qq_data, "tbl_df")
   expect_named(
     qq_data,
-    c("quantile", "treated_quantiles", "untreated_quantiles")
+    c("quantile", "exposed_quantiles", "unexposed_quantiles")
   )
 
   # Should be different from unweighted
   qq_unweighted <- bal_qq(nhefs_weights, age, qsmk)
   expect_false(identical(
-    qq_data$treated_quantiles,
-    qq_unweighted$treated_quantiles
+    qq_data$exposed_quantiles,
+    qq_unweighted$exposed_quantiles
   ))
 })
 
@@ -48,7 +48,7 @@ test_that("bal_qq handles missing values", {
   # With na.rm = TRUE
   qq_data <- bal_qq(nhefs_na, age, qsmk, na.rm = TRUE)
   expect_s3_class(qq_data, "tbl_df")
-  expect_false(any(is.na(qq_data$treated_quantiles)))
+  expect_false(any(is.na(qq_data$exposed_quantiles)))
 
   # With na.rm = FALSE should error
   expect_halfmoon_error(
@@ -97,8 +97,8 @@ test_that("bal_qq works with different treatment levels", {
   )
 
   # Default should match explicit treatment_level = 1
-  expect_equal(qq_default$treated_quantiles, qq_1$treated_quantiles)
-  expect_equal(qq_default$untreated_quantiles, qq_1$untreated_quantiles)
+  expect_equal(qq_default$exposed_quantiles, qq_1$exposed_quantiles)
+  expect_equal(qq_default$unexposed_quantiles, qq_1$unexposed_quantiles)
 
   # Explicit treatment level = 0
   qq_0 <- bal_qq(
@@ -110,8 +110,8 @@ test_that("bal_qq works with different treatment levels", {
   )
 
   # Treated and untreated should swap
-  expect_equal(qq_1$treated_quantiles, qq_0$untreated_quantiles)
-  expect_equal(qq_1$untreated_quantiles, qq_0$treated_quantiles)
+  expect_equal(qq_1$exposed_quantiles, qq_0$unexposed_quantiles)
+  expect_equal(qq_1$unexposed_quantiles, qq_0$exposed_quantiles)
 
   # Invalid treatment level should error
   expect_halfmoon_error(
@@ -133,10 +133,10 @@ test_that("bal_qq matches single method from check_qq", {
   qq_check_observed <- qq_check[qq_check$method == "observed", ]
 
   expect_equal(qq_single$quantile, qq_check_observed$quantile)
-  expect_equal(qq_single$treated_quantiles, qq_check_observed$treated_quantiles)
+  expect_equal(qq_single$exposed_quantiles, qq_check_observed$exposed_quantiles)
   expect_equal(
-    qq_single$untreated_quantiles,
-    qq_check_observed$untreated_quantiles
+    qq_single$unexposed_quantiles,
+    qq_check_observed$unexposed_quantiles
   )
 
   # Test with weighted data
@@ -150,9 +150,9 @@ test_that("bal_qq matches single method from check_qq", {
   )
 
   expect_equal(qq_single_wt$quantile, qq_check_wt$quantile)
-  expect_equal(qq_single_wt$treated_quantiles, qq_check_wt$treated_quantiles)
+  expect_equal(qq_single_wt$exposed_quantiles, qq_check_wt$exposed_quantiles)
   expect_equal(
-    qq_single_wt$untreated_quantiles,
-    qq_check_wt$untreated_quantiles
+    qq_single_wt$unexposed_quantiles,
+    qq_check_wt$unexposed_quantiles
   )
 })

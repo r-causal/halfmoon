@@ -205,8 +205,8 @@ process_aesthetic_group <- function(
 
   # Build result data frame preserving aesthetics
   result_df <- data.frame(
-    treated_quantiles = qq_result$treated_quantiles,
-    untreated_quantiles = qq_result$untreated_quantiles,
+    exposed_quantiles = qq_result$exposed_quantiles,
+    unexposed_quantiles = qq_result$unexposed_quantiles,
     group = which(unique_signatures == sig),
     PANEL = combined_data$PANEL[1]
   )
@@ -230,8 +230,8 @@ StatQq2 <- ggplot2::ggproto(
   ggplot2::Stat,
   required_aes = c("sample", "treatment"),
   default_aes = ggplot2::aes(
-    x = ggplot2::after_stat(treated_quantiles),
-    y = ggplot2::after_stat(untreated_quantiles),
+    x = ggplot2::after_stat(exposed_quantiles),
+    y = ggplot2::after_stat(unexposed_quantiles),
     weight = NULL
   ),
   dropped_aes = "weight",
@@ -329,8 +329,8 @@ StatQq2 <- ggplot2::ggproto(
 
       # Return data frame without x and y; let `after_stat()` handle that
       data.frame(
-        treated_quantiles = qq_result$treated_quantiles,
-        untreated_quantiles = qq_result$untreated_quantiles,
+        exposed_quantiles = qq_result$exposed_quantiles,
+        unexposed_quantiles = qq_result$unexposed_quantiles,
         PANEL = data$PANEL[1],
         group = 1
       )

@@ -27,8 +27,8 @@
 #' @return A tibble with class "halfmoon_qq" containing columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
-#'   \item{treated_quantiles}{Numeric. The quantile value for the treatment group.}
-#'   \item{untreated_quantiles}{Numeric. The quantile value for the control group.}
+#'   \item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
+#'   \item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
 #'
 #' @family balance functions
 #' @seealso [bal_qq()] for single weight QQ data, [plot_qq()] for visualization
@@ -236,8 +236,8 @@ compute_method_quantiles <- function(
   dplyr::tibble(
     method = method,
     quantile = quantiles,
-    treated_quantiles = ref_q,
-    untreated_quantiles = comp_q
+    exposed_quantiles = ref_q,
+    unexposed_quantiles = comp_q
   )
 }
 

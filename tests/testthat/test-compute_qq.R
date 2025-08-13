@@ -5,7 +5,7 @@ test_that("check_qq computes basic quantiles", {
   expect_equal(nrow(result), 99) # 99 quantiles for observed only
   expect_equal(
     colnames(result),
-    c("method", "quantile", "treated_quantiles", "untreated_quantiles")
+    c("method", "quantile", "exposed_quantiles", "unexposed_quantiles")
   )
   expect_equal(unique(result$method), factor("observed"))
 })
@@ -80,8 +80,8 @@ test_that("check_qq handles NA values correctly", {
 
   # Should work with na.rm = TRUE
   result <- check_qq(df, age, qsmk, na.rm = TRUE)
-  expect_false(any(is.na(result$treated_quantiles)))
-  expect_false(any(is.na(result$untreated_quantiles)))
+  expect_false(any(is.na(result$exposed_quantiles)))
+  expect_false(any(is.na(result$unexposed_quantiles)))
 
   # Should have NAs with na.rm = FALSE
   expect_halfmoon_error(check_qq(df, age, qsmk), "halfmoon_na_error")
@@ -96,8 +96,8 @@ test_that("check_qq handles NULL .reference_level correctly", {
 
   result_factor <- check_qq(test_factor, x, group, quantiles = 0.5)
   # Should use "Treatment" (last level) as reference
-  expect_equal(as.numeric(result_factor$treated_quantiles), 8) # median of 6:10
-  expect_equal(as.numeric(result_factor$untreated_quantiles), 3) # median of 1:5
+  expect_equal(as.numeric(result_factor$exposed_quantiles), 8) # median of 6:10
+  expect_equal(as.numeric(result_factor$unexposed_quantiles), 3) # median of 1:5
 
   # Test with numeric
   test_numeric <- data.frame(
@@ -107,8 +107,8 @@ test_that("check_qq handles NULL .reference_level correctly", {
 
   result_numeric <- check_qq(test_numeric, x, group, quantiles = 0.5)
   # Should use 1 (max value) as reference
-  expect_equal(as.numeric(result_numeric$treated_quantiles), 8) # median of 6:10
-  expect_equal(as.numeric(result_numeric$untreated_quantiles), 3) # median of 1:5
+  expect_equal(as.numeric(result_numeric$exposed_quantiles), 8) # median of 6:10
+  expect_equal(as.numeric(result_numeric$unexposed_quantiles), 3) # median of 1:5
 })
 
 test_that("check_qq returns expected quantile values", {
@@ -125,8 +125,8 @@ test_that("check_qq returns expected quantile values", {
   expect_equal(nrow(result), 3)
 
   # With default NULL .reference_level, B (last level) is reference group
-  # So treated_quantiles are from B (higher values) and untreated_quantiles from A (lower values)
-  expect_true(all(result$treated_quantiles > result$untreated_quantiles))
+  # So exposed_quantiles are from B (higher values) and unexposed_quantiles from A (lower values)
+  expect_true(all(result$exposed_quantiles > result$unexposed_quantiles))
 
   # Test with explicit .reference_level = "A"
   result_explicit <- check_qq(
@@ -136,8 +136,8 @@ test_that("check_qq returns expected quantile values", {
     quantiles = c(0.25, 0.5, 0.75),
     .reference_level = "A"
   )
-  # Now A is reference, so treated_quantiles < untreated_quantiles
+  # Now A is reference, so exposed_quantiles < unexposed_quantiles
   expect_true(all(
-    result_explicit$treated_quantiles < result_explicit$untreated_quantiles
+    result_explicit$exposed_quantiles < result_explicit$unexposed_quantiles
   ))
 })
