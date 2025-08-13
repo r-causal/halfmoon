@@ -3,7 +3,7 @@ test_that("plot_balance creates valid ggplot object", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "smd"
   )
 
@@ -16,7 +16,7 @@ test_that("plot_balance handles multiple metrics with faceting", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = c("smd", "vr", "ks")
   )
 
@@ -32,7 +32,7 @@ test_that("plot_balance handles energy metric with NA variable", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "energy"
   )
 
@@ -51,7 +51,7 @@ test_that("plot_balance applies absolute value to SMD when abs_smd = TRUE", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "smd"
   )
 
@@ -76,7 +76,7 @@ test_that("plot_balance adds caption when abs_smd = TRUE", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "smd"
   )
 
@@ -92,7 +92,7 @@ test_that("plot_balance handles different facet scales", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = c("smd", "vr")
   )
 
@@ -114,7 +114,7 @@ test_that("plot_balance adjusts x-axis for variance ratio", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "vr"
   )
 
@@ -145,7 +145,7 @@ test_that("plot_balance passes geom_love parameters correctly", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "smd"
   )
 
@@ -168,7 +168,7 @@ test_that("plot_balance handles multiple weighting methods", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = c(w_ate, w_att),
+    .weights = c(w_ate, w_att),
     .metrics = "smd"
   )
 
@@ -186,7 +186,7 @@ test_that("plot_balance handles categorical exposures with facet_grid", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr")
   )
 
@@ -209,7 +209,7 @@ test_that("plot_balance handles categorical exposures with single metric", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = "smd"
   )
 
@@ -226,7 +226,7 @@ test_that("plot_balance correctly identifies categorical vs binary exposures", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = c("smd", "vr")
   )
 
@@ -256,7 +256,7 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, education, race),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "smd"
   )
 
@@ -270,7 +270,7 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, education, race),
     qsmk,
-    .wts = c(w_ate, w_att),
+    .weights = c(w_ate, w_att),
     .metrics = c("smd", "vr", "ks")
   )
 
@@ -284,7 +284,7 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = c("smd", "energy")
   )
 
@@ -310,7 +310,7 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, education),
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     .metrics = "vr"
   )
 
@@ -337,7 +337,7 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, wt71, sex),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr", "ks")
   )
 
@@ -351,7 +351,7 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, wt71, sex),
     alcoholfreq_cat,
-    .wts = c(w_cat_ate, w_cat_att_2_3wk),
+    .weights = c(w_cat_ate, w_cat_att_2_3wk),
     .metrics = "smd"
   )
 
@@ -381,8 +381,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71, education),
     alcoholfreq_cat,
-    reference_group = "daily",
-    .wts = w_cat_ate,
+    .reference_level = "daily",
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr")
   )
 
@@ -396,7 +396,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "energy")
   )
 
@@ -414,7 +414,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71, sex),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr", "ks")
   )
 
@@ -428,7 +428,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71, sex),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr", "ks")
   )
 
@@ -442,7 +442,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = c(w_cat_att_none, w_cat_att_2_3wk, w_cat_att_daily),
+    .weights = c(w_cat_att_none, w_cat_att_2_3wk, w_cat_att_daily),
     .metrics = "smd"
   )
 
@@ -456,7 +456,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71, smokeintensity),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = "ks"
   )
 
@@ -470,7 +470,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = "smd"
   )
 
@@ -498,7 +498,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
       active
     ),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr")
   )
 
@@ -512,7 +512,7 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = c(w_cat_ate, w_cat_ato, w_cat_atm),
+    .weights = c(w_cat_ate, w_cat_ato, w_cat_atm),
     .metrics = c("smd", "vr")
   )
 

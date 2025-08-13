@@ -16,7 +16,7 @@ test_that("bal_qq works with unweighted data", {
 })
 
 test_that("bal_qq works with weighted data", {
-  qq_data <- bal_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+  qq_data <- bal_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 
   expect_s3_class(qq_data, "tbl_df")
   expect_named(
@@ -78,7 +78,7 @@ test_that("bal_qq validates inputs", {
 
   # Multiple weights should error
   expect_halfmoon_error(
-    bal_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att)),
+    bal_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att)),
     class = "halfmoon_arg_error"
   )
 })
@@ -92,7 +92,7 @@ test_that("bal_qq works with different treatment levels", {
     nhefs_weights,
     age,
     qsmk,
-    treatment_level = 1,
+    .reference_level = 1,
     quantiles = c(0.25, 0.5, 0.75)
   )
 
@@ -105,7 +105,7 @@ test_that("bal_qq works with different treatment levels", {
     nhefs_weights,
     age,
     qsmk,
-    treatment_level = 0,
+    .reference_level = 0,
     quantiles = c(0.25, 0.5, 0.75)
   )
 
@@ -115,7 +115,7 @@ test_that("bal_qq works with different treatment levels", {
 
   # Invalid treatment level should error
   expect_halfmoon_error(
-    bal_qq(nhefs_weights, age, qsmk, treatment_level = 2),
+    bal_qq(nhefs_weights, age, qsmk, .reference_level = 2),
     class = "halfmoon_reference_error"
   )
 })
@@ -140,12 +140,12 @@ test_that("bal_qq matches single method from check_qq", {
   )
 
   # Test with weighted data
-  qq_single_wt <- bal_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+  qq_single_wt <- bal_qq(nhefs_weights, age, qsmk, .weights = w_ate)
   qq_check_wt <- check_qq(
     nhefs_weights,
     age,
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     include_observed = FALSE
   )
 

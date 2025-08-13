@@ -15,7 +15,7 @@
 #' balance.
 #'
 #' @param .data A data frame containing the variables.
-#' @param .truth The treatment/outcome variable (unquoted).
+#' @param .exposure The treatment/outcome variable (unquoted).
 #' @param .estimate The propensity score or fitted values (unquoted).
 #' @param .wts Optional single weight variable (unquoted). If NULL, computes
 #'   unweighted AUC.
@@ -39,25 +39,25 @@
 #' @export
 bal_model_auc <- function(
   .data,
-  .truth,
+  .exposure,
   .estimate,
-  .wts = NULL,
+  .weights = NULL,
   na.rm = TRUE,
-  treatment_level = NULL
+  .focal_level = NULL
 ) {
   validate_data_frame(.data, call = rlang::caller_env())
 
-  truth_quo <- rlang::enquo(.truth)
+  exposure_quo <- rlang::enquo(.exposure)
   estimate_quo <- rlang::enquo(.estimate)
-  wts_quo <- rlang::enquo(.wts)
+  wts_quo <- rlang::enquo(.weights)
 
   # Extract column names
-  truth_name <- names(tidyselect::eval_select(truth_quo, .data))
+  exposure_name <- names(tidyselect::eval_select(exposure_quo, .data))
   estimate_name <- names(tidyselect::eval_select(estimate_quo, .data))
 
-  if (length(truth_name) != 1) {
+  if (length(exposure_name) != 1) {
     abort(
-      "{.arg .truth} must select exactly one variable",
+      "{.arg .exposure} must select exactly one variable",
       error_class = "halfmoon_arg_error",
       call = rlang::current_env()
     )
@@ -71,7 +71,7 @@ bal_model_auc <- function(
   }
 
   # Extract data
-  truth <- .data[[truth_name]]
+  exposure <- .data[[exposure_name]]
   estimate <- .data[[estimate_name]]
 
   # Handle weights if provided
@@ -80,7 +80,7 @@ bal_model_auc <- function(
     weight_vars <- names(tidyselect::eval_select(wts_quo, .data))
     if (length(weight_vars) != 1) {
       abort(
-        "{.arg .wts} must select exactly one variable or be NULL",
+        "{.arg .weights} must select exactly one variable or be NULL",
         error_class = "halfmoon_arg_error",
         call = rlang::current_env()
       )
@@ -91,20 +91,20 @@ bal_model_auc <- function(
   # Handle missing values
   if (na.rm) {
     if (is.null(weights)) {
-      complete_cases <- stats::complete.cases(truth, estimate)
+      complete_cases <- stats::complete.cases(exposure, estimate)
     } else {
-      complete_cases <- stats::complete.cases(truth, estimate, weights)
+      complete_cases <- stats::complete.cases(exposure, estimate, weights)
     }
-    truth <- truth[complete_cases]
+    exposure <- exposure[complete_cases]
     estimate <- estimate[complete_cases]
     if (!is.null(weights)) {
       weights <- weights[complete_cases]
     }
   } else {
     if (is.null(weights)) {
-      na_present <- any(is.na(truth)) || any(is.na(estimate))
+      na_present <- any(is.na(exposure)) || any(is.na(estimate))
     } else {
-      na_present <- any(is.na(truth)) ||
+      na_present <- any(is.na(exposure)) ||
         any(is.na(estimate)) ||
         any(is.na(weights))
     }
@@ -115,10 +115,10 @@ bal_model_auc <- function(
 
   # Compute ROC curve
   roc_data <- compute_roc_curve_imp(
-    truth,
+    exposure,
     estimate,
     weights = weights,
-    treatment_level = treatment_level,
+    .focal_level = .focal_level,
     call = rlang::current_env()
   )
 

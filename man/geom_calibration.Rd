@@ -45,10 +45,6 @@ geom_calibration(
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
-treatment/event. If \code{NULL} (default), uses the last level for factors or
-the maximum value for numeric variables.}
-
 \item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
 
 \item{show_ribbon}{Logical; show confidence interval ribbon.}

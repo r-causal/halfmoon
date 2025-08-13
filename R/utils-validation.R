@@ -20,7 +20,7 @@ validate_numeric <- function(
 validate_weights <- function(
   weights,
   n,
-  arg_name = "weights",
+  arg_name = ".weights",
   call = rlang::caller_env()
 ) {
   if (is.null(weights)) {

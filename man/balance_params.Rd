@@ -4,15 +4,15 @@
 \alias{balance_params}
 \title{Parameter Documentation for Balance Functions}
 \arguments{
-\item{covariate}{A numeric vector containing the covariate values to compare.}
+\item{.covariate}{A numeric vector containing the covariate values to compare.}
 
-\item{group}{A vector (factor or numeric) indicating group membership. Must
+\item{.exposure}{A vector (factor or numeric) indicating group membership. Must
 have exactly two unique levels.}
 
-\item{weights}{An optional numeric vector of case weights. If provided, must
+\item{.weights}{An optional numeric vector of case weights. If provided, must
 have the same length as other input vectors. All weights must be non-negative.}
 
-\item{reference_group}{The reference group level for comparisons. Can be either
+\item{.reference_level}{The reference group level for comparisons. Can be either
 a group level value or a numeric index. If \code{NULL} (default), uses the first level.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values

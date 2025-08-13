@@ -20,7 +20,7 @@
       expr
     Condition <halfmoon_arg_error>
       Error in `plot_mirror_distributions()`:
-      ! Argument `.group` is required
+      ! Argument `.exposure` is required
 
 ---
 
@@ -44,7 +44,7 @@
       expr
     Condition <halfmoon_reference_error>
       Error in `plot_mirror_distributions()`:
-      ! `reference_group` "invalid" not found in grouping variable
+      ! `.reference_level` "invalid" not found in grouping variable
 
 ---
 
@@ -52,5 +52,5 @@
       expr
     Condition <halfmoon_range_error>
       Error in `plot_mirror_distributions()`:
-      ! Reference group index 10 out of bounds
+      ! .reference_level index 10 out of bounds
 

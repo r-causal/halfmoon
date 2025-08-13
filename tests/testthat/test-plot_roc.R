@@ -127,7 +127,7 @@ test_that("StatRoc handles edge cases", {
   )
 
   # The error happens during build, not creation
-  p_bad <- ggplot(bad_data, aes(estimate = x, truth = y)) + stat_roc()
+  p_bad <- ggplot(bad_data, aes(estimate = x, exposure = y)) + stat_roc()
   expect_error(
     ggplot_build(p_bad),
     class = "halfmoon_group_error"

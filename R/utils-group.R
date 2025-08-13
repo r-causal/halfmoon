@@ -48,7 +48,7 @@ determine_reference_group <- function(
   if (is.numeric(reference_group) && length(reference_group) == 1) {
     if (reference_group > length(levels) || reference_group < 1) {
       abort(
-        "Reference group index {reference_group} out of bounds",
+        ".reference_level index {reference_group} out of bounds",
         error_class = "halfmoon_range_error",
         call = call
       )
@@ -58,7 +58,7 @@ determine_reference_group <- function(
 
   # Otherwise, it's an invalid reference group
   abort(
-    "{.arg reference_group} {.val {reference_group}} not found in grouping variable",
+    "{.arg .reference_level} {.val {reference_group}} not found in grouping variable",
     error_class = "halfmoon_reference_error",
     call = call
   )

@@ -1,18 +1,20 @@
 # error messages show user-facing function names
 
     Code
-      plot_mirror_distributions(nhefs_weights, age, alcoholfreq_cat, reference_group = "invalid")
+      plot_mirror_distributions(nhefs_weights, age, alcoholfreq_cat,
+        .reference_level = "invalid")
     Condition <halfmoon_reference_error>
       Error in `plot_mirror_distributions()`:
-      ! `reference_group` "invalid" not found in grouping variable
+      ! `.reference_level` "invalid" not found in grouping variable
 
 ---
 
     Code
-      plot_mirror_distributions(nhefs_weights, age, alcoholfreq_cat, reference_group = 10)
+      plot_mirror_distributions(nhefs_weights, age, alcoholfreq_cat,
+        .reference_level = 10)
     Condition <halfmoon_range_error>
       Error in `plot_mirror_distributions()`:
-      ! Reference group index 10 out of bounds
+      ! .reference_level index 10 out of bounds
 
 ---
 
@@ -33,10 +35,10 @@
 ---
 
     Code
-      plot_qq(nhefs_weights, age, qsmk, treatment_level = "invalid")
+      plot_qq(nhefs_weights, age, qsmk, .reference_level = "invalid")
     Condition <halfmoon_reference_error>
       Error in `plot_qq()`:
-      ! `treatment_level` 'invalid' not found in `.group` levels: "0" and "1"
+      ! `.reference_level` 'invalid' not found in `.group` levels: "0" and "1"
 
 ---
 
@@ -44,20 +46,20 @@
       plot_stratified_residuals(model)
     Condition <halfmoon_arg_error>
       Error in `plot_stratified_residuals()`:
-      ! Argument `treatment` is required
+      ! Argument `.exposure` is required
 
 ---
 
     Code
       check_balance(nhefs_weights, .vars = age, .group = rep(1, nrow(nhefs_weights)))
-    Condition <rlang_error>
-      Error in `as_string()`:
-      ! Can't convert a call to a string.
+    Condition <simpleError>
+      Error in `check_balance()`:
+      ! unused argument (.group = rep(1, nrow(nhefs_weights)))
 
 ---
 
     Code
-      bal_prognostic_score(nhefs_weights, treatment = qsmk, formula = wt82_71 ~ age +
+      bal_prognostic_score(nhefs_weights, .exposure = qsmk, formula = wt82_71 ~ age +
         qsmk + wt71)
     Condition <halfmoon_formula_error>
       Error in `bal_prognostic_score()`:
@@ -67,18 +69,17 @@
 
     Code
       check_balance(nhefs_weights, .vars = age, .group = "not_numeric")
-    Condition <halfmoon_column_error>
+    Condition <simpleError>
       Error in `check_balance()`:
-      ! Column `not_numeric` not found in `data`
+      ! unused argument (.group = "not_numeric")
 
 ---
 
     Code
       check_balance(data.frame(), .vars = age, .group = qsmk)
-    Condition <vctrs_error_subscript_oob>
+    Condition <simpleError>
       Error in `check_balance()`:
-      ! Can't select columns that don't exist.
-      x Column `age` doesn't exist.
+      ! unused argument (.group = qsmk)
 
 # errors have correct custom classes
 
@@ -86,7 +87,7 @@
       expr
     Condition <halfmoon_reference_error>
       Error in `plot_mirror_distributions()`:
-      ! `reference_group` "invalid" not found in grouping variable
+      ! `.reference_level` "invalid" not found in grouping variable
 
 ---
 
@@ -94,7 +95,7 @@
       expr
     Condition <halfmoon_range_error>
       Error in `plot_mirror_distributions()`:
-      ! Reference group index 10 out of bounds
+      ! .reference_level index 10 out of bounds
 
 ---
 

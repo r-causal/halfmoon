@@ -19,9 +19,9 @@
 #' specifically on the propensity score overlap and balance.
 #'
 #' @param .data A data frame containing the variables.
-#' @param .truth The treatment/outcome variable.
+#' @param .exposure The treatment/outcome variable.
 #' @param .estimate The propensity score or fitted values.
-#' @param .wts Weighting variables (supports tidyselect).
+#' @param .weights Weighting variables (supports tidyselect).
 #' @inheritParams check_params
 #' @inheritParams balance_params
 #' @inheritParams treatment_param
@@ -43,23 +43,23 @@
 #' @export
 check_model_auc <- function(
   .data,
-  .truth,
+  .exposure,
   .estimate,
-  .wts,
+  .weights,
   include_observed = TRUE,
   na.rm = TRUE,
-  treatment_level = NULL
+  .focal_level = NULL
 ) {
   validate_data_frame(.data)
 
   roc_data <- check_model_roc_curve(
     .data,
-    {{ .truth }},
+    {{ .exposure }},
     {{ .estimate }},
-    {{ .wts }},
+    {{ .weights }},
     include_observed,
     na.rm,
-    treatment_level
+    .focal_level
   )
 
   # Calculate AUC for each method
@@ -99,12 +99,12 @@ compute_method_auc <- function(method, roc_data) {
 #' indicates good balance between treatment groups.
 #'
 #' @param .data A data frame containing the variables.
-#' @param .truth The treatment/outcome variable (unquoted).
+#' @param .exposure The treatment/outcome variable (unquoted).
 #' @param .estimate The propensity score or covariate (unquoted).
-#' @param .wts Optional weighting variables (unquoted, can be multiple).
+#' @param .weights Optional weighting variables (unquoted, can be multiple).
 #' @param include_observed Include unweighted results? Default TRUE.
 #' @param na.rm Remove missing values? Default TRUE.
-#' @param treatment_level The level of `.truth` to consider as the treatment/event.
+#' @param .focal_level The level of `.exposure` to consider as the treatment/event.
 #'   Default is NULL, which uses the second level.
 #'
 #' @return A tibble with class "halfmoon_roc" containing ROC curve data.
@@ -113,16 +113,16 @@ compute_method_auc <- function(method, roc_data) {
 #' @export
 check_model_roc_curve <- function(
   .data,
-  .truth,
+  .exposure,
   .estimate,
-  .wts = NULL,
+  .weights = NULL,
   include_observed = TRUE,
   na.rm = TRUE,
-  treatment_level = NULL
+  .focal_level = NULL
 ) {
-  truth_quo <- rlang::enquo(.truth)
+  truth_quo <- rlang::enquo(.exposure)
   estimate_quo <- rlang::enquo(.estimate)
-  wts_quo <- rlang::enquo(.wts)
+  wts_quo <- rlang::enquo(.weights)
 
   validate_data_frame(.data)
 
@@ -132,7 +132,7 @@ check_model_roc_curve <- function(
 
   if (length(truth_name) != 1) {
     abort(
-      "{.arg .truth} must select exactly one variable",
+      "{.arg .exposure} must select exactly one variable",
       error_class = "halfmoon_select_error",
       call = rlang::current_env()
     )
@@ -166,13 +166,13 @@ check_model_roc_curve <- function(
         truth <- factor(truth, levels = sort(unique_vals))
       } else {
         abort(
-          "{.arg .truth} must have exactly 2 unique values",
+          "{.arg .exposure} must have exactly 2 unique values",
           error_class = "halfmoon_group_error"
         )
       }
     } else {
       abort(
-        "{.arg .truth} must be a factor, character, logical, or binary numeric",
+        "{.arg .exposure} must be a factor, character, logical, or binary numeric",
         error_class = "halfmoon_type_error"
       )
     }
@@ -180,7 +180,7 @@ check_model_roc_curve <- function(
 
   if (length(levels(truth)) != 2) {
     abort(
-      "{.arg .truth} must have exactly 2 levels",
+      "{.arg .exposure} must have exactly 2 levels",
       error_class = "halfmoon_group_error",
       call = rlang::current_env()
     )
@@ -211,7 +211,7 @@ check_model_roc_curve <- function(
       truth,
       estimate,
       weights = NULL,
-      treatment_level = treatment_level
+      .focal_level = .focal_level
     )
     observed_curve$method <- "observed"
     results$observed <- observed_curve
@@ -256,7 +256,7 @@ check_model_roc_curve <- function(
       truth_wt,
       estimate_wt,
       weights = weights_wt,
-      treatment_level = treatment_level
+      .focal_level = .focal_level
     )
     weighted_curve$method <- wt_name
     results[[wt_name]] <- weighted_curve
@@ -282,7 +282,7 @@ compute_roc_curve_imp <- function(
   truth,
   estimate,
   weights = NULL,
-  treatment_level = NULL,
+  .focal_level = NULL,
   call = rlang::caller_env()
 ) {
   if (length(truth) == 0) {
@@ -319,15 +319,15 @@ compute_roc_curve_imp <- function(
   # Determine which level is the treatment/event
   if (is.factor(truth)) {
     truth_levels <- levels(truth)
-    if (!is.null(treatment_level)) {
+    if (!is.null(.focal_level)) {
       # User specified treatment level
-      if (!treatment_level %in% truth_levels) {
+      if (!.focal_level %in% truth_levels) {
         abort(
-          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} levels: {.val {truth_levels}}",
+          "{.arg .focal_level} '{(.focal_level)}' not found in {.arg truth} levels: {.val {truth_levels}}",
           error_class = "halfmoon_reference_error"
         )
       }
-      event_level <- treatment_level
+      event_level <- .focal_level
     } else {
       # Default: use second level as event
       event_level <- truth_levels[[2]]
@@ -336,14 +336,14 @@ compute_roc_curve_imp <- function(
   } else {
     # For non-factors, determine event level
     unique_vals <- sort(unique(truth))
-    if (!is.null(treatment_level)) {
-      if (!treatment_level %in% unique_vals) {
+    if (!is.null(.focal_level)) {
+      if (!.focal_level %in% unique_vals) {
         abort(
-          "{.arg treatment_level} '{treatment_level}' not found in {.arg truth} values: {.val {unique_vals}}",
+          "{.arg .focal_level} '{(.focal_level)}' not found in {.arg truth} values: {.val {unique_vals}}",
           error_class = "halfmoon_reference_error"
         )
       }
-      event_level <- treatment_level
+      event_level <- .focal_level
     } else {
       # Default: use second unique value as event
       event_level <- unique_vals[[2]]

@@ -9,7 +9,7 @@ test_that("plot_qq creates basic QQ plot", {
 })
 
 test_that("plot_qq works with weights", {
-  p <- plot_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+  p <- plot_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 
   expect_s3_class(p, "ggplot")
   # Should have 3 layers: points + abline + scale_color_discrete
@@ -21,7 +21,7 @@ test_that("plot_qq works with weights", {
 })
 
 test_that("plot_qq works with multiple weights", {
-  p <- plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+  p <- plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 
   expect_s3_class(p, "ggplot")
 
@@ -31,7 +31,7 @@ test_that("plot_qq works with multiple weights", {
 })
 
 test_that("plot_qq works without observed", {
-  p <- plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
+  p <- plot_qq(nhefs_weights, age, qsmk, .weights = w_ate, include_observed = FALSE)
 
   expect_s3_class(p, "ggplot")
 
@@ -88,7 +88,7 @@ test_that("weighted_quantile works correctly", {
   weights <- rep(1, 10)
   quantiles <- c(0.25, 0.5, 0.75)
 
-  result <- weighted_quantile(values, quantiles, .wts = weights)
+  result <- weighted_quantile(values, quantiles, .weights = weights)
   # With equal weights, should be close to regular quantiles
   # but not exactly equal due to interpolation method
   expected <- stats::quantile(values, quantiles)
@@ -96,7 +96,7 @@ test_that("weighted_quantile works correctly", {
 
   # Test with non-uniform weights
   weights <- c(rep(1, 5), rep(2, 5))
-  result <- weighted_quantile(values, quantiles, .wts = weights)
+  result <- weighted_quantile(values, quantiles, .weights = weights)
 
   # Should be weighted towards higher values
   expect_true(all(result > c(2.5, 5, 7.5)))
@@ -125,24 +125,24 @@ test_that("plot_qq visual regression tests", {
   # With single weight
   expect_doppelganger(
     "qq plot with weight",
-    plot_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+    plot_qq(nhefs_weights, age, qsmk, .weights = w_ate)
   )
 
   # With multiple weights
   expect_doppelganger(
     "qq plot multiple weights",
-    plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+    plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
   )
 
   # Without observed
   expect_doppelganger(
     "qq plot no observed",
-    plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
+    plot_qq(nhefs_weights, age, qsmk, .weights = w_ate, include_observed = FALSE)
   )
 
   # With propensity score
   expect_doppelganger(
     "qq plot propensity score",
-    plot_qq(nhefs_weights, .fitted, qsmk, .wts = w_ate)
+    plot_qq(nhefs_weights, .fitted, qsmk, .weights = w_ate)
   )
 })

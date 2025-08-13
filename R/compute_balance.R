@@ -25,39 +25,39 @@
 #'
 #' # With weights
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'         weights = nhefs_weights$w_ate)
+#'         .weights = nhefs_weights$w_ate)
 #'
 #' # Categorical exposure (returns named vector)
 #' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 #'
-#' # Specify reference group
+#' # Specify reference level
 #' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'         reference_group = "daily")
+#'         .reference_level = "daily")
 #'
 #' # With categorical weights
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-#'         weights = nhefs_weights$w_cat_ate)
+#'         .weights = nhefs_weights$w_cat_ate)
 #'
 #' @export
 bal_smd <- function(
-  covariate,
-  group,
-  weights = NULL,
-  reference_group = NULL,
+  .covariate,
+  .exposure,
+  .weights = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 ) {
-  validate_numeric(covariate)
-  validate_not_empty(covariate)
-  validate_equal_length(covariate, group)
-  validate_weights(weights, length(covariate))
+  validate_numeric(.covariate)
+  validate_not_empty(.covariate)
+  validate_equal_length(.covariate, .exposure)
+  validate_weights(.weights, length(.covariate))
 
   # Check if exposure is categorical first
-  if (is_categorical_exposure(group)) {
+  if (is_categorical_exposure(.exposure)) {
     return(.bal_smd_categorical(
-      covariate = covariate,
-      group = group,
-      weights = weights,
-      reference_group = reference_group,
+      covariate = .covariate,
+      group = .exposure,
+      weights = .weights,
+      reference_group = .reference_level,
       na.rm = na.rm
     ))
   }
@@ -65,18 +65,18 @@ bal_smd <- function(
   # Handle missing values for binary exposures
   if (!na.rm) {
     # Check for missing values
-    if (is.null(weights)) {
-      if (any(is.na(covariate) | is.na(group))) return(NA_real_)
+    if (is.null(.weights)) {
+      if (any(is.na(.covariate) | is.na(.exposure))) return(NA_real_)
     } else {
-      if (any(is.na(covariate) | is.na(group) | is.na(weights))) {
+      if (any(is.na(.covariate) | is.na(.exposure) | is.na(.weights))) {
         return(NA_real_)
       }
     }
   }
 
   # Binary exposure handling (existing code)
-  # Convert reference_group to index for smd package
-  levels_g <- unique(stats::na.omit(group))
+  # Convert .reference_level to index for smd package
+  levels_g <- unique(stats::na.omit(.exposure))
 
   # Validate we have exactly two levels
   if (length(levels_g) != 2) {
@@ -87,22 +87,22 @@ bal_smd <- function(
   }
 
   # Determine gref_index for smd package
-  if (is.null(reference_group)) {
+  if (is.null(.reference_level)) {
     gref_index <- 1L
   } else {
-    # If reference_group is a level value, convert to index
-    if (reference_group %in% levels_g) {
-      gref_index <- which(levels_g == reference_group)
+    # If .reference_level is a level value, convert to index
+    if (.reference_level %in% levels_g) {
+      gref_index <- which(levels_g == .reference_level)
     } else {
       # Use it directly as an index
-      gref_index <- reference_group
+      gref_index <- .reference_level
     }
   }
 
   res <- smd::smd(
-    x = covariate,
-    g = group,
-    w = extract_weight_data(weights),
+    x = .covariate,
+    g = .exposure,
+    w = extract_weight_data(.weights),
     gref = gref_index,
     na.rm = na.rm
   )
@@ -145,58 +145,63 @@ is_binary <- function(x) {
 #'
 #' # With weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'        weights = nhefs_weights$w_ate)
+#'        .weights = nhefs_weights$w_ate)
 #'
 #' # Categorical exposure (returns named vector)
 #' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 #'
-#' # Specify reference group
+#' # Specify reference level
 #' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'        reference_group = "2_3_per_week")
+#'        .reference_level = "2_3_per_week")
 #'
 #' # With categorical weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-#'        weights = nhefs_weights$w_cat_ate)
+#'        .weights = nhefs_weights$w_cat_ate)
 #'
 #' @export
 bal_vr <- function(
-  covariate,
-  group,
-  weights = NULL,
-  reference_group = NULL,
+  .covariate,
+  .exposure,
+  .weights = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 ) {
   # Input validation
-  validate_numeric(covariate)
-  validate_not_empty(covariate)
-  validate_equal_length(covariate, group)
-  validate_weights(weights, length(covariate))
+  validate_numeric(.covariate)
+  validate_not_empty(.covariate)
+  validate_equal_length(.covariate, .exposure)
+  validate_weights(.weights, length(.covariate))
 
   # Check if exposure is categorical
-  if (is_categorical_exposure(group)) {
+  if (is_categorical_exposure(.exposure)) {
     return(.bal_vr_categorical(
-      covariate = covariate,
-      group = group,
-      weights = weights,
-      reference_group = reference_group,
+      covariate = .covariate,
+      group = .exposure,
+      weights = .weights,
+      reference_group = .reference_level,
       na.rm = na.rm
     ))
   }
 
   # Binary exposure handling (existing code)
   # Identify reference and comparison indices
-  group_splits <- split_by_group(covariate, group, reference_group)
+  group_splits <- split_by_group(.covariate, .exposure, .reference_level)
   idx_ref <- group_splits$reference
   idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
-    idx_ref <- filter_na_indices(idx_ref, covariate, weights, na.rm = TRUE)
-    idx_other <- filter_na_indices(idx_other, covariate, weights, na.rm = TRUE)
+    idx_ref <- filter_na_indices(idx_ref, .covariate, .weights, na.rm = TRUE)
+    idx_other <- filter_na_indices(
+      idx_other,
+      .covariate,
+      .weights,
+      na.rm = TRUE
+    )
   } else {
     if (
       check_na_return(
-        covariate[c(idx_ref, idx_other)],
-        extract_weight_data(weights)[c(idx_ref, idx_other)] %||% NULL,
+        .covariate[c(idx_ref, idx_other)],
+        extract_weight_data(.weights)[c(idx_ref, idx_other)] %||% NULL,
         na.rm = FALSE
       )
     ) {
@@ -209,33 +214,33 @@ bal_vr <- function(
     return(NA_real_)
   }
   # Compute variances
-  if (is_binary(covariate)) {
+  if (is_binary(.covariate)) {
     # For binary variables, use p*(1-p) formula
-    var_ref <- if (is.null(weights)) {
-      p <- mean(covariate[idx_ref])
+    var_ref <- if (is.null(.weights)) {
+      p <- mean(.covariate[idx_ref])
       p * (1 - p)
     } else {
-      wr <- extract_weight_data(weights)[idx_ref]
-      xr <- covariate[idx_ref]
+      wr <- extract_weight_data(.weights)[idx_ref]
+      xr <- .covariate[idx_ref]
       p <- sum(wr * xr) / sum(wr)
       p * (1 - p)
     }
-    var_other <- if (is.null(weights)) {
-      p <- mean(covariate[idx_other])
+    var_other <- if (is.null(.weights)) {
+      p <- mean(.covariate[idx_other])
       p * (1 - p)
     } else {
-      wo <- extract_weight_data(weights)[idx_other]
-      xo <- covariate[idx_other]
+      wo <- extract_weight_data(.weights)[idx_other]
+      xo <- .covariate[idx_other]
       p <- sum(wo * xo) / sum(wo)
       p * (1 - p)
     }
   } else {
     # For continuous variables, use Bessel's correction
-    var_ref <- if (is.null(weights)) {
-      stats::var(covariate[idx_ref])
+    var_ref <- if (is.null(.weights)) {
+      stats::var(.covariate[idx_ref])
     } else {
-      wr <- extract_weight_data(weights)[idx_ref]
-      xr <- covariate[idx_ref]
+      wr <- extract_weight_data(.weights)[idx_ref]
+      xr <- .covariate[idx_ref]
       mr <- sum(wr * xr) / sum(wr)
       # Use Bessel's correction for weighted sample variance
       denom <- sum(wr) - sum(wr^2) / sum(wr)
@@ -245,11 +250,11 @@ bal_vr <- function(
         sum(wr * (xr - mr)^2) / denom
       }
     }
-    var_other <- if (is.null(weights)) {
-      stats::var(covariate[idx_other])
+    var_other <- if (is.null(.weights)) {
+      stats::var(.covariate[idx_other])
     } else {
-      wo <- extract_weight_data(weights)[idx_other]
-      xo <- covariate[idx_other]
+      wo <- extract_weight_data(.weights)[idx_other]
+      xo <- .covariate[idx_other]
       mo <- sum(wo * xo) / sum(wo)
       # Use Bessel's correction for weighted sample variance
       denom <- sum(wo) - sum(wo^2) / sum(wo)
@@ -310,56 +315,61 @@ bal_vr <- function(
 #'
 #' # With weights
 #' bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
-#'        weights = nhefs_weights$w_ate)
+#'        .weights = nhefs_weights$w_ate)
 #'
 #' # Categorical exposure (returns named vector)
 #' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 #'
-#' # Specify reference group
+#' # Specify reference level
 #' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'        reference_group = "none")
+#'        .reference_level = "none")
 #'
 #' # With categorical weights
 #' bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-#'        weights = nhefs_weights$w_cat_ate)
+#'        .weights = nhefs_weights$w_cat_ate)
 #' @export
 bal_ks <- function(
-  covariate,
-  group,
-  weights = NULL,
-  reference_group = NULL,
+  .covariate,
+  .exposure,
+  .weights = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 ) {
   # Input validation
-  validate_numeric(covariate)
-  validate_not_empty(covariate)
-  validate_equal_length(covariate, group)
-  validate_weights(weights, length(covariate))
+  validate_numeric(.covariate)
+  validate_not_empty(.covariate)
+  validate_equal_length(.covariate, .exposure)
+  validate_weights(.weights, length(.covariate))
 
   # Check if exposure is categorical
-  if (is_categorical_exposure(group)) {
+  if (is_categorical_exposure(.exposure)) {
     return(.bal_ks_categorical(
-      covariate = covariate,
-      group = group,
-      weights = weights,
-      reference_group = reference_group,
+      covariate = .covariate,
+      group = .exposure,
+      weights = .weights,
+      reference_group = .reference_level,
       na.rm = na.rm
     ))
   }
 
   # Binary exposure handling (existing code)
-  group_splits <- split_by_group(covariate, group, reference_group)
+  group_splits <- split_by_group(.covariate, .exposure, .reference_level)
   idx_ref <- group_splits$reference
   idx_other <- group_splits$comparison
   # Handle missing values
   if (na.rm) {
-    idx_ref <- filter_na_indices(idx_ref, covariate, weights, na.rm = TRUE)
-    idx_other <- filter_na_indices(idx_other, covariate, weights, na.rm = TRUE)
+    idx_ref <- filter_na_indices(idx_ref, .covariate, .weights, na.rm = TRUE)
+    idx_other <- filter_na_indices(
+      idx_other,
+      .covariate,
+      .weights,
+      na.rm = TRUE
+    )
   } else {
     if (
       check_na_return(
-        covariate[c(idx_ref, idx_other)],
-        extract_weight_data(weights)[c(idx_ref, idx_other)] %||% NULL,
+        .covariate[c(idx_ref, idx_other)],
+        extract_weight_data(.weights)[c(idx_ref, idx_other)] %||% NULL,
         na.rm = FALSE
       )
     ) {
@@ -372,36 +382,36 @@ bal_ks <- function(
     return(NA_real_)
   }
   # For binary variables, KS statistic is just the difference in proportions
-  if (is_binary(covariate)) {
+  if (is_binary(.covariate)) {
     # Calculate weighted proportions
-    p_ref <- if (is.null(weights)) {
-      mean(covariate[idx_ref])
+    p_ref <- if (is.null(.weights)) {
+      mean(.covariate[idx_ref])
     } else {
-      sum(extract_weight_data(weights)[idx_ref] * covariate[idx_ref]) /
-        sum(extract_weight_data(weights)[idx_ref])
+      sum(extract_weight_data(.weights)[idx_ref] * .covariate[idx_ref]) /
+        sum(extract_weight_data(.weights)[idx_ref])
     }
-    p_other <- if (is.null(weights)) {
-      mean(covariate[idx_other])
+    p_other <- if (is.null(.weights)) {
+      mean(.covariate[idx_other])
     } else {
-      sum(extract_weight_data(weights)[idx_other] * covariate[idx_other]) /
-        sum(extract_weight_data(weights)[idx_other])
+      sum(extract_weight_data(.weights)[idx_other] * .covariate[idx_other]) /
+        sum(extract_weight_data(.weights)[idx_other])
     }
     return(abs(p_other - p_ref))
   }
 
   # For continuous variables, compute full KS statistic
   # Extract and weight
-  x_ref <- covariate[idx_ref]
-  x_other <- covariate[idx_other]
-  w_ref <- if (is.null(weights)) {
+  x_ref <- .covariate[idx_ref]
+  x_other <- .covariate[idx_other]
+  w_ref <- if (is.null(.weights)) {
     rep(1, length(x_ref))
   } else {
-    extract_weight_data(weights)[idx_ref]
+    extract_weight_data(.weights)[idx_ref]
   }
-  w_other <- if (is.null(weights)) {
+  w_other <- if (is.null(.weights)) {
     rep(1, length(x_other))
   } else {
-    extract_weight_data(weights)[idx_other]
+    extract_weight_data(.weights)[idx_other]
   }
   w_ref <- w_ref / sum(w_ref)
   w_other <- w_other / sum(w_other)
@@ -456,54 +466,54 @@ bal_ks <- function(
 #' bal_corr(nhefs_weights$age, nhefs_weights$wt71)
 #'
 #' @export
-bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
+bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
   # Input validation
-  validate_numeric(x)
-  validate_numeric(y)
-  validate_not_empty(x)
-  validate_not_empty(y)
-  validate_equal_length(x, y)
-  validate_weights(weights, length(x))
+  validate_numeric(.x)
+  validate_numeric(.y)
+  validate_not_empty(.x)
+  validate_not_empty(.y)
+  validate_equal_length(.x, .y)
+  validate_weights(.weights, length(.x))
 
   if (na.rm) {
     # Handle missing values carefully - avoid logical(0) issue
-    if (is.null(weights)) {
-      idx <- !(is.na(x) | is.na(y))
+    if (is.null(.weights)) {
+      idx <- !(is.na(.x) | is.na(.y))
     } else {
-      idx <- !(is.na(x) | is.na(y) | is.na(weights))
+      idx <- !(is.na(.x) | is.na(.y) | is.na(.weights))
     }
-    x <- x[idx]
-    y <- y[idx]
-    if (!is.null(weights)) weights <- extract_weight_data(weights)[idx]
+    .x <- .x[idx]
+    .y <- .y[idx]
+    if (!is.null(.weights)) .weights <- extract_weight_data(.weights)[idx]
   } else {
     # Extract weight data if needed
-    if (!is.null(weights)) {
-      weights <- extract_weight_data(weights)
+    if (!is.null(.weights)) {
+      .weights <- extract_weight_data(.weights)
     }
     # Check for missing values
-    if (is.null(weights)) {
-      if (any(is.na(x) | is.na(y))) return(NA_real_)
+    if (is.null(.weights)) {
+      if (any(is.na(.x) | is.na(.y))) return(NA_real_)
     } else {
-      if (any(is.na(x) | is.na(y) | is.na(weights))) return(NA_real_)
+      if (any(is.na(.x) | is.na(.y) | is.na(.weights))) return(NA_real_)
     }
   }
 
   # Check if we have enough data after removing NAs
-  if (length(x) < 2) {
+  if (length(.x) < 2) {
     return(NA_real_)
   }
 
-  if (is.null(weights)) {
-    return(stats::cor(x, y))
+  if (is.null(.weights)) {
+    return(stats::cor(.x, .y))
   }
 
   # Compute weighted covariance
-  w_norm <- weights / sum(weights)
-  mx <- sum(w_norm * x)
-  my <- sum(w_norm * y)
-  cov <- sum(w_norm * (x - mx) * (y - my))
-  vx <- sum(w_norm * (x - mx)^2)
-  vy <- sum(w_norm * (y - my)^2)
+  w_norm <- .weights / sum(.weights)
+  mx <- sum(w_norm * .x)
+  my <- sum(w_norm * .y)
+  cov <- sum(w_norm * (.x - mx) * (.y - my))
+  vx <- sum(w_norm * (.x - mx)^2)
+  vy <- sum(w_norm * (.y - my)^2)
 
   if (vx <= 0 || vy <= 0) {
     return(NA_real_)
@@ -517,25 +527,25 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #'
 #' Computes the energy distance as a multivariate measure of covariate balance
 #' between groups. Energy distance captures the similarity between distributions
-#' across the entire joint distribution of covariates, making it more comprehensive
+#' across the entire joint distribution of .covariates, making it more comprehensive
 #' than univariate balance measures.
 #'
-#' @param covariates A data frame or matrix containing the covariates to compare.
+#' @param .covariates A data frame or matrix containing the .covariates to compare.
 #' @param group A vector (factor or numeric) indicating group membership. For
 #'   binary and multi-category treatments, must have 2+ unique levels. For
 #'   continuous treatments, should be numeric.
 #' @param weights An optional numeric vector of weights. If provided, must
-#'   have the same length as rows in `covariates`. All weights must be non-negative.
+#'   have the same length as rows in `.covariates`. All weights must be non-negative.
 #' @param estimand Character string specifying the estimand. Options are:
 #'   - NULL (default): Pure between-group energy distance comparing distributions
 #'   - "ATE": Energy distance weighted to reflect balance for estimating average
 #'     treatment effects across the entire population
-#'   - "ATT": Energy distance weighted to reflect balance for the treated group,
+#'   - "ATT": Energy distance weighted to reflect balance for the treated .exposure,
 #'     measuring how well controls match the treated distribution
-#'   - "ATC": Energy distance weighted to reflect balance for the control group,
+#'   - "ATC": Energy distance weighted to reflect balance for the control .exposure,
 #'     measuring how well treated units match the control distribution
 #'   For continuous treatments, only NULL is supported.
-#' @param treatment_level The treatment level for ATT/ATC. If `NULL` (default),
+#' @param .focal_level The treatment level for ATT/ATC. If `NULL` (default),
 #'   automatically determined based on estimand.
 #' @param use_improved Logical. Use improved energy distance for ATE? Default is TRUE.
 #'   When TRUE, adds pairwise treatment comparisons for better group separation.
@@ -556,11 +566,11 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' The calculation uses a quadratic form: \eqn{w^T P w + q^T w + k},
 #' where the components depend on the estimand.
 #'
-#' For binary variables in the covariates, variance is calculated as p(1-p)
+#' For binary variables in the .covariates, variance is calculated as p(1-p)
 #' rather than sample variance to prevent over-weighting.
 #'
 #' For continuous treatments, the function uses distance correlation instead of
-#' traditional energy distance, measuring independence between treatment and covariates.
+#' traditional energy distance, measuring independence between treatment and .covariates.
 #'
 #' @references
 #' Huling, J. D., & Mak, S. (2024). Energy Balancing of Covariate Distributions.
@@ -576,59 +586,59 @@ bal_corr <- function(x, y, weights = NULL, na.rm = FALSE) {
 #' @examples
 #' # Binary treatment
 #' bal_energy(
-#'   covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
-#'   group = nhefs_weights$qsmk
+#'   .covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
+#'   .exposure = nhefs_weights$qsmk
 #' )
 #'
 #' # With weights
 #' bal_energy(
-#'   covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
-#'   group = nhefs_weights$qsmk,
-#'   weights = nhefs_weights$w_ate
+#'   .covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
+#'   .exposure = nhefs_weights$qsmk,
+#'   .weights = nhefs_weights$w_ate
 #' )
 #'
 #' # ATT estimand
 #' bal_energy(
-#'   covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
-#'   group = nhefs_weights$qsmk,
-#'   weights = nhefs_weights$w_att,
+#'   .covariates = dplyr::select(nhefs_weights, age, wt71, smokeyrs),
+#'   .exposure = nhefs_weights$qsmk,
+#'   .weights = nhefs_weights$w_att,
 #'   estimand = "ATT"
 #' )
 #'
 #' @export
 #' @importFrom stats dist model.matrix sd
 bal_energy <- function(
-  covariates,
-  group,
-  weights = NULL,
+  .covariates,
+  .exposure,
+  .weights = NULL,
   estimand = NULL,
-  treatment_level = NULL,
+  .focal_level = NULL,
   use_improved = TRUE,
   standardized = TRUE,
   na.rm = FALSE
 ) {
   # Input validation
-  if (!is.data.frame(covariates) && !is.matrix(covariates)) {
+  if (!is.data.frame(.covariates) && !is.matrix(.covariates)) {
     abort(
-      "Argument {.arg covariates} must be a data frame or matrix",
+      "Argument {.arg .covariates} must be a data frame or matrix",
       error_class = "halfmoon_type_error"
     )
   }
 
-  if (is.data.frame(covariates)) {
-    covariates <- create_dummy_variables(covariates, binary_as_single = TRUE)
-    covariates <- as.matrix(covariates)
+  if (is.data.frame(.covariates)) {
+    .covariates <- create_dummy_variables(.covariates, binary_as_single = TRUE)
+    .covariates <- as.matrix(.covariates)
   }
 
-  if (nrow(covariates) == 0) {
+  if (nrow(.covariates) == 0) {
     abort(
-      "Argument {.arg covariates} cannot be empty",
+      "Argument {.arg .covariates} cannot be empty",
       error_class = "halfmoon_empty_error"
     )
   }
 
-  validate_equal_length(group, covariates, "group", "covariates")
-  validate_weights(weights, nrow(covariates))
+  validate_equal_length(.exposure, .covariates, ".exposure", ".covariates")
+  validate_weights(.weights, nrow(.covariates))
 
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
     abort(
@@ -637,44 +647,44 @@ bal_energy <- function(
     )
   }
 
-  if (!na.rm && anyNA(covariates)) {
+  if (!na.rm && anyNA(.covariates)) {
     abort(
-      "Energy distance cannot be computed with missing values in {.arg covariates}. Set {.arg na.rm = TRUE} or remove missing values.",
+      "Energy distance cannot be computed with missing values in {.arg .covariates}. Set {.arg na.rm = TRUE} or remove missing values.",
       error_class = "halfmoon_na_error"
     )
   }
 
-  if (!na.rm && anyNA(group)) {
+  if (!na.rm && anyNA(.exposure)) {
     abort(
       "Energy distance cannot be computed with missing values in {.arg group}. Set {.arg na.rm = TRUE} or remove missing values.",
       error_class = "halfmoon_na_error"
     )
   }
 
-  if (!na.rm && !is.null(weights) && anyNA(weights)) {
+  if (!na.rm && !is.null(.weights) && anyNA(.weights)) {
     abort(
-      "Energy distance cannot be computed with missing values in {.arg weights}. Set {.arg na.rm = TRUE} or remove missing values.",
+      "Energy distance cannot be computed with missing values in {.arg .weights}. Set {.arg na.rm = TRUE} or remove missing values.",
       error_class = "halfmoon_na_error"
     )
   }
 
   # Remove missing values if requested
   if (na.rm) {
-    complete_cases <- stats::complete.cases(covariates, group)
-    if (!is.null(weights)) {
-      complete_cases <- complete_cases & !is.na(weights)
-      weights <- extract_weight_data(weights)[complete_cases]
+    complete_cases <- stats::complete.cases(.covariates, .exposure)
+    if (!is.null(.weights)) {
+      complete_cases <- complete_cases & !is.na(.weights)
+      .weights <- extract_weight_data(.weights)[complete_cases]
     }
-    covariates <- covariates[complete_cases, , drop = FALSE]
-    group <- group[complete_cases]
+    .covariates <- .covariates[complete_cases, , drop = FALSE]
+    .exposure <- .exposure[complete_cases]
 
-    if (nrow(covariates) == 0) {
+    if (nrow(.covariates) == 0) {
       return(NA_real_)
     }
   }
 
   # Determine treatment type
-  unique_groups <- unique(group)
+  unique_groups <- unique(.exposure)
   n_groups <- length(unique_groups)
 
   # Special case: constant group (only one unique value)
@@ -686,7 +696,7 @@ bal_energy <- function(
   }
 
   # Determine if treatment is continuous
-  is_continuous <- is.numeric(group) && n_groups > 10
+  is_continuous <- is.numeric(.exposure) && n_groups > 10
 
   if (is_continuous && !is.null(estimand)) {
     abort(
@@ -698,29 +708,29 @@ bal_energy <- function(
   # For continuous treatments, use distance correlation
   if (is_continuous) {
     return(bal_energy_continuous(
-      covariates = covariates,
-      treatment = group,
-      weights = weights,
+      .covariates = .covariates,
+      treatment = .exposure,
+      .weights = .weights,
       standardized = standardized
     ))
   }
 
   # For discrete treatments, proceed with energy distance
   # Convert group to factor for consistent handling
-  group <- as.factor(group)
-  unique_groups <- levels(group)
+  .exposure <- as.factor(.exposure)
+  unique_groups <- levels(.exposure)
   n_groups <- length(unique_groups)
 
   # Default weights
-  if (is.null(weights)) {
-    weights <- rep(1, nrow(covariates))
+  if (is.null(.weights)) {
+    .weights <- rep(1, nrow(.covariates))
   }
 
   # Normalize weights by group
-  weights_numeric <- extract_weight_data(weights)
+  weights_numeric <- extract_weight_data(.weights)
   weights_normalized <- weights_numeric
   for (g in unique_groups) {
-    group_mask <- group == g
+    group_mask <- .exposure == g
     if (any(group_mask)) {
       group_weights <- weights_numeric[group_mask]
       weights_normalized[group_mask] <- group_weights / mean(group_weights)
@@ -728,24 +738,24 @@ bal_energy <- function(
   }
 
   # Identify binary variables (checking each column)
-  binary_vars <- purrr::map_lgl(as.data.frame(covariates), \(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(.covariates), \(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
 
-  # Standardize covariates
-  standardized_covariates <- bal_energy_standardize(
-    covariates = covariates,
+  # Standardize .covariates
+  standardized_.covariates <- bal_energy_standardize(
+    .covariates = .covariates,
     weights = weights_normalized,
     binary_vars = binary_vars,
-    use_weights = is.null(weights) # Only use weights for standardization when no weights provided
+    use_weights = is.null(.weights) # Only use weights for standardization when no weights provided
   )
 
   # Compute distance matrix
-  distance_matrix <- as.matrix(dist(standardized_covariates))
+  distance_matrix <- as.matrix(dist(standardized_.covariates))
 
   # Create treatment indicators
-  treatment_indicators <- model.matrix(~ group - 1)
+  treatment_indicators <- model.matrix(~ .exposure - 1)
 
   # Compute energy distance components based on estimand
   if (is.null(estimand)) {
@@ -770,9 +780,9 @@ bal_energy <- function(
       distance_matrix = distance_matrix,
       treatment_indicators = treatment_indicators,
       unique_groups = unique_groups,
-      weights = weights_normalized,
-      group = group,
-      treatment_level = treatment_level,
+      .weights = weights_normalized,
+      .exposure = .exposure,
+      .focal_level = .focal_level,
       estimand = estimand
     )
   }
@@ -837,10 +847,10 @@ calculate_scaling_factor <- function(col, is_binary, weights_norm = NULL) {
   }
 }
 
-#' Standardize covariates for energy distance calculation
+#' Standardize .covariates for energy distance calculation
 #' @noRd
 bal_energy_standardize <- function(
-  covariates,
+  .covariates,
   weights,
   binary_vars,
   use_weights = TRUE
@@ -850,7 +860,7 @@ bal_energy_standardize <- function(
     weights_norm <- weights / sum(weights)
 
     scaling_factors <- purrr::map2_dbl(
-      as.data.frame(covariates),
+      as.data.frame(.covariates),
       binary_vars,
       calculate_scaling_factor,
       weights_norm = weights_norm
@@ -858,7 +868,7 @@ bal_energy_standardize <- function(
   } else {
     # Use unweighted standardization (to match cobalt when weights are provided)
     scaling_factors <- purrr::map2_dbl(
-      as.data.frame(covariates),
+      as.data.frame(.covariates),
       binary_vars,
       calculate_scaling_factor,
       weights_norm = NULL
@@ -868,8 +878,8 @@ bal_energy_standardize <- function(
   # Avoid division by zero
   scaling_factors[scaling_factors == 0] <- 1
 
-  # Standardize covariates
-  scale(covariates, center = TRUE, scale = scaling_factors)
+  # Standardize .covariates
+  scale(.covariates, center = TRUE, scale = scaling_factors)
 }
 
 #' Compute between-group energy distance components
@@ -970,23 +980,23 @@ bal_energy_att_atc <- function(
   distance_matrix,
   treatment_indicators,
   unique_groups,
-  weights,
-  group,
-  treatment_level,
+  .weights,
+  .exposure,
+  .focal_level,
   estimand
 ) {
   n_obs <- nrow(distance_matrix)
   n_groups <- length(unique_groups)
 
   # Determine focal group
-  if (is.null(treatment_level)) {
+  if (is.null(.focal_level)) {
     if (estimand == "ATT") {
       # For binary, use the "treatment" group (typically coded as 1)
-      treatment_level <- unique_groups[which.max(as.numeric(unique_groups))]
+      .focal_level <- unique_groups[which.max(as.numeric(unique_groups))]
     } else {
       # ATC
       # Use the "control" group (typically coded as 0)
-      treatment_level <- unique_groups[which.min(as.numeric(unique_groups))]
+      .focal_level <- unique_groups[which.min(as.numeric(unique_groups))]
     }
   }
 
@@ -1000,8 +1010,8 @@ bal_energy_att_atc <- function(
   nn_matrix <- tcrossprod(normalized_indicators)
 
   # Identify focal group observations
-  focal_mask <- group == treatment_level
-  focal_weights <- extract_weight_data(weights)[focal_mask]
+  focal_mask <- .exposure == .focal_level
+  focal_weights <- extract_weight_data(.weights)[focal_mask]
   focal_weights_norm <- focal_weights / sum(focal_weights)
 
   # Compute P matrix
@@ -1028,30 +1038,30 @@ bal_energy_att_atc <- function(
 #' Compute distance correlation for continuous treatments
 #' @noRd
 bal_energy_continuous <- function(
-  covariates,
+  .covariates,
   treatment,
-  weights,
+  .weights,
   standardized
 ) {
-  n_obs <- nrow(covariates)
+  n_obs <- nrow(.covariates)
 
   # Default weights
-  if (is.null(weights)) {
-    weights <- rep(1, n_obs)
+  if (is.null(.weights)) {
+    .weights <- rep(1, n_obs)
   }
 
   # Normalize weights
-  weights_norm <- weights / sum(weights)
+  weights_norm <- .weights / sum(.weights)
 
   # Identify binary variables
-  binary_vars <- purrr::map_lgl(as.data.frame(covariates), \(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(.covariates), \(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
 
   # Compute weighted variances for scaling
   covariate_vars <- purrr::map2_dbl(
-    as.data.frame(covariates),
+    as.data.frame(.covariates),
     binary_vars,
     calculate_variance,
     weights_norm = weights_norm
@@ -1072,12 +1082,12 @@ bal_energy_continuous <- function(
     treatment_var <- 1
   }
 
-  # Scale covariates and treatment
-  scaled_covariates <- scale(covariates, scale = sqrt(covariate_vars))
+  # Scale .covariates and treatment
+  scaled_.covariates <- scale(.covariates, scale = sqrt(covariate_vars))
   scaled_treatment <- treatment / sqrt(treatment_var)
 
   # Compute distance matrices
-  cov_dist <- as.matrix(dist(scaled_covariates))
+  cov_dist <- as.matrix(dist(scaled_.covariates))
   treat_dist <- as.matrix(dist(scaled_treatment))
 
   # Double-center the distance matrices

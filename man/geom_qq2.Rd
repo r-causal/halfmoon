@@ -40,10 +40,6 @@ combining with them.}
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{treatment_level}{The level of the outcome variable to consider as the
-treatment/event. If \code{NULL} (default), uses the last level for factors or
-the maximum value for numeric variables.}
-
 \item{...}{Other arguments passed on to layer().}
 }
 \value{

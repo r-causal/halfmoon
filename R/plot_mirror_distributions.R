@@ -22,10 +22,10 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .var The variable to plot. Supports tidyselect syntax. Can be unquoted.
-#' @param .group Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
+#' @param .exposure Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
 #'   For binary variables, must have exactly 2 levels. For categorical variables (>2 levels),
 #'   creates pairwise comparisons against a reference group.
-#' @param .wts Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
+#' @param .weights Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
 #' @param type Character; type of plot - "histogram" or "density". Default is "histogram".
@@ -37,13 +37,13 @@
 #'   Can be numeric or character (e.g., "nrd0", "sj").
 #' @param adjust Numeric; bandwidth adjustment factor for density. Only used when
 #'   type = "density". Default is 1.
-#' @param include_unweighted Logical. If using `.wts`, also show unweighted
+#' @param include_unweighted Logical. If using `.weights`, also show unweighted
 #'   distribution? Defaults to TRUE.
 #' @param alpha Numeric; transparency level for fills. Default is 0.6.
 #' @param na.rm Logical; if TRUE, drop NA values before plotting.
-#' @param reference_group The reference group level for categorical exposures (>2 levels).
+#' @param .reference_level The reference group level for categorical exposures (>2 levels).
 #'   Can be a string (group level) or numeric (position). Defaults to 1 (first level).
-#'   Only used when .group has more than 2 levels.
+#'   Only used when .exposure has more than 2 levels.
 #'
 #' @return A ggplot2 object.
 #'
@@ -63,15 +63,15 @@
 #' plot_mirror_distributions(nhefs_weights, age, qsmk, type = "density")
 #'
 #' # With weighting
-#' plot_mirror_distributions(nhefs_weights, age, qsmk, .wts = w_ate)
+#' plot_mirror_distributions(nhefs_weights, age, qsmk, .weights = w_ate)
 #'
 #' # Compare multiple weighting schemes
-#' plot_mirror_distributions(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+#' plot_mirror_distributions(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 #'
 #' # Customize appearance
 #' plot_mirror_distributions(
 #'   nhefs_weights, age, qsmk,
-#'   .wts = w_ate,
+#'   .weights = w_ate,
 #'   type = "density",
 #'   alpha = 0.7
 #' )
@@ -79,7 +79,7 @@
 #' # Without unweighted comparison
 #' plot_mirror_distributions(
 #'   nhefs_weights, age, qsmk,
-#'   .wts = w_ate,
+#'   .weights = w_ate,
 #'   include_unweighted = FALSE
 #' )
 #'
@@ -96,16 +96,16 @@
 #'   nhefs_weights,
 #'   wt71,
 #'   alcoholfreq_cat,
-#'   .wts = w_cat_ate,
-#'   reference_group = "none"
+#'   .weights = w_cat_ate,
+#'   .reference_level = "none"
 #' )
 #'
 #' @export
 plot_mirror_distributions <- function(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   type = c("histogram", "density"),
   mirror_axis = "y",
   bins = 30,
@@ -115,21 +115,21 @@ plot_mirror_distributions <- function(
   include_unweighted = TRUE,
   alpha = 0.6,
   na.rm = FALSE,
-  reference_group = 1L
+  .reference_level = 1L
 ) {
   type <- match.arg(type)
 
   var_quo <- rlang::enquo(.var)
-  group_quo <- rlang::enquo(.group)
-  wts_quo <- rlang::enquo(.wts)
+  exposure_quo <- rlang::enquo(.exposure)
+  wts_quo <- rlang::enquo(.weights)
 
   validate_data_frame(.data)
 
   var_name <- get_column_name(var_quo, ".var")
-  group_name <- get_column_name(group_quo, ".group")
+  group_name <- get_column_name(exposure_quo, ".exposure")
 
   validate_column_exists(.data, var_name, ".var")
-  validate_column_exists(.data, group_name, ".group")
+  validate_column_exists(.data, group_name, ".exposure")
 
   if (!na.rm && any(is.na(.data[[var_name]]))) {
     abort(
@@ -153,19 +153,19 @@ plot_mirror_distributions <- function(
 
   if (is_categorical) {
     # Categorical exposure
-    reference_group <- determine_reference_group(group_var, reference_group)
+    .reference_level <- determine_reference_group(group_var, .reference_level)
 
     # Create binary comparisons using purrr
-    comparison_levels <- setdiff(group_levels, reference_group)
+    comparison_levels <- setdiff(group_levels, .reference_level)
 
     .data <- purrr::map_dfr(comparison_levels, \(level) {
       comparison_df <- .data |>
-        dplyr::filter(.data[[group_name]] %in% c(reference_group, level)) |>
-        dplyr::mutate(comparison = paste0(level, " vs ", reference_group))
+        dplyr::filter(.data[[group_name]] %in% c(.reference_level, level)) |>
+        dplyr::mutate(comparison = paste0(level, " vs ", .reference_level))
       # Update the group factor to only have the two levels
       comparison_df[[group_name]] <- factor(
         comparison_df[[group_name]],
-        levels = c(reference_group, level)
+        levels = c(.reference_level, level)
       )
       comparison_df
     })

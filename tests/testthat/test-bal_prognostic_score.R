@@ -3,8 +3,8 @@ test_that("bal_prognostic_score works with tidyselect interface", {
   scores <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex, wt71)
+    .exposure = qsmk,
+    .covariates = c(age, sex, wt71)
   )
 
   expect_type(scores, "double")
@@ -15,8 +15,8 @@ test_that("bal_prognostic_score works with tidyselect interface", {
   scores_quoted <- bal_prognostic_score(
     nhefs_weights,
     outcome = "wt82_71",
-    treatment = "qsmk",
-    covariates = c("age", "sex", "wt71")
+    .exposure = "qsmk",
+    .covariates = c("age", "sex", "wt71")
   )
 
   expect_equal(scores, scores_quoted)
@@ -25,8 +25,8 @@ test_that("bal_prognostic_score works with tidyselect interface", {
   scores2 <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = matches("^(age|sex|race|education)$")
+    .exposure = qsmk,
+    .covariates = matches("^(age|sex|race|education)$")
   )
 
   expect_type(scores2, "double")
@@ -37,7 +37,7 @@ test_that("bal_prognostic_score works with formula interface", {
   # Formula interface
   scores_formula <- bal_prognostic_score(
     nhefs_weights,
-    treatment = qsmk,
+    .exposure = qsmk,
     formula = wt82_71 ~ age + sex + wt71
   )
 
@@ -49,7 +49,7 @@ test_that("bal_prognostic_score validates treatment not in formula", {
   expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
-      treatment = qsmk,
+      .exposure = qsmk,
       formula = wt82_71 ~ age + qsmk + wt71
     ),
     "halfmoon_formula_error"
@@ -61,8 +61,8 @@ test_that("bal_prognostic_score handles different families", {
   scores_binary <- bal_prognostic_score(
     nhefs_weights,
     outcome = death,
-    treatment = qsmk,
-    covariates = c(age, sex),
+    .exposure = qsmk,
+    .covariates = c(age, sex),
     family = binomial()
   )
 
@@ -74,9 +74,9 @@ test_that("bal_prognostic_score handles weights", {
   scores_weighted <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
-    weights = w_ate
+    .exposure = qsmk,
+    .covariates = c(age, sex),
+    .weights = w_ate
   )
 
   expect_type(scores_weighted, "double")
@@ -86,22 +86,22 @@ test_that("bal_prognostic_score handles weights", {
   scores_weighted2 <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
-    weights = "w_ate"
+    .exposure = qsmk,
+    .covariates = c(age, sex),
+    .weights = "w_ate"
   )
 
   expect_equal(scores_weighted, scores_weighted2)
 })
 
-test_that("bal_prognostic_score handles treatment_level parameter", {
+test_that("bal_prognostic_score handles .reference_level parameter", {
   # Specify control level explicitly
   scores_ref <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
-    treatment_level = 0
+    .exposure = qsmk,
+    .covariates = c(age, sex),
+    .reference_level = 0
   )
 
   expect_type(scores_ref, "double")
@@ -118,8 +118,8 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   scores_with_na <- bal_prognostic_score(
     data_with_na,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
+    .exposure = qsmk,
+    .covariates = c(age, sex),
     na.rm = FALSE
   )
   expect_type(scores_with_na, "double")
@@ -131,8 +131,8 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   scores_na_rm <- bal_prognostic_score(
     data_with_na,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
+    .exposure = qsmk,
+    .covariates = c(age, sex),
     na.rm = TRUE
   )
 
@@ -149,8 +149,8 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   scores_cov_na <- bal_prognostic_score(
     data_with_na_cov,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
+    .exposure = qsmk,
+    .covariates = c(age, sex),
     na.rm = FALSE
   )
   expect_length(scores_cov_na, nrow(data_with_na_cov))
@@ -159,8 +159,8 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   scores_cov_na_rm <- bal_prognostic_score(
     data_with_na_cov,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex),
+    .exposure = qsmk,
+    .covariates = c(age, sex),
     na.rm = TRUE
   )
   expect_length(
@@ -177,8 +177,8 @@ test_that("bal_prognostic_score errors with no control observations", {
     bal_prognostic_score(
       treated_only,
       outcome = wt82_71,
-      treatment = qsmk,
-      covariates = c(age, sex)
+      .exposure = qsmk,
+      .covariates = c(age, sex)
     ),
     "halfmoon_reference_error"
   )
@@ -189,8 +189,8 @@ test_that("bal_prognostic_score errors when required arguments missing", {
   expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
-      treatment = qsmk,
-      covariates = c(age, sex)
+      .exposure = qsmk,
+      .covariates = c(age, sex)
     ),
     "halfmoon_arg_error"
   )
@@ -199,7 +199,7 @@ test_that("bal_prognostic_score errors when required arguments missing", {
   expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
-      treatment = qsmk,
+      .exposure = qsmk,
       formula = "not a formula"
     ),
     "halfmoon_formula_error"
@@ -211,7 +211,7 @@ test_that("bal_prognostic_score handles everything() selector", {
   scores_all <- bal_prognostic_score(
     nhefs_weights[, c("wt82_71", "qsmk", "age", "sex", "wt71")],
     outcome = wt82_71,
-    treatment = qsmk
+    .exposure = qsmk
   )
 
   expect_type(scores_all, "double")
@@ -223,8 +223,8 @@ test_that("bal_prognostic_score integrates with balance functions", {
   prog_scores <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex, wt71)
+    .exposure = qsmk,
+    .covariates = c(age, sex, wt71)
   )
 
   # Add to data
@@ -233,9 +233,9 @@ test_that("bal_prognostic_score integrates with balance functions", {
 
   # Check balance using existing functions
   balance_smd <- bal_smd(
-    test_data$prog_score,
-    test_data$qsmk,
-    weights = test_data$w_ate
+    .covariate = test_data$prog_score,
+    .exposure = test_data$qsmk,
+    .weights = test_data$w_ate
   )
 
   expect_type(balance_smd, "double")
@@ -245,7 +245,7 @@ test_that("bal_prognostic_score integrates with balance functions", {
     test_data,
     prog_score,
     qsmk,
-    .wts = w_ate
+    .weights = w_ate
   )
 
   expect_s3_class(balance_check, "tbl_df")
@@ -256,8 +256,8 @@ test_that("bal_prognostic_score produces reasonable predictions", {
   scores <- bal_prognostic_score(
     nhefs_weights,
     outcome = wt82_71,
-    treatment = qsmk,
-    covariates = c(age, sex, wt71)
+    .exposure = qsmk,
+    .covariates = c(age, sex, wt71)
   )
 
   # Scores should be in reasonable range for weight change
@@ -271,7 +271,7 @@ test_that("bal_prognostic_score handles formula with transformations", {
   # Formula with polynomial and interaction terms
   scores_complex <- bal_prognostic_score(
     nhefs_weights,
-    treatment = qsmk,
+    .exposure = qsmk,
     formula = wt82_71 ~ age + I(age^2) + sex + wt71 + age:sex
   )
 
@@ -281,7 +281,7 @@ test_that("bal_prognostic_score handles formula with transformations", {
   # Should produce different results than simple model
   scores_simple <- bal_prognostic_score(
     nhefs_weights,
-    treatment = qsmk,
+    .exposure = qsmk,
     formula = wt82_71 ~ age + sex + wt71
   )
 

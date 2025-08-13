@@ -14,7 +14,7 @@ test_that("categorical balance functions work with nhefs_weights data", {
   result_ref <- bal_smd(
     nhefs_weights$age,
     nhefs_weights$alcoholfreq_cat,
-    reference_group = "2_3_per_week"
+    .reference_level = "2_3_per_week"
   )
   expect_true(all(grepl("_vs_2_3_per_week$", names(result_ref))))
   expect_false(identical(result_smd, result_ref))
@@ -25,7 +25,7 @@ test_that("categorical balance functions work with nhefs_weights data", {
   result_weighted <- bal_smd(
     nhefs_with_weights$wt71,
     nhefs_with_weights$alcoholfreq_cat,
-    weights = nhefs_with_weights$w_cat_ate
+    .weights = nhefs_with_weights$w_cat_ate
   )
   expect_length(result_weighted, 4) # 5 levels - 1 reference = 4 (unknown excluded)
   expect_true(all(!is.na(result_weighted)))
@@ -63,7 +63,7 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = c("smd", "vr")
   )
 
@@ -79,7 +79,7 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
     nhefs_complete,
     age,
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     .metrics = "smd",
     include_observed = FALSE
   )
@@ -168,7 +168,7 @@ test_that("bal_smd works with categorical exposures", {
   expect_true(all(grepl("_vs_", names(result))))
 
   # Test with explicit reference group
-  result_ref <- bal_smd(data$age, data$exposure, reference_group = "low")
+  result_ref <- bal_smd(data$age, data$exposure, .reference_level = "low")
   expect_true(all(grepl("_vs_low$", names(result_ref))))
   expect_length(result_ref, 2) # medium_vs_low and high_vs_low
 
@@ -176,7 +176,7 @@ test_that("bal_smd works with categorical exposures", {
   result_weighted <- bal_smd(
     data$age,
     data$exposure,
-    weights = data$weights_att
+    .weights = data$weights_att
   )
   expect_length(result_weighted, 2)
   expect_true(all(!is.na(result_weighted)))
@@ -248,7 +248,7 @@ test_that("check_balance integrates categorical exposures correctly", {
     data,
     age,
     exposure,
-    .wts = weights_att,
+    .weights = weights_att,
     .metrics = "smd"
   )
 
@@ -300,11 +300,11 @@ test_that("categorical balance handles factor exposures", {
   )
 
   # Use explicit reference group to ensure consistency
-  result_char <- bal_smd(data$age, data$exposure, reference_group = "low")
+  result_char <- bal_smd(data$age, data$exposure, .reference_level = "low")
   result_factor <- bal_smd(
     data$age,
     data$exposure_factor,
-    reference_group = "low"
+    .reference_level = "low"
   )
 
   # Results should be identical when using same reference
@@ -321,9 +321,9 @@ test_that("reference group specification works correctly", {
 
   # Test different ways of specifying reference group
   result_default <- bal_smd(data$age, data$exposure)
-  result_low <- bal_smd(data$age, data$exposure, reference_group = "low")
-  result_medium <- bal_smd(data$age, data$exposure, reference_group = "medium")
-  result_high <- bal_smd(data$age, data$exposure, reference_group = "high")
+  result_low <- bal_smd(data$age, data$exposure, .reference_level = "low")
+  result_medium <- bal_smd(data$age, data$exposure, .reference_level = "medium")
+  result_high <- bal_smd(data$age, data$exposure, .reference_level = "high")
 
   # Each should have 2 comparisons
   expect_length(result_default, 2)
@@ -338,7 +338,7 @@ test_that("reference group specification works correctly", {
 
   # Test numeric reference group (by position)
   levels_sorted <- sort(unique(data$exposure))
-  result_numeric <- bal_smd(data$age, data$exposure, reference_group = 1)
+  result_numeric <- bal_smd(data$age, data$exposure, .reference_level = 1)
   expect_true(all(grepl(
     paste0("_vs_", levels_sorted[1], "$"),
     names(result_numeric)
@@ -395,9 +395,9 @@ test_that("bal_smd categorical matches cobalt for 3-level exposure with binary c
 
   # Halfmoon - using binary covariate for exact match
   hm_result <- bal_smd(
-    covariate = data$employed,
-    group = data$exposure,
-    reference_group = "low"
+    .covariate = data$employed,
+    .exposure = data$exposure,
+    .reference_level = "low"
   )
 
   # Cobalt - separate calculations matching halfmoon's internal logic
@@ -449,9 +449,9 @@ test_that("bal_smd categorical with continuous covariate shows expected variance
 
   # Halfmoon - returns named vector with both comparisons
   hm_result <- bal_smd(
-    covariate = data$age,
-    group = data$exposure,
-    reference_group = "low"
+    .covariate = data$age,
+    .exposure = data$exposure,
+    .reference_level = "low"
   )
 
   # Cobalt - separate calculations
@@ -481,10 +481,10 @@ test_that("bal_smd categorical matches cobalt with weights and binary covariate"
 
   # Halfmoon with weights - using binary covariate for exact match
   hm_result <- bal_smd(
-    covariate = data$employed,
-    group = data$exposure,
-    weights = data$weights_att,
-    reference_group = "high"
+    .covariate = data$employed,
+    .exposure = data$exposure,
+    .weights = data$weights_att,
+    .reference_level = "high"
   )
 
   # Cobalt - separate calculations
@@ -535,9 +535,9 @@ test_that("bal_vr categorical matches cobalt for 3-level exposure", {
 
   # Halfmoon - returns named vector
   hm_result <- bal_vr(
-    covariate = data$age,
-    group = data$exposure,
-    reference_group = "low"
+    .covariate = data$age,
+    .exposure = data$exposure,
+    .reference_level = "low"
   )
 
   # Cobalt - separate calculations
@@ -578,9 +578,9 @@ test_that("bal_vr categorical matches cobalt with binary covariate", {
 
   # Halfmoon with binary covariate
   hm_result <- bal_vr(
-    covariate = data$employed,
-    group = data$exposure,
-    reference_group = "medium"
+    .covariate = data$employed,
+    .exposure = data$exposure,
+    .reference_level = "medium"
   )
 
   # Cobalt - separate calculations with bin.vars = TRUE
@@ -627,9 +627,9 @@ test_that("bal_ks categorical matches cobalt for 3-level exposure", {
 
   # Halfmoon - returns named vector
   hm_result <- bal_ks(
-    covariate = data$income,
-    group = data$exposure,
-    reference_group = "low"
+    .covariate = data$income,
+    .exposure = data$exposure,
+    .reference_level = "low"
   )
 
   # Cobalt - separate calculations
@@ -670,10 +670,10 @@ test_that("bal_ks categorical matches cobalt with weights and binary covariate",
 
   # Halfmoon with weights and binary covariate
   hm_result <- bal_ks(
-    covariate = data$employed,
-    group = data$exposure,
-    weights = data$weights_att,
-    reference_group = "high"
+    .covariate = data$employed,
+    .exposure = data$exposure,
+    .weights = data$weights_att,
+    .reference_level = "high"
   )
 
   # Cobalt - separate calculations
@@ -729,8 +729,8 @@ test_that("bal_energy categorical matches cobalt single overall statistic", {
 
   # Halfmoon - single overall statistic
   hm_result <- bal_energy(
-    covariates = covariates,
-    group = data$exposure
+    .covariates = covariates,
+    .exposure = data$exposure
   )
 
   # Cobalt - also single overall statistic
@@ -762,9 +762,9 @@ test_that("bal_energy categorical with weights matches cobalt", {
 
   # Halfmoon with weights
   hm_result <- bal_energy(
-    covariates = covariates,
-    group = data$exposure,
-    weights = data$weights_att
+    .covariates = covariates,
+    .exposure = data$exposure,
+    .weights = data$weights_att
   )
 
   # Cobalt with weights
@@ -791,9 +791,9 @@ test_that("categorical balance with NA values matches cobalt behavior", {
 
   # Test SMD with na.rm = TRUE
   hm_smd <- bal_smd(
-    covariate = employed_na,
-    group = data$exposure,
-    reference_group = "low",
+    .covariate = employed_na,
+    .exposure = data$exposure,
+    .reference_level = "low",
     na.rm = TRUE
   )
 
@@ -836,9 +836,9 @@ test_that("categorical balance with 4-level exposure matches cobalt pattern", {
 
   # Halfmoon - should return 3 comparisons vs reference
   hm_result <- bal_smd(
-    covariate = covariate_binary,
-    group = exposure_4,
-    reference_group = "A"
+    .covariate = covariate_binary,
+    .exposure = exposure_4,
+    .reference_level = "A"
   )
 
   # Should have 3 comparisons: B_vs_A, C_vs_A, D_vs_A

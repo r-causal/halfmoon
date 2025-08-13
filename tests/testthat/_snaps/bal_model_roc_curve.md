@@ -22,5 +22,5 @@
       expr
     Condition <halfmoon_arg_error>
       Error in `bal_model_roc_curve()`:
-      ! `.wts` must select exactly one variable or be NULL
+      ! `.weights` must select exactly one variable or be NULL
 

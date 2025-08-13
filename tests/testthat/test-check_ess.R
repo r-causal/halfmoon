@@ -9,7 +9,7 @@ test_that("check_ess works with no weights", {
 })
 
 test_that("check_ess works with single weight", {
-  result <- check_ess(nhefs_weights, .wts = w_ate)
+  result <- check_ess(nhefs_weights, .weights = w_ate)
 
   expect_s3_class(result, "tbl_df")
   expect_equal(nrow(result), 2)
@@ -19,7 +19,7 @@ test_that("check_ess works with single weight", {
 })
 
 test_that("check_ess works with multiple weights", {
-  result <- check_ess(nhefs_weights, .wts = c(w_ate, w_att, w_atm))
+  result <- check_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 
   expect_s3_class(result, "tbl_df")
   expect_equal(nrow(result), 4)
@@ -28,14 +28,14 @@ test_that("check_ess works with multiple weights", {
 })
 
 test_that("check_ess works without observed", {
-  result <- check_ess(nhefs_weights, .wts = w_ate, include_observed = FALSE)
+  result <- check_ess(nhefs_weights, .weights = w_ate, include_observed = FALSE)
 
   expect_equal(nrow(result), 1)
   expect_equal(result$method, "w_ate")
 })
 
 test_that("check_ess works with binary groups", {
-  result <- check_ess(nhefs_weights, .wts = w_ate, .group = qsmk)
+  result <- check_ess(nhefs_weights, .weights = w_ate, .group = qsmk)
 
   expect_s3_class(result, "tbl_df")
   expect_true("group" %in% names(result))
@@ -44,7 +44,7 @@ test_that("check_ess works with binary groups", {
 })
 
 test_that("check_ess works with categorical groups", {
-  result <- check_ess(nhefs_weights, .wts = w_cat_ate, .group = alcoholfreq_cat)
+  result <- check_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
 
   expect_s3_class(result, "tbl_df")
   expect_true("group" %in% names(result))
@@ -52,7 +52,7 @@ test_that("check_ess works with categorical groups", {
 })
 
 test_that("check_ess works with continuous groups", {
-  result <- check_ess(nhefs_weights, .wts = w_ate, .group = age, n_tiles = 4)
+  result <- check_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
 
   expect_s3_class(result, "tbl_df")
   expect_true("group" %in% names(result))
@@ -64,7 +64,7 @@ test_that("check_ess works with custom tile labels", {
   labels <- c("Young", "Middle", "Older")
   result <- check_ess(
     nhefs_weights,
-    .wts = w_ate,
+    .weights = w_ate,
     .group = age,
     n_tiles = 3,
     tile_labels = labels
@@ -74,10 +74,10 @@ test_that("check_ess works with custom tile labels", {
 })
 
 test_that("check_ess handles tidyselect syntax", {
-  result1 <- check_ess(nhefs_weights, .wts = starts_with("w_a"))
+  result1 <- check_ess(nhefs_weights, .weights = starts_with("w_a"))
   result2 <- check_ess(
     nhefs_weights,
-    .wts = c(w_ate, w_att, w_atc, w_atm, w_ato)
+    .weights = c(w_ate, w_att, w_atc, w_atm, w_ato)
   )
 
   # Should have same number of methods (plus observed)
@@ -87,7 +87,7 @@ test_that("check_ess handles tidyselect syntax", {
 test_that("check_ess handles psw weight objects", {
   # Assuming psw weights are numeric vectors with special class
   # The extract_weight_data function should handle conversion
-  result <- check_ess(nhefs_weights, .wts = w_ate)
+  result <- check_ess(nhefs_weights, .weights = w_ate)
 
   expect_true(is.numeric(result$ess))
   expect_true(all(result$ess > 0))
@@ -107,7 +107,7 @@ test_that("check_ess validates inputs", {
   expect_halfmoon_error(
     check_ess(
       nhefs_weights,
-      .wts = w_ate,
+      .weights = w_ate,
       .group = age,
       n_tiles = 3,
       tile_labels = c("Too", "Few")
@@ -123,7 +123,7 @@ test_that("ESS calculation is correct", {
     wts2 = c(4, 0, 0, 0) # All weight on one obs -> ESS = 1
   )
 
-  result <- check_ess(test_df, .wts = c(wts, wts2), include_observed = FALSE)
+  result <- check_ess(test_df, .weights = c(wts, wts2), include_observed = FALSE)
 
   expect_equal(result$ess[result$method == "wts"], 4)
   expect_equal(result$ess[result$method == "wts2"], 1)
@@ -136,7 +136,7 @@ test_that("check_ess handles NA values", {
   test_df <- nhefs_weights
   test_df$w_ate[1:10] <- NA
 
-  result <- check_ess(test_df, .wts = w_ate)
+  result <- check_ess(test_df, .weights = w_ate)
 
   # Should still compute ESS on non-NA values
   expect_true(all(!is.na(result$ess)))

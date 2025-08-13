@@ -34,7 +34,7 @@
 #'   Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 #'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
 #'   "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").
-#' @param reference_group The reference group level to use for comparisons.
+#' @param .reference_level The reference group level to use for comparisons.
 #'   Defaults to 1 (first level).
 #' @inheritParams balance_params
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
@@ -61,21 +61,21 @@
 #'
 #' @examples
 #' # Basic usage with binary exposure
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = c(w_ate, w_att))
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = c(w_ate, w_att))
 #'
 #' # With specific metrics only
 #' check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 #'
 #' # Categorical exposure
 #' check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
-#'               .wts = c(w_cat_ate, w_cat_att_2_3wk))
+#'               .weights = c(w_cat_ate, w_cat_att_2_3wk))
 #'
 #' # Specify reference group for categorical exposure
 #' check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
-#'               reference_group = "daily", .metrics = c("smd", "vr"))
+#'               .reference_level = "daily", .metrics = c("smd", "vr"))
 #'
 #' # Exclude observed results
-#' check_balance(nhefs_weights, c(age, wt71), qsmk, .wts = w_ate,
+#' check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = w_ate,
 #'               include_observed = FALSE)
 #'
 #' # Use correlation for continuous exposure
@@ -90,11 +90,11 @@
 check_balance <- function(
   .data,
   .vars,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   .metrics = c("smd", "vr", "ks", "energy"),
   include_observed = TRUE,
-  reference_group = 1L,
+  .reference_level = 1L,
   na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
@@ -104,7 +104,7 @@ check_balance <- function(
   validate_data_frame(.data)
 
   # Convert inputs to character vectors for consistent handling
-  group_var <- rlang::as_name(rlang::enquo(.group))
+  exposure_var <- rlang::as_name(rlang::enquo(.exposure))
   var_names <- names(tidyselect::eval_select(rlang::enquo(.vars), .data))
 
   if (length(var_names) == 0) {
@@ -253,24 +253,24 @@ check_balance <- function(
   }
 
   # Handle weights using proper NSE - capture quosure and check if null
-  .wts <- rlang::enquo(.wts)
-  if (!rlang::quo_is_null(.wts)) {
-    wts_names <- names(tidyselect::eval_select(.wts, .data))
+  .weights <- rlang::enquo(.weights)
+  if (!rlang::quo_is_null(.weights)) {
+    wts_names <- names(tidyselect::eval_select(.weights, .data))
   } else {
     wts_names <- NULL
   }
 
   # Validate group variable
-  validate_column_exists(transformed_data, group_var, "data")
+  validate_column_exists(transformed_data, exposure_var, "data")
 
   # Get group levels in proper order
   # For correlation, we allow continuous group variables
   using_correlation <- "correlation" %in% .metrics
 
-  if (is.factor(transformed_data[[group_var]])) {
-    group_levels <- levels(transformed_data[[group_var]])
+  if (is.factor(transformed_data[[exposure_var]])) {
+    group_levels <- levels(transformed_data[[exposure_var]])
   } else {
-    group_levels <- transformed_data[[group_var]] |>
+    group_levels <- transformed_data[[exposure_var]] |>
       stats::na.omit() |>
       unique() |>
       sort()
@@ -287,7 +287,7 @@ check_balance <- function(
     )
   }
 
-  if (using_correlation && !is.numeric(transformed_data[[group_var]])) {
+  if (using_correlation && !is.numeric(transformed_data[[exposure_var]])) {
     abort(
       "Group variable must be numeric when using correlation metric",
       error_class = "halfmoon_type_error"
@@ -327,7 +327,7 @@ check_balance <- function(
 
   if (length(methods) == 0) {
     abort(
-      "No methods to compute. Either set {.arg include_observed = TRUE} or provide {.arg .wts}",
+      "No methods to compute. Either set {.arg include_observed = TRUE} or provide {.arg .weights}",
       error_class = "halfmoon_arg_error"
     )
   }
@@ -368,9 +368,9 @@ check_balance <- function(
     .data = .data,
     metric_functions = metric_functions,
     transformed_data = transformed_data,
-    group_var = group_var,
+    exposure_var = exposure_var,
     na.rm = na.rm,
-    reference_group = reference_group,
+    .reference_level = .reference_level,
     group_levels = group_levels,
     var_names = var_names
   )
@@ -394,9 +394,9 @@ compute_single_balance_metric <- function(
   .data,
   metric_functions,
   transformed_data,
-  group_var,
+  exposure_var,
   na.rm,
-  reference_group,
+  .reference_level,
   group_levels,
   var_names
 ) {
@@ -415,49 +415,49 @@ compute_single_balance_metric <- function(
     {
       if (metric == "energy") {
         # For energy, use all variables
-        group_data <- transformed_data[[group_var]]
+        group_data <- transformed_data[[exposure_var]]
         covariates_data <- transformed_data[var_names]
 
         estimate <- compute_fn(
-          covariates = covariates_data,
-          group = group_data,
-          weights = weights_data,
+          .covariates = covariates_data,
+          .exposure = group_data,
+          .weights = weights_data,
           na.rm = na.rm
         )
       } else if (metric == "correlation") {
         # For correlation, use the group variable as the second variable
         var_data <- transformed_data[[variable]]
-        group_data <- transformed_data[[group_var]]
+        group_data <- transformed_data[[exposure_var]]
 
         estimate <- compute_fn(
-          x = var_data,
-          y = group_data,
-          weights = weights_data,
+          .x = var_data,
+          .y = group_data,
+          .weights = weights_data,
           na.rm = na.rm
         )
       } else {
         # For other metrics (smd, vr, ks)
         var_data <- transformed_data[[variable]]
-        group_data <- transformed_data[[group_var]]
+        group_data <- transformed_data[[exposure_var]]
         # Handle reference group parameter based on the function
         ref_group_param <- if (metric == "smd") {
           # bal_smd accepts both indices and group values
-          reference_group
+          .reference_level
         } else {
           # bal_vr and bal_ks expect actual group values
-          # Always treat numeric reference_group as index for consistency
-          if (is.numeric(reference_group) && length(reference_group) == 1) {
-            group_levels[reference_group]
+          # Always treat numeric .reference_level as index for consistency
+          if (is.numeric(.reference_level) && length(.reference_level) == 1) {
+            group_levels[.reference_level]
           } else {
-            reference_group
+            .reference_level
           }
         }
 
         estimate <- compute_fn(
-          covariate = var_data,
-          group = group_data,
-          weights = weights_data,
-          reference_group = ref_group_param,
+          .covariate = var_data,
+          .exposure = group_data,
+          .weights = weights_data,
+          .reference_level = ref_group_param,
           na.rm = na.rm
         )
       }
@@ -485,17 +485,17 @@ compute_single_balance_metric <- function(
         # Determine the group level for reporting
         if (metric == "correlation") {
           # For correlation, report the group variable name since it's continuous
-          group_level <- group_var
+          group_level <- exposure_var
         } else if (metric == "energy") {
           # For energy, use NA since it's multivariate
           group_level <- NA_character_
         } else {
           # For other metrics, determine the non-reference group level
-          if (reference_group %in% group_levels) {
-            ref_level <- reference_group
+          if (.reference_level %in% group_levels) {
+            ref_level <- .reference_level
           } else {
-            # If reference_group is numeric index, get the corresponding level
-            ref_level <- group_levels[reference_group]
+            # If .reference_level is numeric index, get the corresponding level
+            ref_level <- group_levels[.reference_level]
           }
           group_level <- setdiff(group_levels, ref_level)[1]
         }
@@ -512,16 +512,16 @@ compute_single_balance_metric <- function(
     error = \(e) {
       # Return NA for failed computations but preserve structure
       error_group_level <- if (metric == "correlation") {
-        group_var
+        exposure_var
       } else if (metric == "energy") {
         NA_character_
       } else {
         setdiff(
           group_levels,
-          if (reference_group %in% group_levels) {
-            reference_group
+          if (.reference_level %in% group_levels) {
+            .reference_level
           } else {
-            group_levels[reference_group]
+            group_levels[.reference_level]
           }
         )[1]
       }

@@ -74,7 +74,7 @@ geom_qq2 <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   ...
 ) {
   ggplot2::layer(
@@ -88,7 +88,7 @@ geom_qq2 <- function(
     params = list(
       na.rm = na.rm,
       quantiles = quantiles,
-      treatment_level = treatment_level,
+      .reference_level = .reference_level,
       ...
     )
   )
@@ -106,7 +106,7 @@ geom_qq2 <- function(
 #' @param show.legend Show legend? Default NA.
 #' @param inherit.aes Inherit aesthetics? Default TRUE.
 #' @param quantiles Numeric vector of quantiles to compute.
-#' @param treatment_level The reference treatment level to use for comparisons.
+#' @param .reference_level The reference treatment level to use for comparisons.
 #' @param include_observed For compatibility with qq(). When weights are present,
 #'   this determines if an additional "observed" group is added. Default FALSE
 #'   for stat_qq2 to avoid duplication when using facets/colors.
@@ -123,7 +123,7 @@ stat_qq2 <- function(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   include_observed = FALSE,
   ...
 ) {
@@ -138,7 +138,7 @@ stat_qq2 <- function(
     params = list(
       na.rm = na.rm,
       quantiles = quantiles,
-      treatment_level = treatment_level,
+      .reference_level = .reference_level,
       include_observed = include_observed,
       ...
     )
@@ -155,7 +155,7 @@ stat_qq2 <- function(
 #' @param group_signatures Character vector mapping groups to signatures
 #' @param unique_signatures Character vector of all unique signatures
 #' @param aes_cols Character vector of aesthetic column names
-#' @param treatment_level The treatment level to use as reference
+#' @param .reference_level The treatment level to use as reference
 #' @param quantiles Numeric vector of quantiles to compute
 #' @param na.rm Logical whether to remove NA values
 #'
@@ -167,7 +167,7 @@ process_aesthetic_group <- function(
   group_signatures,
   unique_signatures,
   aes_cols,
-  treatment_level,
+  .reference_level,
   quantiles,
   na.rm
 ) {
@@ -178,7 +178,7 @@ process_aesthetic_group <- function(
   # Create temporary data frame with binary treatment
   temp_data <- data.frame(
     .var = combined_data$sample,
-    .group = as.integer(combined_data$treatment == treatment_level),
+    .group = as.integer(combined_data$treatment == .reference_level),
     stringsAsFactors = FALSE
   )
 
@@ -193,10 +193,10 @@ process_aesthetic_group <- function(
   qq_result <- check_qq(
     .data = temp_data,
     .var = .var,
-    .group = .group,
-    .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
+    .exposure = .group,
+    .weights = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
     quantiles = quantiles,
-    treatment_level = 1L, # We already converted to 0/1
+    .reference_level = 1L, # We already converted to 0/1
     na.rm = na.rm,
     include_observed = FALSE
   )
@@ -241,24 +241,24 @@ StatQq2 <- ggplot2::ggproto(
     data,
     scales,
     quantiles = seq(0.01, 0.99, 0.01),
-    treatment_level = NULL,
+    .reference_level = NULL,
     na.rm = TRUE,
     include_observed = FALSE
   ) {
-    # Handle NULL treatment_level
-    if (is.null(treatment_level)) {
+    # Handle NULL .reference_level
+    if (is.null(.reference_level)) {
       if (is.factor(data$treatment)) {
         # Factor - use the last level
-        treatment_level <- levels(data$treatment)[length(levels(
+        .reference_level <- levels(data$treatment)[length(levels(
           data$treatment
         ))]
       } else {
         # Numeric or character
         treatment_values <- unique(data$treatment[!is.na(data$treatment)])
         if (length(treatment_values) == 0) {
-          treatment_level <- 1 # Default for empty data
+          .reference_level <- 1 # Default for empty data
         } else {
-          treatment_level <- max(treatment_values)
+          .reference_level <- max(treatment_values)
         }
       }
     }
@@ -292,7 +292,7 @@ StatQq2 <- ggplot2::ggproto(
         group_signatures = group_signatures,
         unique_signatures = unique_signatures,
         aes_cols = aes_cols,
-        treatment_level = treatment_level,
+        .reference_level = .reference_level,
         quantiles = quantiles,
         na.rm = na.rm
       )
@@ -302,7 +302,7 @@ StatQq2 <- ggplot2::ggproto(
       # No groups, process all data together
       temp_data <- data.frame(
         .var = data$sample,
-        .group = as.integer(data$treatment == treatment_level),
+        .group = as.integer(data$treatment == .reference_level),
         stringsAsFactors = FALSE
       )
 
@@ -314,13 +314,13 @@ StatQq2 <- ggplot2::ggproto(
         wts_arg <- NULL
       }
 
-      qq_result <- qq(
+      qq_result <- check_qq(
         .data = temp_data,
         .var = .var,
-        .group = .group,
-        .wts = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
+        .exposure = .group,
+        .weights = if (!is.null(wts_arg)) rlang::sym(wts_arg) else NULL,
         quantiles = quantiles,
-        treatment_level = 1L, # We already converted to 0/1
+        .reference_level = 1L, # We already converted to 0/1
         na.rm = na.rm,
         include_observed = FALSE
       )

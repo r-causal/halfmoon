@@ -7,11 +7,11 @@
 check_qq(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE
 )
 }
@@ -20,22 +20,22 @@ check_qq(
 
 \item{.var}{Variable to compute quantiles for. Supports tidyselect syntax.}
 
-\item{.group}{Column name of treatment/group variable. Supports tidyselect syntax.}
-
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
-a character vector, or NULL. Multiple weights can be provided to compare
-different weighting schemes. Default is NULL (unweighted).}
-
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
 \item{include_observed}{Logical. If using \code{.wts}, also compute observed
 (unweighted) quantiles? Defaults to TRUE.}
 
-\item{treatment_level}{The reference treatment level to use for comparisons.
+\item{.reference_level}{The reference treatment level to use for comparisons.
 If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before computation.}
+
+\item{.group}{Column name of treatment/group variable. Supports tidyselect syntax.}
+
+\item{.wts}{Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
+a character vector, or NULL. Multiple weights can be provided to compare
+different weighting schemes. Default is NULL (unweighted).}
 }
 \value{
 A tibble with class "halfmoon_qq" containing columns:

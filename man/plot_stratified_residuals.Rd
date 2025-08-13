@@ -11,7 +11,7 @@ plot_stratified_residuals(x, ...)
 
 \method{plot_stratified_residuals}{lm}(
   x,
-  treatment,
+  .exposure,
   ps_model = NULL,
   plot_type = c("color", "facet", "both"),
   smooth = TRUE,
@@ -23,7 +23,7 @@ plot_stratified_residuals(x, ...)
 
 \method{plot_stratified_residuals}{glm}(
   x,
-  treatment,
+  .exposure,
   ps_model = NULL,
   plot_type = c("color", "facet", "both"),
   smooth = TRUE,
@@ -35,7 +35,7 @@ plot_stratified_residuals(x, ...)
 
 \method{plot_stratified_residuals}{data.frame}(
   x,
-  treatment,
+  .exposure,
   residuals,
   x_var,
   plot_type = c("color", "facet", "both"),
@@ -51,7 +51,7 @@ plot_stratified_residuals(x, ...)
 
 \item{...}{Additional arguments passed to methods}
 
-\item{treatment}{A vector indicating treatment group membership.
+\item{.exposure}{A vector indicating .exposure group membership.
 Must have exactly two unique levels. For data frames, can be
 an unquoted column name.}
 
@@ -60,8 +60,8 @@ If provided, uses propensity scores instead of fitted values.}
 
 \item{plot_type}{Character; type of plot - "color" (default), "facet", or "both".
 \itemize{
-\item "color": Single plot with points colored by treatment
-\item "facet": Separate facets for each treatment group
+\item "color": Single plot with points colored by .exposure
+\item "facet": Separate facets for each .exposure group
 \item "both": Both color and faceting
 }}
 
@@ -82,56 +82,56 @@ Supports tidyselect syntax.}
 A ggplot2 object
 }
 \description{
-Create diagnostic plots to assess differences between treatment group after adjustment.
+Create diagnostic plots to assess differences between .exposure group after adjustment.
 This function plots residuals
 from an outcome model against propensity scores (or fitted values),
-stratified by treatment group, to reveal model mis-specification.
+stratified by .exposure group, to reveal model mis-specification.
 }
 \details{
 This diagnostic plot was originally suggested by Rosenbaum and Rubin (1983)
 and revisited by D'Agostino McGowan, D'Agostino, and D'Agostino (2023).
 The key idea is that plotting residuals against propensity scores
-or fitted values by treatment group can reveal non-linear relationships or
-heterogeneous treatment effects that might be obscured in standard
+or fitted values by .exposure group can reveal non-linear relationships or
+heterogeneous .exposure effects that might be obscured in standard
 residuals-vs-fitted plots.
 
 The function supports two approaches:
 \itemize{
 \item For regression models (lm/glm): Extracts residuals and fitted values automatically
-\item For data frames: Uses specified columns for residuals, treatment, and x-axis values
+\item For data frames: Uses specified columns for residuals, .exposure, and x-axis values
 }
 }
 \examples{
 \dontrun{
 library(ggplot2)
 
-# Simulate data with treatment effect heterogeneity
+# Simulate data with .exposure effect heterogeneity
 set.seed(8)
 n <- 1000
 x <- rnorm(n)
 ps <- plogis(x)  # True propensity score
-treatment <- rbinom(n, 1, ps)
+.exposure <- rbinom(n, 1, ps)
 y1 <- 0.5 * x + rnorm(n)
 y0 <- -0.5 * x + rnorm(n)
-y <- treatment * y1 + (1 - treatment) * y0
+y <- .exposure * y1 + (1 - .exposure) * y0
 
 # Method 1: Using model objects
 # Fit misspecified model (missing interaction)
-model_wrong <- lm(y ~ treatment + x)
+model_wrong <- lm(y ~ .exposure + x)
 
 # Plot with fitted values
 plot_stratified_residuals(
   model_wrong,
-  treatment = treatment,
+  .exposure = .exposure,
   plot_type = "both"
 )
 
 # Plot with propensity scores
-ps_model <- glm(treatment ~ x, family = binomial)
+ps_model <- glm(.exposure ~ x, family = binomial)
 
 plot_stratified_residuals(
   model_wrong,
-  treatment = treatment,
+  .exposure = .exposure,
   ps_model = ps_model,
   plot_type = "color"
 )
@@ -139,7 +139,7 @@ plot_stratified_residuals(
 # Method 2: Using data frame
 library(dplyr)
 plot_data <- data.frame(
-  treatment = treatment,
+  .exposure = .exposure,
   residuals = residuals(model_wrong),
   fitted_values = fitted(model_wrong),
   propensity_score = fitted(ps_model)
@@ -147,7 +147,7 @@ plot_data <- data.frame(
 
 plot_stratified_residuals(
   plot_data,
-  treatment = treatment,
+  .exposure = .exposure,
   residuals = residuals,
   x_var = propensity_score,
   plot_type = "facet"

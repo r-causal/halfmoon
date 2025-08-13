@@ -27,19 +27,19 @@
 #' @param .data A data frame containing the variables for analysis
 #' @param outcome The outcome variable. Can be specified as a bare name or
 #'   character string. Ignored if `formula` is provided.
-#' @param covariates Variables to include in the outcome model. Defaults to
+#' @param .covariates Variables to include in the outcome model. Defaults to
 #'   `everything()` which includes all variables except the outcome and treatment.
 #'   Supports tidyselect syntax. Ignored if `formula` is provided.
-#' @param treatment The treatment variable. Can be specified as a bare name or
+#' @param .exposure The treatment variable. Can be specified as a bare name or
 #'   character string.
 #' @param formula Optional formula for the outcome model. If provided, `outcome`
-#'   and `covariates` arguments are ignored. The formula should not include the
+#'   and `.covariates` arguments are ignored. The formula should not include the
 #'   treatment variable.
-#' @param treatment_level The level of treatment that represents the control group.
+#' @param .reference_level The level of treatment that represents the control group.
 #'   If NULL (default), the first level is used as control.
 #' @param family A family object for the GLM. Defaults to `gaussian()` for
 #'   continuous outcomes. Use `binomial()` for binary outcomes.
-#' @param weights Optional weights for the outcome model. Can be a numeric vector
+#' @param .weights Optional weights for the outcome model. Can be a numeric vector
 #'   or bare name of a variable in `.data`.
 #' @param na.rm Logical. Should missing values be removed? Defaults to FALSE.
 #' @param ... Additional arguments passed to `glm()`.
@@ -57,27 +57,27 @@
 #' prog_scores <- bal_prognostic_score(
 #'   nhefs_weights,
 #'   outcome = wt82_71,
-#'   treatment = qsmk,
-#'   covariates = c(age, sex, race, wt71)
+#'   .exposure = qsmk,
+#'   .covariates = c(age, sex, race, wt71)
 #' )
 #'
 #' # Using formula interface
 #' prog_scores_formula <- bal_prognostic_score(
 #'   nhefs_weights,
-#'   treatment = qsmk,
+#'   .exposure = qsmk,
 #'   formula = wt82_71 ~ age + sex + race + wt71 + I(age^2)
 #' )
 #'
 #' # Add to data and check balance
 #' nhefs_with_prog <- nhefs_weights
 #' nhefs_with_prog$prog_score <- prog_scores
-#' check_balance(nhefs_with_prog, prog_score, qsmk, .wts = w_ate)
+#' check_balance(nhefs_with_prog, prog_score, qsmk, .weights = w_ate)
 #'
 #' # For binary outcome
 #' prog_scores_binary <- bal_prognostic_score(
 #'   nhefs_weights,
 #'   outcome = death,
-#'   treatment = qsmk,
+#'   .exposure = qsmk,
 #'   family = binomial()
 #' )
 #'
@@ -87,20 +87,20 @@
 bal_prognostic_score <- function(
   .data,
   outcome = NULL,
-  covariates = everything(),
-  treatment,
+  .covariates = everything(),
+  .exposure,
   formula = NULL,
-  treatment_level = NULL,
+  .reference_level = NULL,
   family = gaussian(),
-  weights = NULL,
+  .weights = NULL,
   na.rm = FALSE,
   ...
 ) {
   validate_data_frame(.data)
 
-  treatment_quo <- rlang::enquo(treatment)
-  treatment_var <- get_column_name(treatment_quo, "treatment")
-  validate_column_exists(.data, treatment_var)
+  exposure_quo <- rlang::enquo(.exposure)
+  exposure_var <- get_column_name(exposure_quo, ".exposure")
+  validate_column_exists(.data, exposure_var)
 
   # Handle formula vs tidyselect interface
   if (!is.null(formula)) {
@@ -118,11 +118,11 @@ bal_prognostic_score <- function(
     outcome_var <- formula_vars[1] # LHS of formula
 
     # Check that treatment is not in the formula
-    if (treatment_var %in% formula_vars) {
+    if (exposure_var %in% formula_vars) {
       abort(
         paste0(
           "The treatment variable '",
-          treatment_var,
+          exposure_var,
           "' should not be included in the outcome model formula."
         ),
         error_class = "halfmoon_formula_error",
@@ -152,10 +152,10 @@ bal_prognostic_score <- function(
     validate_column_exists(.data, outcome_var)
 
     # Get covariate names
-    covariate_enquo <- rlang::enquo(covariates)
+    covariate_enquo <- rlang::enquo(.covariates)
     all_vars <- names(.data)
-    # Remove outcome and treatment from available variables for selection
-    available_vars <- setdiff(all_vars, c(outcome_var, treatment_var))
+    # Remove outcome and exposure from available variables for selection
+    available_vars <- setdiff(all_vars, c(outcome_var, exposure_var))
     covariate_names <- names(tidyselect::eval_select(
       covariate_enquo,
       .data[available_vars]
@@ -179,12 +179,12 @@ bal_prognostic_score <- function(
   }
 
   # Handle weights
-  weights_enquo <- rlang::enquo(weights)
+  weights_enquo <- rlang::enquo(.weights)
   if (!rlang::quo_is_null(weights_enquo)) {
     # Try to get column name first (handles both quoted and unquoted)
     weights_var <- tryCatch(
       {
-        get_column_name(weights_enquo, "weights")
+        get_column_name(weights_enquo, ".weights")
       },
       error = function(e) NULL
     )
@@ -203,19 +203,19 @@ bal_prognostic_score <- function(
   }
 
   # Determine control group
-  treatment_levels <- extract_group_levels(.data[[treatment_var]])
+  exposure_levels <- extract_group_levels(.data[[exposure_var]])
   control_level <- determine_reference_group(
-    treatment_levels,
-    treatment_level
+    exposure_levels,
+    .reference_level
   )
 
   # Create control group indicator
-  is_control <- .data[[treatment_var]] == control_level
+  is_control <- .data[[exposure_var]] == control_level
 
   # Handle NAs if requested
   if (na.rm) {
     # Get all variables used in the model
-    model_vars <- unique(c(all.vars(model_formula), treatment_var))
+    model_vars <- unique(c(all.vars(model_formula), exposure_var))
     complete_idx <- stats::complete.cases(.data[model_vars])
 
     if (!is.null(model_weights)) {
@@ -250,7 +250,7 @@ bal_prognostic_score <- function(
     model_formula = model_formula,
     is_control = is_control,
     family = family,
-    weights = model_weights,
+    .weights = model_weights,
     ...
   )
 
@@ -262,19 +262,19 @@ bal_prognostic_fit_model <- function(
   model_formula,
   is_control,
   family,
-  weights = NULL,
+  .weights = NULL,
   ...
 ) {
   # Subset to control group for fitting
   control_data <- .data[is_control, ]
 
-  if (!is.null(weights)) {
-    control_data$.weights <- weights[is_control]
+  if (!is.null(.weights)) {
+    .weights <- .weights[is_control]
   }
 
   model <- tryCatch(
     {
-      if (!is.null(weights)) {
+      if (!is.null(.weights)) {
         stats::glm(
           formula = model_formula,
           data = control_data,

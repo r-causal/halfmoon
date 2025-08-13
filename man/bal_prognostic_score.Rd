@@ -8,11 +8,11 @@ bal_prognostic_score(
   .data,
   outcome = NULL,
   covariates = everything(),
-  treatment,
+  .exposure,
   formula = NULL,
-  treatment_level = NULL,
+  .reference_level = NULL,
   family = gaussian(),
-  weights = NULL,
+  .weights = NULL,
   na.rm = FALSE,
   ...
 )
@@ -27,25 +27,25 @@ character string. Ignored if \code{formula} is provided.}
 \code{everything()} which includes all variables except the outcome and treatment.
 Supports tidyselect syntax. Ignored if \code{formula} is provided.}
 
-\item{treatment}{The treatment variable. Can be specified as a bare name or
+\item{.exposure}{The treatment variable. Can be specified as a bare name or
 character string.}
 
 \item{formula}{Optional formula for the outcome model. If provided, \code{outcome}
 and \code{covariates} arguments are ignored. The formula should not include the
 treatment variable.}
 
-\item{treatment_level}{The level of treatment that represents the control group.
+\item{.reference_level}{The level of treatment that represents the control group.
 If NULL (default), the first level is used as control.}
 
 \item{family}{A family object for the GLM. Defaults to \code{gaussian()} for
 continuous outcomes. Use \code{binomial()} for binary outcomes.}
 
-\item{weights}{Optional weights for the outcome model. Can be a numeric vector
-or bare name of a variable in \code{.data}.}
-
 \item{na.rm}{Logical. Should missing values be removed? Defaults to FALSE.}
 
 \item{...}{Additional arguments passed to \code{glm()}.}
+
+\item{weights}{Optional weights for the outcome model. Can be a numeric vector
+or bare name of a variable in \code{.data}.}
 }
 \value{
 A numeric vector of prognostic scores with the same length as the
@@ -84,27 +84,27 @@ treatment groups.
 prog_scores <- bal_prognostic_score(
   nhefs_weights,
   outcome = wt82_71,
-  treatment = qsmk,
+  .exposure = qsmk,
   covariates = c(age, sex, race, wt71)
 )
 
 # Using formula interface
 prog_scores_formula <- bal_prognostic_score(
   nhefs_weights,
-  treatment = qsmk,
+  .exposure = qsmk,
   formula = wt82_71 ~ age + sex + race + wt71 + I(age^2)
 )
 
 # Add to data and check balance
 nhefs_with_prog <- nhefs_weights
 nhefs_with_prog$prog_score <- prog_scores
-check_balance(nhefs_with_prog, prog_score, qsmk, .wts = w_ate)
+check_balance(nhefs_with_prog, prog_score, qsmk, .weights = w_ate)
 
 # For binary outcome
 prog_scores_binary <- bal_prognostic_score(
   nhefs_weights,
   outcome = death,
-  treatment = qsmk,
+  .exposure = qsmk,
   family = binomial()
 )
 

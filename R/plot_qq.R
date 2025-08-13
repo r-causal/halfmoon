@@ -18,14 +18,14 @@
 #' @param ... Arguments passed to methods (see Methods section).
 #' @param .var Variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
 #' @param .group Column name of treatment/group variable. Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
-#' @param .wts Optional weighting variable(s). Can be unquoted variable names,
+#' @param .weights Optional weighting variable(s). Can be unquoted variable names,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @param include_observed Logical. If using `.wts`, also show observed
+#' @param include_observed Logical. If using `.weights`, also show observed
 #'   (unweighted) QQ plot? Defaults to TRUE.
-#' @param treatment_level The reference treatment level to use for comparisons.
+#' @param .reference_level The reference treatment level to use for comparisons.
 #'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
 #' @param na.rm Logical; if TRUE, drop NA values before computation.
 #'
@@ -49,16 +49,16 @@
 #' plot_qq(nhefs_weights, age, qsmk)
 #'
 #' # With weighting
-#' plot_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+#' plot_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 #'
 #' # Compare multiple weighting schemes
-#' plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+#' plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 #'
 #' # For propensity scores
-#' plot_qq(nhefs_weights, .fitted, qsmk, .wts = w_ate)
+#' plot_qq(nhefs_weights, .fitted, qsmk, .weights = w_ate)
 #'
 #' # Without observed comparison
-#' plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
+#' plot_qq(nhefs_weights, age, qsmk, .weights = w_ate, include_observed = FALSE)
 #'
 #' @export
 plot_qq <- function(.data, ...) {
@@ -71,10 +71,10 @@ plot_qq.default <- function(
   .data,
   .var,
   .group,
-  .wts = NULL,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE,
   ...
 ) {
@@ -121,33 +121,33 @@ plot_qq.default <- function(
     )
   }
 
-  # Handle NULL treatment_level
-  if (is.null(treatment_level)) {
+  # Handle NULL .reference_level
+  if (is.null(.reference_level)) {
     if (is.factor(group_var)) {
       # For factors, use the last level
-      treatment_level <- group_levels[length(group_levels)]
+      .reference_level <- group_levels[length(group_levels)]
     } else {
       # For numeric, use the maximum value
-      treatment_level <- max(group_levels)
+      .reference_level <- max(group_levels)
     }
   }
 
-  # Validate treatment_level exists
-  if (!treatment_level %in% group_levels) {
+  # Validate .reference_level exists
+  if (!.reference_level %in% group_levels) {
     abort(
-      "{.arg treatment_level} '{treatment_level}' not found in {.arg .group} levels: {.val {group_levels}}",
+      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .group} levels: {.val {group_levels}}",
       error_class = "halfmoon_reference_error"
     )
   }
 
-  ref_group <- treatment_level
-  comp_group <- setdiff(group_levels, treatment_level)
+  ref_group <- .reference_level
+  comp_group <- setdiff(group_levels, .reference_level)
 
   # Get variable name for labels
   var_name <- get_column_name(var_quo, ".var")
 
   # Prepare data in long format
-  wts_quo <- rlang::enquo(.wts)
+  wts_quo <- rlang::enquo(.weights)
 
   if (!rlang::quo_is_null(wts_quo)) {
     # Get weight columns
@@ -192,7 +192,7 @@ plot_qq.default <- function(
       geom_qq2(
         ggplot2::aes(color = method),
         quantiles = quantiles,
-        treatment_level = treatment_level,
+        .reference_level = .reference_level,
         na.rm = na.rm
       )
   } else {
@@ -203,7 +203,7 @@ plot_qq.default <- function(
     ) +
       geom_qq2(
         quantiles = quantiles,
-        treatment_level = treatment_level,
+        .reference_level = .reference_level,
         na.rm = na.rm
       )
   }

@@ -7,8 +7,8 @@
 plot_mirror_distributions(
   .data,
   .var,
-  .group,
-  .wts = NULL,
+  .exposure,
+  .weights = NULL,
   type = c("histogram", "density"),
   mirror_axis = "y",
   bins = 30,
@@ -18,7 +18,7 @@ plot_mirror_distributions(
   include_unweighted = TRUE,
   alpha = 0.6,
   na.rm = FALSE,
-  reference_group = 1L
+  .reference_level = 1L
 )
 }
 \arguments{
@@ -26,11 +26,11 @@ plot_mirror_distributions(
 
 \item{.var}{The variable to plot. Supports tidyselect syntax. Can be unquoted.}
 
-\item{.group}{Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
+\item{.exposure}{Column name of treatment/group variable. Supports tidyselect syntax. Can be unquoted.
 For binary variables, must have exactly 2 levels. For categorical variables (>2 levels),
 creates pairwise comparisons against a reference group.}
 
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
+\item{.weights}{Optional weighting variable(s). Can be unquoted variable names, tidyselect syntax,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 
@@ -49,16 +49,16 @@ Can be numeric or character (e.g., "nrd0", "sj").}
 \item{adjust}{Numeric; bandwidth adjustment factor for density. Only used when
 type = "density". Default is 1.}
 
-\item{include_unweighted}{Logical. If using \code{.wts}, also show unweighted
+\item{include_unweighted}{Logical. If using \code{.weights}, also show unweighted
 distribution? Defaults to TRUE.}
 
 \item{alpha}{Numeric; transparency level for fills. Default is 0.6.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before plotting.}
 
-\item{reference_group}{The reference group level for categorical exposures (>2 levels).
+\item{.reference_level}{The reference group level for categorical exposures (>2 levels).
 Can be a string (group level) or numeric (position). Defaults to 1 (first level).
-Only used when .group has more than 2 levels.}
+Only used when .exposure has more than 2 levels.}
 }
 \value{
 A ggplot2 object.
@@ -94,15 +94,15 @@ plot_mirror_distributions(nhefs_weights, age, qsmk)
 plot_mirror_distributions(nhefs_weights, age, qsmk, type = "density")
 
 # With weighting
-plot_mirror_distributions(nhefs_weights, age, qsmk, .wts = w_ate)
+plot_mirror_distributions(nhefs_weights, age, qsmk, .weights = w_ate)
 
 # Compare multiple weighting schemes
-plot_mirror_distributions(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+plot_mirror_distributions(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 
 # Customize appearance
 plot_mirror_distributions(
   nhefs_weights, age, qsmk,
-  .wts = w_ate,
+  .weights = w_ate,
   type = "density",
   alpha = 0.7
 )
@@ -110,7 +110,7 @@ plot_mirror_distributions(
 # Without unweighted comparison
 plot_mirror_distributions(
   nhefs_weights, age, qsmk,
-  .wts = w_ate,
+  .weights = w_ate,
   include_unweighted = FALSE
 )
 
@@ -127,8 +127,8 @@ plot_mirror_distributions(
   nhefs_weights,
   wt71,
   alcoholfreq_cat,
-  .wts = w_cat_ate,
-  reference_group = "none"
+  .weights = w_cat_ate,
+  .reference_level = "none"
 )
 
 }

@@ -7,7 +7,7 @@ test_that("error messages show user-facing function names", {
       nhefs_weights,
       age,
       alcoholfreq_cat,
-      reference_group = "invalid"
+      .reference_level = "invalid"
     )
   )
 
@@ -19,7 +19,7 @@ test_that("error messages show user-facing function names", {
       nhefs_weights,
       age,
       alcoholfreq_cat,
-      reference_group = 10
+      .reference_level = 10
     )
   )
 
@@ -49,7 +49,7 @@ test_that("error messages show user-facing function names", {
       nhefs_weights,
       age,
       qsmk,
-      treatment_level = "invalid"
+      .reference_level = "invalid"
     )
   )
 
@@ -78,7 +78,7 @@ test_that("error messages show user-facing function names", {
     cnd_class = TRUE,
     bal_prognostic_score(
       nhefs_weights,
-      treatment = qsmk,
+      .exposure = qsmk,
       formula = wt82_71 ~ age + qsmk + wt71
     )
   )
@@ -115,7 +115,7 @@ test_that("errors have correct custom classes", {
       nhefs_weights,
       age,
       alcoholfreq_cat,
-      reference_group = "invalid"
+      .reference_level = "invalid"
     ),
     class = "halfmoon_reference_error"
   )
@@ -126,7 +126,7 @@ test_that("errors have correct custom classes", {
       nhefs_weights,
       age,
       alcoholfreq_cat,
-      reference_group = 10
+      .reference_level = 10
     ),
     class = "halfmoon_range_error"
   )
@@ -151,7 +151,7 @@ test_that("errors have correct custom classes", {
   expect_halfmoon_error(
     bal_prognostic_score(
       nhefs_weights,
-      treatment = qsmk,
+      .exposure = qsmk,
       formula = wt82_71 ~ age + qsmk + wt71
     ),
     class = "halfmoon_formula_error"

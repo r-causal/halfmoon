@@ -32,7 +32,7 @@ test_that("plot_mirror_distributions works with weights", {
     nhefs_weights,
     age,
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     bins = 20
   )
 
@@ -44,7 +44,7 @@ test_that("plot_mirror_distributions works with weights", {
     nhefs_weights,
     age,
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     type = "density"
   )
 
@@ -57,7 +57,7 @@ test_that("plot_mirror_distributions works with multiple weights", {
     nhefs_weights,
     age,
     qsmk,
-    .wts = c(w_ate, w_att),
+    .weights = c(w_ate, w_att),
     bins = 20
   )
 
@@ -71,7 +71,7 @@ test_that("plot_mirror_distributions works without unweighted", {
     nhefs_weights,
     age,
     qsmk,
-    .wts = w_ate,
+    .weights = w_ate,
     include_unweighted = FALSE,
     bins = 20
   )
@@ -234,7 +234,7 @@ test_that("plot_mirror_distributions works with faceting", {
     nhefs_weights,
     age,
     qsmk,
-    .wts = c(w_ate, w_att)
+    .weights = c(w_ate, w_att)
   )
 
   built <- ggplot_build(p_facet)
@@ -271,7 +271,7 @@ test_that("plot_mirror_distributions works with categorical exposures", {
     nhefs_weights,
     age,
     alcoholfreq_cat,
-    reference_group = "daily",
+    .reference_level = "daily",
     type = "density"
   )
 
@@ -284,8 +284,8 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
     nhefs_weights,
     wt71,
     alcoholfreq_cat,
-    .wts = w_cat_ate,
-    reference_group = "none",
+    .weights = w_cat_ate,
+    .reference_level = "none",
     bins = 20
   )
 
@@ -297,8 +297,8 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
     nhefs_weights,
     age,
     alcoholfreq_cat,
-    .wts = c(w_cat_ate, w_cat_att_2_3wk),
-    reference_group = "none",
+    .weights = c(w_cat_ate, w_cat_att_2_3wk),
+    .reference_level = "none",
     type = "density"
   )
 
@@ -309,7 +309,7 @@ test_that("plot_mirror_distributions works with categorical exposures and weight
     nhefs_weights,
     age,
     alcoholfreq_cat,
-    .wts = w_cat_ate,
+    .weights = w_cat_ate,
     include_unweighted = FALSE,
     type = "density"
   )
@@ -324,7 +324,7 @@ test_that("plot_mirror_distributions validates categorical reference group", {
       nhefs_weights,
       age,
       alcoholfreq_cat,
-      reference_group = "invalid"
+      .reference_level = "invalid"
     ),
     "halfmoon_reference_error"
   )
@@ -335,7 +335,7 @@ test_that("plot_mirror_distributions validates categorical reference group", {
       nhefs_weights,
       age,
       alcoholfreq_cat,
-      reference_group = 10
+      .reference_level = 10
     ),
     "halfmoon_range_error"
   )

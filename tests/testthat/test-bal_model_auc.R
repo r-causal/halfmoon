@@ -75,7 +75,7 @@ test_that("bal_model_auc works with different treatment levels", {
     nhefs_weights,
     qsmk,
     .fitted,
-    treatment_level = 1
+    .focal_level = 1
   )
 
   # Should be different from opposite level
@@ -83,7 +83,7 @@ test_that("bal_model_auc works with different treatment levels", {
     nhefs_weights,
     qsmk,
     .fitted,
-    treatment_level = 0
+    .focal_level = 0
   )
   expect_false(isTRUE(all.equal(auc_explicit, auc_opposite)))
 })

@@ -27,10 +27,6 @@ plot_ess(
 \item Raw data to compute ESS from (requires \code{.wts} to be specified)
 }}
 
-\item{.wts}{Optional weighting variables. Can be unquoted variable names,
-a character vector, or NULL. Multiple weights can be provided to compare
-different weighting schemes.}
-
 \item{.group}{Optional grouping variable. When provided, ESS is calculated
 separately for each group level. For continuous variables, groups are
 created using quantiles.}
