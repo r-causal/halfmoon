@@ -23,7 +23,7 @@ check_model_auc(
 
 \item{.weights}{Weighting variables (supports tidyselect).}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values

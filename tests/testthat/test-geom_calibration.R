@@ -497,7 +497,7 @@ test_that("check_model_calibration handles all zeros and all ones", {
     pred,
     obs,
     method = "breaks",
-    treatment_level = 1
+    .focal_level = 1
   ))
   # This should give us meaningful calibration metrics
   expect_true(all(
@@ -580,7 +580,7 @@ test_that("check_model_calibration handles factor treatment variables", {
     pred,
     obs,
     method = "breaks",
-    treatment_level = "1"
+    .focal_level = "1"
   ))
 
   expect_s3_class(result, "tbl_df")

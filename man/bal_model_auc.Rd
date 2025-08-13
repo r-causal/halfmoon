@@ -20,8 +20,8 @@ bal_model_auc(
 
 \item{.estimate}{The propensity score or fitted values (unquoted).}
 
-\item{.weights}{An optional numeric vector of case weights. If provided, must
-have the same length as other input vectors. All weights must be non-negative.}
+\item{.weights}{Optional single weight variable (unquoted). If NULL, computes
+unweighted AUC.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input
@@ -30,9 +30,6 @@ will produce \code{NA} in the output.}
 \item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
 the maximum value for numeric variables.}
-
-\item{.wts}{Optional single weight variable (unquoted). If NULL, computes
-unweighted AUC.}
 }
 \value{
 A numeric value representing the AUC. Values around 0.5 indicate

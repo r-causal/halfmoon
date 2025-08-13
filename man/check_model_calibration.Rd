@@ -8,7 +8,7 @@ check_model_calibration(
   data,
   .fitted,
   .group,
-  treatment_level = NULL,
+  .focal_level = NULL,
   method = c("breaks", "logistic", "windowed"),
   bins = 10,
   binning_method = c("equal_width", "quantile"),
@@ -28,6 +28,10 @@ Can be unquoted (e.g., \code{p}) or quoted (e.g., \code{"p"}).}
 
 \item{.group}{Column name of treatment/group variable.
 Can be unquoted (e.g., \code{g}) or quoted (e.g., \code{"g"}).}
+
+\item{.focal_level}{The level of the outcome variable to consider as the
+treatment/event. If \code{NULL} (default), uses the last level for factors or
+the maximum value for numeric variables.}
 
 \item{method}{Character; calibration method. One of: "breaks", "logistic", or "windowed".}
 

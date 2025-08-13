@@ -16,11 +16,15 @@ check_ess(
 \arguments{
 \item{.data}{A data frame containing the variables to analyze.}
 
+\item{.weights}{Optional weighting variables. Can be unquoted variable names,
+a character vector, or NULL. Multiple weights can be provided to compare
+different weighting schemes.}
+
 \item{.group}{Optional grouping variable. When provided, ESS is calculated
 separately for each group level. For continuous variables, groups are
 created using quantiles.}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
 \item{n_tiles}{For continuous \code{.group} variables, the number of quantile

@@ -12,13 +12,13 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to compute quantiles for. Supports tidyselect syntax.
-#' @param .group Column name of treatment/group variable. Supports tidyselect syntax.
-#' @param .wts Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
+#' @param .exposure Column name of treatment/group variable. Supports tidyselect syntax.
+#' @param .weights Optional weighting variable(s). Can be unquoted variable names (supports tidyselect syntax),
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @param include_observed Logical. If using `.wts`, also compute observed
+#' @param include_observed Logical. If using `.weights`, also compute observed
 #'   (unweighted) quantiles? Defaults to TRUE.
 #' @param .reference_level The reference treatment level to use for comparisons.
 #'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
@@ -37,10 +37,10 @@
 #' check_qq(nhefs_weights, age, qsmk)
 #'
 #' # With weighting
-#' check_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+#' check_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 #'
 #' # Compare multiple weighting schemes
-#' check_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+#' check_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 #'
 #' @export
 check_qq <- function(

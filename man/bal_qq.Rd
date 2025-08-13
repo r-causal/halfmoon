@@ -19,8 +19,7 @@ bal_qq(
 
 \item{.var}{Variable to compute quantiles for (unquoted).}
 
-\item{.exposure}{A vector (factor or numeric) indicating group membership. Must
-have exactly two unique levels.}
+\item{.exposure}{Column name of treatment/group variable (unquoted).}
 
 \item{.weights}{Optional single weight variable (unquoted). If NULL, computes
 unweighted quantiles.}
@@ -34,8 +33,6 @@ a group level value or a numeric index. If \code{NULL} (default), uses the first
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input
 will produce \code{NA} in the output.}
-
-\item{.group}{Column name of treatment/group variable (unquoted).}
 }
 \value{
 A tibble with columns:

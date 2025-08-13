@@ -40,6 +40,10 @@ combining with them.}
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
+\item{.reference_level}{The reference treatment level to use for comparisons.
+If \code{NULL} (default), uses the first level for factors or the minimum value
+for numeric variables.}
+
 \item{...}{Other arguments passed on to layer().}
 }
 \value{

@@ -26,10 +26,10 @@ NULL
 #' @param .vars Variables for which to calculate metrics. Can be unquoted
 #'   variable names, a character vector, or a tidyselect expression.
 #' @param .exposure Grouping variable, e.g., treatment or exposure group.
-#' @param .wts Optional weighting variables. Can be unquoted variable names,
+#' @param .weights Optional weighting variables. Can be unquoted variable names,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes.
-#' @param include_observed Logical. If using `.wts`, also calculate observed
+#' @param include_observed Logical. If using `.weights`, also calculate observed
 #'   (unweighted) metrics? Defaults to TRUE.
 #' @keywords internal
 #' @name check_params

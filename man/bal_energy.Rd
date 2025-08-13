@@ -18,6 +18,13 @@ bal_energy(
 \arguments{
 \item{.covariates}{A data frame or matrix containing the .covariates to compare.}
 
+\item{.exposure}{A vector (factor or numeric) indicating group membership. For
+binary and multi-category treatments, must have 2+ unique levels. For
+continuous treatments, should be numeric.}
+
+\item{.weights}{An optional numeric vector of weights. If provided, must
+have the same length as rows in \code{.covariates}. All weights must be non-negative.}
+
 \item{estimand}{Character string specifying the estimand. Options are:
 \itemize{
 \item NULL (default): Pure between-group energy distance comparing distributions
@@ -42,13 +49,6 @@ distance correlation? Default is TRUE.}
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values result in
 an error (energy distance cannot be computed with missing data).}
-
-\item{group}{A vector (factor or numeric) indicating group membership. For
-binary and multi-category treatments, must have 2+ unique levels. For
-continuous treatments, should be numeric.}
-
-\item{weights}{An optional numeric vector of weights. If provided, must
-have the same length as rows in \code{.covariates}. All weights must be non-negative.}
 }
 \value{
 A numeric value representing the energy distance between groups. Lower

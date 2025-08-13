@@ -7,17 +7,17 @@
 bal_corr(.x, .y, .weights = NULL, na.rm = FALSE)
 }
 \arguments{
+\item{.x}{A numeric vector containing the first variable.}
+
+\item{.y}{A numeric vector containing the second variable. Must have the same
+length as \code{.x}.}
+
+\item{.weights}{An optional numeric vector of case weights. If provided, must
+have the same length as \code{.x} and \code{.y}. All weights must be non-negative.}
+
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values result in
 \code{NA} output.}
-
-\item{x}{A numeric vector containing the first variable.}
-
-\item{y}{A numeric vector containing the second variable. Must have the same
-length as \code{x}.}
-
-\item{weights}{An optional numeric vector of case weights. If provided, must
-have the same length as \code{x} and \code{y}. All weights must be non-negative.}
 }
 \value{
 A numeric value representing the correlation coefficient between -1 and 1.

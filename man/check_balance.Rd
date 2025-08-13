@@ -27,15 +27,16 @@ variable names, a character vector, or a tidyselect expression.}
 
 \item{.exposure}{Grouping variable, e.g., treatment or exposure group.}
 
-\item{.weights}{An optional numeric vector of case weights. If provided, must
-have the same length as other input vectors. All weights must be non-negative.}
+\item{.weights}{Optional weighting variables. Can be unquoted variable names,
+a character vector, or NULL. Multiple weights can be provided to compare
+different weighting schemes.}
 
 \item{.metrics}{Character vector specifying which metrics to compute.
 Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
 "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
 \item{.reference_level}{The reference group level to use for comparisons.

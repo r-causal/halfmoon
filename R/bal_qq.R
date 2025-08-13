@@ -17,7 +17,7 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .var Variable to compute quantiles for (unquoted).
-#' @param .group Column name of treatment/group variable (unquoted).
+#' @param .exposure Column name of treatment/group variable (unquoted).
 #' @param .weights Optional single weight variable (unquoted). If NULL, computes
 #'   unweighted quantiles.
 #' @param quantiles Numeric vector of quantiles to compute. Default is

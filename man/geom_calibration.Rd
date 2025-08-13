@@ -14,7 +14,7 @@ geom_calibration(
   conf_level = 0.95,
   window_size = 0.1,
   step_size = window_size/2,
-  treatment_level = NULL,
+  .focal_level = NULL,
   k = 10,
   show_ribbon = TRUE,
   show_points = TRUE,
@@ -44,6 +44,10 @@ geom_calibration(
 \item{window_size}{Numeric; size of each window for "windowed" method.}
 
 \item{step_size}{Numeric; distance between window centers for "windowed" method.}
+
+\item{.focal_level}{The level of the outcome variable to consider as the
+treatment/event. If \code{NULL} (default), uses the last level for factors or
+the maximum value for numeric variables.}
 
 \item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = TRUE. Default is 10.}
 
@@ -106,7 +110,7 @@ ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
 
 # Specify treatment level explicitly
 ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
-  geom_calibration(treatment_level = "1") +
+  geom_calibration(.focal_level = "1") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 

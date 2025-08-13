@@ -450,11 +450,11 @@ bal_ks <- function(
 #' with optional case weights. Uses the standard correlation formula for
 #' unweighted data and weighted covariance for weighted data.
 #'
-#' @param x A numeric vector containing the first variable.
-#' @param y A numeric vector containing the second variable. Must have the same
-#'   length as `x`.
-#' @param weights An optional numeric vector of case weights. If provided, must
-#'   have the same length as `x` and `y`. All weights must be non-negative.
+#' @param .x A numeric vector containing the first variable.
+#' @param .y A numeric vector containing the second variable. Must have the same
+#'   length as `.x`.
+#' @param .weights An optional numeric vector of case weights. If provided, must
+#'   have the same length as `.x` and `.y`. All weights must be non-negative.
 #' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   `NA` output.
@@ -531,10 +531,10 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' than univariate balance measures.
 #'
 #' @param .covariates A data frame or matrix containing the .covariates to compare.
-#' @param group A vector (factor or numeric) indicating group membership. For
+#' @param .exposure A vector (factor or numeric) indicating group membership. For
 #'   binary and multi-category treatments, must have 2+ unique levels. For
 #'   continuous treatments, should be numeric.
-#' @param weights An optional numeric vector of weights. If provided, must
+#' @param .weights An optional numeric vector of weights. If provided, must
 #'   have the same length as rows in `.covariates`. All weights must be non-negative.
 #' @param estimand Character string specifying the estimand. Options are:
 #'   - NULL (default): Pure between-group energy distance comparing distributions

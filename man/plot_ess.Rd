@@ -27,11 +27,15 @@ plot_ess(
 \item Raw data to compute ESS from (requires \code{.weights} to be specified)
 }}
 
+\item{.weights}{Optional weighting variables. Can be unquoted variable names,
+a character vector, or NULL. Multiple weights can be provided to compare
+different weighting schemes.}
+
 \item{.group}{Optional grouping variable. When provided, ESS is calculated
 separately for each group level. For continuous variables, groups are
 created using quantiles.}
 
-\item{include_observed}{Logical. If using \code{.wts}, also calculate observed
+\item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
 \item{n_tiles}{For continuous \code{.group} variables, the number of quantile

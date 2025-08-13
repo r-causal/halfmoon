@@ -21,7 +21,7 @@
 #' * If ESS is much lower than the total sample size, consider investigating
 #'   why some weights are extremely large or small
 #'
-#' @param .wts A numeric vector of weights or a single weight column from a data frame.
+#' @param .weights A numeric vector of weights or a single weight column from a data frame.
 #' @inheritParams balance_params
 #'
 #' @return A single numeric value representing the effective sample size.
@@ -43,7 +43,7 @@
 #' bal_ess(weights_with_na, na.rm = TRUE)
 #'
 #' @export
-bal_ess <- function(.wts, na.rm = FALSE) {
+bal_ess <- function(.weights, na.rm = FALSE) {
   # Simply call the existing ess() function
-  ess(.wts, na.rm = na.rm)
+  ess(.weights, na.rm = na.rm)
 }

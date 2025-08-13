@@ -17,7 +17,7 @@
 #' @param .data A data frame containing the variables.
 #' @param .exposure The treatment/outcome variable (unquoted).
 #' @param .estimate The propensity score or fitted values (unquoted).
-#' @param .wts Optional single weight variable (unquoted). If NULL, computes
+#' @param .weights Optional single weight variable (unquoted). If NULL, computes
 #'   unweighted AUC.
 #' @inheritParams balance_params
 #' @inheritParams treatment_param
