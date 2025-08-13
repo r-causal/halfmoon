@@ -15,7 +15,7 @@ stat_qq2(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   include_observed = FALSE,
   ...
 )
@@ -37,7 +37,7 @@ stat_qq2(
 
 \item{quantiles}{Numeric vector of quantiles to compute.}
 
-\item{treatment_level}{The reference treatment level to use for comparisons.}
+\item{.reference_level}{The reference treatment level to use for comparisons.}
 
 \item{include_observed}{For compatibility with qq(). When weights are present,
 this determines if an additional "observed" group is added. Default FALSE

@@ -12,10 +12,10 @@ plot_qq(.data, ...)
   .data,
   .var,
   .group,
-  .wts = NULL,
+  .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
-  treatment_level = NULL,
+  .reference_level = NULL,
   na.rm = FALSE,
   ...
 )
@@ -31,17 +31,17 @@ plot_qq(.data, ...)
 
 \item{.group}{Column name of treatment/group variable. Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
 
-\item{.wts}{Optional weighting variable(s). Can be unquoted variable names,
+\item{.weights}{Optional weighting variable(s). Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes. Default is NULL (unweighted).}
 
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{include_observed}{Logical. If using \code{.wts}, also show observed
+\item{include_observed}{Logical. If using \code{.weights}, also show observed
 (unweighted) QQ plot? Defaults to TRUE.}
 
-\item{treatment_level}{The reference treatment level to use for comparisons.
+\item{.reference_level}{The reference treatment level to use for comparisons.
 If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
 
 \item{na.rm}{Logical; if TRUE, drop NA values before computation.}
@@ -79,16 +79,16 @@ library(ggplot2)
 plot_qq(nhefs_weights, age, qsmk)
 
 # With weighting
-plot_qq(nhefs_weights, age, qsmk, .wts = w_ate)
+plot_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 
 # Compare multiple weighting schemes
-plot_qq(nhefs_weights, age, qsmk, .wts = c(w_ate, w_att))
+plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 
 # For propensity scores
-plot_qq(nhefs_weights, .fitted, qsmk, .wts = w_ate)
+plot_qq(nhefs_weights, .fitted, qsmk, .weights = w_ate)
 
 # Without observed comparison
-plot_qq(nhefs_weights, age, qsmk, .wts = w_ate, include_observed = FALSE)
+plot_qq(nhefs_weights, age, qsmk, .weights = w_ate, include_observed = FALSE)
 
 }
 \seealso{

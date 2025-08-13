@@ -13,7 +13,7 @@ geom_qq2(
   show.legend = NA,
   inherit.aes = TRUE,
   quantiles = seq(0.01, 0.99, 0.01),
-  treatment_level = NULL,
+  .reference_level = NULL,
   ...
 )
 }

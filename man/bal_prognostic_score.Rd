@@ -7,7 +7,7 @@
 bal_prognostic_score(
   .data,
   outcome = NULL,
-  covariates = everything(),
+  .covariates = everything(),
   .exposure,
   formula = NULL,
   .reference_level = NULL,
@@ -23,7 +23,7 @@ bal_prognostic_score(
 \item{outcome}{The outcome variable. Can be specified as a bare name or
 character string. Ignored if \code{formula} is provided.}
 
-\item{covariates}{Variables to include in the outcome model. Defaults to
+\item{.covariates}{Variables to include in the outcome model. Defaults to
 \code{everything()} which includes all variables except the outcome and treatment.
 Supports tidyselect syntax. Ignored if \code{formula} is provided.}
 
@@ -31,7 +31,7 @@ Supports tidyselect syntax. Ignored if \code{formula} is provided.}
 character string.}
 
 \item{formula}{Optional formula for the outcome model. If provided, \code{outcome}
-and \code{covariates} arguments are ignored. The formula should not include the
+and \code{.covariates} arguments are ignored. The formula should not include the
 treatment variable.}
 
 \item{.reference_level}{The level of treatment that represents the control group.
@@ -40,12 +40,12 @@ If NULL (default), the first level is used as control.}
 \item{family}{A family object for the GLM. Defaults to \code{gaussian()} for
 continuous outcomes. Use \code{binomial()} for binary outcomes.}
 
+\item{.weights}{Optional weights for the outcome model. Can be a numeric vector
+or bare name of a variable in \code{.data}.}
+
 \item{na.rm}{Logical. Should missing values be removed? Defaults to FALSE.}
 
 \item{...}{Additional arguments passed to \code{glm()}.}
-
-\item{weights}{Optional weights for the outcome model. Can be a numeric vector
-or bare name of a variable in \code{.data}.}
 }
 \value{
 A numeric vector of prognostic scores with the same length as the
@@ -85,7 +85,7 @@ prog_scores <- bal_prognostic_score(
   nhefs_weights,
   outcome = wt82_71,
   .exposure = qsmk,
-  covariates = c(age, sex, race, wt71)
+  .covariates = c(age, sex, race, wt71)
 )
 
 # Using formula interface

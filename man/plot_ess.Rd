@@ -6,7 +6,7 @@
 \usage{
 plot_ess(
   .data,
-  .wts = NULL,
+  .weights = NULL,
   .group = NULL,
   include_observed = TRUE,
   n_tiles = 4,
@@ -24,7 +24,7 @@ plot_ess(
 \item{.data}{A data frame, either:
 \itemize{
 \item Output from \code{check_ess()} containing ESS calculations
-\item Raw data to compute ESS from (requires \code{.wts} to be specified)
+\item Raw data to compute ESS from (requires \code{.weights} to be specified)
 }}
 
 \item{.group}{Optional grouping variable. When provided, ESS is calculated
@@ -88,36 +88,36 @@ Lower ESS percentages indicate:
 }
 \examples{
 # Overall ESS for different weighting schemes
-plot_ess(nhefs_weights, .wts = c(w_ate, w_att, w_atm))
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 
 # ESS by treatment group (binary exposure)
-plot_ess(nhefs_weights, .wts = c(w_ate, w_att), .group = qsmk)
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
 
 # ESS by treatment group (categorical exposure)
-plot_ess(nhefs_weights, .wts = w_cat_ate, .group = alcoholfreq_cat)
+plot_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
 
 # ESS by age quartiles
-plot_ess(nhefs_weights, .wts = w_ate, .group = age)
+plot_ess(nhefs_weights, .weights = w_ate, .group = age)
 
 # Customize quantiles for continuous variable
-plot_ess(nhefs_weights, .wts = w_ate, .group = age,
+plot_ess(nhefs_weights, .weights = w_ate, .group = age,
          n_tiles = 5, tile_labels = c("Youngest", "Young", "Middle", "Older", "Oldest"))
 
 # Without percentage labels
-plot_ess(nhefs_weights, .wts = c(w_ate, w_att), .group = qsmk,
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk,
          show_labels = FALSE)
 
 # Custom styling
-plot_ess(nhefs_weights, .wts = c(w_ate, w_att), .group = qsmk,
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk,
          alpha = 0.6, fill_color = "steelblue",
          reference_line_color = "red")
 
 # Using pre-computed ESS data
-ess_data <- check_ess(nhefs_weights, .wts = c(w_ate, w_att))
+ess_data <- check_ess(nhefs_weights, .weights = c(w_ate, w_att))
 plot_ess(ess_data)
 
 # Show ESS on original scale instead of percentage
-plot_ess(nhefs_weights, .wts = c(w_ate, w_att), percent_scale = FALSE)
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), percent_scale = FALSE)
 
 }
 \seealso{
