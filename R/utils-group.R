@@ -17,7 +17,7 @@ extract_group_levels <- function(
 
   if (require_binary && length(levels) != 2) {
     abort(
-      "Group variable must have exactly two levels, got {length(levels)}",
+      "Exposure variable must have exactly two levels, got {length(levels)}",
       error_class = "halfmoon_group_error",
       call = call
     )

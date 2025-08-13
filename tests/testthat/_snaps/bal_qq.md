@@ -28,7 +28,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `bal_qq()`:
-      ! Group variable must have exactly two levels, got 5
+      ! Exposure variable must have exactly two levels, got 5
 
 ---
 

@@ -116,7 +116,7 @@ plot_qq.default <- function(
 
   if (length(group_levels) != 2) {
     abort(
-      "Group variable must have exactly 2 levels",
+      "Exposure variable must have exactly 2 levels",
       error_class = "halfmoon_group_error"
     )
   }

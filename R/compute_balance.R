@@ -81,7 +81,7 @@ bal_smd <- function(
   # Validate we have exactly two levels
   if (length(levels_g) != 2) {
     abort(
-      "Group variable must have exactly two levels, got {length(levels_g)}",
+      "Exposure variable must have exactly two levels, got {length(levels_g)}",
       error_class = "halfmoon_group_error"
     )
   }
@@ -690,7 +690,7 @@ bal_energy <- function(
   # Special case: constant group (only one unique value)
   if (n_groups <= 1) {
     abort(
-      "Group variable must have at least two levels",
+      "Exposure variable must have at least two levels",
       error_class = "halfmoon_group_error"
     )
   }

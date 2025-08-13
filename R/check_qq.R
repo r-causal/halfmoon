@@ -93,7 +93,7 @@ check_qq <- function(
 
   if (length(exposure_levels) != 2) {
     abort(
-      "Group variable must have exactly 2 levels",
+      "Exposure variable must have exactly 2 levels",
       error_class = "halfmoon_group_error"
     )
   }
@@ -109,7 +109,7 @@ check_qq <- function(
     }
     if (any(is.na(exposure_var))) {
       abort(
-        "Group variable {.code {exposure_name}} contains missing values and {.arg na.rm = FALSE}",
+        "Exposure variable {.code {exposure_name}} contains missing values and {.arg na.rm = FALSE}",
         error_class = "halfmoon_na_error"
       )
     }

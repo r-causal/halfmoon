@@ -260,11 +260,11 @@ check_balance <- function(
     wts_names <- NULL
   }
 
-  # Validate group variable
+  # Validate exposure variable
   validate_column_exists(transformed_data, exposure_var, "data")
 
   # Get group levels in proper order
-  # For correlation, we allow continuous group variables
+  # For correlation, we allow continuous exposure variables
   using_correlation <- "correlation" %in% .metrics
 
   if (is.factor(transformed_data[[exposure_var]])) {
@@ -276,20 +276,20 @@ check_balance <- function(
       sort()
   }
 
-  # Check group variable requirements based on metrics
+  # Check exposure variable requirements based on metrics
   only_correlation <- length(setdiff(.metrics, "correlation")) == 0
 
   # Check for single-level groups
   if (length(group_levels) < 2 && !only_correlation) {
     abort(
-      "Group variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}.",
+      "Exposure variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}.",
       error_class = "halfmoon_group_error"
     )
   }
 
   if (using_correlation && !is.numeric(transformed_data[[exposure_var]])) {
     abort(
-      "Group variable must be numeric when using correlation metric",
+      "Exposure variable must be numeric when using correlation metric",
       error_class = "halfmoon_type_error"
     )
   }
@@ -425,7 +425,7 @@ compute_single_balance_metric <- function(
           na.rm = na.rm
         )
       } else if (metric == "correlation") {
-        # For correlation, use the group variable as the second variable
+        # For correlation, use the exposure variable as the second variable
         var_data <- transformed_data[[variable]]
         group_data <- transformed_data[[exposure_var]]
 
@@ -484,7 +484,7 @@ compute_single_balance_metric <- function(
         # Binary exposure - single result
         # Determine the group level for reporting
         if (metric == "correlation") {
-          # For correlation, report the group variable name since it's continuous
+          # For correlation, report the exposure variable name since it's continuous
           group_level <- exposure_var
         } else if (metric == "energy") {
           # For energy, use NA since it's multivariate

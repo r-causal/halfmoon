@@ -174,7 +174,7 @@ plot_mirror_distributions <- function(
     group_levels <- extract_group_levels(group_var, require_binary = TRUE)
   } else {
     abort(
-      "Group variable must have at least two levels",
+      "Exposure variable must have at least two levels",
       error_class = "halfmoon_group_error"
     )
   }

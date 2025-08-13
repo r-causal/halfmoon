@@ -36,7 +36,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `plot_mirror_distributions()`:
-      ! Group variable must have at least two levels
+      ! Exposure variable must have at least two levels
 
 # plot_mirror_distributions validates categorical reference group
 

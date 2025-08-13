@@ -36,7 +36,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `plot_qq()`:
-      ! Group variable must have exactly 2 levels
+      ! Exposure variable must have exactly 2 levels
 
 # plot_qq handles NA values
 

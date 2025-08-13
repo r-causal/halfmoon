@@ -4,7 +4,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `bal_smd()`:
-      ! Group variable must have exactly two levels, got 1
+      ! Exposure variable must have exactly two levels, got 1
 
 ---
 
@@ -28,7 +28,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `split_by_group()`:
-      ! Group variable must have exactly two levels, got 1
+      ! Exposure variable must have exactly two levels, got 1
 
 ---
 
@@ -52,7 +52,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `split_by_group()`:
-      ! Group variable must have exactly two levels, got 1
+      ! Exposure variable must have exactly two levels, got 1
 
 ---
 
@@ -132,7 +132,7 @@
       expr
     Condition <halfmoon_group_error>
       Error in `bal_energy()`:
-      ! Group variable must have at least two levels
+      ! Exposure variable must have at least two levels
 
 ---
 
