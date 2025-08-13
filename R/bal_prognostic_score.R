@@ -274,22 +274,23 @@ bal_prognostic_fit_model <- function(
 
   model <- tryCatch(
     {
+      # Build arguments list for GLM
+      glm_args <- list(
+        formula = model_formula,
+        data = control_data,
+        family = family
+      )
+      
+      # Add weights if provided
       if (!is.null(.weights)) {
-        stats::glm(
-          formula = model_formula,
-          data = control_data,
-          family = family,
-          weights = .weights,
-          ...
-        )
-      } else {
-        stats::glm(
-          formula = model_formula,
-          data = control_data,
-          family = family,
-          ...
-        )
+        glm_args$weights <- .weights
       }
+      
+      # Add any additional arguments
+      glm_args <- c(glm_args, list(...))
+      
+      # Use do.call to bypass non-standard evaluation
+      do.call(stats::glm, glm_args)
     },
     error = function(e) {
       abort(
