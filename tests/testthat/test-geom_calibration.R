@@ -932,7 +932,10 @@ test_that("geom_calibration works with nhefs_weights data", {
   cal_data <- nhefs_weights
   cal_data$binary_outcome <- rbinom(nrow(cal_data), 1, cal_data$.fitted)
 
-  p_nhefs <- ggplot(cal_data, aes(.fitted = .fitted, .exposure = binary_outcome)) +
+  p_nhefs <- ggplot(
+    cal_data,
+    aes(.fitted = .fitted, .exposure = binary_outcome)
+  ) +
     geom_calibration(method = "breaks", bins = 8) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     labs(x = "Propensity Score", y = "Observed Rate") +

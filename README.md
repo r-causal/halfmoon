@@ -122,14 +122,14 @@ about 0.5 (what you would observe from a randomized experiment):
 roc_results <- check_model_roc_curve(
   nhefs_weights,
   .exposure = qsmk,
-  .estimate = .fitted,
+  .fitted = .fitted,
   .weights = c(w_ate, w_att, w_atm, w_ato)
 )
 
 auc_results <- check_model_auc(
   nhefs_weights,
   .exposure = qsmk,
-  .estimate = .fitted,
+  .fitted = .fitted,
   .weights = c(w_ate, w_att, w_atm, w_ato)
 )
 

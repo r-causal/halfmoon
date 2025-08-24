@@ -20,7 +20,7 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .exposure The treatment/outcome variable.
-#' @param .estimate The propensity score or fitted values.
+#' @param .fitted The propensity score or fitted values.
 #' @param .weights Weighting variables (supports tidyselect).
 #' @inheritParams check_params
 #' @inheritParams balance_params
@@ -44,7 +44,7 @@
 check_model_auc <- function(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights,
   include_observed = TRUE,
   na.rm = TRUE,
@@ -55,7 +55,7 @@ check_model_auc <- function(
   roc_data <- check_model_roc_curve(
     .data,
     {{ .exposure }},
-    {{ .estimate }},
+    {{ .fitted }},
     {{ .weights }},
     include_observed,
     na.rm,
@@ -100,7 +100,7 @@ compute_method_auc <- function(method, roc_data) {
 #'
 #' @param .data A data frame containing the variables.
 #' @param .exposure The treatment/outcome variable (unquoted).
-#' @param .estimate The propensity score or covariate (unquoted).
+#' @param .fitted The propensity score or covariate (unquoted).
 #' @param .weights Optional weighting variables (unquoted, can be multiple).
 #' @param include_observed Include unweighted results? Default TRUE.
 #' @param na.rm Remove missing values? Default TRUE.
@@ -114,14 +114,14 @@ compute_method_auc <- function(method, roc_data) {
 check_model_roc_curve <- function(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights = NULL,
   include_observed = TRUE,
   na.rm = TRUE,
   .focal_level = NULL
 ) {
   truth_quo <- rlang::enquo(.exposure)
-  estimate_quo <- rlang::enquo(.estimate)
+  estimate_quo <- rlang::enquo(.fitted)
   wts_quo <- rlang::enquo(.weights)
 
   validate_data_frame(.data)
@@ -139,7 +139,7 @@ check_model_roc_curve <- function(
   }
   if (length(estimate_name) != 1) {
     abort(
-      "{.arg .estimate} must select exactly one variable",
+      "{.arg .fitted} must select exactly one variable",
       error_class = "halfmoon_select_error",
       call = rlang::current_env()
     )
@@ -186,7 +186,7 @@ check_model_roc_curve <- function(
     )
   }
 
-  validate_numeric(estimate, ".estimate")
+  validate_numeric(estimate, ".fitted")
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)

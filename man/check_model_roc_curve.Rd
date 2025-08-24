@@ -7,7 +7,7 @@
 check_model_roc_curve(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights = NULL,
   include_observed = TRUE,
   na.rm = TRUE,
@@ -19,7 +19,7 @@ check_model_roc_curve(
 
 \item{.exposure}{The treatment/outcome variable (unquoted).}
 
-\item{.estimate}{The propensity score or covariate (unquoted).}
+\item{.fitted}{The propensity score or covariate (unquoted).}
 
 \item{.weights}{Optional weighting variables (unquoted, can be multiple).}
 

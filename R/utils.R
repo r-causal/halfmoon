@@ -105,6 +105,7 @@ utils::globalVariables(c(
   ".fitted",
   ".exposure",
   ".group",
+  "estimate",
   "ymin",
   "ymax",
   "x_quantiles",

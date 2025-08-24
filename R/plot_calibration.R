@@ -114,7 +114,10 @@ plot_model_calibration.data.frame <- function(
   # Create the base plot with new aesthetics
   p <- ggplot2::ggplot(
     x,
-    ggplot2::aes(.fitted = .data[[fitted_name]], .exposure = .data[[group_name]])
+    ggplot2::aes(
+      .fitted = .data[[fitted_name]],
+      .exposure = .data[[group_name]]
+    )
   ) +
     geom_calibration(
       method = method,

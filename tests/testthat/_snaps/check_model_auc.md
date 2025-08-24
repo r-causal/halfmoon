@@ -28,7 +28,7 @@
       expr
     Condition <halfmoon_type_error>
       Error in `check_model_roc_curve()`:
-      ! `.estimate` must be numeric, got <character>
+      ! `.fitted` must be numeric, got <character>
 
 ---
 
