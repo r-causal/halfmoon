@@ -35,7 +35,7 @@ test_that("check_ess works without observed", {
 })
 
 test_that("check_ess works with binary groups", {
-  result <- check_ess(nhefs_weights, .weights = w_ate, .group = qsmk)
+  result <- check_ess(nhefs_weights, .weights = w_ate, .exposure = qsmk)
 
   expect_s3_class(result, "tbl_df")
   expect_true("group" %in% names(result))
@@ -47,7 +47,7 @@ test_that("check_ess works with categorical groups", {
   result <- check_ess(
     nhefs_weights,
     .weights = w_cat_ate,
-    .group = alcoholfreq_cat
+    .exposure = alcoholfreq_cat
   )
 
   expect_s3_class(result, "tbl_df")
@@ -59,7 +59,7 @@ test_that("check_ess works with continuous groups", {
   result <- check_ess(
     nhefs_weights,
     .weights = w_ate,
-    .group = age,
+    .exposure = age,
     n_tiles = 4
   )
 
@@ -74,7 +74,7 @@ test_that("check_ess works with custom tile labels", {
   result <- check_ess(
     nhefs_weights,
     .weights = w_ate,
-    .group = age,
+    .exposure = age,
     n_tiles = 3,
     tile_labels = labels
   )
@@ -109,7 +109,7 @@ test_that("check_ess validates inputs", {
   )
 
   expect_halfmoon_error(
-    check_ess(nhefs_weights, .group = "not_a_column"),
+    check_ess(nhefs_weights, .exposure = "not_a_column"),
     "halfmoon_column_error"
   )
 
@@ -117,7 +117,7 @@ test_that("check_ess validates inputs", {
     check_ess(
       nhefs_weights,
       .weights = w_ate,
-      .group = age,
+      .exposure = age,
       n_tiles = 3,
       tile_labels = c("Too", "Few")
     ),

@@ -7,7 +7,7 @@
 check_model_calibration(
   data,
   .fitted,
-  .group,
+  .exposure,
   .focal_level = NULL,
   method = c("breaks", "logistic", "windowed"),
   bins = 10,
@@ -26,7 +26,7 @@ check_model_calibration(
 \item{.fitted}{Column name of predicted probabilities (numeric between 0 and 1).
 Can be unquoted (e.g., \code{p}) or quoted (e.g., \code{"p"}).}
 
-\item{.group}{Column name of treatment/group variable.
+\item{.exposure}{Column name of treatment/exposure variable.
 Can be unquoted (e.g., \code{g}) or quoted (e.g., \code{"g"}).}
 
 \item{.focal_level}{The level of the outcome variable to consider as the

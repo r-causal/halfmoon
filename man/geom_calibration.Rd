@@ -26,8 +26,8 @@ geom_calibration(
 )
 }
 \arguments{
-\item{mapping}{Aesthetic mapping (must supply \code{estimate} and \code{truth} if not inherited).
-\code{estimate} should be propensity scores/predicted probabilities, \code{truth} should be treatment variable.}
+\item{mapping}{Aesthetic mapping (must supply \code{.fitted} and \code{.exposure} if not inherited).
+\code{.fitted} should be propensity scores/predicted probabilities, \code{.exposure} should be treatment variable.}
 
 \item{data}{Data frame or tibble; if NULL, uses ggplot default.}
 
@@ -97,25 +97,25 @@ library(ggplot2)
 
 # Basic calibration plot using nhefs_weights dataset
 # .fitted contains propensity scores, qsmk is the treatment variable
-ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
   geom_calibration() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 
 # Using different methods
-ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
   geom_calibration(method = "logistic") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 
 # Specify treatment level explicitly
-ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
   geom_calibration(.focal_level = "1") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 
 # Windowed method with custom parameters
-ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
   geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   labs(x = "Propensity Score", y = "Observed Treatment Rate")

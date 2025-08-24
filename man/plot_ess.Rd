@@ -7,7 +7,7 @@
 plot_ess(
   .data,
   .weights = NULL,
-  .group = NULL,
+  .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
   tile_labels = NULL,
@@ -31,20 +31,20 @@ plot_ess(
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
-\item{.group}{Optional grouping variable. When provided, ESS is calculated
-separately for each group level. For continuous variables, groups are
+\item{.exposure}{Optional exposure variable. When provided, ESS is calculated
+separately for each exposure level. For continuous variables, groups are
 created using quantiles.}
 
 \item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
-\item{n_tiles}{For continuous \code{.group} variables, the number of quantile
+\item{n_tiles}{For continuous \code{.exposure} variables, the number of quantile
 groups to create. Default is 4 (quartiles).}
 
 \item{tile_labels}{Optional character vector of labels for the quantile groups
-when \code{.group} is continuous. If NULL, uses "Q1", "Q2", etc.}
+when \code{.exposure} is continuous. If NULL, uses "Q1", "Q2", etc.}
 
-\item{fill_color}{Color for the bars when \code{.group} is not provided.
+\item{fill_color}{Color for the bars when \code{.exposure} is not provided.
 Default is "#0172B1".}
 
 \item{alpha}{Transparency level for the bars. Default is 0.8.}
@@ -74,9 +74,9 @@ This function visualizes the output of \code{check_ess()} or computes ESS direct
 from the provided data. The plot shows how much "effective" sample size remains
 after weighting, which is a key diagnostic for assessing weight variability.
 
-When \code{.group} is not provided, the function displays overall ESS for each
-weighting method. When \code{.group} is provided, ESS is shown separately for each
-group level using dodged bars.
+When \code{.exposure} is not provided, the function displays overall ESS for each
+weighting method. When \code{.exposure} is provided, ESS is shown separately for each
+exposure level using dodged bars.
 
 For continuous grouping variables, the function automatically creates quantile
 groups (quartiles by default) to show how ESS varies across the distribution
@@ -95,24 +95,24 @@ Lower ESS percentages indicate:
 plot_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 
 # ESS by treatment group (binary exposure)
-plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk)
 
 # ESS by treatment group (categorical exposure)
-plot_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
+plot_ess(nhefs_weights, .weights = w_cat_ate, .exposure = alcoholfreq_cat)
 
 # ESS by age quartiles
-plot_ess(nhefs_weights, .weights = w_ate, .group = age)
+plot_ess(nhefs_weights, .weights = w_ate, .exposure = age)
 
 # Customize quantiles for continuous variable
-plot_ess(nhefs_weights, .weights = w_ate, .group = age,
+plot_ess(nhefs_weights, .weights = w_ate, .exposure = age,
          n_tiles = 5, tile_labels = c("Youngest", "Young", "Middle", "Older", "Oldest"))
 
 # Without percentage labels
-plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk,
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk,
          show_labels = FALSE)
 
 # Custom styling
-plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk,
+plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk,
          alpha = 0.6, fill_color = "steelblue",
          reference_line_color = "red")
 

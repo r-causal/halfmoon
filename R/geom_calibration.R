@@ -8,7 +8,7 @@
 #' @param data A data frame containing the data.
 #' @param .fitted Column name of predicted probabilities (numeric between 0 and 1).
 #'   Can be unquoted (e.g., `p`) or quoted (e.g., `"p"`).
-#' @param .group Column name of treatment/group variable.
+#' @param .exposure Column name of treatment/exposure variable.
 #'   Can be unquoted (e.g., `g`) or quoted (e.g., `"g"`).
 #' @inheritParams treatment_param
 #' @param method Character; calibration method. One of: "breaks", "logistic", or "windowed".
@@ -50,7 +50,7 @@
 check_model_calibration <- function(
   data,
   .fitted,
-  .group,
+  .exposure,
   .focal_level = NULL,
   method = c("breaks", "logistic", "windowed"),
   bins = 10,
@@ -75,10 +75,10 @@ check_model_calibration <- function(
   }
 
   fitted_quo <- rlang::enquo(.fitted)
-  group_quo <- rlang::enquo(.group)
+  group_quo <- rlang::enquo(.exposure)
 
   fitted_name <- get_column_name(fitted_quo, ".fitted")
-  group_name <- get_column_name(group_quo, ".group")
+  group_name <- get_column_name(group_quo, ".exposure")
 
   group_var <- data[[group_name]]
 
@@ -145,7 +145,7 @@ check_treatment_level <- function(group_var, .focal_level) {
     unique_levels <- unique(group_var[!is.na(group_var)])
     if (length(unique_levels) > 0 && !.focal_level %in% unique_levels) {
       abort(
-        "{.code .focal_level} {.code {.focal_level}} not found in {.code .group} variable",
+        "{.code .focal_level} {.code {.focal_level}} not found in {.code .exposure} variable",
         error_class = "halfmoon_reference_error"
       )
     }
@@ -457,7 +457,7 @@ calculate_window_statistics <- function(
 StatCalibration <- ggplot2::ggproto(
   "StatCalibration",
   ggplot2::Stat,
-  required_aes = c("estimate", "truth"),
+  required_aes = c(".fitted", ".exposure"),
   default_aes = ggplot2::aes(
     x = ggplot2::after_stat(predicted_rate),
     y = ggplot2::after_stat(observed_rate),
@@ -465,7 +465,7 @@ StatCalibration <- ggplot2::ggproto(
     ymax = ggplot2::after_stat(upper),
     alpha = 0.3
   ),
-  dropped_aes = c("truth"),
+  dropped_aes = c(".exposure"),
   setup_params = function(data, params) {
     # Set default parameters
     params$method <- params$method %||% "breaks"
@@ -500,7 +500,7 @@ StatCalibration <- ggplot2::ggproto(
       # We want to merge groups that differ only by truth factor levels
       aes_cols <- setdiff(
         names(data),
-        c("estimate", "truth", "weight", "PANEL", "group", "x", "y")
+        c(".fitted", ".exposure", "weight", "PANEL", "group", "x", "y")
       )
 
       group_signatures <- purrr::map_chr(
@@ -573,12 +573,12 @@ compute_calibration_for_group <- function(
   call = rlang::caller_env()
 ) {
   # Convert to binary using helper function
-  truth <- data$truth
-  treatment_indicator <- create_treatment_indicator(truth, .focal_level)
+  exposure <- data$.exposure
+  treatment_indicator <- create_treatment_indicator(exposure, .focal_level)
 
   # Create data frame for calibration computation
   df <- tibble::tibble(
-    x_var = data$estimate,
+    x_var = data$.fitted,
     y_var = treatment_indicator
   )
 
@@ -710,8 +710,8 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'     requiring additional packages
 #' }
 #'
-#' @param mapping Aesthetic mapping (must supply `estimate` and `truth` if not inherited).
-#'   `estimate` should be propensity scores/predicted probabilities, `truth` should be treatment variable.
+#' @param mapping Aesthetic mapping (must supply `.fitted` and `.exposure` if not inherited).
+#'   `.fitted` should be propensity scores/predicted probabilities, `.exposure` should be treatment variable.
 #' @param data Data frame or tibble; if NULL, uses ggplot default.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
@@ -733,25 +733,25 @@ GeomCalibrationPoint <- ggplot2::ggproto(
 #'
 #' # Basic calibration plot using nhefs_weights dataset
 #' # .fitted contains propensity scores, qsmk is the treatment variable
-#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+#' ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
 #'   geom_calibration() +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Using different methods
-#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+#' ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
 #'   geom_calibration(method = "logistic") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Specify treatment level explicitly
-#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+#' ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
 #'   geom_calibration(.focal_level = "1") +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")
 #'
 #' # Windowed method with custom parameters
-#' ggplot(nhefs_weights, aes(estimate = .fitted, truth = qsmk)) +
+#' ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
 #'   geom_calibration(method = "windowed", window_size = 0.2, step_size = 0.1) +
 #'   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
 #'   labs(x = "Propensity Score", y = "Observed Treatment Rate")

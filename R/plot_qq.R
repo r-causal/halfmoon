@@ -17,7 +17,7 @@
 #' @param .data A data frame containing the variables or a halfmoon_qq object.
 #' @param ... Arguments passed to methods (see Methods section).
 #' @param .var Variable to plot. Can be unquoted (e.g., `age`) or quoted (e.g., `"age"`).
-#' @param .group Column name of treatment/group variable. Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
+#' @param .exposure Column name of treatment/exposure variable. Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
 #' @param .weights Optional weighting variable(s). Can be unquoted variable names,
 #'   a character vector, or NULL. Multiple weights can be provided to compare
 #'   different weighting schemes. Default is NULL (unweighted).
@@ -70,7 +70,7 @@ plot_qq <- function(.data, ...) {
 plot_qq.default <- function(
   .data,
   .var,
-  .group,
+  .exposure,
   .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
@@ -80,10 +80,10 @@ plot_qq.default <- function(
 ) {
   # Basic validation
   var_quo <- rlang::enquo(.var)
-  group_quo <- rlang::enquo(.group)
+  group_quo <- rlang::enquo(.exposure)
 
   var_name <- get_column_name(var_quo, ".var")
-  group_name <- get_column_name(group_quo, ".group")
+  group_name <- get_column_name(group_quo, ".exposure")
 
   if (!var_name %in% names(.data)) {
     abort(
@@ -135,7 +135,7 @@ plot_qq.default <- function(
   # Validate .reference_level exists
   if (!.reference_level %in% group_levels) {
     abort(
-      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .group} levels: {.val {group_levels}}",
+      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .exposure} levels: {.val {group_levels}}",
       error_class = "halfmoon_reference_error"
     )
   }
@@ -185,7 +185,7 @@ plot_qq.default <- function(
       plot_data,
       ggplot2::aes(
         sample = {{ .var }},
-        treatment = {{ .group }},
+        treatment = {{ .exposure }},
         weight = weight
       )
     ) +
@@ -199,7 +199,7 @@ plot_qq.default <- function(
     # No weights - just use geom_qq2 directly
     p <- ggplot2::ggplot(
       .data,
-      ggplot2::aes(sample = {{ .var }}, treatment = {{ .group }})
+      ggplot2::aes(sample = {{ .var }}, treatment = {{ .exposure }})
     ) +
       geom_qq2(
         quantiles = quantiles,

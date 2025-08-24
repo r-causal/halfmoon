@@ -11,7 +11,7 @@ plot_qq(.data, ...)
 \method{plot_qq}{default}(
   .data,
   .var,
-  .group,
+  .exposure,
   .weights = NULL,
   quantiles = seq(0.01, 0.99, 0.01),
   include_observed = TRUE,
@@ -29,7 +29,7 @@ plot_qq(.data, ...)
 
 \item{.var}{Variable to plot. Can be unquoted (e.g., \code{age}) or quoted (e.g., \code{"age"}).}
 
-\item{.group}{Column name of treatment/group variable. Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
+\item{.exposure}{Column name of treatment/exposure variable. Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
 
 \item{.weights}{Optional weighting variable(s). Can be unquoted variable names,
 a character vector, or NULL. Multiple weights can be provided to compare

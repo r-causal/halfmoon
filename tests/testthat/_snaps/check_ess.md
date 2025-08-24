@@ -12,7 +12,7 @@
       expr
     Condition <halfmoon_column_error>
       Error in `check_ess()`:
-      ! Column `not_a_column` not found in `.group`
+      ! Column `not_a_column` not found in `.exposure`
 
 ---
 

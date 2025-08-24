@@ -70,9 +70,9 @@ plot_model_calibration <- function(x, ...) {
 #' @rdname plot_model_calibration
 #' @param .fitted Column name of predicted probabilities (propensity scores).
 #'   Can be unquoted (e.g., `.fitted`) or quoted (e.g., `".fitted"`).
-#' @param .group Column name of treatment/group variable.
+#' @param .exposure Column name of treatment/exposure variable.
 #'   Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
-#' @param .focal_level Value indicating which level of `.group` represents treatment.
+#' @param .focal_level Value indicating which level of `.exposure` represents treatment.
 #'   If NULL (default), uses the last level for factors or max value for numeric.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
@@ -89,7 +89,7 @@ plot_model_calibration <- function(x, ...) {
 plot_model_calibration.data.frame <- function(
   x,
   .fitted,
-  .group,
+  .exposure,
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
@@ -106,15 +106,15 @@ plot_model_calibration.data.frame <- function(
 ) {
   # Handle both quoted and unquoted column names using the same logic as check_calibration
   fitted_quo <- rlang::enquo(.fitted)
-  group_quo <- rlang::enquo(.group)
+  group_quo <- rlang::enquo(.exposure)
 
   fitted_name <- get_column_name(fitted_quo, ".fitted")
-  group_name <- get_column_name(group_quo, ".group")
+  group_name <- get_column_name(group_quo, ".exposure")
 
   # Create the base plot with new aesthetics
   p <- ggplot2::ggplot(
     x,
-    ggplot2::aes(estimate = .data[[fitted_name]], truth = .data[[group_name]])
+    ggplot2::aes(.fitted = .data[[fitted_name]], .exposure = .data[[group_name]])
   ) +
     geom_calibration(
       method = method,
@@ -193,19 +193,19 @@ plot_model_calibration.glm <- function(
   .fitted <- stats::fitted(x)
 
   # For GLM/LM models, the response is the first column of the model frame
-  .group <- model_frame[[1]]
+  .exposure <- model_frame[[1]]
 
   # Create a data frame for plotting
   plot_data <- data.frame(
     .fitted = .fitted,
-    .group = .group
+    .exposure = .exposure
   )
 
   # Call the data frame method
   plot_model_calibration.data.frame(
     plot_data,
     .fitted = .fitted,
-    .group = .group,
+    .exposure = .exposure,
     .focal_level = .focal_level,
     method = method,
     bins = bins,

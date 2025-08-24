@@ -12,7 +12,7 @@
 #' number of observations, indicating that a few observations carry
 #' disproportionately large weights.
 #'
-#' When `.group` is provided, ESS is calculated separately for each group level:
+#' When `.exposure` is provided, ESS is calculated separately for each exposure level:
 #' - For binary/categorical exposures: ESS is computed within each treatment level
 #' - For continuous exposures: The variable is divided into quantiles (using
 #'   `dplyr::ntile()`) and ESS is computed within each quantile
@@ -21,17 +21,17 @@
 #' further analysis.
 #'
 #' @inheritParams check_params
-#' @param .group Optional grouping variable. When provided, ESS is calculated
-#'   separately for each group level. For continuous variables, groups are
+#' @param .exposure Optional exposure variable. When provided, ESS is calculated
+#'   separately for each exposure level. For continuous variables, groups are
 #'   created using quantiles.
-#' @param n_tiles For continuous `.group` variables, the number of quantile
+#' @param n_tiles For continuous `.exposure` variables, the number of quantile
 #'   groups to create. Default is 4 (quartiles).
 #' @param tile_labels Optional character vector of labels for the quantile groups
-#'   when `.group` is continuous. If NULL, uses "Q1", "Q2", etc.
+#'   when `.exposure` is continuous. If NULL, uses "Q1", "Q2", etc.
 #'
 #' @return A tibble with columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
-#'   \item{group}{Character. The group level (if `.group` is provided).}
+#'   \item{group}{Character. The exposure level (if `.exposure` is provided).}
 #'   \item{n}{Integer. The number of observations in the group.}
 #'   \item{ess}{Numeric. The effective sample size.}
 #'   \item{ess_pct}{Numeric. ESS as a percentage of the actual sample size.}
@@ -44,27 +44,27 @@
 #' check_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 #'
 #' # ESS by treatment group (binary exposure)
-#' check_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
+#' check_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk)
 #'
 #' # ESS by treatment group (categorical exposure)
-#' check_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
+#' check_ess(nhefs_weights, .weights = w_cat_ate, .exposure = alcoholfreq_cat)
 #'
 #' # ESS by quartiles of a continuous variable
-#' check_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
+#' check_ess(nhefs_weights, .weights = w_ate, .exposure = age, n_tiles = 4)
 #'
 #' # Custom labels for continuous groups
-#' check_ess(nhefs_weights, .weights = w_ate, .group = age,
+#' check_ess(nhefs_weights, .weights = w_ate, .exposure = age,
 #'           n_tiles = 3, tile_labels = c("Young", "Middle", "Older"))
 #'
 #' # Without unweighted comparison
-#' check_ess(nhefs_weights, .weights = w_ate, .group = qsmk,
+#' check_ess(nhefs_weights, .weights = w_ate, .exposure = qsmk,
 #'           include_observed = FALSE)
 #'
 #' @export
 check_ess <- function(
   .data,
   .weights = NULL,
-  .group = NULL,
+  .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
   tile_labels = NULL
@@ -72,13 +72,13 @@ check_ess <- function(
   # Validate inputs
   validate_data_frame(.data)
 
-  # Handle group variable
-  group_quo <- rlang::enquo(.group)
+  # Handle exposure variable
+  group_quo <- rlang::enquo(.exposure)
   has_group <- !rlang::quo_is_null(group_quo)
 
   if (has_group) {
-    group_name <- get_column_name(group_quo, ".group")
-    validate_column_exists(.data, group_name, ".group")
+    group_name <- get_column_name(group_quo, ".exposure")
+    validate_column_exists(.data, group_name, ".exposure")
     group_var <- .data[[group_name]]
 
     # Check if continuous (numeric and more than 10 unique values)
