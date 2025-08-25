@@ -468,14 +468,14 @@ test_that("check_model_calibration handles edge cases with all methods", {
 test_that("check_model_calibration handles all zeros and all ones", {
   set.seed(123)
 
-  # All zeros - when treatment_level is not specified, 0 becomes the treatment level
+  # All zeros - when .focal_level is not specified, 0 becomes the treatment level
   # so observed_rate will be 1 (all observations match treatment level)
   zeros_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = rep(0, 50)
   )
 
-  # When all observations are 0, default treatment_level will be 0
+  # When all observations are 0, default .focal_level will be 0
   # Test the actual behavior
   result_breaks_zeros_default <- suppress_calibration_warnings(check_model_calibration(
     zeros_data,
@@ -483,7 +483,7 @@ test_that("check_model_calibration handles all zeros and all ones", {
     obs,
     method = "breaks"
   ))
-  # All values are 0 and treatment_level=0, so observed_rate=1
+  # All values are 0 and .focal_level=0, so observed_rate=1
   expect_true(all(result_breaks_zeros_default$observed_rate == 1))
 
   # Now test with mixed data where 1 is the treatment level
@@ -533,7 +533,7 @@ test_that("check_model_calibration handles all zeros and all ones", {
     obs,
     method = "breaks"
   ))
-  # With default treatment_level, all zeros means treatment_level=0, so observed_rate=1
+  # With default .focal_level, all zeros means .focal_level=0, so observed_rate=1
   expect_true(all(result_default_zeros$observed_rate == 1))
 })
 

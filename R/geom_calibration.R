@@ -84,7 +84,7 @@ check_model_calibration <- function(
 
   check_columns(data, fitted_name, group_name, .focal_level)
 
-  treatment_indicator <- check_treatment_level(group_var, .focal_level)
+  treatment_indicator <- check_focal_level(group_var, .focal_level)
 
   df <- tibble::tibble(
     x_var = data[[fitted_name]],
@@ -139,7 +139,7 @@ empty_calibration <- function(method = "breaks") {
   }
 }
 
-check_treatment_level <- function(group_var, .focal_level) {
+check_focal_level <- function(group_var, .focal_level) {
   # Validate treatment level exists if provided
   if (!is.null(.focal_level)) {
     unique_levels <- unique(group_var[!is.na(group_var)])

@@ -307,7 +307,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
   expect_true(all(c("method", "auc") %in% colnames(balance_roc)))
 })
 
-test_that("treatment_level parameter works correctly", {
+test_that(".focal_level parameter works correctly", {
   # Test with default (second level)
   roc_default <- check_model_roc_curve(
     nhefs_weights,
@@ -328,7 +328,7 @@ test_that("treatment_level parameter works correctly", {
   # Should be identical
   expect_equal(roc_default, roc_explicit)
 
-  # Test with treatment_level = "0" (opposite)
+  # Test with .focal_level = "0" (opposite)
   roc_opposite <- check_model_roc_curve(
     nhefs_weights,
     qsmk,
@@ -340,7 +340,7 @@ test_that("treatment_level parameter works correctly", {
   # ROC curves should be different
   expect_false(identical(roc_default, roc_opposite))
 
-  # Test with invalid treatment_level
+  # Test with invalid .focal_level
   expect_halfmoon_error(
     check_model_roc_curve(
       nhefs_weights,

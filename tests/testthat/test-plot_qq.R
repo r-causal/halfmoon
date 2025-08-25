@@ -3,7 +3,7 @@ test_that("plot_qq creates basic QQ plot", {
 
   expect_s3_class(p, "ggplot")
   expect_equal(length(p$layers), 2) # points + abline
-  # With NULL treatment_level, uses last level (1) as reference
+  # With NULL .focal_level, uses last level (1) as reference
   expect_equal(p$labels$x, "age (qsmk = 1)")
   expect_equal(p$labels$y, "age (qsmk = 0)")
 })
