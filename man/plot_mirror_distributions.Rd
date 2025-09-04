@@ -18,7 +18,8 @@ plot_mirror_distributions(
   include_unweighted = TRUE,
   alpha = 0.6,
   na.rm = FALSE,
-  .reference_level = 1L
+  .reference_level = 1L,
+  facet_scales = "fixed"
 )
 }
 \arguments{
@@ -59,6 +60,11 @@ distribution? Defaults to TRUE.}
 \item{.reference_level}{The reference group level for categorical exposures (>2 levels).
 Can be a string (group level) or numeric (position). Defaults to 1 (first level).
 Only used when .exposure has more than 2 levels.}
+
+\item{facet_scales}{Character. Scale specification for facets. Defaults to
+"fixed" to match ggplot2's default behavior. Options are
+"fixed", "free_x", "free_y", or "free". Use "free_y" to allow different
+y-axis scales across panels, which was the previous default behavior.}
 }
 \value{
 A ggplot2 object.

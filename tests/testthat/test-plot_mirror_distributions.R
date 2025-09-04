@@ -340,3 +340,62 @@ test_that("plot_mirror_distributions validates categorical reference group", {
     "halfmoon_range_error"
   )
 })
+
+test_that("plot_mirror_distributions respects facet_scales parameter", {
+  # Test default fixed scales
+  p_fixed <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    qsmk,
+    .weights = w_ate,
+    bins = 20
+  )
+
+  expect_s3_class(p_fixed, "ggplot")
+  expect_doppelganger("fixed facet scales default", p_fixed)
+
+  # Test free_y scales (previous default behavior)
+  p_free_y <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    qsmk,
+    .weights = w_ate,
+    facet_scales = "free_y",
+    bins = 20
+  )
+
+  expect_doppelganger("free_y facet scales", p_free_y)
+
+  # Test with categorical exposure
+  p_cat_fixed <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    type = "density"
+  )
+
+  expect_doppelganger("categorical fixed scales", p_cat_fixed)
+
+  # Test categorical with free_y
+  p_cat_free <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    alcoholfreq_cat,
+    type = "density",
+    facet_scales = "free_y"
+  )
+
+  expect_doppelganger("categorical free_y scales", p_cat_free)
+
+  # Test other scale options
+  p_free <- plot_mirror_distributions(
+    nhefs_weights,
+    age,
+    qsmk,
+    .weights = c(w_ate, w_att),
+    facet_scales = "free",
+    bins = 20
+  )
+
+  expect_doppelganger("free facet scales", p_free)
+})
