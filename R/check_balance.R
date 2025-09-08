@@ -122,9 +122,18 @@ check_balance <- function(
     # Extract just the variables we're working with
     vars_data <- dplyr::select(.data, dplyr::all_of(var_names))
 
+    # Track variable origins for interaction filtering
+    dummy_var_mapping <- list()
+
     # Create dummy variables if requested
     if (make_dummy_vars) {
-      vars_data <- create_dummy_variables(vars_data, binary_as_single = TRUE)
+      dummy_result <- create_dummy_variables(
+        vars_data,
+        binary_as_single = TRUE,
+        return_mapping = TRUE
+      )
+      vars_data <- dummy_result$data
+      dummy_var_mapping <- dummy_result$mapping
     }
 
     # Add squared terms if requested
@@ -206,13 +215,32 @@ check_balance <- function(
           }
 
           # Prepare variables for interactions
-          interaction_vars <- purrr::imap(
+          interaction_vars_list <- purrr::imap(
             original_numeric,
             prepare_interaction_variable,
             binary_categorical_names = binary_categorical_names,
             original_vars_data = original_vars_data
-          ) |>
-            purrr::flatten()
+          )
+
+          # Extract the variables and update mapping for expanded binaries
+          interaction_vars <- purrr::flatten(interaction_vars_list)
+
+          # Update mapping for any expanded binary categoricals
+          for (i in seq_along(interaction_vars_list)) {
+            var_result <- interaction_vars_list[[i]]
+            var_name <- names(original_numeric)[i]
+
+            # Check if this variable was expanded (binary categorical)
+            if (var_name %in% binary_categorical_names) {
+              # The result is already flattened by prepare_interaction_variable
+              # Get the names of the expanded dummies
+              expanded_names <- names(var_result)
+              for (expanded_name in expanded_names) {
+                # Track that this expanded dummy came from the original variable
+                dummy_var_mapping[[expanded_name]] <- var_name
+              }
+            }
+          }
 
           # Now create interactions between all pairs
           var_combinations <- utils::combn(
@@ -224,7 +252,7 @@ check_balance <- function(
           # Filter out same-variable dummy interactions (e.g., sex0 x sex1)
           valid_combinations <- purrr::keep(
             var_combinations,
-            is_valid_interaction_combo
+            \(combo) is_valid_interaction_combo(combo, dummy_var_mapping)
           )
 
           # Create interaction terms using functional programming
@@ -234,9 +262,12 @@ check_balance <- function(
             interaction_vars = interaction_vars
           )
 
-          # Flatten the list and add to vars_data
+          # Flatten the list and convert to data frame
           interaction_terms <- purrr::flatten(interaction_terms)
-          vars_data <- c(vars_data, interaction_terms)
+          if (length(interaction_terms) > 0) {
+            interaction_df <- dplyr::as_tibble(interaction_terms)
+            vars_data <- dplyr::bind_cols(vars_data, interaction_df)
+          }
         }
       }
     }
@@ -568,10 +599,21 @@ prepare_interaction_variable <- function(
 }
 
 # Check if an interaction combination is valid (not between same variable dummies)
-is_valid_interaction_combo <- function(combo) {
+is_valid_interaction_combo <- function(combo, variable_mapping = NULL) {
   var1 <- combo[1]
   var2 <- combo[2]
 
+  # If we have a mapping, use it to determine if variables come from same source
+  if (!is.null(variable_mapping)) {
+    # Get the original variable for each dummy (or the variable itself if not a dummy)
+    origin1 <- variable_mapping[[var1]] %||% var1
+    origin2 <- variable_mapping[[var2]] %||% var2
+
+    # Only keep interactions between different original variables
+    return(origin1 != origin2)
+  }
+
+  # Fallback to the old regex approach if no mapping provided
   # Extract base variable names (before dummy suffixes)
   base1 <- sub("^([^0-9]+).*", "\\1", var1)
   base2 <- sub("^([^0-9]+).*", "\\1", var2)

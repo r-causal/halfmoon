@@ -188,7 +188,11 @@ utils::globalVariables(c(
 #'   variable representations
 #'
 #' @noRd
-create_dummy_variables <- function(data, binary_as_single = TRUE) {
+create_dummy_variables <- function(
+  data,
+  binary_as_single = TRUE,
+  return_mapping = FALSE
+) {
   # Identify categorical variables (factors and character variables)
   categorical_vars <- purrr::map_lgl(
     data,
@@ -197,7 +201,11 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
 
   if (!any(categorical_vars)) {
     # No categorical variables, return data as-is
-    return(data)
+    if (return_mapping) {
+      return(list(data = data, mapping = list()))
+    } else {
+      return(data)
+    }
   }
 
   # Extract categorical and non-categorical data
@@ -210,6 +218,9 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
     data,
     -dplyr::where(\(x) is.factor(x) || is.character(x))
   )
+
+  # Track dummy variable mapping
+  dummy_mapping <- list()
 
   # Create dummy variables using functional programming
   dummy_vars <- purrr::imap(
@@ -233,6 +244,8 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
           col_factor <- factor(col_data, levels = levels_to_use)
           dummy_values <- as.numeric(col_factor) - 1
         }
+        # Track that this dummy came from the original variable
+        dummy_mapping[[col_name]] <<- col_name
         stats::setNames(list(dummy_values), col_name)
       } else {
         # Multi-level variable or binary with binary_as_single = FALSE:
@@ -242,6 +255,10 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
           levels_to_use,
           \(x) as.numeric(col_data == x)
         )
+        # Track that all these dummies came from the original variable
+        for (dummy_name in dummy_names) {
+          dummy_mapping[[dummy_name]] <<- col_name
+        }
         stats::setNames(dummy_values, dummy_names)
       }
     }
@@ -251,7 +268,13 @@ create_dummy_variables <- function(data, binary_as_single = TRUE) {
   dummy_df <- dplyr::as_tibble(purrr::flatten(dummy_vars))
 
   # Combine non-categorical and dummy variables
-  dplyr::bind_cols(non_categorical_data, dummy_df)
+  result_data <- dplyr::bind_cols(non_categorical_data, dummy_df)
+
+  if (return_mapping) {
+    return(list(data = result_data, mapping = dummy_mapping))
+  } else {
+    return(result_data)
+  }
 }
 
 # Create a signature for a group based on aesthetic columns
