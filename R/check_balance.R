@@ -141,14 +141,21 @@ check_balance <- function(
       numeric_vars <- purrr::map_lgl(vars_data, is.numeric)
       if (any(numeric_vars)) {
         numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
-        squared_data <- dplyr::mutate(
+        # Only square non-binary numeric variables
+        non_binary_numeric <- dplyr::select(
           numeric_data,
-          dplyr::across(everything(), \(x) x^2, .names = "{.col}_squared")
+          dplyr::where(\(x) !is_binary(x))
         )
-        vars_data <- dplyr::bind_cols(
-          vars_data,
-          dplyr::select(squared_data, dplyr::ends_with("_squared"))
-        )
+        if (ncol(non_binary_numeric) > 0) {
+          squared_data <- dplyr::mutate(
+            non_binary_numeric,
+            dplyr::across(everything(), \(x) x^2, .names = "{.col}_squared")
+          )
+          vars_data <- dplyr::bind_cols(
+            vars_data,
+            dplyr::select(squared_data, dplyr::ends_with("_squared"))
+          )
+        }
       }
     }
 
@@ -157,14 +164,19 @@ check_balance <- function(
       numeric_vars <- purrr::map_lgl(vars_data, is.numeric)
       if (any(numeric_vars)) {
         numeric_data <- dplyr::select(vars_data, dplyr::where(is.numeric))
-        # Only cube original variables, not squared ones
+        # Only cube original non-binary variables, not squared ones
         original_numeric <- dplyr::select(
           numeric_data,
           -dplyr::ends_with("_squared")
         )
-        if (ncol(original_numeric) > 0) {
+        # Filter out binary variables
+        non_binary_original <- dplyr::select(
+          original_numeric,
+          dplyr::where(\(x) !is_binary(x))
+        )
+        if (ncol(non_binary_original) > 0) {
           cubed_data <- dplyr::mutate(
-            original_numeric,
+            non_binary_original,
             dplyr::across(everything(), \(x) x^3, .names = "{.col}_cubed")
           )
           vars_data <- dplyr::bind_cols(

@@ -277,6 +277,12 @@ create_dummy_variables <- function(
   }
 }
 
+# Check if a numeric vector is binary (only contains 0 and 1)
+is_binary <- function(x) {
+  unique_vals <- unique(stats::na.omit(x))
+  length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
+}
+
 # Create a signature for a group based on aesthetic columns
 create_group_signature <- function(group_data, aes_cols) {
   if (length(aes_cols) > 0) {
