@@ -94,8 +94,7 @@ StatMirrorCount <- ggplot2::ggproto(
     pad = FALSE,
     breaks = NULL,
     flipped_aes = FALSE,
-    origin = NULL,
-    right = NULL,
+    ...,
     drop = NULL
   ) {
     # Check for no group
@@ -130,8 +129,7 @@ StatMirrorCount <- ggplot2::ggproto(
       pad = pad,
       breaks = breaks,
       flipped_aes = flipped_aes,
-      origin = origin,
-      right = right,
+      ...,
       drop = drop
     )
 

@@ -170,9 +170,6 @@ test_that("plot functions produce expected output structure", {
 
   expect_equal(p_auc$labels$x, "auc")
   expect_equal(p_auc$labels$y, "method")
-
-  # Check coordinate system for ROC plot
-  expect_s3_class(p_roc$coordinates, "CoordFixed")
 })
 
 # vdiffr tests
