@@ -8,18 +8,18 @@ library(propensity)
 propensity_model <- glm(
   qsmk ~
     sex +
-      race +
-      age +
-      I(age^2) +
-      education +
-      smokeintensity +
-      I(smokeintensity^2) +
-      smokeyrs +
-      I(smokeyrs^2) +
-      exercise +
-      active +
-      wt71 +
-      I(wt71^2),
+    race +
+    age +
+    I(age^2) +
+    education +
+    smokeintensity +
+    I(smokeintensity^2) +
+    smokeyrs +
+    I(smokeyrs^2) +
+    exercise +
+    active +
+    wt71 +
+    I(wt71^2),
   family = binomial(),
   data = nhefs_complete
 )
@@ -67,18 +67,18 @@ nhefs_for_model <- nhefs_with_cat %>%
 cat_ps_model <- multinom(
   alcoholfreq_cat ~
     sex +
-      race +
-      age +
-      I(age^2) +
-      education +
-      smokeintensity +
-      I(smokeintensity^2) +
-      smokeyrs +
-      I(smokeyrs^2) +
-      exercise +
-      active +
-      wt71 +
-      I(wt71^2),
+    race +
+    age +
+    I(age^2) +
+    education +
+    smokeintensity +
+    I(smokeintensity^2) +
+    smokeyrs +
+    I(smokeyrs^2) +
+    exercise +
+    active +
+    wt71 +
+    I(wt71^2),
   data = nhefs_for_model,
   trace = FALSE
 )
