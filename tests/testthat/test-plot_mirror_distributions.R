@@ -225,7 +225,7 @@ test_that("plot_mirror_distributions produces correct plot structure", {
 
   # Check that y-axis uses absolute values
   y_labels <- built$layout$panel_params[[1]]$y$get_labels() |>
-    na.omit() |>
+    stats::na.omit() |>
     as.numeric()
   expect_true(all(y_labels >= 0))
 })
