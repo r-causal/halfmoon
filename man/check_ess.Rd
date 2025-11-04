@@ -7,7 +7,7 @@
 check_ess(
   .data,
   .weights = NULL,
-  .group = NULL,
+  .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
   tile_labels = NULL
@@ -20,23 +20,23 @@ check_ess(
 a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.}
 
-\item{.group}{Optional grouping variable. When provided, ESS is calculated
-separately for each group level. For continuous variables, groups are
+\item{.exposure}{Optional exposure variable. When provided, ESS is calculated
+separately for each exposure level. For continuous variables, groups are
 created using quantiles.}
 
 \item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
-\item{n_tiles}{For continuous \code{.group} variables, the number of quantile
+\item{n_tiles}{For continuous \code{.exposure} variables, the number of quantile
 groups to create. Default is 4 (quartiles).}
 
 \item{tile_labels}{Optional character vector of labels for the quantile groups
-when \code{.group} is continuous. If NULL, uses "Q1", "Q2", etc.}
+when \code{.exposure} is continuous. If NULL, uses "Q1", "Q2", etc.}
 }
 \value{
 A tibble with columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
-\item{group}{Character. The group level (if \code{.group} is provided).}
+\item{group}{Character. The exposure level (if \code{.exposure} is provided).}
 \item{n}{Integer. The number of observations in the group.}
 \item{ess}{Numeric. The effective sample size.}
 \item{ess_pct}{Numeric. ESS as a percentage of the actual sample size.}
@@ -54,7 +54,7 @@ When weights vary substantially, the ESS can be much smaller than the actual
 number of observations, indicating that a few observations carry
 disproportionately large weights.
 
-When \code{.group} is provided, ESS is calculated separately for each group level:
+When \code{.exposure} is provided, ESS is calculated separately for each exposure level:
 \itemize{
 \item For binary/categorical exposures: ESS is computed within each treatment level
 \item For continuous exposures: The variable is divided into quantiles (using
@@ -69,20 +69,20 @@ further analysis.
 check_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 
 # ESS by treatment group (binary exposure)
-check_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
+check_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk)
 
 # ESS by treatment group (categorical exposure)
-check_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
+check_ess(nhefs_weights, .weights = w_cat_ate, .exposure = alcoholfreq_cat)
 
 # ESS by quartiles of a continuous variable
-check_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
+check_ess(nhefs_weights, .weights = w_ate, .exposure = age, n_tiles = 4)
 
 # Custom labels for continuous groups
-check_ess(nhefs_weights, .weights = w_ate, .group = age,
+check_ess(nhefs_weights, .weights = w_ate, .exposure = age,
           n_tiles = 3, tile_labels = c("Young", "Middle", "Older"))
 
 # Without unweighted comparison
-check_ess(nhefs_weights, .weights = w_ate, .group = qsmk,
+check_ess(nhefs_weights, .weights = w_ate, .exposure = qsmk,
           include_observed = FALSE)
 
 }

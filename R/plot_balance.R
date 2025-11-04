@@ -148,7 +148,7 @@ plot_balance <- function(
   }
 
   # Create caption based on whether we're using absolute values
-  caption_text <- if (abs_smd) {
+  caption_text <- if (any(.df$metric %in% "smd") && abs_smd) {
     "smd values shown as absolute values"
   } else {
     NULL

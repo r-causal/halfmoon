@@ -38,7 +38,7 @@
       plot_qq(nhefs_weights, age, qsmk, .reference_level = "invalid")
     Condition <halfmoon_reference_error>
       Error in `plot_qq()`:
-      ! `.reference_level` 'invalid' not found in `.group` levels: "0" and "1"
+      ! `.reference_level` 'invalid' not found in `.exposure` levels: "0" and "1"
 
 ---
 

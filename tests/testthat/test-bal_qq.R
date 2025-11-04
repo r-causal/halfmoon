@@ -96,7 +96,7 @@ test_that("bal_qq works with different treatment levels", {
     quantiles = c(0.25, 0.5, 0.75)
   )
 
-  # Default should match explicit treatment_level = 1
+  # Default should match explicit .focal_level = 1
   expect_equal(qq_default$exposed_quantiles, qq_1$exposed_quantiles)
   expect_equal(qq_default$unexposed_quantiles, qq_1$unexposed_quantiles)
 
@@ -121,7 +121,7 @@ test_that("bal_qq works with different treatment levels", {
 })
 
 test_that("bal_qq matches single method from check_qq", {
-  # Test with default treatment_level (should use last/max level)
+  # Test with default .focal_level (should use last/max level)
   qq_single <- bal_qq(nhefs_weights, age, qsmk, quantiles = seq(0.1, 0.9, 0.1))
   qq_check <- check_qq(
     nhefs_weights,

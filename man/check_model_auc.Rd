@@ -7,7 +7,7 @@
 check_model_auc(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights,
   include_observed = TRUE,
   na.rm = TRUE,
@@ -19,7 +19,7 @@ check_model_auc(
 
 \item{.exposure}{The treatment/outcome variable.}
 
-\item{.estimate}{The propensity score or fitted values.}
+\item{.fitted}{The propensity score or fitted values.}
 
 \item{.weights}{Weighting variables (supports tidyselect).}
 

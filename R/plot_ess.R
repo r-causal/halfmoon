@@ -9,9 +9,9 @@
 #' from the provided data. The plot shows how much "effective" sample size remains
 #' after weighting, which is a key diagnostic for assessing weight variability.
 #'
-#' When `.group` is not provided, the function displays overall ESS for each
-#' weighting method. When `.group` is provided, ESS is shown separately for each
-#' group level using dodged bars.
+#' When `.exposure` is not provided, the function displays overall ESS for each
+#' weighting method. When `.exposure` is provided, ESS is shown separately for each
+#' exposure level using dodged bars.
 #'
 #' For continuous grouping variables, the function automatically creates quantile
 #' groups (quartiles by default) to show how ESS varies across the distribution
@@ -27,7 +27,7 @@
 #'   - Output from `check_ess()` containing ESS calculations
 #'   - Raw data to compute ESS from (requires `.weights` to be specified)
 #' @inheritParams check_ess
-#' @param fill_color Color for the bars when `.group` is not provided.
+#' @param fill_color Color for the bars when `.exposure` is not provided.
 #'   Default is "#0172B1".
 #' @param alpha Transparency level for the bars. Default is 0.8.
 #' @param show_labels Logical. Show ESS percentage values as text labels on bars?
@@ -47,24 +47,24 @@
 #' plot_ess(nhefs_weights, .weights = c(w_ate, w_att, w_atm))
 #'
 #' # ESS by treatment group (binary exposure)
-#' plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
+#' plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk)
 #'
 #' # ESS by treatment group (categorical exposure)
-#' plot_ess(nhefs_weights, .weights = w_cat_ate, .group = alcoholfreq_cat)
+#' plot_ess(nhefs_weights, .weights = w_cat_ate, .exposure = alcoholfreq_cat)
 #'
 #' # ESS by age quartiles
-#' plot_ess(nhefs_weights, .weights = w_ate, .group = age)
+#' plot_ess(nhefs_weights, .weights = w_ate, .exposure = age)
 #'
 #' # Customize quantiles for continuous variable
-#' plot_ess(nhefs_weights, .weights = w_ate, .group = age,
+#' plot_ess(nhefs_weights, .weights = w_ate, .exposure = age,
 #'          n_tiles = 5, tile_labels = c("Youngest", "Young", "Middle", "Older", "Oldest"))
 #'
 #' # Without percentage labels
-#' plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk,
+#' plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk,
 #'          show_labels = FALSE)
 #'
 #' # Custom styling
-#' plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk,
+#' plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk,
 #'          alpha = 0.6, fill_color = "steelblue",
 #'          reference_line_color = "red")
 #'
@@ -79,7 +79,7 @@
 plot_ess <- function(
   .data,
   .weights = NULL,
-  .group = NULL,
+  .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
   tile_labels = NULL,
@@ -99,7 +99,7 @@ plot_ess <- function(
     .data <- check_ess(
       .data = .data,
       .weights = {{ .weights }},
-      .group = {{ .group }},
+      .exposure = {{ .exposure }},
       include_observed = include_observed,
       n_tiles = n_tiles,
       tile_labels = tile_labels

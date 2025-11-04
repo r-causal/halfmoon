@@ -48,13 +48,13 @@ test_that("plot_model_calibration works with different methods", {
   expect_s3_class(p_windowed, "ggplot")
 })
 
-test_that("plot_model_calibration works with treatment level specification", {
-  # Test with explicit treatment level
+test_that("plot_model_calibration works with focal level specification", {
+  # Test with explicit focal level
   p <- plot_model_calibration(
     nhefs_weights,
     .fitted,
     qsmk,
-    treatment_level = "1"
+    .focal_level = "1"
   )
 
   expect_s3_class(p, "ggplot")
@@ -205,8 +205,8 @@ test_that("plot_model_calibration works with glm objects", {
   p_rug <- plot_model_calibration(ps_model, include_rug = TRUE)
   expect_s3_class(p_rug, "ggplot")
 
-  # Test with treatment level
-  p_treatment <- plot_model_calibration(ps_model, treatment_level = 1)
+  # Test with focal level
+  p_treatment <- plot_model_calibration(ps_model, .focal_level = 1)
   expect_s3_class(p_treatment, "ggplot")
 })
 
@@ -280,12 +280,12 @@ test_that("plot_model_calibration visual snapshot tests", {
   )
   expect_doppelganger("plot_calibration windowed", p4)
 
-  # With explicit treatment level
+  # With explicit focal level
   p5 <- plot_model_calibration(
     nhefs_weights,
     .fitted,
     qsmk,
-    treatment_level = "1"
+    .focal_level = "1"
   )
   expect_doppelganger("plot_calibration explicit treatment", p5)
 

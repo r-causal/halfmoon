@@ -32,7 +32,7 @@ test_that("plot_ess works without groups", {
 })
 
 test_that("plot_ess works with groups", {
-  p <- plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
+  p <- plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk)
 
   # Should have fill aesthetic for groups
   expect_true("fill" %in% names(p$mapping))
@@ -88,7 +88,7 @@ test_that("plot_ess y-axis uses percent scale", {
 })
 
 test_that("plot_ess handles continuous groups", {
-  p <- plot_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 4)
+  p <- plot_ess(nhefs_weights, .weights = w_ate, .exposure = age, n_tiles = 4)
 
   expect_s3_class(p, "ggplot")
   expect_true("fill" %in% names(p$mapping))
@@ -154,7 +154,7 @@ test_that("plot_ess snapshot tests", {
   # Plot with groups
   expect_doppelganger(
     "plot_ess_groups",
-    plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .group = qsmk)
+    plot_ess(nhefs_weights, .weights = c(w_ate, w_att), .exposure = qsmk)
   )
 
   # Plot without labels
@@ -166,6 +166,6 @@ test_that("plot_ess snapshot tests", {
   # Plot with continuous groups
   expect_doppelganger(
     "plot_ess_continuous",
-    plot_ess(nhefs_weights, .weights = w_ate, .group = age, n_tiles = 3)
+    plot_ess(nhefs_weights, .weights = w_ate, .exposure = age, n_tiles = 3)
   )
 })

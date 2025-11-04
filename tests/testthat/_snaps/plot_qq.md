@@ -12,7 +12,7 @@
       expr
     Condition <halfmoon_arg_error>
       Error in `plot_qq()`:
-      ! Argument `.group` is required
+      ! Argument `.exposure` is required
 
 # plot_qq errors with missing columns
 

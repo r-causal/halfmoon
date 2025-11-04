@@ -110,10 +110,6 @@ bal_smd <- function(
   res$estimate
 }
 
-is_binary <- function(x) {
-  unique_vals <- unique(stats::na.omit(x))
-  length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
-}
 
 #' Balance Variance Ratio for Two Groups
 #'

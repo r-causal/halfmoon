@@ -65,7 +65,7 @@ determine_reference_group <- function(
 }
 
 # Create treatment indicator
-create_treatment_indicator <- function(group, treatment_level = NULL) {
+create_treatment_indicator <- function(group, .focal_level = NULL) {
   unique_levels <- unique(group[!is.na(group)])
 
   # Handle empty groups
@@ -73,19 +73,19 @@ create_treatment_indicator <- function(group, treatment_level = NULL) {
     return(integer(length(group)))
   }
 
-  if (is.null(treatment_level)) {
+  if (is.null(.focal_level)) {
     if (is.factor(group)) {
-      treatment_level <- levels(group)[length(levels(group))]
+      .focal_level <- levels(group)[length(levels(group))]
     } else {
-      treatment_level <- max(unique_levels, na.rm = TRUE)
+      .focal_level <- max(unique_levels, na.rm = TRUE)
     }
   }
 
   # Handle both factor and non-factor variables
   if (is.factor(group)) {
-    as.integer(as.character(group) == as.character(treatment_level))
+    as.integer(as.character(group) == as.character(.focal_level))
   } else {
-    as.integer(group == treatment_level)
+    as.integer(group == .focal_level)
   }
 }
 

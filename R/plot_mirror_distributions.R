@@ -44,6 +44,10 @@
 #' @param .reference_level The reference group level for categorical exposures (>2 levels).
 #'   Can be a string (group level) or numeric (position). Defaults to 1 (first level).
 #'   Only used when .exposure has more than 2 levels.
+#' @param facet_scales Character. Scale specification for facets. Defaults to
+#'   "fixed" to match ggplot2's default behavior. Options are
+#'   "fixed", "free_x", "free_y", or "free". Use "free_y" to allow different
+#'   y-axis scales across panels, which was the previous default behavior.
 #'
 #' @return A ggplot2 object.
 #'
@@ -115,7 +119,8 @@ plot_mirror_distributions <- function(
   include_unweighted = TRUE,
   alpha = 0.6,
   na.rm = FALSE,
-  .reference_level = 1L
+  .reference_level = 1L,
+  facet_scales = "fixed"
 ) {
   type <- match.arg(type)
 
@@ -220,9 +225,9 @@ plot_mirror_distributions <- function(
           na.rm = na.rm
         ) +
         if (is_categorical) {
-          ggplot2::facet_grid(comparison ~ method, scales = "free_y")
+          ggplot2::facet_grid(comparison ~ method, scales = facet_scales)
         } else {
-          ggplot2::facet_wrap(~method, scales = "free_y")
+          ggplot2::facet_wrap(~method, scales = facet_scales)
         }
     } else {
       p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[var_name]])) +
@@ -238,9 +243,9 @@ plot_mirror_distributions <- function(
           na.rm = na.rm
         ) +
         if (is_categorical) {
-          ggplot2::facet_grid(comparison ~ method, scales = "free_y")
+          ggplot2::facet_grid(comparison ~ method, scales = facet_scales)
         } else {
-          ggplot2::facet_wrap(~method, scales = "free_y")
+          ggplot2::facet_wrap(~method, scales = facet_scales)
         }
     }
   } else {
@@ -272,7 +277,7 @@ plot_mirror_distributions <- function(
 
     # Add faceting for categorical exposures without weights
     if (is_categorical) {
-      p <- p + ggplot2::facet_wrap(~comparison, scales = "free_y")
+      p <- p + ggplot2::facet_wrap(~comparison, scales = facet_scales)
     }
   }
 

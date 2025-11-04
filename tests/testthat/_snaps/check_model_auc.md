@@ -28,7 +28,7 @@
       expr
     Condition <halfmoon_type_error>
       Error in `check_model_roc_curve()`:
-      ! `.estimate` must be numeric, got <character>
+      ! `.fitted` must be numeric, got <character>
 
 ---
 
@@ -38,7 +38,7 @@
       Error in `check_model_roc_curve()`:
       ! `.exposure` must have exactly 2 levels
 
-# treatment_level parameter works correctly
+# .focal_level parameter works correctly
 
     Code
       expr

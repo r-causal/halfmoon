@@ -7,7 +7,7 @@
 bal_model_auc(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights = NULL,
   na.rm = TRUE,
   .focal_level = NULL
@@ -18,7 +18,7 @@ bal_model_auc(
 
 \item{.exposure}{The treatment/outcome variable (unquoted).}
 
-\item{.estimate}{The propensity score or fitted values (unquoted).}
+\item{.fitted}{The propensity score or fitted values (unquoted).}
 
 \item{.weights}{Optional single weight variable (unquoted). If NULL, computes
 unweighted AUC.}

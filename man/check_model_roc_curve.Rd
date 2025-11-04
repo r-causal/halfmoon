@@ -7,7 +7,7 @@
 check_model_roc_curve(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights = NULL,
   include_observed = TRUE,
   na.rm = TRUE,
@@ -19,7 +19,7 @@ check_model_roc_curve(
 
 \item{.exposure}{The treatment/outcome variable (unquoted).}
 
-\item{.estimate}{The propensity score or covariate (unquoted).}
+\item{.fitted}{The propensity score or covariate (unquoted).}
 
 \item{.weights}{Optional weighting variables (unquoted, can be multiple).}
 
@@ -37,6 +37,33 @@ A tibble with class "halfmoon_roc" containing ROC curve data.
 Computes ROC curves (weighted or unweighted) for evaluating propensity score balance.
 In causal inference, an ROC curve near the diagonal (AUC around 0.5)
 indicates good balance between treatment groups.
+}
+\examples{
+# Check ROC curves for propensity scores with multiple weights
+roc_data <- check_model_roc_curve(
+  nhefs_weights,
+  qsmk,
+  .fitted,
+  c(w_ate, w_att)
+)
+
+# Check ROC curve for a single weight without observed
+check_model_roc_curve(
+  nhefs_weights,
+  qsmk,
+  .fitted,
+  w_ate,
+  include_observed = FALSE
+)
+
+# Specify a different focal level
+check_model_roc_curve(
+  nhefs_weights,
+  qsmk,
+  .fitted,
+  w_ate,
+  .focal_level = 0  # Use 0 as the treatment level instead of 1
+)
 }
 \seealso{
 \code{\link[=check_model_auc]{check_model_auc()}} for AUC summaries, \code{\link[=bal_model_roc_curve]{bal_model_roc_curve()}} for single ROC curves

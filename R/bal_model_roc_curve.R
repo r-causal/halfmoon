@@ -17,7 +17,7 @@
 #'
 #' @param .data A data frame containing the variables.
 #' @param .exposure The treatment/outcome variable (unquoted).
-#' @param .estimate The propensity score or fitted values (unquoted).
+#' @param .fitted The propensity score or fitted values (unquoted).
 #' @param .weights Optional single weight variable (unquoted). If NULL, computes
 #'   unweighted ROC curve.
 #' @inheritParams balance_params
@@ -43,7 +43,7 @@
 bal_model_roc_curve <- function(
   .data,
   .exposure,
-  .estimate,
+  .fitted,
   .weights = NULL,
   na.rm = TRUE,
   .focal_level = NULL
@@ -51,7 +51,7 @@ bal_model_roc_curve <- function(
   validate_data_frame(.data, call = rlang::caller_env())
 
   exposure_quo <- rlang::enquo(.exposure)
-  estimate_quo <- rlang::enquo(.estimate)
+  estimate_quo <- rlang::enquo(.fitted)
   wts_quo <- rlang::enquo(.weights)
 
   # Extract column names
@@ -67,7 +67,7 @@ bal_model_roc_curve <- function(
   }
   if (length(estimate_name) != 1) {
     abort(
-      "{.arg .estimate} must select exactly one variable",
+      "{.arg .fitted} must select exactly one variable",
       error_class = "halfmoon_arg_error",
       call = rlang::current_env()
     )

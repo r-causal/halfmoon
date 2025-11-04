@@ -52,7 +52,7 @@ library(ggplot2)
 # weighted mirrored histograms
 ggplot(nhefs_weights, aes(.fitted)) +
   geom_mirror_histogram(
-    aes(exposure = qsmk),
+    aes(group = qsmk),
     bins = 50
   ) +
   geom_mirror_histogram(
@@ -60,8 +60,6 @@ ggplot(nhefs_weights, aes(.fitted)) +
     bins = 50,
     alpha = 0.5
   ) + scale_y_continuous(labels = abs)
-#> Warning in ggplot2::geom_histogram(mapping = mapping, data = data, stat =
-#> StatMirrorCount, : Ignoring unknown aesthetics: exposure
 ```
 
 <img src="man/figures/README-example-1.png" width="100%" />
@@ -122,14 +120,14 @@ about 0.5 (what you would observe from a randomized experiment):
 roc_results <- check_model_roc_curve(
   nhefs_weights,
   .exposure = qsmk,
-  .estimate = .fitted,
+  .fitted = .fitted,
   .weights = c(w_ate, w_att, w_atm, w_ato)
 )
 
 auc_results <- check_model_auc(
   nhefs_weights,
   .exposure = qsmk,
-  .estimate = .fitted,
+  .fitted = .fitted,
   .weights = c(w_ate, w_att, w_atm, w_ato)
 )
 
@@ -275,7 +273,7 @@ matches$ps <- m.out1$distance
 
 ggplot(matches, aes(ps)) +
     geom_mirror_histogram(
-        aes(exposure = factor(treat)),
+        aes(group = factor(treat)),
         bins = 50
     ) +
     geom_mirror_histogram(
@@ -283,8 +281,6 @@ ggplot(matches, aes(ps)) +
         bins = 50,
         alpha = 0.5
     ) + scale_y_continuous(labels = abs)
-#> Warning in ggplot2::geom_histogram(mapping = mapping, data = data, stat =
-#> StatMirrorCount, : Ignoring unknown aesthetics: exposure
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
