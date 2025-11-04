@@ -227,7 +227,7 @@ test_that("plot_mirror_distributions produces correct plot structure", {
   y_labels <- built$layout$panel_params[[1]]$y$get_labels() |>
     stats::na.omit() |>
     as.numeric()
-  expect_true(all(as.numeric(y_labels) >= 0))
+  expect_true(all(y_labels >= 0))
 })
 
 test_that("plot_mirror_distributions works with faceting", {
