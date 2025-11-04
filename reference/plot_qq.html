@@ -59,7 +59,7 @@ groups.</p>
 <span><span class="fu">plot_qq</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
 <span>  <span class="va">.var</span>,</span>
-<span>  <span class="va">.group</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span>, <span class="fl">0.01</span><span class="op">)</span>,</span>
 <span>  include_observed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -88,8 +88,8 @@ groups.</p>
 <dd><p>Variable to plot. Can be unquoted (e.g., <code>age</code>) or quoted (e.g., <code>"age"</code>).</p></dd>
 
 
-<dt id="arg--group">.group<a class="anchor" aria-label="anchor" href="#arg--group"></a></dt>
-<dd><p>Column name of treatment/group variable. Can be unquoted (e.g., <code>qsmk</code>) or quoted (e.g., <code>"qsmk"</code>).</p></dd>
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
+<dd><p>Column name of treatment/exposure variable. Can be unquoted (e.g., <code>qsmk</code>) or quoted (e.g., <code>"qsmk"</code>).</p></dd>
 
 
 <dt id="arg--weights">.weights<a class="anchor" aria-label="anchor" href="#arg--weights"></a></dt>

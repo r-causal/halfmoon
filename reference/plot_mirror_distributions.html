@@ -67,7 +67,8 @@ the distributions side-by-side with one group mirrored below the axis.</p>
 <span>  include_unweighted <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  .reference_level <span class="op">=</span> <span class="fl">1L</span></span>
+<span>  .reference_level <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  facet_scales <span class="op">=</span> <span class="st">"fixed"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -139,6 +140,13 @@ distribution? Defaults to TRUE.</p></dd>
 <dd><p>The reference group level for categorical exposures (&gt;2 levels).
 Can be a string (group level) or numeric (position). Defaults to 1 (first level).
 Only used when .exposure has more than 2 levels.</p></dd>
+
+
+<dt id="arg-facet-scales">facet_scales<a class="anchor" aria-label="anchor" href="#arg-facet-scales"></a></dt>
+<dd><p>Character. Scale specification for facets. Defaults to
+"fixed" to match ggplot2's default behavior. Options are
+"fixed", "free_x", "free_y", or "free". Use "free_y" to allow different
+y-axis scales across panels, which was the previous default behavior.</p></dd>
 
 </dl></div>
     <div class="section level2">

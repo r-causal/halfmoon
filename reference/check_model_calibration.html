@@ -56,7 +56,7 @@ Supports multiple methods for calibration assessment.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_model_calibration</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">.fitted</span>,</span>
-<span>  <span class="va">.group</span>,</span>
+<span>  <span class="va">.exposure</span>,</span>
 <span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"breaks"</span>, <span class="st">"logistic"</span>, <span class="st">"windowed"</span><span class="op">)</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">10</span>,</span>
@@ -83,8 +83,8 @@ Supports multiple methods for calibration assessment.</p>
 Can be unquoted (e.g., <code>p</code>) or quoted (e.g., <code>"p"</code>).</p></dd>
 
 
-<dt id="arg--group">.group<a class="anchor" aria-label="anchor" href="#arg--group"></a></dt>
-<dd><p>Column name of treatment/group variable.
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
+<dd><p>Column name of treatment/exposure variable.
 Can be unquoted (e.g., <code>g</code>) or quoted (e.g., <code>"g"</code>).</p></dd>
 
 

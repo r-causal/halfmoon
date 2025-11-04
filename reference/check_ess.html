@@ -53,7 +53,7 @@ you would have if all were equally weighted.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_ess</span><span class="op">(</span></span>
 <span>  <span class="va">.data</span>,</span>
 <span>  .weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  .group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .exposure <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  include_observed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_tiles <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  tile_labels <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -74,9 +74,9 @@ a character vector, or NULL. Multiple weights can be provided to compare
 different weighting schemes.</p></dd>
 
 
-<dt id="arg--group">.group<a class="anchor" aria-label="anchor" href="#arg--group"></a></dt>
-<dd><p>Optional grouping variable. When provided, ESS is calculated
-separately for each group level. For continuous variables, groups are
+<dt id="arg--exposure">.exposure<a class="anchor" aria-label="anchor" href="#arg--exposure"></a></dt>
+<dd><p>Optional exposure variable. When provided, ESS is calculated
+separately for each exposure level. For continuous variables, groups are
 created using quantiles.</p></dd>
 
 
@@ -86,13 +86,13 @@ created using quantiles.</p></dd>
 
 
 <dt id="arg-n-tiles">n_tiles<a class="anchor" aria-label="anchor" href="#arg-n-tiles"></a></dt>
-<dd><p>For continuous <code>.group</code> variables, the number of quantile
+<dd><p>For continuous <code>.exposure</code> variables, the number of quantile
 groups to create. Default is 4 (quartiles).</p></dd>
 
 
 <dt id="arg-tile-labels">tile_labels<a class="anchor" aria-label="anchor" href="#arg-tile-labels"></a></dt>
 <dd><p>Optional character vector of labels for the quantile groups
-when <code>.group</code> is continuous. If NULL, uses "Q1", "Q2", etc.</p></dd>
+when <code>.exposure</code> is continuous. If NULL, uses "Q1", "Q2", etc.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -102,7 +102,7 @@ when <code>.group</code> is continuous. If NULL, uses "Q1", "Q2", etc.</p></dd>
 <dd><p>Character. The weighting method ("observed" or weight variable name).</p></dd>
 
 <dt>group</dt>
-<dd><p>Character. The group level (if <code>.group</code> is provided).</p></dd>
+<dd><p>Character. The exposure level (if <code>.exposure</code> is provided).</p></dd>
 
 <dt>n</dt>
 <dd><p>Integer. The number of observations in the group.</p></dd>
@@ -121,7 +121,7 @@ when <code>.group</code> is continuous. If NULL, uses "Q1", "Q2", etc.</p></dd>
 <p>When weights vary substantially, the ESS can be much smaller than the actual
 number of observations, indicating that a few observations carry
 disproportionately large weights.</p>
-<p>When <code>.group</code> is provided, ESS is calculated separately for each group level:</p><ul><li><p>For binary/categorical exposures: ESS is computed within each treatment level</p></li>
+<p>When <code>.exposure</code> is provided, ESS is calculated separately for each exposure level:</p><ul><li><p>For binary/categorical exposures: ESS is computed within each treatment level</p></li>
 <li><p>For continuous exposures: The variable is divided into quantiles (using
 <code><a href="https://dplyr.tidyverse.org/reference/ntile.html" class="external-link">dplyr::ntile()</a></code>) and ESS is computed within each quantile</p></li>
 </ul><p>The function returns results in a tidy format suitable for plotting or
@@ -159,7 +159,7 @@ further analysis.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> w_att     <span style="text-decoration: underline;">1</span>566 <span style="text-decoration: underline;">1</span>070.    68.3</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ESS by treatment group (binary exposure)</span></span></span>
-<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span>, .group <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span>, .exposure <span class="op">=</span> <span class="va">qsmk</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   method   group     n   ess ess_pct</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -171,7 +171,7 @@ further analysis.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> w_att    1       403  403    100  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ESS by treatment group (categorical exposure)</span></span></span>
-<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_cat_ate</span>, .group <span class="op">=</span> <span class="va">alcoholfreq_cat</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_cat_ate</span>, .exposure <span class="op">=</span> <span class="va">alcoholfreq_cat</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 12 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    method    group              n   ess ess_pct</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -189,7 +189,7 @@ further analysis.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> w_cat_ate <span style="color: #BB0000;">NA</span>                 5 <span style="color: #BB0000;">NaN</span>     <span style="color: #BB0000;">NaN</span>  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ESS by quartiles of a continuous variable</span></span></span>
-<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>, .group <span class="op">=</span> <span class="va">age</span>, n_tiles <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>, .exposure <span class="op">=</span> <span class="va">age</span>, n_tiles <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 8 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   method   group     n   ess ess_pct</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -203,7 +203,7 @@ further analysis.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">8</span> w_ate    Q4      391  317.    81.0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom labels for continuous groups</span></span></span>
-<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>, .group <span class="op">=</span> <span class="va">age</span>,</span></span>
+<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>, .exposure <span class="op">=</span> <span class="va">age</span>,</span></span>
 <span class="r-in"><span>          n_tiles <span class="op">=</span> <span class="fl">3</span>, tile_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young"</span>, <span class="st">"Middle"</span>, <span class="st">"Older"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   method   group      n   ess ess_pct</span>
@@ -216,7 +216,7 @@ further analysis.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> w_ate    Older    522  417.    80.0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Without unweighted comparison</span></span></span>
-<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>, .group <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
+<span class="r-in"><span><span class="fu">check_ess</span><span class="op">(</span><span class="va">nhefs_weights</span>, .weights <span class="op">=</span> <span class="va">w_ate</span>, .exposure <span class="op">=</span> <span class="va">qsmk</span>,</span></span>
 <span class="r-in"><span>          include_observed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   method group     n   ess ess_pct</span>
