@@ -26,7 +26,7 @@ This function replaces the counts in the default header of
 Effective Sample Size (ESS). See \code{\link[=ess]{ess()}} for details.
 }
 \examples{
-\dontshow{if (rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))) withAutoprint(\{ # examplesIf}
 svy <- survey::svydesign(~1, data = nhefs_weights, weights = ~ w_ate)
 
 gtsummary::tbl_svysummary(svy, include = c(age, sex, smokeyrs)) |>
