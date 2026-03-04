@@ -11,12 +11,12 @@ Source:
 [`DESCRIPTION`](https://github.com/r-causal/halfmoon/blob/main/DESCRIPTION)
 
 Barrett M (2026). *halfmoon: Techniques to Build Better Balance*. R
-package version 0.1.0.9000, <https://github.com/r-causal/halfmoon>.
+package version 0.2.0, <https://github.com/r-causal/halfmoon>.
 
     @Manual{,
       title = {halfmoon: Techniques to Build Better Balance},
       author = {Malcolm Barrett},
       year = {2026},
-      note = {R package version 0.1.0.9000},
+      note = {R package version 0.2.0},
       url = {https://github.com/r-causal/halfmoon},
     }
