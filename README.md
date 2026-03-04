@@ -62,7 +62,7 @@ ggplot(nhefs_weights, aes(.fitted)) +
   ) + scale_y_continuous(labels = abs)
 ```
 
-<img src="man/figures/README-example-1.png" width="100%" />
+<img src="man/figures/README-example-1.png" alt="" width="100%" />
 
 ``` r
 
@@ -76,7 +76,7 @@ ggplot(
   ylab("Proportion <= x")
 ```
 
-<img src="man/figures/README-example-2.png" width="100%" />
+<img src="man/figures/README-example-2.png" alt="" width="100%" />
 
 ``` r
 
@@ -101,7 +101,7 @@ ggplot(
   geom_love()
 ```
 
-<img src="man/figures/README-example-3.png" width="100%" />
+<img src="man/figures/README-example-3.png" alt="" width="100%" />
 
 ## Propensity Score Diagnostics
 
@@ -135,7 +135,7 @@ auc_results <- check_model_auc(
 plot_model_roc_curve(roc_results)
 ```
 
-<img src="man/figures/README-roc-example-1.png" width="100%" />
+<img src="man/figures/README-roc-example-1.png" alt="" width="100%" />
 
 ``` r
 
@@ -143,7 +143,7 @@ plot_model_roc_curve(roc_results)
 plot_model_auc(auc_results)
 ```
 
-<img src="man/figures/README-roc-example-2.png" width="100%" />
+<img src="man/figures/README-roc-example-2.png" alt="" width="100%" />
 
 ### Calibration Assessment
 
@@ -154,7 +154,7 @@ frequencies:
 plot_model_calibration(nhefs_weights, .fitted, qsmk)
 ```
 
-<img src="man/figures/README-calibration-example-1.png" width="100%" />
+<img src="man/figures/README-calibration-example-1.png" alt="" width="100%" />
 
 ### Comprehensive Balance Checking
 
@@ -177,7 +177,7 @@ ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
   labs(x = "Balance Statistic", y = "Variable")
 ```
 
-<img src="man/figures/README-balance-example-1.png" width="100%" />
+<img src="man/figures/README-balance-example-1.png" alt="" width="100%" />
 
 ### Distributional Balance with QQ Plots
 
@@ -187,7 +187,7 @@ Assess distributional balance between treatment groups:
 plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 ```
 
-<img src="man/figures/README-qq-example-1.png" width="100%" />
+<img src="man/figures/README-qq-example-1.png" alt="" width="100%" />
 
 ## Example: Matching
 
@@ -224,7 +224,7 @@ match_smd <- check_balance(
 plot_balance(match_smd)
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" alt="" width="100%" />
 
 The downside here is that you can’t compare multiple matching strategies
 to the observed dataset; the label on the plot is also wrong. halfmoon
@@ -261,7 +261,7 @@ many_matched_smds <- check_balance(
 plot_balance(many_matched_smds)
 ```
 
-<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-5-1.png" alt="" width="100%" />
 
 We can also extend the idea that matching indicators are weights to
 weighted mirrored histograms, giving us a good idea of the range of
@@ -283,4 +283,4 @@ ggplot(matches, aes(ps)) +
     ) + scale_y_continuous(labels = abs)
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" alt="" width="100%" />
