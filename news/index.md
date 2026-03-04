@@ -1,5 +1,7 @@
 # Changelog
 
+## halfmoon (development version)
+
 ## halfmoon 0.2.0
 
 ## halfmoon 0.1.0.9000
