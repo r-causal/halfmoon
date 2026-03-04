@@ -109,13 +109,12 @@ geom_mirror_histogram(
 - binwidth:
 
   The width of the bins. Can be specified as a numeric value or as a
-  function that calculates width from unscaled x. Here, "unscaled x"
-  refers to the original x values in the data, before application of any
-  scale transformation. When specifying a function along with a grouping
-  structure, the function will be called once per group. The default is
-  to use the number of bins in `bins`, covering the range of the data.
-  You should always override this value, exploring multiple widths to
-  find the best to illustrate the stories in your data.
+  function that takes x after scale transformation as input and returns
+  a single numeric value. When specifying a function along with a
+  grouping structure, the function will be called once per group. The
+  default is to use the number of bins in `bins`, covering the range of
+  the data. You should always override this value, exploring multiple
+  widths to find the best to illustrate the stories in your data.
 
   The bin width of a date variable is the number of days in each time;
   the bin width of a time variable is the number of seconds.
@@ -142,7 +141,9 @@ geom_mirror_histogram(
   logical. Should this layer be included in the legends? `NA`, the
   default, includes if any aesthetics are mapped. `FALSE` never
   includes, and `TRUE` always includes. It can also be a named logical
-  vector to finely select the aesthetics to display.
+  vector to finely select the aesthetics to display. To include legend
+  keys for all levels, even when no data exists, use `TRUE`. If `NA`,
+  all levels are shown in legend, but unobserved levels are omitted.
 
 - inherit.aes:
 
@@ -150,7 +151,7 @@ geom_mirror_histogram(
   with them. This is most useful for helper functions that define both
   data and aesthetics and shouldn't inherit behaviour from the default
   plot specification, e.g.
-  [`borders()`](https://ggplot2.tidyverse.org/reference/annotation_borders.html).
+  [`annotation_borders()`](https://ggplot2.tidyverse.org/reference/annotation_borders.html).
 
 ## Value
 

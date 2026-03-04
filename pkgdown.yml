@@ -2,7 +2,7 @@ pandoc: 3.1.11
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles: {}
-last_built: 2026-03-04T15:39Z
+last_built: 2026-03-04T16:42Z
 urls:
   reference: https://r-causal.github.io/halfmoon/reference
   article: https://r-causal.github.io/halfmoon/articles
