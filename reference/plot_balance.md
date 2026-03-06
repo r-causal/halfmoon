@@ -138,19 +138,19 @@ balance_data <- check_balance(
 
 # Create balance plot
 plot_balance(balance_data)
-#> Error in geom_love(data = function(x) dplyr::filter(x, metric != "energy"),     linewidth = linewidth, point_size = point_size, vline_xintercept = if (show_vline) vline_xintercept else NULL,     vline_color = vline_color, vlinewidth = vlinewidth): unused argument (data = function(x) dplyr::filter(x, metric != "energy"))
+
 
 # Without absolute SMD values
 plot_balance(balance_data, abs_smd = FALSE)
-#> Error in geom_love(data = function(x) dplyr::filter(x, metric != "energy"),     linewidth = linewidth, point_size = point_size, vline_xintercept = if (show_vline) vline_xintercept else NULL,     vline_color = vline_color, vlinewidth = vlinewidth): unused argument (data = function(x) dplyr::filter(x, metric != "energy"))
+
 
 # With fixed scales across facets
 plot_balance(balance_data, facet_scales = "fixed")
-#> Error in geom_love(data = function(x) dplyr::filter(x, metric != "energy"),     linewidth = linewidth, point_size = point_size, vline_xintercept = if (show_vline) vline_xintercept else NULL,     vline_color = vline_color, vlinewidth = vlinewidth): unused argument (data = function(x) dplyr::filter(x, metric != "energy"))
+
 
 # Customize threshold lines
 plot_balance(balance_data, vline_xintercept = 0.05)
-#> Error in geom_love(data = function(x) dplyr::filter(x, metric != "energy"),     linewidth = linewidth, point_size = point_size, vline_xintercept = if (show_vline) vline_xintercept else NULL,     vline_color = vline_color, vlinewidth = vlinewidth): unused argument (data = function(x) dplyr::filter(x, metric != "energy"))
+
 
 # Categorical exposure example
 # Automatically uses facet_grid to show each group comparison
@@ -162,5 +162,4 @@ balance_cat <- check_balance(
   .metrics = c("smd", "vr")
 )
 plot_balance(balance_cat)
-#> Error in geom_love(data = function(x) dplyr::filter(x, metric != "energy"),     linewidth = linewidth, point_size = point_size, vline_xintercept = if (show_vline) vline_xintercept else NULL,     vline_color = vline_color, vlinewidth = vlinewidth): unused argument (data = function(x) dplyr::filter(x, metric != "energy"))
 ```
