@@ -1,3 +1,8 @@
+# Skip test if suggested package is not present for these tests.
+if (requireNamespace("survey", quietly = TRUE)) {
+  q(save = "no")
+}
+
 suppressPackageStartupMessages(library(survey))
 suppressPackageStartupMessages(library(gtsummary))
 suppressPackageStartupMessages(library(dplyr))
