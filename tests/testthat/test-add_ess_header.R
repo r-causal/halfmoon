@@ -1,7 +1,5 @@
 # Skip test if suggested package is not present for these tests.
-if (requireNamespace("survey", quietly = TRUE)) {
-  q(save = "no")
-}
+skip_if_not_installed("survey")
 
 suppressPackageStartupMessages(library(survey))
 suppressPackageStartupMessages(library(gtsummary))
