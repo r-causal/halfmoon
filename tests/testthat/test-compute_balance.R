@@ -1173,7 +1173,8 @@ test_that("bal_energy handles continuous treatments", {
   )
   continuous_treatment <- rnorm(n)
 
-  # Should work with continuous treatment (uses distance correlation)
+  # Default dependence criterion returns D(w), which is finite and nonnegative
+  # but not bounded above by 1.
   energy_cont <- bal_energy(
     .covariates = covs,
     .exposure = continuous_treatment,
@@ -1181,7 +1182,16 @@ test_that("bal_energy handles continuous treatments", {
   )
   expect_true(is.finite(energy_cont))
   expect_true(energy_cont >= 0)
-  expect_true(energy_cont <= 1) # Distance correlation is bounded [0,1]
+
+  # The dcor criterion returns a distance correlation bounded in [0, 1].
+  dcor_cont <- bal_energy(
+    .covariates = covs,
+    .exposure = continuous_treatment,
+    criterion = "dcor"
+  )
+  expect_true(is.finite(dcor_cont))
+  expect_true(dcor_cont >= 0)
+  expect_true(dcor_cont <= 1)
 
   # Should error if estimand is not NULL for continuous treatment
   expect_halfmoon_error(

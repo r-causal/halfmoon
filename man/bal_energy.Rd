@@ -102,8 +102,9 @@ of the covariates. All three terms are computed on unscaled Euclidean distance
 matrices with the weights normalized to mean 1. The weighted distance
 covariance alone has a false converse, since weights can shrink it while
 distorting the marginals, so by their Theorem 3.2 it is the full \eqn{D(w)},
-not the distance covariance, that is 0 exactly when the weighted exposure and
-covariates are independent. The \code{dimension_adj} argument controls the relative
+not the distance covariance, that is 0 exactly when the weights make the
+exposure and covariates independent without distorting their unweighted
+marginal distributions. The \code{dimension_adj} argument controls the relative
 weighting of the two marginal energy terms.
 
 \code{criterion = "dcor"} instead returns cobalt's \code{distance.cor} balance
