@@ -1148,13 +1148,18 @@ bal_energy_dependence <- function(
   mean_treat_dist <- mean(treat_dist)
   mean_cov_dist <- mean(cov_dist)
 
-  # Double-centered distance matrices for the weighted distance covariance
+  # Double-centered distance matrices for the weighted distance covariance.
+  # The matrices are symmetric, so row and column means coincide: recycling
+  # subtracts the means down the rows and sweep() subtracts them across the
+  # columns, avoiding the large temporary that outer() would allocate.
   cov_means <- colMeans(cov_dist)
-  cov_centered <- cov_dist + mean(cov_means) - outer(cov_means, cov_means, "+")
+  cov_centered <- sweep(cov_dist + mean(cov_means) - cov_means, 2, cov_means)
   treat_means <- colMeans(treat_dist)
-  treat_centered <- treat_dist +
-    mean(treat_means) -
-    outer(treat_means, treat_means, "+")
+  treat_centered <- sweep(
+    treat_dist + mean(treat_means) - treat_means,
+    2,
+    treat_means
+  )
   dcov_matrix <- cov_centered * treat_centered / n_obs^2
 
   # Dimension adjustment splits weight between the two marginal energy terms
@@ -1235,16 +1240,21 @@ bal_energy_continuous <- function(
   cov_dist <- as.matrix(dist(scaled_.covariates))
   treat_dist <- as.matrix(dist(scaled_treatment))
 
-  # Double-center the distance matrices
+  # Double-center the distance matrices. The matrices are symmetric, so row and
+  # column means coincide: recycling subtracts the means down the rows and
+  # sweep() subtracts them across the columns, avoiding the large temporary that
+  # outer() would allocate.
   cov_means <- colMeans(cov_dist)
   cov_grand_mean <- mean(cov_means)
-  cov_centered <- cov_dist + cov_grand_mean - outer(cov_means, cov_means, "+")
+  cov_centered <- sweep(cov_dist + cov_grand_mean - cov_means, 2, cov_means)
 
   treat_means <- colMeans(treat_dist)
   treat_grand_mean <- mean(treat_means)
-  treat_centered <- treat_dist +
-    treat_grand_mean -
-    outer(treat_means, treat_means, "+")
+  treat_centered <- sweep(
+    treat_dist + treat_grand_mean - treat_means,
+    2,
+    treat_means
+  )
 
   # Compute P matrix
   P <- cov_centered * treat_centered
