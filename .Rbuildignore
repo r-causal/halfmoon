@@ -16,3 +16,4 @@
 CLAUDE.md
 ^[.]?air[.]toml$
 ^\.vscode$
+^\.beads$
