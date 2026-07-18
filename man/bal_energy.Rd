@@ -12,6 +12,8 @@ bal_energy(
   .focal_level = NULL,
   use_improved = TRUE,
   standardized = TRUE,
+  criterion = c("dependence", "dcor"),
+  dimension_adj = TRUE,
   na.rm = FALSE
 )
 }
@@ -43,18 +45,37 @@ automatically determined based on estimand.}
 \item{use_improved}{Logical. Use improved energy distance for ATE? Default is TRUE.
 When TRUE, adds pairwise treatment comparisons for better group separation.}
 
-\item{standardized}{Logical. For continuous treatments, return standardized
-distance correlation? Default is TRUE.}
+\item{standardized}{Logical. Only used when \code{criterion = "dcor"} for a
+continuous exposure, where \code{TRUE} (default) returns the standardized
+distance correlation and \code{FALSE} returns the unstandardized square-root
+distance covariance. Ignored for \code{criterion = "dependence"}.}
+
+\item{criterion}{Character string selecting the continuous-exposure statistic.
+\code{"dependence"} (default) returns the weighted dependence distance \eqn{D(w)}
+of Huling, Greifer, and Chen (2023); \code{"dcor"} returns cobalt's
+\code{distance.cor} balance statistic. Ignored for binary and multi-category
+exposures, which always use the energy distance.}
+
+\item{dimension_adj}{Logical. For \code{criterion = "dependence"}, weight the two
+marginal energy terms by a dimension adjustment (\code{TRUE}, default) so that
+the covariate term and the treatment term contribute comparably regardless
+of the number of covariates, or split them evenly (\code{FALSE}). Ignored for
+\code{criterion = "dcor"} and for binary and multi-category exposures.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values result in
 an error (energy distance cannot be computed with missing data).}
 }
 \value{
-A numeric value representing the energy distance between groups. Lower
-values indicate better balance, with 0 indicating perfect balance (identical
-distributions). For continuous treatments, returns the distance correlation
-coefficient (0 = independence, 1 = perfect dependence).
+A numeric value. For binary and multi-category exposures, the energy
+distance between groups, where lower values indicate better balance and 0
+indicates identical distributions. For a continuous exposure with
+\code{criterion = "dependence"}, the weighted dependence distance \eqn{D(w)},
+which is 0 if and only if the weighted joint distribution of the exposure
+and covariates factorizes into their unweighted marginals; smaller values
+indicate better balance, and the statistic is not bounded above by 1. For a
+continuous exposure with \code{criterion = "dcor"}, cobalt's \code{distance.cor}
+balance statistic.
 }
 \description{
 Computes the energy distance as a multivariate measure of covariate balance
@@ -71,8 +92,25 @@ where the components depend on the estimand.
 For binary variables in the .covariates, variance is calculated as p(1-p)
 rather than sample variance to prevent over-weighting.
 
-For continuous treatments, the function uses distance correlation instead of
-traditional energy distance, measuring independence between treatment and .covariates.
+For a continuous exposure, \code{criterion = "dependence"} returns the weighted
+dependence distance \eqn{D(w)} of Huling, Greifer, and Chen (2023, eq. 7),
+\deqn{D(w) = \mathrm{dCov}_w(A, X) + E_w(A) + E_w(X),}
+the weighted distance covariance between the exposure \eqn{A} and the
+covariates \eqn{X} plus dimension-adjusted energy distances \eqn{E_w(A)} and
+\eqn{E_w(X)} between the weighted and unweighted marginals of the exposure and
+of the covariates. All three terms are computed on unscaled Euclidean distance
+matrices with the weights normalized to mean 1. The weighted distance
+covariance alone has a false converse, since weights can shrink it while
+distorting the marginals, so by their Theorem 3.2 it is the full \eqn{D(w)},
+not the distance covariance, that is 0 exactly when the weighted exposure and
+covariates are independent. The \code{dimension_adj} argument controls the relative
+weighting of the two marginal energy terms.
+
+\code{criterion = "dcor"} instead returns cobalt's \code{distance.cor} balance
+statistic, a weighted-variance-scaled distance correlation (or, with
+\code{standardized = FALSE}, the corresponding square-root distance covariance).
+This is a descriptive balance summary rather than a measure of weighted
+dependence.
 }
 \examples{
 # Binary treatment
