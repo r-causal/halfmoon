@@ -552,13 +552,16 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' @param criterion Character string selecting the continuous-exposure statistic.
 #'   `"dependence"` (default) returns the weighted dependence distance \eqn{D(w)}
 #'   of Huling, Greifer, and Chen (2023); `"dcor"` returns cobalt's
-#'   `distance.cor` balance statistic. Ignored for binary and multi-category
-#'   exposures, which always use the energy distance.
+#'   `distance.cor` balance statistic. Binary and multi-category exposures
+#'   always use the energy distance and accept only the default; supplying
+#'   `"dcor"` with a non-continuous exposure is an error.
 #' @param dimension_adj Logical. For `criterion = "dependence"`, weight the two
 #'   marginal energy terms by a dimension adjustment (`TRUE`, default) so that
 #'   the covariate term and the treatment term contribute comparably regardless
-#'   of the number of covariates, or split them evenly (`FALSE`). Ignored for
-#'   `criterion = "dcor"` and for binary and multi-category exposures.
+#'   of the number of covariates, or split them evenly (`FALSE`). Ignored when
+#'   `criterion = "dcor"`. Binary and multi-category exposures accept only the
+#'   default; `dimension_adj = FALSE` with a non-continuous exposure is an
+#'   error.
 #' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   an error (energy distance cannot be computed with missing data).

@@ -53,14 +53,17 @@ distance covariance. Ignored for \code{criterion = "dependence"}.}
 \item{criterion}{Character string selecting the continuous-exposure statistic.
 \code{"dependence"} (default) returns the weighted dependence distance \eqn{D(w)}
 of Huling, Greifer, and Chen (2023); \code{"dcor"} returns cobalt's
-\code{distance.cor} balance statistic. Ignored for binary and multi-category
-exposures, which always use the energy distance.}
+\code{distance.cor} balance statistic. Binary and multi-category exposures
+always use the energy distance and accept only the default; supplying
+\code{"dcor"} with a non-continuous exposure is an error.}
 
 \item{dimension_adj}{Logical. For \code{criterion = "dependence"}, weight the two
 marginal energy terms by a dimension adjustment (\code{TRUE}, default) so that
 the covariate term and the treatment term contribute comparably regardless
-of the number of covariates, or split them evenly (\code{FALSE}). Ignored for
-\code{criterion = "dcor"} and for binary and multi-category exposures.}
+of the number of covariates, or split them evenly (\code{FALSE}). Ignored when
+\code{criterion = "dcor"}. Binary and multi-category exposures accept only the
+default; \code{dimension_adj = FALSE} with a non-continuous exposure is an
+error.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values result in
