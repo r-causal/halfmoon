@@ -103,11 +103,11 @@ ggplot(long_data, aes(color = weight_type)) +
 \item \code{\link[=check_qq]{check_qq()}} for the underlying data computation
 }
 
-Other ggplot2 functions: 
-\code{\link{geom_calibration}()},
-\code{\link{geom_ecdf}()},
-\code{\link{geom_mirror_density}()},
-\code{\link{geom_mirror_histogram}()},
-\code{\link{geom_roc}()}
+Other ggplot2 functions:
+\code{\link[=geom_calibration]{geom_calibration()}},
+\code{\link[=geom_ecdf]{geom_ecdf()}},
+\code{\link[=geom_mirror_density]{geom_mirror_density()}},
+\code{\link[=geom_mirror_histogram]{geom_mirror_histogram()}},
+\code{\link[=geom_roc]{geom_roc()}}
 }
 \concept{ggplot2 functions}

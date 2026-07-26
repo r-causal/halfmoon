@@ -74,11 +74,11 @@ ggplot(long_data, aes(estimate = .fitted, exposure = qsmk, weight = weight)) +
 \seealso{
 \code{\link[=check_model_auc]{check_model_auc()}} for computing AUC values, \code{\link[=stat_roc]{stat_roc()}} for the underlying stat
 
-Other ggplot2 functions: 
-\code{\link{geom_calibration}()},
-\code{\link{geom_ecdf}()},
-\code{\link{geom_mirror_density}()},
-\code{\link{geom_mirror_histogram}()},
-\code{\link{geom_qq2}()}
+Other ggplot2 functions:
+\code{\link[=geom_calibration]{geom_calibration()}},
+\code{\link[=geom_ecdf]{geom_ecdf()}},
+\code{\link[=geom_mirror_density]{geom_mirror_density()}},
+\code{\link[=geom_mirror_histogram]{geom_mirror_histogram()}},
+\code{\link[=geom_qq2]{geom_qq2()}}
 }
 \concept{ggplot2 functions}

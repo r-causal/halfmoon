@@ -57,19 +57,19 @@ bal_ess(weights_with_na, na.rm = TRUE)
 \code{\link[=ess]{ess()}} for the underlying implementation, \code{\link[=check_ess]{check_ess()}} for
 computing ESS across multiple weighting schemes
 
-Other balance functions: 
-\code{\link{bal_corr}()},
-\code{\link{bal_ks}()},
-\code{\link{bal_model_auc}()},
-\code{\link{bal_model_roc_curve}()},
-\code{\link{bal_qq}()},
-\code{\link{bal_smd}()},
-\code{\link{bal_vr}()},
-\code{\link{check_balance}()},
-\code{\link{check_ess}()},
-\code{\link{check_model_auc}()},
-\code{\link{check_model_roc_curve}()},
-\code{\link{check_qq}()},
-\code{\link{plot_balance}()}
+Other balance functions:
+\code{\link[=bal_corr]{bal_corr()}},
+\code{\link[=bal_ks]{bal_ks()}},
+\code{\link[=bal_model_auc]{bal_model_auc()}},
+\code{\link[=bal_model_roc_curve]{bal_model_roc_curve()}},
+\code{\link[=bal_qq]{bal_qq()}},
+\code{\link[=bal_smd]{bal_smd()}},
+\code{\link[=bal_vr]{bal_vr()}},
+\code{\link[=check_balance]{check_balance()}},
+\code{\link[=check_ess]{check_ess()}},
+\code{\link[=check_model_auc]{check_model_auc()}},
+\code{\link[=check_model_roc_curve]{check_model_roc_curve()}},
+\code{\link[=check_qq]{check_qq()}},
+\code{\link[=plot_balance]{plot_balance()}}
 }
 \concept{balance functions}

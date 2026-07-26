@@ -25,8 +25,8 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{tidyselect}{\code{\link[tidyselect:starts_with]{contains}}, \code{\link[tidyselect:starts_with]{ends_with}}, \code{\link[tidyselect]{everything}}, \code{\link[tidyselect:everything]{last_col}}, \code{\link[tidyselect:starts_with]{matches}}, \code{\link[tidyselect:starts_with]{num_range}}, \code{\link[tidyselect]{one_of}}, \code{\link[tidyselect]{peek_vars}}, \code{\link[tidyselect]{starts_with}}}
+  \item{tidyselect}{\code{\link[tidyselect:contains]{contains()}}, \code{\link[tidyselect:ends_with]{ends_with()}}, \code{\link[tidyselect:everything]{everything()}}, \code{\link[tidyselect:last_col]{last_col()}}, \code{\link[tidyselect:matches]{matches()}}, \code{\link[tidyselect:num_range]{num_range()}}, \code{\link[tidyselect:one_of]{one_of()}}, \code{\link[tidyselect:peek_vars]{peek_vars()}}, \code{\link[tidyselect:starts_with]{starts_with()}}}
 
-  \item{tidysmd}{\code{\link[tidysmd]{bind_matches}}, \code{\link[tidysmd]{geom_love}}, \code{\link[tidysmd:geom_love]{love_plot}}, \code{\link[tidysmd]{tidy_smd}}}
+  \item{tidysmd}{\code{\link[tidysmd:bind_matches]{bind_matches()}}, \code{\link[tidysmd:geom_love]{geom_love()}}, \code{\link[tidysmd:love_plot]{love_plot()}}, \code{\link[tidysmd:tidy_smd]{tidy_smd()}}}
 }}
 

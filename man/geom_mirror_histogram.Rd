@@ -135,11 +135,11 @@ ggplot(nhefs_weights, aes(.fitted)) +
   scale_y_continuous(labels = abs)
 }
 \seealso{
-Other ggplot2 functions: 
-\code{\link{geom_calibration}()},
-\code{\link{geom_ecdf}()},
-\code{\link{geom_mirror_density}()},
-\code{\link{geom_qq2}()},
-\code{\link{geom_roc}()}
+Other ggplot2 functions:
+\code{\link[=geom_calibration]{geom_calibration()}},
+\code{\link[=geom_ecdf]{geom_ecdf()}},
+\code{\link[=geom_mirror_density]{geom_mirror_density()}},
+\code{\link[=geom_qq2]{geom_qq2()}},
+\code{\link[=geom_roc]{geom_roc()}}
 }
 \concept{ggplot2 functions}
