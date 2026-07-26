@@ -1173,7 +1173,8 @@ test_that("bal_energy handles continuous treatments", {
   )
   continuous_treatment <- rnorm(n)
 
-  # Should work with continuous treatment (uses distance correlation)
+  # Default dependence criterion returns D(w), which is finite and nonnegative
+  # but not bounded above by 1.
   energy_cont <- bal_energy(
     .covariates = covs,
     .exposure = continuous_treatment,
@@ -1181,7 +1182,16 @@ test_that("bal_energy handles continuous treatments", {
   )
   expect_true(is.finite(energy_cont))
   expect_true(energy_cont >= 0)
-  expect_true(energy_cont <= 1) # Distance correlation is bounded [0,1]
+
+  # The dcor criterion returns a distance correlation bounded in [0, 1].
+  dcor_cont <- bal_energy(
+    .covariates = covs,
+    .exposure = continuous_treatment,
+    criterion = "dcor"
+  )
+  expect_true(is.finite(dcor_cont))
+  expect_true(dcor_cont >= 0)
+  expect_true(dcor_cont <= 1)
 
   # Should error if estimand is not NULL for continuous treatment
   expect_halfmoon_error(
@@ -1423,7 +1433,7 @@ test_that("bal_energy multi-category comparison with cobalt", {
   expect_equal(our_energy, cobalt_energy, tolerance = 1e-4)
 })
 
-test_that("bal_energy continuous treatment comparison with cobalt", {
+test_that("bal_energy dcor criterion reproduces cobalt distance.cor", {
   testthat::skip_if_not_installed("cobalt")
   skip_on_cran()
 
@@ -1436,11 +1446,11 @@ test_that("bal_energy continuous treatment comparison with cobalt", {
   )
   treatment <- rnorm(n)
 
-  # Our implementation (distance correlation)
+  # Opt-in distance correlation criterion
   our_dcor <- bal_energy(
     .covariates = covariates,
     .exposure = treatment,
-    estimand = NULL,
+    criterion = "dcor",
     standardized = TRUE
   )
 
@@ -1453,6 +1463,346 @@ test_that("bal_energy continuous treatment comparison with cobalt", {
 
   # Should be very close
   expect_equal(our_dcor, cobalt_dcor, tolerance = 1e-4)
+})
+
+test_that("bal_energy dcor criterion with standardized = FALSE reproduces sqrt distance covariance", {
+  skip_on_cran()
+
+  set.seed(321)
+  n <- 150
+  covariates <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n)
+  )
+  treatment <- rnorm(n)
+
+  our_dcov <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    criterion = "dcor",
+    standardized = FALSE
+  )
+
+  # Hand-coded replica of the unstandardized distance covariance algorithm:
+  # weighted-variance-scaled distances, double-centered, quadratic form in
+  # sum-1 weights, returned as sqrt(dcov).
+  expected_sqrt_dcov <- function(covariates, treatment, weights = NULL) {
+    covariates <- as.matrix(covariates)
+    n_obs <- nrow(covariates)
+    if (is.null(weights)) {
+      weights <- rep(1, n_obs)
+    }
+    weights_norm <- weights / sum(weights)
+
+    binary_vars <- apply(covariates, 2, function(col) {
+      unique_vals <- unique(col)
+      length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
+    })
+
+    covariate_vars <- vapply(
+      seq_len(ncol(covariates)),
+      function(j) {
+        col <- covariates[, j]
+        if (binary_vars[j]) {
+          p <- sum(weights_norm * col)
+          p * (1 - p)
+        } else {
+          mean_x <- sum(weights_norm * col)
+          denom <- 1 - sum(weights_norm^2)
+          if (denom <= 0) {
+            sum(weights_norm * (col - mean_x)^2)
+          } else {
+            sum(weights_norm * (col - mean_x)^2) / denom
+          }
+        }
+      },
+      numeric(1)
+    )
+
+    mean_t <- sum(weights_norm * treatment)
+    denom <- 1 - sum(weights_norm^2)
+    treatment_var <- if (denom <= 0) {
+      sum(weights_norm * (treatment - mean_t)^2)
+    } else {
+      sum(weights_norm * (treatment - mean_t)^2) / denom
+    }
+
+    covariate_vars[covariate_vars == 0] <- 1
+    if (treatment_var == 0) {
+      treatment_var <- 1
+    }
+
+    scaled_cov <- scale(covariates, scale = sqrt(covariate_vars))
+    scaled_treat <- treatment / sqrt(treatment_var)
+
+    cov_dist <- as.matrix(dist(scaled_cov))
+    treat_dist <- as.matrix(dist(scaled_treat))
+
+    cov_means <- colMeans(cov_dist)
+    cov_centered <- cov_dist +
+      mean(cov_means) -
+      outer(cov_means, cov_means, "+")
+    treat_means <- colMeans(treat_dist)
+    treat_centered <- treat_dist +
+      mean(treat_means) -
+      outer(treat_means, treat_means, "+")
+
+    P <- cov_centered * treat_centered
+    dcov <- as.numeric(t(weights_norm) %*% P %*% weights_norm)
+    if (dcov <= 0) {
+      return(0)
+    }
+    sqrt(dcov)
+  }
+
+  expect_equal(
+    our_dcov,
+    expected_sqrt_dcov(covariates, treatment),
+    tolerance = 1e-8
+  )
+})
+
+test_that("bal_energy dependence criterion matches independenceWeights D_w", {
+  skip_if_not_installed("independenceWeights")
+  skip_on_cran()
+
+  set.seed(2023)
+  n <- 150
+  x1 <- rnorm(n)
+  x2 <- rnorm(n)
+  x3 <- rbinom(n, 1, 0.4)
+  covariates <- data.frame(x1 = x1, x2 = x2, x3 = x3)
+  covariate_matrix <- as.matrix(covariates)
+  treatment <- 0.5 * x1 - 0.3 * x3 + rnorm(n)
+  weights <- runif(n, 0.2, 3)
+
+  our_default <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights
+  )
+  ref_adj <- independenceWeights::weighted_energy_stats(
+    treatment,
+    covariate_matrix,
+    weights,
+    dimension_adj = TRUE
+  )$D_w
+  expect_equal(our_default, ref_adj, tolerance = 1e-8)
+
+  our_no_adj <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights,
+    dimension_adj = FALSE
+  )
+  ref_no_adj <- independenceWeights::weighted_energy_stats(
+    treatment,
+    covariate_matrix,
+    weights,
+    dimension_adj = FALSE
+  )$D_w
+  expect_equal(our_no_adj, ref_no_adj, tolerance = 1e-8)
+})
+
+test_that("bal_energy dependence criterion ignores standardized", {
+  skip_if_not_installed("independenceWeights")
+  skip_on_cran()
+
+  set.seed(2023)
+  n <- 150
+  x1 <- rnorm(n)
+  x2 <- rnorm(n)
+  x3 <- rbinom(n, 1, 0.4)
+  covariates <- data.frame(x1 = x1, x2 = x2, x3 = x3)
+  covariate_matrix <- as.matrix(covariates)
+  treatment <- 0.5 * x1 - 0.3 * x3 + rnorm(n)
+  weights <- runif(n, 0.2, 3)
+
+  ref_adj <- independenceWeights::weighted_energy_stats(
+    treatment,
+    covariate_matrix,
+    weights,
+    dimension_adj = TRUE
+  )$D_w
+
+  # standardized is ignored for the dependence criterion: standardized = FALSE
+  # must still return the dimension-adjusted D_w, both via the default criterion
+  # and when the dependence criterion is named explicitly. This pins that a
+  # standardized = FALSE call cannot be routed into the unstandardized dcor path.
+  our_default_unstd <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights,
+    standardized = FALSE
+  )
+  expect_equal(our_default_unstd, ref_adj, tolerance = 1e-8)
+
+  our_dependence_unstd <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights,
+    criterion = "dependence",
+    standardized = FALSE
+  )
+  expect_equal(our_dependence_unstd, ref_adj, tolerance = 1e-8)
+})
+
+test_that("bal_energy dependence criterion with unit weights reduces to unweighted distance covariance", {
+  skip_if_not_installed("independenceWeights")
+  skip_on_cran()
+
+  set.seed(11)
+  n <- 120
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  covariate_matrix <- as.matrix(covariates)
+  treatment <- rnorm(n)
+
+  ref <- independenceWeights::weighted_energy_stats(
+    treatment,
+    covariate_matrix,
+    rep(1, n),
+    dimension_adj = TRUE
+  )
+  # With unit weights the marginal energy terms vanish and D_w collapses to the
+  # unweighted distance covariance.
+  expect_equal(ref$D_w, ref$distcov_unweighted, tolerance = 1e-8)
+
+  our_unit <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = rep(1, n)
+  )
+  expect_equal(our_unit, ref$D_w, tolerance = 1e-8)
+
+  our_null <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = NULL
+  )
+  expect_equal(our_null, ref$D_w, tolerance = 1e-8)
+})
+
+test_that("bal_energy dependence criterion is nonnegative across random weights", {
+  skip_on_cran()
+
+  set.seed(99)
+  n <- 100
+  covariates <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    x3 = rbinom(n, 1, 0.5)
+  )
+  treatment <- rnorm(n)
+
+  for (i in seq_len(5)) {
+    weights <- runif(n, 0.1, 5)
+    result <- bal_energy(
+      .covariates = covariates,
+      .exposure = treatment,
+      .weights = weights
+    )
+    expect_true(result >= 0)
+  }
+})
+
+test_that("bal_energy dependence criterion counts marginal distortion under degenerate weights", {
+  skip_if_not_installed("independenceWeights")
+  skip_on_cran()
+
+  set.seed(505)
+  n <- 200
+  x <- rnorm(n)
+  covariates <- data.frame(x = x)
+  covariate_matrix <- as.matrix(covariates)
+  treatment <- x + rnorm(n, sd = 0.3)
+  weights <- as.numeric(abs(x) < 0.2) + 1e-6
+
+  ref <- independenceWeights::weighted_energy_stats(
+    treatment,
+    covariate_matrix,
+    weights,
+    dimension_adj = TRUE
+  )
+  our_default <- bal_energy(
+    .covariates = covariates,
+    .exposure = treatment,
+    .weights = weights
+  )
+  expect_equal(our_default, ref$D_w, tolerance = 1e-8)
+
+  # The marginal-distortion terms keep D_w well above the weighted distance
+  # covariance component alone, so degenerate weights are penalized.
+  expect_gt(ref$D_w, ref$distcov_weighted)
+  expect_gt(our_default, ref$distcov_weighted)
+})
+
+test_that("check_balance with continuous exposure and energy metric matches bal_energy default", {
+  set.seed(2024)
+  n <- 120
+  df <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    a = rnorm(n)
+  )
+
+  cb <- check_balance(df, c(x1, x2), a, .metrics = "energy")
+  energy_estimate <- cb$estimate[
+    cb$metric == "energy" & cb$method == "observed"
+  ]
+
+  direct <- bal_energy(
+    .covariates = df[c("x1", "x2")],
+    .exposure = df$a
+  )
+  expect_equal(energy_estimate, direct, tolerance = 1e-8)
+})
+
+test_that("bal_energy validates criterion and criterion-specific arguments", {
+  set.seed(1)
+  n <- 60
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  continuous_treatment <- rnorm(n)
+  discrete_treatment <- rbinom(n, 1, 0.5)
+
+  # Unknown criterion value is rejected.
+  expect_error(
+    bal_energy(
+      .covariates = covariates,
+      .exposure = continuous_treatment,
+      criterion = "bogus"
+    ),
+    class = "halfmoon_arg_error"
+  )
+
+  # The dcor criterion is continuous-only.
+  expect_error(
+    bal_energy(
+      .covariates = covariates,
+      .exposure = discrete_treatment,
+      criterion = "dcor"
+    ),
+    class = "halfmoon_arg_error"
+  )
+
+  # Non-default dimension_adj is continuous-only.
+  expect_error(
+    bal_energy(
+      .covariates = covariates,
+      .exposure = discrete_treatment,
+      dimension_adj = FALSE
+    ),
+    class = "halfmoon_arg_error"
+  )
+
+  # A non-NULL estimand with a continuous exposure remains an error.
+  expect_error(
+    bal_energy(
+      .covariates = covariates,
+      .exposure = continuous_treatment,
+      estimand = "ATE"
+    ),
+    class = "halfmoon_arg_error"
+  )
 })
 
 test_that("bal_energy handles categorical covariates", {

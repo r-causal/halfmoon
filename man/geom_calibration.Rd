@@ -123,11 +123,11 @@ ggplot(nhefs_weights, aes(.fitted = .fitted, .exposure = qsmk)) +
 \seealso{
 \code{\link[=check_model_calibration]{check_model_calibration()}} for computing calibration statistics
 
-Other ggplot2 functions: 
-\code{\link{geom_ecdf}()},
-\code{\link{geom_mirror_density}()},
-\code{\link{geom_mirror_histogram}()},
-\code{\link{geom_qq2}()},
-\code{\link{geom_roc}()}
+Other ggplot2 functions:
+\code{\link[=geom_ecdf]{geom_ecdf()}},
+\code{\link[=geom_mirror_density]{geom_mirror_density()}},
+\code{\link[=geom_mirror_histogram]{geom_mirror_histogram()}},
+\code{\link[=geom_qq2]{geom_qq2()}},
+\code{\link[=geom_roc]{geom_roc()}}
 }
 \concept{ggplot2 functions}

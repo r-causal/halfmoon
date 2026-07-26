@@ -165,11 +165,11 @@ ggplot(
 \item \code{\link[ggplot2:stat_ecdf]{ggplot2::stat_ecdf()}} for the unweighted version
 }
 
-Other ggplot2 functions: 
-\code{\link{geom_calibration}()},
-\code{\link{geom_mirror_density}()},
-\code{\link{geom_mirror_histogram}()},
-\code{\link{geom_qq2}()},
-\code{\link{geom_roc}()}
+Other ggplot2 functions:
+\code{\link[=geom_calibration]{geom_calibration()}},
+\code{\link[=geom_mirror_density]{geom_mirror_density()}},
+\code{\link[=geom_mirror_histogram]{geom_mirror_histogram()}},
+\code{\link[=geom_qq2]{geom_qq2()}},
+\code{\link[=geom_roc]{geom_roc()}}
 }
 \concept{ggplot2 functions}

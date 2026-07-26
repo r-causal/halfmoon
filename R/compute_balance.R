@@ -545,16 +545,36 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #'   automatically determined based on estimand.
 #' @param use_improved Logical. Use improved energy distance for ATE? Default is TRUE.
 #'   When TRUE, adds pairwise treatment comparisons for better group separation.
-#' @param standardized Logical. For continuous treatments, return standardized
-#'   distance correlation? Default is TRUE.
+#' @param standardized Logical. Only used when `criterion = "dcor"` for a
+#'   continuous exposure, where `TRUE` (default) returns the standardized
+#'   distance correlation and `FALSE` returns the unstandardized square-root
+#'   distance covariance. Ignored for `criterion = "dependence"`.
+#' @param criterion Character string selecting the continuous-exposure statistic.
+#'   `"dependence"` (default) returns the weighted dependence distance \eqn{D(w)}
+#'   of Huling, Greifer, and Chen (2023); `"dcor"` returns cobalt's
+#'   `distance.cor` balance statistic. Binary and multi-category exposures
+#'   always use the energy distance and accept only the default; supplying
+#'   `"dcor"` with a non-continuous exposure is an error.
+#' @param dimension_adj Logical. For `criterion = "dependence"`, weight the two
+#'   marginal energy terms by a dimension adjustment (`TRUE`, default) so that
+#'   the covariate term and the treatment term contribute comparably regardless
+#'   of the number of covariates, or split them evenly (`FALSE`). Ignored when
+#'   `criterion = "dcor"`. Binary and multi-category exposures accept only the
+#'   default; `dimension_adj = FALSE` with a non-continuous exposure is an
+#'   error.
 #' @param na.rm A logical value indicating whether to remove missing values
 #'   before computation. If `FALSE` (default), missing values result in
 #'   an error (energy distance cannot be computed with missing data).
 #'
-#' @return A numeric value representing the energy distance between groups. Lower
-#'   values indicate better balance, with 0 indicating perfect balance (identical
-#'   distributions). For continuous treatments, returns the distance correlation
-#'   coefficient (0 = independence, 1 = perfect dependence).
+#' @return A numeric value. For binary and multi-category exposures, the energy
+#'   distance between groups, where lower values indicate better balance and 0
+#'   indicates identical distributions. For a continuous exposure with
+#'   `criterion = "dependence"`, the weighted dependence distance \eqn{D(w)},
+#'   which is 0 if and only if the weighted joint distribution of the exposure
+#'   and covariates factorizes into their unweighted marginals; smaller values
+#'   indicate better balance, and the statistic is not bounded above by 1. For a
+#'   continuous exposure with `criterion = "dcor"`, cobalt's `distance.cor`
+#'   balance statistic.
 #'
 #' @details
 #' Energy distance is based on the energy statistics framework (Székely & Rizzo, 2004)
@@ -565,8 +585,26 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' For binary variables in the .covariates, variance is calculated as p(1-p)
 #' rather than sample variance to prevent over-weighting.
 #'
-#' For continuous treatments, the function uses distance correlation instead of
-#' traditional energy distance, measuring independence between treatment and .covariates.
+#' For a continuous exposure, `criterion = "dependence"` returns the weighted
+#' dependence distance \eqn{D(w)} of Huling, Greifer, and Chen (2023, eq. 7),
+#' \deqn{D(w) = \mathrm{dCov}_w(A, X) + E_w(A) + E_w(X),}
+#' the weighted distance covariance between the exposure \eqn{A} and the
+#' covariates \eqn{X} plus dimension-adjusted energy distances \eqn{E_w(A)} and
+#' \eqn{E_w(X)} between the weighted and unweighted marginals of the exposure and
+#' of the covariates. All three terms are computed on unscaled Euclidean distance
+#' matrices with the weights normalized to mean 1. The weighted distance
+#' covariance alone has a false converse, since weights can shrink it while
+#' distorting the marginals, so by their Theorem 3.2 it is the full \eqn{D(w)},
+#' not the distance covariance, that is 0 exactly when the weights make the
+#' exposure and covariates independent without distorting their unweighted
+#' marginal distributions. The `dimension_adj` argument controls the relative
+#' weighting of the two marginal energy terms.
+#'
+#' `criterion = "dcor"` instead returns cobalt's `distance.cor` balance
+#' statistic, a weighted-variance-scaled distance correlation (or, with
+#' `standardized = FALSE`, the corresponding square-root distance covariance).
+#' This is a descriptive balance summary rather than a measure of weighted
+#' dependence.
 #'
 #' @references
 #' Huling, J. D., & Mak, S. (2024). Energy Balancing of Covariate Distributions.
@@ -611,9 +649,32 @@ bal_energy <- function(
   .focal_level = NULL,
   use_improved = TRUE,
   standardized = TRUE,
+  criterion = c("dependence", "dcor"),
+  dimension_adj = TRUE,
   na.rm = FALSE
 ) {
   # Input validation
+  if (length(criterion) > 1) {
+    criterion <- criterion[[1]]
+  }
+  if (!is.character(criterion) || !criterion %in% c("dependence", "dcor")) {
+    abort(
+      "{.arg criterion} must be one of: {.val dependence} or {.val dcor}",
+      error_class = "halfmoon_arg_error"
+    )
+  }
+
+  if (
+    !is.logical(dimension_adj) ||
+      length(dimension_adj) != 1 ||
+      is.na(dimension_adj)
+  ) {
+    abort(
+      "{.arg dimension_adj} must be a single {.code TRUE} or {.code FALSE}",
+      error_class = "halfmoon_arg_error"
+    )
+  }
+
   if (!is.data.frame(.covariates) && !is.matrix(.covariates)) {
     abort(
       "Argument {.arg .covariates} must be a data frame or matrix",
@@ -701,12 +762,36 @@ bal_energy <- function(
     )
   }
 
-  # For continuous treatments, use distance correlation
+  # criterion and dimension_adj only apply to continuous exposures
+  if (!is_continuous) {
+    if (criterion == "dcor") {
+      abort(
+        "{.arg criterion} {.val dcor} is only available for continuous exposures.",
+        error_class = "halfmoon_arg_error"
+      )
+    }
+    if (!dimension_adj) {
+      abort(
+        "{.arg dimension_adj} is only used for continuous exposures.",
+        error_class = "halfmoon_arg_error"
+      )
+    }
+  }
+
+  # For continuous treatments, compute the requested criterion
   if (is_continuous) {
+    if (criterion == "dependence") {
+      return(bal_energy_dependence(
+        covariates = .covariates,
+        treatment = .exposure,
+        weights = extract_weight_data(.weights),
+        dimension_adj = dimension_adj
+      ))
+    }
     return(bal_energy_continuous(
       .covariates = .covariates,
       treatment = .exposure,
-      .weights = .weights,
+      .weights = extract_weight_data(.weights),
       standardized = standardized
     ))
   }
@@ -1031,6 +1116,78 @@ bal_energy_att_atc <- function(
   list(P = P, q = q, k = k)
 }
 
+#' Compute the weighted dependence distance D(w) for continuous treatments
+#'
+#' Native implementation of the D(w) statistic of Huling, Greifer, and Chen
+#' (2023), matching `independenceWeights::weighted_energy_stats(A, X, w,
+#' dimension_adj)$D_w`. The exposure and covariate distance matrices are each
+#' formed once and shared across the weighted distance covariance and the two
+#' marginal energy terms.
+#' @noRd
+bal_energy_dependence <- function(
+  covariates,
+  treatment,
+  weights,
+  dimension_adj
+) {
+  n_obs <- nrow(covariates)
+  n_cov <- ncol(covariates)
+
+  # Weights normalized to mean 1 (unit weights when none supplied)
+  if (is.null(weights)) {
+    weights <- rep(1, n_obs)
+  }
+  weights <- weights / mean(weights)
+
+  # Distance matrices on unscaled covariates and treatment, formed once
+  cov_dist <- as.matrix(dist(covariates))
+  treat_dist <- as.matrix(dist(treatment))
+
+  # Marginal energy pieces comparing weighted and unweighted marginals
+  q_energy_treat <- -treat_dist / n_obs^2
+  q_energy_cov <- -cov_dist / n_obs^2
+  row_energy_treat <- rowSums(treat_dist) / n_obs^2
+  row_energy_cov <- rowSums(cov_dist) / n_obs^2
+  mean_treat_dist <- mean(treat_dist)
+  mean_cov_dist <- mean(cov_dist)
+
+  # Double-centered distance matrices for the weighted distance covariance.
+  # The matrices are symmetric, so row and column means coincide: recycling
+  # subtracts the means down the rows and sweep() subtracts them across the
+  # columns, avoiding the large temporary that outer() would allocate.
+  cov_means <- colMeans(cov_dist)
+  cov_centered <- sweep(cov_dist + mean(cov_means) - cov_means, 2, cov_means)
+  treat_means <- colMeans(treat_dist)
+  treat_centered <- sweep(
+    treat_dist + mean(treat_means) - treat_means,
+    2,
+    treat_means
+  )
+  dcov_matrix <- cov_centered * treat_centered / n_obs^2
+
+  # Dimension adjustment splits weight between the two marginal energy terms
+  if (dimension_adj) {
+    adj_treat <- 1 / sqrt(n_cov)
+    adj_cov <- 1
+    adj_sum <- adj_treat + adj_cov
+    adj_treat <- adj_treat / adj_sum
+    adj_cov <- adj_cov / adj_sum
+  } else {
+    adj_treat <- 0.5
+    adj_cov <- 0.5
+  }
+
+  quad_matrix <- dcov_matrix +
+    q_energy_treat * adj_treat +
+    q_energy_cov * adj_cov
+  quad_part <- as.numeric(t(weights) %*% quad_matrix %*% weights)
+  lin_vec <- 2 * (row_energy_treat * adj_treat + row_energy_cov * adj_cov)
+  lin_part <- as.numeric(weights %*% lin_vec)
+  const_part <- -mean_cov_dist * adj_cov - mean_treat_dist * adj_treat
+
+  quad_part + lin_part + const_part
+}
+
 #' Compute distance correlation for continuous treatments
 #' @noRd
 bal_energy_continuous <- function(
@@ -1086,16 +1243,21 @@ bal_energy_continuous <- function(
   cov_dist <- as.matrix(dist(scaled_.covariates))
   treat_dist <- as.matrix(dist(scaled_treatment))
 
-  # Double-center the distance matrices
+  # Double-center the distance matrices. The matrices are symmetric, so row and
+  # column means coincide: recycling subtracts the means down the rows and
+  # sweep() subtracts them across the columns, avoiding the large temporary that
+  # outer() would allocate.
   cov_means <- colMeans(cov_dist)
   cov_grand_mean <- mean(cov_means)
-  cov_centered <- cov_dist + cov_grand_mean - outer(cov_means, cov_means, "+")
+  cov_centered <- sweep(cov_dist + cov_grand_mean - cov_means, 2, cov_means)
 
   treat_means <- colMeans(treat_dist)
   treat_grand_mean <- mean(treat_means)
-  treat_centered <- treat_dist +
-    treat_grand_mean -
-    outer(treat_means, treat_means, "+")
+  treat_centered <- sweep(
+    treat_dist + treat_grand_mean - treat_means,
+    2,
+    treat_means
+  )
 
   # Compute P matrix
   P <- cov_centered * treat_centered

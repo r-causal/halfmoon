@@ -70,19 +70,19 @@ check_model_auc(nhefs_weights, qsmk, .fitted, w_ate, include_observed = FALSE)
 \code{\link[=bal_model_auc]{bal_model_auc()}} for single AUC values, \code{\link[=plot_model_auc]{plot_model_auc()}} for visualization,
 \code{\link[=check_balance]{check_balance()}} for other balance metrics
 
-Other balance functions: 
-\code{\link{bal_corr}()},
-\code{\link{bal_ess}()},
-\code{\link{bal_ks}()},
-\code{\link{bal_model_auc}()},
-\code{\link{bal_model_roc_curve}()},
-\code{\link{bal_qq}()},
-\code{\link{bal_smd}()},
-\code{\link{bal_vr}()},
-\code{\link{check_balance}()},
-\code{\link{check_ess}()},
-\code{\link{check_model_roc_curve}()},
-\code{\link{check_qq}()},
-\code{\link{plot_balance}()}
+Other balance functions:
+\code{\link[=bal_corr]{bal_corr()}},
+\code{\link[=bal_ess]{bal_ess()}},
+\code{\link[=bal_ks]{bal_ks()}},
+\code{\link[=bal_model_auc]{bal_model_auc()}},
+\code{\link[=bal_model_roc_curve]{bal_model_roc_curve()}},
+\code{\link[=bal_qq]{bal_qq()}},
+\code{\link[=bal_smd]{bal_smd()}},
+\code{\link[=bal_vr]{bal_vr()}},
+\code{\link[=check_balance]{check_balance()}},
+\code{\link[=check_ess]{check_ess()}},
+\code{\link[=check_model_roc_curve]{check_model_roc_curve()}},
+\code{\link[=check_qq]{check_qq()}},
+\code{\link[=plot_balance]{plot_balance()}}
 }
 \concept{balance functions}
