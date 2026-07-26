@@ -5,7 +5,7 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Balance Energy Distance — bal_energy"><meta name="description" content="Computes the energy distance as a multivariate measure of covariate balance
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Balance Energy Distance — bal_energy"><meta name="description" content="Computes the energy distance as a multivariate measure of covariate balance
 between groups. Energy distance captures the similarity between distributions
 across the entire joint distribution of .covariates, making it more comprehensive
 than univariate balance measures."><meta property="og:description" content="Computes the energy distance as a multivariate measure of covariate balance
@@ -61,6 +61,8 @@ than univariate balance measures.</p>
 <span>  .focal_level <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_improved <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  standardized <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  criterion <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dependence"</span>, <span class="st">"dcor"</span><span class="op">)</span>,</span>
+<span>  dimension_adj <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -107,8 +109,29 @@ When TRUE, adds pairwise treatment comparisons for better group separation.</p><
 
 
 <dt id="arg-standardized">standardized<a class="anchor" aria-label="anchor" href="#arg-standardized"></a></dt>
-<dd><p>Logical. For continuous treatments, return standardized
-distance correlation? Default is TRUE.</p></dd>
+<dd><p>Logical. Only used when <code>criterion = "dcor"</code> for a
+continuous exposure, where <code>TRUE</code> (default) returns the standardized
+distance correlation and <code>FALSE</code> returns the unstandardized square-root
+distance covariance. Ignored for <code>criterion = "dependence"</code>.</p></dd>
+
+
+<dt id="arg-criterion">criterion<a class="anchor" aria-label="anchor" href="#arg-criterion"></a></dt>
+<dd><p>Character string selecting the continuous-exposure statistic.
+<code>"dependence"</code> (default) returns the weighted dependence distance \(D(w)\)
+of Huling, Greifer, and Chen (2023); <code>"dcor"</code> returns cobalt's
+<code>distance.cor</code> balance statistic. Binary and multi-category exposures
+always use the energy distance and accept only the default; supplying
+<code>"dcor"</code> with a non-continuous exposure is an error.</p></dd>
+
+
+<dt id="arg-dimension-adj">dimension_adj<a class="anchor" aria-label="anchor" href="#arg-dimension-adj"></a></dt>
+<dd><p>Logical. For <code>criterion = "dependence"</code>, weight the two
+marginal energy terms by a dimension adjustment (<code>TRUE</code>, default) so that
+the covariate term and the treatment term contribute comparably regardless
+of the number of covariates, or split them evenly (<code>FALSE</code>). Ignored when
+<code>criterion = "dcor"</code>. Binary and multi-category exposures accept only the
+default; <code>dimension_adj = FALSE</code> with a non-continuous exposure is an
+error.</p></dd>
 
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
@@ -119,10 +142,15 @@ an error (energy distance cannot be computed with missing data).</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric value representing the energy distance between groups. Lower
-values indicate better balance, with 0 indicating perfect balance (identical
-distributions). For continuous treatments, returns the distance correlation
-coefficient (0 = independence, 1 = perfect dependence).</p>
+    <p>A numeric value. For binary and multi-category exposures, the energy
+distance between groups, where lower values indicate better balance and 0
+indicates identical distributions. For a continuous exposure with
+<code>criterion = "dependence"</code>, the weighted dependence distance \(D(w)\),
+which is 0 if and only if the weighted joint distribution of the exposure
+and covariates factorizes into their unweighted marginals; smaller values
+indicate better balance, and the statistic is not bounded above by 1. For a
+continuous exposure with <code>criterion = "dcor"</code>, cobalt's <code>distance.cor</code>
+balance statistic.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -132,8 +160,25 @@ The calculation uses a quadratic form: \(w^T P w + q^T w + k\),
 where the components depend on the estimand.</p>
 <p>For binary variables in the .covariates, variance is calculated as p(1-p)
 rather than sample variance to prevent over-weighting.</p>
-<p>For continuous treatments, the function uses distance correlation instead of
-traditional energy distance, measuring independence between treatment and .covariates.</p>
+<p>For a continuous exposure, <code>criterion = "dependence"</code> returns the weighted
+dependence distance \(D(w)\) of Huling, Greifer, and Chen (2023, eq. 7),
+$$D(w) = \mathrm{dCov}_w(A, X) + E_w(A) + E_w(X),$$
+the weighted distance covariance between the exposure \(A\) and the
+covariates \(X\) plus dimension-adjusted energy distances \(E_w(A)\) and
+\(E_w(X)\) between the weighted and unweighted marginals of the exposure and
+of the covariates. All three terms are computed on unscaled Euclidean distance
+matrices with the weights normalized to mean 1. The weighted distance
+covariance alone has a false converse, since weights can shrink it while
+distorting the marginals, so by their Theorem 3.2 it is the full \(D(w)\),
+not the distance covariance, that is 0 exactly when the weights make the
+exposure and covariates independent without distorting their unweighted
+marginal distributions. The <code>dimension_adj</code> argument controls the relative
+weighting of the two marginal energy terms.</p>
+<p><code>criterion = "dcor"</code> instead returns cobalt's <code>distance.cor</code> balance
+statistic, a weighted-variance-scaled distance correlation (or, with
+<code>standardized = FALSE</code>, the corresponding square-root distance covariance).
+This is a descriptive balance summary rather than a measure of weighted
+dependence.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -184,7 +229,7 @@ high dimension. InterStat, 5.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

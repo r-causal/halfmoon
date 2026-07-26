@@ -260,7 +260,7 @@ check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
 #>   <chr>    <chr>       <chr>    <chr>          <dbl>
 #> 1 hp       disp        observed correlation    0.791
 #> 2 mpg      disp        observed correlation   -0.848
-#> 3 NA       NA          observed energy         0.882
+#> 3 NA       NA          observed energy      3057.   
 
 # With dummy variables for categorical variables (default behavior)
 check_balance(nhefs_weights, c(age, sex, race), qsmk)

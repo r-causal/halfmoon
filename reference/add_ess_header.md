@@ -47,38 +47,3 @@ gtsummary::tbl_svysummary(svy, include = c(age, sex, smokeyrs)) |>
 
 Characteristic
 ```
-
-**Overall**  
-ESS = 1013.3¹
-
-AGE IN 1971
-
-43 (33, 53)
-
-0: MALE 1: FEMALE
-
-  
-
-    0
-
-1,527 (49%)
-
-    1
-
-1,599 (51%)
-
-YEARS OF SMOKING
-
-24 (14, 33)
-
-¹ Median (Q1, Q3); n (%)
-
-Abbreviation: ESS = Effective Sample Size
-
-hdr \<- [paste0](https://rdrr.io/r/base/paste.html)( "\*\*{level}\*\*
-\n", "N = {n_unweighted}; ESS = {format(n, digits = 1, nsmall = 1)}" )
-gtsummary::[tbl_svysummary](https://www.danieldsjoberg.com/gtsummary/reference/tbl_svysummary.html)(svy,
-by = qsmk, include = [c](https://rdrr.io/r/base/c.html)(age, sex,
-smokeyrs)) \|\> add_ess_header(header = hdr)
-
-[TABLE]

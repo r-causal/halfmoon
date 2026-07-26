@@ -15,6 +15,7 @@ The goal of halfmoon is to cultivate balance in propensity score models.
 You can install the most recent version of halfmoon from CRAN with:
 
 ``` r
+
 install.packages("halfmoon")
 ```
 
@@ -22,6 +23,7 @@ You can also install the development version of halfmoon from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("r-causal/halfmoon")
 ```
@@ -32,6 +34,7 @@ halfmoon includes several techniques for assessing the balance created
 by propensity score weights.
 
 ``` r
+
 library(halfmoon)
 library(ggplot2)
 
@@ -52,6 +55,7 @@ ggplot(nhefs_weights, aes(.fitted)) +
 
 ``` r
 
+
 # weighted ecdf
 ggplot(
   nhefs_weights,
@@ -65,6 +69,7 @@ ggplot(
 ![](reference/figures/README-example-2.png)
 
 ``` r
+
 
 # weighted SMDs
 plot_df <- check_balance(
@@ -102,6 +107,7 @@ treatment groups, as well as whether or not the weights create an AUC of
 about 0.5 (what you would observe from a randomized experiment):
 
 ``` r
+
 # Check AUC across different weighting methods
 roc_results <- check_model_roc_curve(
   nhefs_weights,
@@ -125,6 +131,7 @@ plot_model_roc_curve(roc_results)
 
 ``` r
 
+
 # Display AUC values
 plot_model_auc(auc_results)
 ```
@@ -137,6 +144,7 @@ Evaluate whether predicted probabilities align with observed treatment
 frequencies:
 
 ``` r
+
 plot_model_calibration(nhefs_weights, .fitted, qsmk)
 ```
 
@@ -147,6 +155,7 @@ plot_model_calibration(nhefs_weights, .fitted, qsmk)
 Assess balance across multiple metrics simultaneously:
 
 ``` r
+
 # Check balance using multiple metrics
 balance_results <- check_balance(
   nhefs_weights,
@@ -170,6 +179,7 @@ ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
 Assess distributional balance between treatment groups:
 
 ``` r
+
 plot_qq(nhefs_weights, age, qsmk, .weights = c(w_ate, w_att))
 ```
 
@@ -182,6 +192,7 @@ these two objects from the
 [MatchIt](https://github.com/kosukeimai/MatchIt) documentation:
 
 ``` r
+
 library(MatchIt)
 # Default: 1:1 NN PS matching w/o replacement
 m.out1 <- matchit(treat ~ age + educ + race + nodegree +
@@ -198,6 +209,7 @@ m.out2 <- matchit(treat ~ age + educ + race + nodegree +
 One option is to just look at the matched dataset with halfmoon:
 
 ``` r
+
 matched_data <- get_matches(m.out1)
 
 match_smd <- check_balance(
@@ -219,6 +231,7 @@ comes with a helper function,
 that creates a dataset more appropriate for this task:
 
 ``` r
+
 matches <- bind_matches(lalonde, m.out1, m.out2)
 head(matches)
 #>      treat age educ   race married nodegree re74 re75       re78 m.out1 m.out2
@@ -237,6 +250,7 @@ matches, we can more easily compare multiple matched datasets with
 `.wts`:
 
 ``` r
+
 many_matched_smds <- check_balance(
   matches,
   c(age, educ, race, nodegree, married, re74, re75),
@@ -255,6 +269,7 @@ weighted mirrored histograms, giving us a good idea of the range of
 propensity scores that are being removed from the dataset.
 
 ``` r
+
 # use the distance as the propensity score
 matches$ps <- m.out1$distance
 
