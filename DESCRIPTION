@@ -16,6 +16,7 @@ BugReports: https://github.com/r-causal/halfmoon/issues
 Depends:
     R (>= 4.1.0)
 Imports:
+    causalgenerics (>= 0.0.0.9001),
     cli,
     dplyr,
     ggplot2,
@@ -41,8 +42,10 @@ Suggests:
     testthat (>= 3.0.0),
     vdiffr,
     withr
+Remotes:
+    r-causal/causalgenerics
+Config/roxygen2/version: 8.0.0
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-Config/roxygen2/version: 8.0.0
