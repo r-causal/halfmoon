@@ -39,7 +39,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="halfmoon-development-version">halfmoon (development version)<a class="anchor" aria-label="anchor" href="#halfmoon-development-version"></a></h2>
-</div>
+<ul><li><p><code><a href="https://rdrr.io/pkg/causalgenerics/man/ess.html" class="external-link">ess()</a></code> is now a re-export of the generic of the same name from causalgenerics. Attaching halfmoon alongside another package that re-exports that same generic no longer produces a masking conflict, because both packages export the one object. A package that defines its own unrelated <code><a href="https://rdrr.io/pkg/causalgenerics/man/ess.html" class="external-link">ess()</a></code> still masks, as before. The calculation is unchanged for numeric weights.</p></li>
+<li><p>Because the generic names its first argument <code>x</code>, <code><a href="https://rdrr.io/pkg/causalgenerics/man/ess.html" class="external-link">ess()</a></code> no longer accepts the argument name <code>wts</code>. Pass the weights positionally, as in <code>ess(w)</code>.</p></li>
+<li><p><code><a href="https://rdrr.io/pkg/causalgenerics/man/ess.html" class="external-link">ess()</a></code>, and <code><a href="../reference/bal_ess.html">bal_ess()</a></code> through it, now error on non-numeric input instead of returning a meaningless number. Previously <code>ess(NULL)</code> and <code>bal_ess(NULL)</code> returned <code>NaN</code>, and factors, logicals, data frames, dates, time differences, and complex vectors each produced a value: <code>bal_ess(factor("a"))</code> returned <code>1.8</code>. <code>ess(rep(0, 5))</code> and <code>ess(numeric(0))</code> still return <code>NaN</code>.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="halfmoon-020">halfmoon 0.2.0<a class="anchor" aria-label="anchor" href="#halfmoon-020"></a></h2><p class="text-muted">CRAN release: 2026-03-04</p>
 </div>

@@ -43,8 +43,6 @@
   : Check ROC Curves for Multiple Weights
 - [`check_qq()`](https://r-causal.github.io/halfmoon/reference/check_qq.md)
   : Check QQ Data for Multiple Weights
-- [`ess()`](https://r-causal.github.io/halfmoon/reference/ess.md) :
-  Calculate the Effective Sample Size (ESS)
 - [`geom_calibration()`](https://r-causal.github.io/halfmoon/reference/geom_calibration.md)
   : Geom for calibration plot with confidence intervals
 - [`geom_ecdf()`](https://r-causal.github.io/halfmoon/reference/geom_ecdf.md)

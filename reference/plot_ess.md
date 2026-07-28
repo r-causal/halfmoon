@@ -129,7 +129,7 @@ Lower ESS percentages indicate:
 
 [`check_ess()`](https://r-causal.github.io/halfmoon/reference/check_ess.md)
 for computing ESS values,
-[`ess()`](https://r-causal.github.io/halfmoon/reference/ess.md) for the
+[`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html) for the
 underlying calculation
 
 ## Examples

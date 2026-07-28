@@ -3,6 +3,10 @@
 These objects are imported from other packages. Follow the links below
 to see their documentation.
 
+- causalgenerics:
+
+  [`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html)
+
 - tidyselect:
 
   [`contains()`](https://tidyselect.r-lib.org/reference/starts_with.html),

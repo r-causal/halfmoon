@@ -99,7 +99,7 @@ further analysis.
 
 ## See also
 
-[`ess()`](https://r-causal.github.io/halfmoon/reference/ess.md) for the
+[`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html) for the
 underlying ESS calculation,
 [`plot_ess()`](https://r-causal.github.io/halfmoon/reference/plot_ess.md)
 for visualization
