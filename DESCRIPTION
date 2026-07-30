@@ -16,7 +16,7 @@ BugReports: https://github.com/r-causal/halfmoon/issues
 Depends:
     R (>= 4.1.0)
 Imports:
-    causalgenerics (>= 0.0.0.9001),
+    causalgenerics (>= 0.0.0.9000),
     cli,
     dplyr,
     ggplot2,
