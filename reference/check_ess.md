@@ -99,8 +99,8 @@ further analysis.
 
 ## See also
 
-[`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html) for the
-underlying ESS calculation,
+[`ess()`](https://r-causal.github.io/causalgenerics/reference/ess.html)
+for the underlying ESS calculation,
 [`plot_ess()`](https://r-causal.github.io/halfmoon/reference/plot_ess.md)
 for visualization
 

@@ -3,7 +3,8 @@
 This function replaces the counts in the default header of
 [`gtsummary::tbl_svysummary()`](https://www.danieldsjoberg.com/gtsummary/reference/tbl_svysummary.html)
 tables to counts representing the Effective Sample Size (ESS). See
-[`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html) for details.
+[`ess()`](https://r-causal.github.io/causalgenerics/reference/ess.html)
+for details.
 
 ## Usage
 

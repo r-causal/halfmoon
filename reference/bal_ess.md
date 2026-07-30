@@ -2,8 +2,8 @@
 
 Computes the effective sample size (ESS) for a single weighting scheme.
 This is a wrapper around
-[`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html) that follows
-the bal\_\*() naming convention for API consistency.
+[`ess()`](https://r-causal.github.io/causalgenerics/reference/ess.html)
+that follows the bal\_\*() naming convention for API consistency.
 
 ## Usage
 
@@ -51,8 +51,8 @@ observations carry disproportionately large weights.
 
 ## See also
 
-[`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html) for the
-underlying implementation,
+[`ess()`](https://r-causal.github.io/causalgenerics/reference/ess.html)
+for the underlying implementation,
 [`check_ess()`](https://r-causal.github.io/halfmoon/reference/check_ess.md)
 for computing ESS across multiple weighting schemes
 

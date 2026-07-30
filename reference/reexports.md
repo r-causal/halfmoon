@@ -5,7 +5,7 @@ to see their documentation.
 
 - causalgenerics:
 
-  [`ess()`](https://rdrr.io/pkg/causalgenerics/man/ess.html)
+  [`ess()`](https://r-causal.github.io/causalgenerics/reference/ess.html)
 
 - tidyselect:
 
