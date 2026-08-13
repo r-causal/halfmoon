@@ -319,9 +319,11 @@ test_that("bal_energy keeps its own exposure heuristic for direct calls", {
 # =============================================================================
 
 test_that("default results for discrete exposures are unchanged", {
+  # The fixture is saved on one platform; estimates differ across BLAS builds
+  # at ~1e-13, so compare within testthat's default tolerance
   defaults <- readRDS(test_path("fixtures", "check-balance-defaults.rds"))
 
-  expect_identical(
+  expect_equal(
     check_balance(
       nhefs_weights,
       c(age, wt71, smokeintensity, race, education),
@@ -329,7 +331,7 @@ test_that("default results for discrete exposures are unchanged", {
     ),
     defaults$binary_observed
   )
-  expect_identical(
+  expect_equal(
     check_balance(
       nhefs_weights,
       c(age, wt71, smokeintensity, race, education),
@@ -338,11 +340,11 @@ test_that("default results for discrete exposures are unchanged", {
     ),
     defaults$binary_weighted
   )
-  expect_identical(
+  expect_equal(
     check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat),
     defaults$categorical_observed
   )
-  expect_identical(
+  expect_equal(
     check_balance(
       nhefs_weights,
       c(age, wt71, sex),
