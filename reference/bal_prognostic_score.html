@@ -170,6 +170,7 @@ research. J Clin Epidemiol. 2013;66(8):S84-S90.</p>
 <span class="r-in"><span><span class="va">nhefs_with_prog</span> <span class="op">&lt;-</span> <span class="va">nhefs_weights</span></span></span>
 <span class="r-in"><span><span class="va">nhefs_with_prog</span><span class="op">$</span><span class="va">prog_score</span> <span class="op">&lt;-</span> <span class="va">prog_scores</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="check_balance.html">check_balance</a></span><span class="op">(</span><span class="va">nhefs_with_prog</span>, <span class="va">prog_score</span>, <span class="va">qsmk</span>, .weights <span class="op">=</span> <span class="va">w_ate</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Treating `.exposure` as binary</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 8 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable   group_level method   metric  estimate</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>

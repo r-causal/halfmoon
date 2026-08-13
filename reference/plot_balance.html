@@ -124,7 +124,8 @@ near 1 indicate similar variability.</p></li>
 <li><p><strong>KS</strong>: Kolmogorov-Smirnov statistic, where smaller values indicate
 better distributional balance.</p></li>
 <li><p><strong>Correlation</strong>: For continuous exposures, measures association with
-covariates.</p></li>
+covariates. Its facet draws a reference line at 0, the value weighting
+aims for.</p></li>
 <li><p><strong>Energy</strong>: Multivariate balance metric applied to all variables
 simultaneously.</p></li>
 </ul></div>
@@ -157,6 +158,7 @@ the underlying geom</p>
 <span class="r-in"><span>  <span class="va">qsmk</span>,</span></span>
 <span class="r-in"><span>  .weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">w_ate</span>, <span class="va">w_att</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Treating `.exposure` as binary</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create balance plot</span></span></span>
 <span class="r-in"><span><span class="fu">plot_balance</span><span class="op">(</span><span class="va">balance_data</span><span class="op">)</span></span></span>
@@ -183,6 +185,7 @@ the underlying geom</p>
 <span class="r-in"><span>  .weights <span class="op">=</span> <span class="va">w_cat_ate</span>,</span></span>
 <span class="r-in"><span>  .metrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"smd"</span>, <span class="st">"vr"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Treating `.exposure` as categorical</span>
 <span class="r-in"><span><span class="fu">plot_balance</span><span class="op">(</span><span class="va">balance_cat</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot_balance-5.png" alt="" width="700" height="433"></span>
 </code></pre></div>

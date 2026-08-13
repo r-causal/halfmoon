@@ -98,7 +98,8 @@ Different metrics have different interpretations:
   better distributional balance.
 
 - **Correlation**: For continuous exposures, measures association with
-  covariates.
+  covariates. Its facet draws a reference line at 0, the value weighting
+  aims for.
 
 - **Energy**: Multivariate balance metric applied to all variables
   simultaneously.
@@ -135,6 +136,7 @@ balance_data <- check_balance(
   qsmk,
   .weights = c(w_ate, w_att)
 )
+#> ℹ Treating `.exposure` as binary
 
 # Create balance plot
 plot_balance(balance_data)
@@ -161,5 +163,6 @@ balance_cat <- check_balance(
   .weights = w_cat_ate,
   .metrics = c("smd", "vr")
 )
+#> ℹ Treating `.exposure` as categorical
 plot_balance(balance_cat)
 ```

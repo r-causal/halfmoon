@@ -14,7 +14,8 @@ check_balance(
   .vars,
   .exposure,
   .weights = NULL,
-  .metrics = c("smd", "vr", "ks", "energy"),
+  .metrics = NULL,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
   include_observed = TRUE,
   .reference_level = 1L,
   na.rm = FALSE,
@@ -51,8 +52,16 @@ check_balance(
   Character vector specifying which metrics to compute. Available
   options: "smd" (standardized mean difference), "vr" (variance ratio),
   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
-  "energy" (multivariate energy distance). Defaults to c("smd", "vr",
-  "ks", "energy").
+  "energy" (multivariate energy distance). Defaults to `NULL`, which
+  uses every metric that applies to the exposure type: c("smd", "vr",
+  "ks", "energy") for a binary or categorical exposure and
+  c("correlation", "energy") for a continuous one.
+
+- exposure_type:
+
+  The type of exposure `.exposure` holds: one of "binary",
+  "categorical", or "continuous". Defaults to "auto", which detects the
+  type from the data and reports what it found.
 
 - include_observed:
 
@@ -62,7 +71,7 @@ check_balance(
 - .reference_level:
 
   The reference group level to use for comparisons. Defaults to 1 (first
-  level).
+  level). Ignored for a continuous exposure.
 
 - na.rm:
 
@@ -148,6 +157,25 @@ balance for each method, enabling comparison of different approaches
 (e.g., ATE vs ATT weights). The `include_observed` parameter controls
 whether unweighted ("observed") balance is included in the results.
 
+The metrics that apply depend on the type of the exposure. Binary and
+categorical exposures compare groups, so they take the standardized mean
+difference, the variance ratio, the Kolmogorov-Smirnov statistic, and
+the energy distance. A continuous exposure has no groups to compare, so
+it takes the weighted correlation and the energy distance.
+`exposure_type` decides which set applies, and `.metrics = NULL` fills
+in that whole set. Asking for a metric that does not apply to the
+exposure type is an error.
+
+By default the exposure type is read from the exposure itself: two
+observed values are binary, a factor or character vector with more than
+two values is categorical, and a numeric vector is categorical when its
+distinct values cover less than a fifth of its observations and
+continuous otherwise. A numeric exposure with many repeated values, such
+as a change score on a bounded count, therefore reads as categorical;
+pass `exposure_type = "continuous"` when that is not what you mean. The
+detected type is reported once per call, which
+`options(halfmoon.quiet = TRUE)` silences.
+
 ## See also
 
 [`bal_smd()`](https://r-causal.github.io/halfmoon/reference/bal_smd.md),
@@ -179,6 +207,7 @@ Other balance functions:
 ``` r
 # Basic usage with binary exposure
 check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = c(w_ate, w_att))
+#> ℹ Treating `.exposure` as binary
 #> # A tibble: 21 × 5
 #>    variable group_level method   metric estimate
 #>    <chr>    <chr>       <chr>    <chr>     <dbl>
@@ -196,6 +225,7 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = c(w_ate, w_att))
 
 # With specific metrics only
 check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
+#> ℹ Treating `.exposure` as binary
 #> # A tibble: 3 × 5
 #>   variable group_level method   metric estimate
 #>   <chr>    <chr>       <chr>    <chr>     <dbl>
@@ -206,6 +236,7 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 # Categorical exposure
 check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
               .weights = c(w_cat_ate, w_cat_att_2_3wk))
+#> ℹ Treating `.exposure` as categorical
 #> # A tibble: 75 × 5
 #>    variable group_level    method          metric estimate
 #>    <chr>    <chr>          <chr>           <chr>     <dbl>
@@ -224,6 +255,7 @@ check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
 # Specify reference group for categorical exposure
 check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
               .reference_level = "daily", .metrics = c("smd", "vr"))
+#> ℹ Treating `.exposure` as categorical
 #> # A tibble: 24 × 5
 #>    variable group_level    method   metric estimate
 #>    <chr>    <chr>          <chr>    <chr>     <dbl>
@@ -242,6 +274,7 @@ check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
 # Exclude observed results
 check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = w_ate,
               include_observed = FALSE)
+#> ℹ Treating `.exposure` as binary
 #> # A tibble: 7 × 5
 #>   variable group_level method metric estimate
 #>   <chr>    <chr>       <chr>  <chr>     <dbl>
@@ -255,6 +288,7 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = w_ate,
 
 # Use correlation for continuous exposure
 check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
+#> ℹ Treating `.exposure` as continuous
 #> # A tibble: 3 × 5
 #>   variable group_level method   metric      estimate
 #>   <chr>    <chr>       <chr>    <chr>          <dbl>
@@ -262,8 +296,29 @@ check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
 #> 2 mpg      disp        observed correlation   -0.848
 #> 3 NA       NA          observed energy      3057.   
 
+# The metrics that apply to the exposure type are the default
+check_balance(mtcars, c(mpg, hp), disp, exposure_type = "continuous")
+#> # A tibble: 3 × 5
+#>   variable group_level method   metric      estimate
+#>   <chr>    <chr>       <chr>    <chr>          <dbl>
+#> 1 hp       disp        observed correlation    0.791
+#> 2 mpg      disp        observed correlation   -0.848
+#> 3 NA       NA          observed energy      3057.   
+
+# A numeric exposure with many repeated values reads as categorical, so say
+# so when you mean it to be continuous
+check_balance(nhefs_weights, c(age, wt71), smokeintensity,
+              exposure_type = "continuous")
+#> # A tibble: 3 × 5
+#>   variable group_level    method   metric      estimate
+#>   <chr>    <chr>          <chr>    <chr>          <dbl>
+#> 1 age      smokeintensity observed correlation  -0.0449
+#> 2 wt71     smokeintensity observed correlation   0.100 
+#> 3 NA       NA             observed energy        1.09  
+
 # With dummy variables for categorical variables (default behavior)
 check_balance(nhefs_weights, c(age, sex, race), qsmk)
+#> ℹ Treating `.exposure` as binary
 #> # A tibble: 10 × 5
 #>    variable group_level method   metric estimate
 #>    <chr>    <chr>       <chr>    <chr>     <dbl>
@@ -280,6 +335,7 @@ check_balance(nhefs_weights, c(age, sex, race), qsmk)
 
 # Without dummy variables for categorical variables
 check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = FALSE)
+#> ℹ Treating `.exposure` as binary
 #> # A tibble: 10 × 5
 #>    variable group_level method   metric estimate
 #>    <chr>    <chr>       <chr>    <chr>     <dbl>

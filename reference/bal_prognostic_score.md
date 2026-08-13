@@ -140,6 +140,7 @@ prog_scores_formula <- bal_prognostic_score(
 nhefs_with_prog <- nhefs_weights
 nhefs_with_prog$prog_score <- prog_scores
 check_balance(nhefs_with_prog, prog_score, qsmk, .weights = w_ate)
+#> ℹ Treating `.exposure` as binary
 #> # A tibble: 8 × 5
 #>   variable   group_level method   metric  estimate
 #>   <chr>      <chr>       <chr>    <chr>      <dbl>
