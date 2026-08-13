@@ -162,15 +162,26 @@ test_that("check_balance rejects correlation for a categorical exposure", {
   )
 })
 
-test_that("check_balance still requires a numeric exposure for correlation", {
+test_that("check_balance requires a numeric exposure treated as continuous", {
   # `exposure_type` clears the metric compatibility check, so the lower level
-  # guard is what rejects the factor
+  # guard is what rejects the factor. Energy alone must hit it too: computing
+  # distances on a factor would silently measure its integer codes
   expect_halfmoon_error(
     check_balance(
       nhefs_weights,
       age,
       qsmk,
       .metrics = "correlation",
+      exposure_type = "continuous"
+    ),
+    "halfmoon_type_error"
+  )
+  expect_halfmoon_error(
+    check_balance(
+      nhefs_weights,
+      age,
+      qsmk,
+      .metrics = "energy",
       exposure_type = "continuous"
     ),
     "halfmoon_type_error"

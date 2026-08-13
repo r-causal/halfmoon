@@ -28,13 +28,21 @@
       i Metrics for a "categorical" exposure: "smd", "vr", "ks", and "energy".
       i Set `exposure_type` to read `.exposure` as another type.
 
-# check_balance still requires a numeric exposure for correlation
+# check_balance requires a numeric exposure treated as continuous
 
     Code
       expr
     Condition <halfmoon_type_error>
       Error in `check_balance()`:
-      ! Exposure variable must be numeric when using correlation metric
+      ! Exposure variable must be numeric when treated as continuous
+
+---
+
+    Code
+      expr
+    Condition <halfmoon_type_error>
+      Error in `check_balance()`:
+      ! Exposure variable must be numeric when treated as continuous
 
 # check_balance still rejects unknown metric names
 

@@ -373,12 +373,14 @@ check_balance <- function(
     }
   }
 
-  # For correlation, we allow continuous exposure variables
-  using_correlation <- "correlation" %in% .metrics
-
-  if (using_correlation && !is.numeric(transformed_data[[exposure_var]])) {
+  # A continuous reading needs a numeric exposure whatever the metrics;
+  # energy on a factor would otherwise measure its integer codes
+  if (
+    exposure_type == "continuous" &&
+      !is.numeric(transformed_data[[exposure_var]])
+  ) {
     abort(
-      "Exposure variable must be numeric when using correlation metric",
+      "Exposure variable must be numeric when treated as continuous",
       error_class = "halfmoon_type_error"
     )
   }
