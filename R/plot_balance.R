@@ -24,7 +24,8 @@
 #'   \item **KS**: Kolmogorov-Smirnov statistic, where smaller values indicate
 #'     better distributional balance.
 #'   \item **Correlation**: For continuous exposures, measures association with
-#'     covariates.
+#'     covariates. Its facet draws a reference line at 0, the value weighting
+#'     aims for.
 #'   \item **Energy**: Multivariate balance metric applied to all variables
 #'     simultaneously.
 #' }
