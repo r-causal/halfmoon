@@ -29,13 +29,37 @@
 #' The `include_observed` parameter controls whether unweighted ("observed") balance
 #' is included in the results.
 #'
+#' The metrics that apply depend on the type of the exposure. Binary and
+#' categorical exposures compare groups, so they take the standardized mean
+#' difference, the variance ratio, the Kolmogorov-Smirnov statistic, and the
+#' energy distance. A continuous exposure has no groups to compare, so it takes
+#' the weighted correlation and the energy distance. `exposure_type` decides
+#' which set applies, and `.metrics = NULL` fills in that whole set. Asking for
+#' a metric that does not apply to the exposure type is an error.
+#'
+#' By default the exposure type is read from the exposure itself: two observed
+#' values are binary, a factor or character vector with more than two values is
+#' categorical, and a numeric vector is categorical when its distinct values
+#' cover less than a fifth of its observations and continuous otherwise. A
+#' numeric exposure with many repeated values, such as a change score on a
+#' bounded count, therefore reads as categorical; pass
+#' `exposure_type = "continuous"` when that is not what you mean. The detected
+#' type is reported once per call, which `options(halfmoon.quiet = TRUE)`
+#' silences.
+#'
 #' @inheritParams check_params
 #' @param .metrics Character vector specifying which metrics to compute.
 #'   Available options: "smd" (standardized mean difference), "vr" (variance ratio),
 #'   "ks" (Kolmogorov-Smirnov), "correlation" (for continuous exposures),
-#'   "energy" (multivariate energy distance). Defaults to c("smd", "vr", "ks", "energy").
+#'   "energy" (multivariate energy distance). Defaults to `NULL`, which uses
+#'   every metric that applies to the exposure type: c("smd", "vr", "ks",
+#'   "energy") for a binary or categorical exposure and c("correlation",
+#'   "energy") for a continuous one.
+#' @param exposure_type The type of exposure `.exposure` holds: one of "binary",
+#'   "categorical", or "continuous". Defaults to "auto", which detects the type
+#'   from the data and reports what it found.
 #' @param .reference_level The reference group level to use for comparisons.
-#'   Defaults to 1 (first level).
+#'   Defaults to 1 (first level). Ignored for a continuous exposure.
 #' @inheritParams balance_params
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
 #'   variables using `model.matrix()`? Defaults to TRUE. When TRUE, categorical
@@ -81,6 +105,14 @@
 #' # Use correlation for continuous exposure
 #' check_balance(mtcars, c(mpg, hp), disp, .metrics = c("correlation", "energy"))
 #'
+#' # The metrics that apply to the exposure type are the default
+#' check_balance(mtcars, c(mpg, hp), disp, exposure_type = "continuous")
+#'
+#' # A numeric exposure with many repeated values reads as categorical, so say
+#' # so when you mean it to be continuous
+#' check_balance(nhefs_weights, c(age, wt71), smokeintensity,
+#'               exposure_type = "continuous")
+#'
 #' # With dummy variables for categorical variables (default behavior)
 #' check_balance(nhefs_weights, c(age, sex, race), qsmk)
 #'
@@ -92,7 +124,8 @@ check_balance <- function(
   .vars,
   .exposure,
   .weights = NULL,
-  .metrics = c("smd", "vr", "ks", "energy"),
+  .metrics = NULL,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
   include_observed = TRUE,
   .reference_level = 1L,
   na.rm = FALSE,
@@ -306,47 +339,47 @@ check_balance <- function(
   # Validate exposure variable
   validate_column_exists(transformed_data, exposure_var, "data")
 
-  # Get group levels in proper order
+  exposure_type <- causalgenerics::match_exposure_type(
+    exposure_type,
+    transformed_data[[exposure_var]],
+    arg = ".exposure",
+    announce = !be_quiet(),
+    call = rlang::current_env()
+  )
+
+  .metrics <- resolve_metrics(.metrics, exposure_type)
+
+  # A continuous exposure has no groups to compare, so the levels are neither
+  # computed nor needed
+  if (exposure_type == "continuous") {
+    group_levels <- NULL
+  } else {
+    if (is.factor(transformed_data[[exposure_var]])) {
+      group_levels <- levels(transformed_data[[exposure_var]])
+    } else {
+      group_levels <- transformed_data[[exposure_var]] |>
+        stats::na.omit() |>
+        unique() |>
+        sort()
+    }
+
+    # Check for single-level groups
+    only_correlation <- length(setdiff(.metrics, "correlation")) == 0
+    if (length(group_levels) < 2 && !only_correlation) {
+      abort(
+        "Exposure variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}.",
+        error_class = "halfmoon_group_error"
+      )
+    }
+  }
+
   # For correlation, we allow continuous exposure variables
   using_correlation <- "correlation" %in% .metrics
-
-  if (is.factor(transformed_data[[exposure_var]])) {
-    group_levels <- levels(transformed_data[[exposure_var]])
-  } else {
-    group_levels <- transformed_data[[exposure_var]] |>
-      stats::na.omit() |>
-      unique() |>
-      sort()
-  }
-
-  # Check exposure variable requirements based on metrics
-  only_correlation <- length(setdiff(.metrics, "correlation")) == 0
-
-  # Check for single-level groups
-  if (length(group_levels) < 2 && !only_correlation) {
-    abort(
-      "Exposure variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}.",
-      error_class = "halfmoon_group_error"
-    )
-  }
 
   if (using_correlation && !is.numeric(transformed_data[[exposure_var]])) {
     abort(
       "Exposure variable must be numeric when using correlation metric",
       error_class = "halfmoon_type_error"
-    )
-  }
-
-  # Validate metrics
-  available_metrics <- c("smd", "vr", "ks", "correlation", "energy")
-  invalid_metrics <- setdiff(.metrics, available_metrics)
-  if (length(invalid_metrics) > 0) {
-    abort(
-      c(
-        "Invalid metric{?s}: {.val {invalid_metrics}}",
-        i = "Available metrics: {.val {available_metrics}}"
-      ),
-      error_class = "halfmoon_arg_error"
     )
   }
 
@@ -356,7 +389,7 @@ check_balance <- function(
     vr = bal_vr,
     ks = bal_ks,
     correlation = bal_corr,
-    energy = bal_energy
+    energy = energy_metric(exposure_type)
   )
 
   # Determine which methods to include
@@ -427,6 +460,75 @@ check_balance <- function(
   class(results) <- c("halfmoon_balance", class(results))
 
   return(results)
+}
+
+# The metrics check_balance() can compute, either overall or for one exposure
+# type
+balance_metrics <- function(exposure_type = NULL) {
+  if (is.null(exposure_type)) {
+    c("smd", "vr", "ks", "correlation", "energy")
+  } else if (exposure_type == "continuous") {
+    c("correlation", "energy")
+  } else {
+    c("smd", "vr", "ks", "energy")
+  }
+}
+
+# Supply the metrics that suit the exposure type, or check the requested ones
+# against it
+resolve_metrics <- function(
+  .metrics,
+  exposure_type,
+  call = rlang::caller_env()
+) {
+  type_metrics <- balance_metrics(exposure_type)
+
+  if (is.null(.metrics)) {
+    return(type_metrics)
+  }
+
+  available_metrics <- balance_metrics()
+  invalid_metrics <- setdiff(.metrics, available_metrics)
+  if (length(invalid_metrics) > 0) {
+    abort(
+      c(
+        "Invalid metric{?s}: {.val {invalid_metrics}}",
+        i = "Available metrics: {.val {available_metrics}}"
+      ),
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+
+  mismatched_metrics <- setdiff(.metrics, type_metrics)
+  if (length(mismatched_metrics) > 0) {
+    abort(
+      c(
+        "{cli::qty(mismatched_metrics)}Metric{?s} {.val {mismatched_metrics}} cannot be computed for a {.val {exposure_type}} exposure.",
+        i = "Metrics for a {.val {exposure_type}} exposure: {.val {type_metrics}}.",
+        i = "Set {.arg exposure_type} to read {.arg .exposure} as another type."
+      ),
+      error_class = "halfmoon_metric_type_error",
+      call = call
+    )
+  }
+
+  .metrics
+}
+
+# `bal_energy()` reads the exposure to choose between its continuous and its
+# discrete branch. Within check_balance() the resolved exposure type makes that
+# choice instead, so that every metric describes the same exposure.
+energy_metric <- function(exposure_type) {
+  function(.covariates, .exposure, .weights, na.rm) {
+    bal_energy_impl(
+      .covariates = .covariates,
+      .exposure = .exposure,
+      .weights = .weights,
+      na.rm = na.rm,
+      exposure_type = exposure_type
+    )
+  }
 }
 
 # Compute a single balance metric for a variable/method/metric combination

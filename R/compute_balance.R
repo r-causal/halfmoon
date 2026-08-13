@@ -653,6 +653,43 @@ bal_energy <- function(
   dimension_adj = TRUE,
   na.rm = FALSE
 ) {
+  bal_energy_impl(
+    .covariates = .covariates,
+    .exposure = .exposure,
+    .weights = .weights,
+    estimand = estimand,
+    .focal_level = .focal_level,
+    use_improved = use_improved,
+    standardized = standardized,
+    criterion = criterion,
+    dimension_adj = dimension_adj,
+    na.rm = na.rm,
+    exposure_type = NULL
+  )
+}
+
+#' The body of `bal_energy()`
+#'
+#' `exposure_type` names the type the exposure should be treated as. `NULL`
+#' leaves the choice to the shape of the exposure, which is what a direct call
+#' to `bal_energy()` does. `call` keeps errors pointing at the function the user
+#' called.
+#'
+#' @noRd
+bal_energy_impl <- function(
+  .covariates,
+  .exposure,
+  .weights = NULL,
+  estimand = NULL,
+  .focal_level = NULL,
+  use_improved = TRUE,
+  standardized = TRUE,
+  criterion = c("dependence", "dcor"),
+  dimension_adj = TRUE,
+  na.rm = FALSE,
+  exposure_type = NULL,
+  call = rlang::caller_env()
+) {
   # Input validation
   if (length(criterion) > 1) {
     criterion <- criterion[[1]]
@@ -660,7 +697,8 @@ bal_energy <- function(
   if (!is.character(criterion) || !criterion %in% c("dependence", "dcor")) {
     abort(
       "{.arg criterion} must be one of: {.val dependence} or {.val dcor}",
-      error_class = "halfmoon_arg_error"
+      error_class = "halfmoon_arg_error",
+      call = call
     )
   }
 
@@ -671,14 +709,16 @@ bal_energy <- function(
   ) {
     abort(
       "{.arg dimension_adj} must be a single {.code TRUE} or {.code FALSE}",
-      error_class = "halfmoon_arg_error"
+      error_class = "halfmoon_arg_error",
+      call = call
     )
   }
 
   if (!is.data.frame(.covariates) && !is.matrix(.covariates)) {
     abort(
       "Argument {.arg .covariates} must be a data frame or matrix",
-      error_class = "halfmoon_type_error"
+      error_class = "halfmoon_type_error",
+      call = call
     )
   }
 
@@ -690,38 +730,49 @@ bal_energy <- function(
   if (nrow(.covariates) == 0) {
     abort(
       "Argument {.arg .covariates} cannot be empty",
-      error_class = "halfmoon_empty_error"
+      error_class = "halfmoon_empty_error",
+      call = call
     )
   }
 
-  validate_equal_length(.exposure, .covariates, ".exposure", ".covariates")
-  validate_weights(.weights, nrow(.covariates))
+  validate_equal_length(
+    .exposure,
+    .covariates,
+    ".exposure",
+    ".covariates",
+    call = call
+  )
+  validate_weights(.weights, nrow(.covariates), call = call)
 
   if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
     abort(
       "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}",
-      error_class = "halfmoon_arg_error"
+      error_class = "halfmoon_arg_error",
+      call = call
     )
   }
 
   if (!na.rm && anyNA(.covariates)) {
     abort(
       "Energy distance cannot be computed with missing values in {.arg .covariates}. Set {.arg na.rm = TRUE} or remove missing values.",
-      error_class = "halfmoon_na_error"
+      error_class = "halfmoon_na_error",
+      call = call
     )
   }
 
   if (!na.rm && anyNA(.exposure)) {
     abort(
       "Energy distance cannot be computed with missing values in {.arg group}. Set {.arg na.rm = TRUE} or remove missing values.",
-      error_class = "halfmoon_na_error"
+      error_class = "halfmoon_na_error",
+      call = call
     )
   }
 
   if (!na.rm && !is.null(.weights) && anyNA(.weights)) {
     abort(
       "Energy distance cannot be computed with missing values in {.arg .weights}. Set {.arg na.rm = TRUE} or remove missing values.",
-      error_class = "halfmoon_na_error"
+      error_class = "halfmoon_na_error",
+      call = call
     )
   }
 
@@ -748,17 +799,23 @@ bal_energy <- function(
   if (n_groups <= 1) {
     abort(
       "Exposure variable must have at least two levels",
-      error_class = "halfmoon_group_error"
+      error_class = "halfmoon_group_error",
+      call = call
     )
   }
 
   # Determine if treatment is continuous
-  is_continuous <- is.numeric(.exposure) && n_groups > 10
+  is_continuous <- if (is.null(exposure_type)) {
+    is.numeric(.exposure) && n_groups > 10
+  } else {
+    exposure_type == "continuous"
+  }
 
   if (is_continuous && !is.null(estimand)) {
     abort(
       "For continuous treatments, {.arg estimand} must be {.code NULL}",
-      error_class = "halfmoon_arg_error"
+      error_class = "halfmoon_arg_error",
+      call = call
     )
   }
 
@@ -767,13 +824,15 @@ bal_energy <- function(
     if (criterion == "dcor") {
       abort(
         "{.arg criterion} {.val dcor} is only available for continuous exposures.",
-        error_class = "halfmoon_arg_error"
+        error_class = "halfmoon_arg_error",
+        call = call
       )
     }
     if (!dimension_adj) {
       abort(
         "{.arg dimension_adj} is only used for continuous exposures.",
-        error_class = "halfmoon_arg_error"
+        error_class = "halfmoon_arg_error",
+        call = call
       )
     }
   }

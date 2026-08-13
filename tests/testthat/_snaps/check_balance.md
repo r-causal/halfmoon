@@ -43,15 +43,19 @@
 
     Code
       expr
-    Condition <halfmoon_type_error>
+    Condition <halfmoon_metric_type_error>
       Error in `check_balance()`:
-      ! Exposure variable must be numeric when using correlation metric
+      ! Metric "correlation" cannot be computed for a "binary" exposure.
+      i Metrics for a "binary" exposure: "smd", "vr", "ks", and "energy".
+      i Set `exposure_type` to read `.exposure` as another type.
 
 # check_balance handles mixed metrics with correlation
 
     Code
       expr
-    Condition <halfmoon_type_error>
+    Condition <halfmoon_metric_type_error>
       Error in `check_balance()`:
-      ! Exposure variable must be numeric when using correlation metric
+      ! Metric "correlation" cannot be computed for a "binary" exposure.
+      i Metrics for a "binary" exposure: "smd", "vr", "ks", and "energy".
+      i Set `exposure_type` to read `.exposure` as another type.
 

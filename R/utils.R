@@ -1,14 +1,8 @@
-# future implementations for interface
-#
-# be_quiet <- function() {
-#   getOption("halfmoon.quiet", default = FALSE)
-# }
-#
-# alert_info <- function(.message) {
-#   if (!be_quiet()) {
-#     cli::cli_alert_info(text = .message)
-#   }
-# }
+# Should halfmoon hold back the information it would otherwise report to the
+# user? Set `options(halfmoon.quiet = TRUE)` to silence it.
+be_quiet <- function() {
+  getOption("halfmoon.quiet", default = FALSE)
+}
 
 # Import NULL coalescing operator from rlang
 #' @importFrom rlang %||%
@@ -150,6 +144,10 @@ utils::globalVariables(c(
 #
 # Argument errors
 # - halfmoon_arg_error: Invalid argument value or missing required argument
+#
+# Metric errors
+# - halfmoon_metric_type_error: Metric requested for an exposure type it does
+#   not apply to
 #
 # Formula/model errors
 # - halfmoon_formula_error: Invalid formula or model specification
