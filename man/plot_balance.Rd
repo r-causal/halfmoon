@@ -65,7 +65,8 @@ near 1 indicate similar variability.
 \item \strong{KS}: Kolmogorov-Smirnov statistic, where smaller values indicate
 better distributional balance.
 \item \strong{Correlation}: For continuous exposures, measures association with
-covariates.
+covariates. Its facet draws a reference line at 0, the value weighting
+aims for.
 \item \strong{Energy}: Multivariate balance metric applied to all variables
 simultaneously.
 }

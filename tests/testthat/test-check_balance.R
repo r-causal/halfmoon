@@ -727,7 +727,7 @@ test_that("check_balance correlation requires numeric group variable", {
   # Should error when using factor/binary variable with correlation
   expect_halfmoon_error(
     check_balance_basic(data, age, qsmk, .metrics = "correlation"),
-    "halfmoon_type_error"
+    "halfmoon_metric_type_error"
   )
 })
 
@@ -742,7 +742,7 @@ test_that("check_balance handles mixed metrics with correlation", {
       qsmk,
       .metrics = c("smd", "correlation")
     ),
-    "halfmoon_type_error"
+    "halfmoon_metric_type_error"
   )
 
   # But should work with continuous group when only using correlation

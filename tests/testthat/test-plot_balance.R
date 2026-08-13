@@ -521,3 +521,73 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     plot_balance(balance_cat_compare)
   )
 })
+
+test_that("plot_balance renders continuous exposure results", {
+  withr::local_seed(20260815)
+  n <- 300
+  continuous_data <- tibble::tibble(
+    z1 = stats::rnorm(n),
+    z2 = stats::rnorm(n)
+  )
+  continuous_data$exposure <- 0.5 *
+    continuous_data$z1 -
+    0.3 * continuous_data$z2 +
+    stats::rnorm(n)
+  continuous_data$wts <- stats::runif(n, 0.5, 2)
+
+  balance_data <- check_balance(
+    continuous_data,
+    c(z1, z2),
+    exposure,
+    .weights = wts
+  )
+
+  p <- plot_balance(balance_data)
+
+  expect_s3_class(p, "ggplot")
+  expect_s3_class(p$facet, "FacetWrap")
+
+  plot_data <- ggplot2::ggplot_build(p)$plot$data
+  expect_false(anyNA(plot_data$variable))
+  expect_true("overall (multivariate)" %in% plot_data$variable)
+
+  expect_doppelganger("balance-plot-continuous", p)
+})
+
+# Reference lines a plot draws, gathered across its vertical line layers
+vline_intercepts <- function(p) {
+  vline_layers <- purrr::keep(p$layers, \(layer) {
+    inherits(layer$geom, "GeomVline")
+  })
+
+  unname(unlist(purrr::map(vline_layers, \(layer) layer$data$xintercept)))
+}
+
+test_that("plot_balance marks the correlation reference at zero", {
+  withr::local_seed(20260816)
+  n <- 200
+  continuous_data <- tibble::tibble(
+    z1 = stats::rnorm(n),
+    z2 = stats::rnorm(n)
+  )
+  continuous_data$exposure <- continuous_data$z1 + stats::rnorm(n)
+
+  balance_data <- check_balance(
+    continuous_data,
+    c(z1, z2),
+    exposure,
+    .metrics = "correlation"
+  )
+
+  expect_equal(vline_intercepts(plot_balance(balance_data)), 0)
+
+  # smd keeps its threshold line
+  smd_data <- check_balance(
+    nhefs_weights,
+    c(age, wt71),
+    qsmk,
+    .metrics = "smd"
+  )
+
+  expect_equal(vline_intercepts(plot_balance(smd_data)), 0.1)
+})

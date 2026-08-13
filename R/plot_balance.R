@@ -24,7 +24,8 @@
 #'   \item **KS**: Kolmogorov-Smirnov statistic, where smaller values indicate
 #'     better distributional balance.
 #'   \item **Correlation**: For continuous exposures, measures association with
-#'     covariates.
+#'     covariates. Its facet draws a reference line at 0, the value weighting
+#'     aims for.
 #'   \item **Energy**: Multivariate balance metric applied to all variables
 #'     simultaneously.
 #' }
@@ -171,6 +172,19 @@ plot_balance <- function(
 
   # Determine if we should show vline (only for SMD when it's the only metric)
   show_vline <- "smd" %in% unique_metrics && length(unique_metrics) == 1
+
+  # A correlation is balanced at 0 rather than at the SMD threshold, so it gets
+  # its own reference line, restricted to its own facet
+  if ("correlation" %in% unique_metrics) {
+    p <- p +
+      ggplot2::geom_vline(
+        data = tibble::tibble(metric = "correlation", xintercept = 0),
+        mapping = ggplot2::aes(xintercept = .data$xintercept),
+        color = vline_color,
+        linewidth = vlinewidth,
+        inherit.aes = FALSE
+      )
+  }
 
   # Add geom_love for non-energy metrics
   p <- p +
