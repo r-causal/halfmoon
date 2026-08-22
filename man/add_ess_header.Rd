@@ -25,6 +25,17 @@ This function replaces the counts in the default header of
 \code{gtsummary::tbl_svysummary()} tables to counts representing the
 Effective Sample Size (ESS). See \code{\link[=ess]{ess()}} for details.
 }
+\details{
+The header statistics available to \code{header} are the ESS of the column (\code{n}),
+the total the columns are a share of (\code{N}), and that share (\code{p}). ESS is not
+additive, so the ESS of the whole sample is not the total that the group ESS
+values divide up. For a table with a
+\code{gtsummary::tbl_svysummary(by =)} variable, \code{N} is therefore the sum of the
+group ESS values and \code{p} is each group's share of that sum, whether or not
+the table also has an overall column from \code{gtsummary::add_overall()}. The
+overall column reports the ESS of the whole sample as both \code{n} and \code{N}, so
+its \code{p} is 1.
+}
 \examples{
 \dontshow{if (rlang::is_installed(c("survey", "gtsummary", "cards", "cardx", "dplyr"))) withAutoprint(\{ # examplesIf}
 svy <- survey::svydesign(~1, data = nhefs_weights, weights = ~ w_ate)

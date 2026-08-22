@@ -419,6 +419,14 @@
   observations. The 90 observations it was computed from are all weighted
   equally, so it is now reported as 100%.
 
+* `add_ess_header()` gives the group columns of a table with an overall column
+  from `gtsummary::add_overall()` the denominator they have without one, the
+  sum of the group effective sample sizes. ESS is not additive, so dividing a
+  group ESS by the ESS of the whole sample could exceed 1: the header of the
+  `qsmk = 0` column of `nhefs_weights` weighted by `w_ate` reported `p` as
+  1.11. The group percentages now sum to 100%, and the overall column reports
+  a `p` of 1.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

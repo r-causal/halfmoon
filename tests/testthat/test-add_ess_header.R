@@ -76,3 +76,29 @@ test_that("Error if `header` is not a string", {
     "halfmoon_type_error"
   )
 })
+
+test_that("add_ess_header keeps the by columns comparable when an overall column is added", {
+  skip_if_not_installed("gtsummary")
+  tbl_overall <- suppressWarnings(add_overall(tbl_by))
+
+  res_by <- add_ess_header(tbl_by)
+  res_overall <- add_ess_header(tbl_overall)
+
+  by_rows <- res_overall$table_styling$header |>
+    filter(column %in% c("stat_1", "stat_2"))
+  no_overall_rows <- res_by$table_styling$header |>
+    filter(column %in% c("stat_1", "stat_2"))
+
+  # ESS is not additive, so a group column is not a share of the overall ESS
+  expect_true(all(by_rows$modify_stat_p <= 1))
+  expect_equal(sum(by_rows$modify_stat_p), 1, tolerance = 1e-8)
+  expect_equal(by_rows$modify_stat_n, no_overall_rows$modify_stat_n)
+  expect_equal(by_rows$modify_stat_N, no_overall_rows$modify_stat_N)
+
+  # the overall column is its own denominator
+  overall_row <- res_overall$table_styling$header |>
+    filter(column == "stat_0")
+  expect_equal(overall_row$modify_stat_n, ess(weights(svy)))
+  expect_equal(overall_row$modify_stat_N, overall_row$modify_stat_n)
+  expect_equal(overall_row$modify_stat_p, 1)
+})

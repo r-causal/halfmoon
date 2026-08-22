@@ -4,6 +4,17 @@
 #' `gtsummary::tbl_svysummary()` tables to counts representing the
 #' Effective Sample Size (ESS). See [`ess()`] for details.
 #'
+#' @details
+#' The header statistics available to `header` are the ESS of the column (`n`),
+#' the total the columns are a share of (`N`), and that share (`p`). ESS is not
+#' additive, so the ESS of the whole sample is not the total that the group ESS
+#' values divide up. For a table with a
+#' `gtsummary::tbl_svysummary(by =)` variable, `N` is therefore the sum of the
+#' group ESS values and `p` is each group's share of that sum, whether or not
+#' the table also has an overall column from `gtsummary::add_overall()`. The
+#' overall column reports the ESS of the whole sample as both `n` and `N`, so
+#' its `p` is 1.
+#'
 #' @param x (`tbl_svysummary`)\cr
 #'   Object of class `'tbl_svysummary'` typically created with `gtsummary::tbl_svysummary()`.
 #' @param header (`string`)\cr
@@ -82,6 +93,7 @@ add_ess_header <- function(
       )
   } else {
     # with both a `tbl_svysummary(by)` value and an overall column
+    overall_ess <- unlist(ard_ess_overall$stat)
     x$table_styling$header <-
       dplyr::rows_update(
         x$table_styling$header,
@@ -98,7 +110,19 @@ add_ess_header <- function(
         by = "column"
       ) |>
       dplyr::mutate(
-        modify_stat_N = unlist(.env$ard_ess_overall$stat),
+        # ESS is not additive, so the overall ESS is not the total the group
+        # ESS values divide up. The group columns take the same denominator
+        # they would without an overall column, the sum of the group ESS, and
+        # the overall column is its own denominator.
+        modify_stat_N = sum(
+          .data$modify_stat_n[.data$column != "stat_0"],
+          na.rm = TRUE
+        ),
+        modify_stat_N = ifelse(
+          .data$column == "stat_0",
+          .env$overall_ess,
+          .data$modify_stat_N
+        ),
         modify_stat_p = .data$modify_stat_n / .data$modify_stat_N
       )
   }
