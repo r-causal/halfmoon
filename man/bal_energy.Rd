@@ -87,7 +87,8 @@ missing values are dropped before computation.}
 }
 \value{
 A numeric value, or \code{NA_real_} when \code{na.rm = FALSE} and the
-covariates, the exposure, or the weights contain missing values. For binary
+covariates, the exposure, or the weights contain missing values, and also
+when \code{na.rm = TRUE} leaves no rows to compute on. For binary
 and multi-category exposures, the energy
 distance between groups, where lower values indicate better balance and 0
 indicates identical distributions. For a continuous exposure with

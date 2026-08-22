@@ -42,6 +42,10 @@
   categorical exposure now reports one missing row per comparison level instead
   of a single row labeled with one of them.
 
+* `check_balance()` forms the distance matrix behind the energy metric once per
+  call and evaluates every weight column against it, rather than rebuilding it
+  for each column. The estimates are unchanged.
+
 * `bal_energy()` compares the weighted groups against an unweighted target
   population for `estimand = "ATE"`. It previously used the balancing weights
   for both sides of the comparison, which understated the energy distance when
@@ -80,7 +84,9 @@
   `check_balance()`, so the continuous or the categorical statistic can be
   asked for directly. The default `"auto"` keeps the existing rule, which is now
   documented: a numeric exposure taking more than ten unique values is treated
-  as continuous.
+  as continuous. The argument sits before `na.rm` in the signature, so a fully
+  positional call that passed `na.rm` in that slot now raises
+  `halfmoon_arg_error` rather than reading a logical as an exposure type.
 
 * `bal_energy()` raises `halfmoon_arg_error` for an option argument that is not
   a single value. `estimand = character(0)`, `criterion = character(0)`, and

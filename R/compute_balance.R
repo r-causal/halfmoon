@@ -637,7 +637,8 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #'   missing values are dropped before computation.
 #'
 #' @return A numeric value, or `NA_real_` when `na.rm = FALSE` and the
-#'   covariates, the exposure, or the weights contain missing values. For binary
+#'   covariates, the exposure, or the weights contain missing values, and also
+#'   when `na.rm = TRUE` leaves no rows to compute on. For binary
 #'   and multi-category exposures, the energy
 #'   distance between groups, where lower values indicate better balance and 0
 #'   indicates identical distributions. For a continuous exposure with

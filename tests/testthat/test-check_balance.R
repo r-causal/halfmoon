@@ -1984,3 +1984,101 @@ test_that("check_balance stays quiet about missing values it was asked to keep",
   expect_no_warning(keeps_na())
   expect_true(is.na(keeps_na()$estimate))
 })
+
+test_that("check_balance reports the same energy for several weights as for one", {
+  data <- get_nhefs_test_data()
+
+  together <- check_balance(
+    data,
+    c(age, wt71, smokeyrs),
+    qsmk,
+    .weights = c(w_ate, w_att),
+    .metrics = "energy"
+  )
+
+  separately <- purrr::map_dfr(c("w_ate", "w_att"), \(weight) {
+    check_balance(
+      data,
+      c(age, wt71, smokeyrs),
+      qsmk,
+      .weights = all_of(weight),
+      .metrics = "energy"
+    )
+  })
+
+  for (method in c("observed", "w_ate", "w_att")) {
+    expect_identical(
+      together$estimate[together$method == method],
+      unique(separately$estimate[separately$method == method])
+    )
+  }
+})
+
+test_that("check_balance stays quiet about missing values in the energy metric", {
+  data <- get_nhefs_test_data()
+  data$age[1:20] <- NA
+
+  keeps_na <- function() {
+    check_balance(
+      data,
+      c(age, wt71),
+      qsmk,
+      .metrics = "energy",
+      na.rm = FALSE
+    )
+  }
+
+  expect_no_warning(keeps_na())
+  expect_true(all(is.na(keeps_na()$estimate)))
+})
+
+test_that("check_balance measures a weight column with missing values on its own rows", {
+  data <- get_nhefs_test_data()
+  data$w_missing <- data$w_att
+  data$w_missing[1:25] <- NA
+
+  balance <- function() {
+    check_balance(
+      data,
+      c(age, wt71, smokeyrs),
+      qsmk,
+      .weights = c(w_ate, w_missing),
+      .metrics = "energy",
+      na.rm = TRUE
+    )
+  }
+
+  expect_no_warning(balance())
+  result <- balance()
+
+  # A weight column with missing values drops rows the other columns keep, so
+  # the shared distance matrix does not describe its sample and it is measured
+  # on the rows it still covers
+  covered <- !is.na(data$w_missing)
+  expect_equal(
+    result$estimate[result$method == "w_missing"],
+    bal_energy(
+      .covariates = data[covered, c("age", "wt71", "smokeyrs")],
+      .exposure = data$qsmk[covered],
+      .weights = data$w_missing[covered]
+    ),
+    tolerance = 1e-10
+  )
+
+  # The columns with no missing weights still share the whole sample
+  alone <- check_balance(
+    data,
+    c(age, wt71, smokeyrs),
+    qsmk,
+    .weights = w_ate,
+    .metrics = "energy",
+    na.rm = TRUE
+  )
+
+  for (method in c("observed", "w_ate")) {
+    expect_identical(
+      result$estimate[result$method == method],
+      alone$estimate[alone$method == method]
+    )
+  }
+})

@@ -551,15 +551,38 @@ resolve_metrics <- function(
 # `bal_energy()` reads the exposure to choose between its continuous and its
 # discrete branch. Within check_balance() the resolved exposure type makes that
 # choice instead, so that every metric describes the same exposure.
+#
+# Every weight column of one call describes the same covariates and the same
+# exposure, and the distance matrix and target terms of the energy distance
+# depend on nothing else, so they are formed on the first column and reused.
 energy_metric <- function(exposure_type) {
+  init <- NULL
+
   function(.covariates, .exposure, .weights, na.rm) {
-    bal_energy_impl(
+    prepared <- bal_energy_prepare(
       .covariates = .covariates,
       .exposure = .exposure,
       .weights = .weights,
-      na.rm = na.rm,
-      exposure_type = exposure_type
+      criterion = "dependence",
+      exposure_type = exposure_type,
+      na.rm = na.rm
     )
+
+    if (is.null(prepared)) {
+      return(NA_real_)
+    }
+
+    # A weight column with missing values drops rows of its own, so it is
+    # measured on its own remaining sample rather than the shared one
+    if (prepared$weights_reduced_rows) {
+      return(bal_energy_evaluate(bal_energy_init(prepared), prepared$weights))
+    }
+
+    if (is.null(init)) {
+      init <<- bal_energy_init(prepared)
+    }
+
+    bal_energy_evaluate(init, prepared$weights)
   }
 }
 
