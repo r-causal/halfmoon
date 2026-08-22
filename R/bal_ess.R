@@ -44,6 +44,8 @@
 #'
 #' @export
 bal_ess <- function(.weights, na.rm = FALSE) {
+  validate_weights(.weights, allow_null = FALSE)
+
   # Simply call the existing ess() function
   ess(.weights, na.rm = na.rm)
 }

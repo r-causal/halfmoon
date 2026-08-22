@@ -427,6 +427,12 @@
   1.11. The group percentages now sum to 100%, and the overall column reports
   a `p` of 1.
 
+* `bal_ess()` validates `.weights` itself, so an invalid weight reports
+  `bal_ess()` and `.weights` with a halfmoon condition class. `bal_ess(NULL)`
+  previously raised a `causalgenerics` error about an argument named `x` in a
+  call to `ess.default()`. A negative weight is now a `halfmoon_range_error`,
+  where `bal_ess(c(1, -1))` previously returned 0.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

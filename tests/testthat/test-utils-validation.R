@@ -24,3 +24,16 @@ test_that("validate_weights rejects weights that are not a causal weight or nume
     "halfmoon_type_error"
   )
 })
+
+test_that("validate_weights rejects `NULL` when the caller requires weights", {
+  expect_silent(validate_weights(NULL, 3))
+  expect_error(
+    validate_weights(NULL, allow_null = FALSE),
+    class = "halfmoon_type_error"
+  )
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
+    validate_weights("a", allow_null = FALSE)
+  )
+})

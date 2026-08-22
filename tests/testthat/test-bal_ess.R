@@ -36,3 +36,9 @@ test_that("bal_ess works with different weight types", {
     expect_true(ess_psw > 0)
   }
 })
+
+test_that("bal_ess reports its own name and argument for invalid weights", {
+  expect_halfmoon_error(bal_ess(NULL), "halfmoon_type_error")
+  expect_halfmoon_error(bal_ess(c("a", "b")), "halfmoon_type_error")
+  expect_halfmoon_error(bal_ess(c(1, -1)), "halfmoon_range_error")
+})

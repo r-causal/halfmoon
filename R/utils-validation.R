@@ -32,15 +32,27 @@ validate_flag <- function(
   invisible(x)
 }
 
-# Weight validation
+# Weight validation. `n` is the length the weights must match; it defaults to
+# their own length, which skips that check for a caller that has nothing to
+# match them against. `allow_null` is for the callers where weights are
+# optional, `NULL` meaning unweighted.
 validate_weights <- function(
   weights,
-  n,
+  n = length(weights),
   arg_name = ".weights",
+  allow_null = TRUE,
   call = rlang::caller_env()
 ) {
   if (is.null(weights)) {
-    return(invisible(weights))
+    if (allow_null) {
+      return(invisible(weights))
+    }
+
+    abort(
+      "{.arg {arg_name}} must be numeric or a causal weight object, not {.code NULL}",
+      error_class = "halfmoon_type_error",
+      call = call
+    )
   }
 
   # Accept numeric vectors and any causal weight object, which covers the psw
@@ -49,8 +61,13 @@ validate_weights <- function(
     causalgenerics::is_causal_wt(weights)
 
   if (!is_valid_weights) {
+    type_message <- if (allow_null) {
+      "{.arg {arg_name}} must be numeric, a causal weight object, or {.code NULL}"
+    } else {
+      "{.arg {arg_name}} must be numeric or a causal weight object"
+    }
     abort(
-      "{.arg {arg_name}} must be numeric, a causal weight object, or {.code NULL}",
+      type_message,
       error_class = "halfmoon_type_error",
       call = call
     )
