@@ -1,5 +1,18 @@
 # halfmoon (development version)
 
+* `plot_model_calibration()` no longer applies `ggplot2::theme_minimal()` to a
+  `halfmoon_calibration` object. Both methods now leave the theme to the user,
+  as `plot_qq()` and the other halfmoon plotting functions do.
+
+* `check_qq()` and `bal_qq()` read the column a renaming selection points at and
+  label the method with the new name, so `.weights = c(ate = w_ate)` works as it
+  does in `check_balance()`. It previously looked for a column named after the
+  method and failed to find it.
+
+* `check_balance()` raises `halfmoon_empty_error` naming `.data` when the data
+  has no rows or no columns, rather than failing inside the covariate selection
+  with an error about a column that does not exist.
+
 * `geom_ecdf()` supports a flipped orientation. Mapping the variable to `y`, or
   passing `orientation = "y"`, computes the same weighted curve and draws it
   across the panel. It previously ignored the request and drew the curve as if
