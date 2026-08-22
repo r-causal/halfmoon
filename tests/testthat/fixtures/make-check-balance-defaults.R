@@ -1,7 +1,7 @@
 # Regression fixture for the default output of `check_balance()` with binary and
-# categorical exposures. The saved list pins the results a default call produced
-# before `check_balance()` resolved metrics from the exposure type, so the
-# accompanying test can show that type resolution leaves those results untouched.
+# categorical exposures. The saved list pins the results a default call produces,
+# so the accompanying test can show that resolving metrics from the exposure type
+# leaves those results untouched.
 # Regenerate only when a change to the default output is intended.
 
 pkgload::load_all(quiet = TRUE)

@@ -1,5 +1,47 @@
 # halfmoon (development version)
 
+* `check_balance()` resolves `.reference_level` once for the whole call and uses
+  the result for every metric and every label. It previously resolved the
+  argument one way for the standardized mean difference and another way for the
+  variance ratio and the Kolmogorov-Smirnov statistic, so a single table could
+  compare against two different reference groups and label the rows with the
+  wrong one. On a 0/1 exposure the default now references the level `0` for
+  every metric, where the standardized mean difference previously referenced the
+  level `1`: those rows change sign relative to the previous output, and the
+  `group_level` column reports `1` rather than `0`. The default is now `NULL`,
+  documented as the first observed level, and a value that matches a level is
+  taken as that level, so `.reference_level = 0` on a 0/1 exposure means the
+  level `0` for every metric.
+
+* `check_balance()` validates `.reference_level` before computing anything. A
+  value that names no group raises `halfmoon_reference_error` and an index out
+  of range raises `halfmoon_range_error`, where both previously produced rows of
+  missing values without comment for the variance ratio and the
+  Kolmogorov-Smirnov statistic.
+
+* `check_balance()` warns once, naming the affected metrics and variables, when
+  it reports a combination it could not compute as `NA`. Missing values that
+  `na.rm = FALSE` asks it to keep are not such a combination and stay silent.
+
+* `check_balance()` honors a renamed selection. `.weights = c(myw = w_ate)` now
+  weights by `w_ate` and reports the method as `myw`, where it previously
+  reported unweighted estimates under the new name, and a renamed `.vars`
+  selection now reports the covariate under its new name instead of failing or
+  returning `NA`.
+
+* `check_balance()` drops the grouping of a grouped data frame instead of adding
+  the grouping variables to `.vars` and repairing the duplicated names.
+
+* `check_balance()` reads a logical covariate as a 0/1 indicator, where every
+  metric previously reported `NA` for it.
+
+* `check_balance()` labels the comparison groups of a categorical exposure by
+  removing the reference level from the names the balance functions return,
+  rather than by splitting those names on `_vs_`. A reference level that itself
+  contains `_vs_` no longer truncates the labels. A metric that fails for a
+  categorical exposure now reports one missing row per comparison level instead
+  of a single row labeled with one of them.
+
 * `bal_smd()` now reports the comparison group minus the reference group, so a
   positive value means the comparison group has the higher mean or proportion.
   This is the convention the documentation has always described and the one

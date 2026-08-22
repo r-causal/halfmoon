@@ -66,7 +66,9 @@ test_that("check_balance works with single variable and single metric", {
   expect_equal(result$variable, "age")
   expect_equal(result$metric, "smd")
   expect_equal(result$method, "observed")
-  expect_equal(result$group_level, "0") # qsmk is 0/1, reference = 1L -> first level = 0, but check_balance shows comparison group
+  # qsmk is 0/1 and the reference is its first observed level, so the
+  # comparison group is 1
+  expect_equal(result$group_level, "1")
   expect_true(is.numeric(result$estimate))
   expect_true(is.finite(result$estimate))
 })
@@ -200,7 +202,7 @@ test_that("check_balance SMD matches bal_smd", {
   direct_smd <- bal_smd(
     .covariate = data$age,
     .exposure = data$qsmk,
-    .reference_level = 1L
+    .reference_level = "0" # First observed level of qsmk
   )
 
   expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
@@ -216,11 +218,10 @@ test_that("check_balance vr matches bal_vr", {
   ]
 
   # Get result from bal_vr directly
-  # check_balance uses reference_group=1L which maps to first level (0) for bal_vr
   direct_vr <- bal_vr(
     .covariate = data$age,
     .exposure = data$qsmk,
-    .reference_level = 0 # First level of qsmk (group_levels[1])
+    .reference_level = "0" # First observed level of qsmk
   )
 
   expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
@@ -239,7 +240,7 @@ test_that("check_balance KS matches bal_ks", {
   direct_ks <- bal_ks(
     .covariate = data$age,
     .exposure = data$qsmk,
-    .reference_level = 0 # First level of qsmk
+    .reference_level = "0" # First observed level of qsmk
   )
 
   expect_equal(balance_ks, direct_ks, tolerance = 1e-10)
@@ -264,7 +265,7 @@ test_that("check_balance weighted results match individual weighted functions", 
     .covariate = data$age,
     .exposure = data$qsmk,
     .weights = data$w_test1,
-    .reference_level = 1L
+    .reference_level = "0" # First observed level of qsmk
   )
 
   expect_equal(balance_smd, direct_smd, tolerance = 1e-10)
@@ -285,7 +286,7 @@ test_that("check_balance weighted results match individual weighted functions", 
     .covariate = data$age,
     .exposure = data$qsmk,
     .weights = data$w_test1,
-    .reference_level = 0 # First level (group_levels[1])
+    .reference_level = "0" # First observed level of qsmk
   )
 
   expect_equal(balance_vr, direct_vr, tolerance = 1e-10)
@@ -384,7 +385,7 @@ test_that("check_balance handles missing values correctly", {
   direct_smd <- bal_smd(
     .covariate = data_na$age,
     .exposure = data_na$qsmk,
-    .reference_level = 1L,
+    .reference_level = "0", # First observed level of qsmk
     na.rm = TRUE
   )
   expect_equal(result_na_true$estimate, direct_smd, tolerance = 1e-10)
@@ -492,7 +493,7 @@ test_that("check_balance handles extreme weights", {
     data$age,
     data$qsmk,
     .weights = data$w_extreme,
-    .reference_level = 1L
+    .reference_level = "0" # First observed level of qsmk
   )
   expect_equal(weighted_estimate, direct_smd, tolerance = 1e-10)
 })
@@ -886,13 +887,17 @@ test_that("make_dummy_vars works with categorical variables", {
 test_that("make_dummy_vars = FALSE preserves original variables", {
   data <- get_nhefs_test_data()
 
-  # Test with categorical variables but no dummy transformation
-  result <- check_balance(
-    data,
-    c(sex, race),
-    qsmk,
-    .metrics = "smd",
-    make_dummy_vars = FALSE
+  # Test with categorical variables but no dummy transformation. The balance
+  # functions need numeric covariates, so untransformed factors report NA.
+  expect_warning(
+    result <- check_balance(
+      data,
+      c(sex, race),
+      qsmk,
+      .metrics = "smd",
+      make_dummy_vars = FALSE
+    ),
+    class = "halfmoon_data_warning"
   )
 
   # Should have exactly the original variables
@@ -1478,12 +1483,15 @@ test_that("no dummy variables when make_dummy_vars = FALSE", {
   data <- get_nhefs_test_data()
 
   # Test with dummy variables disabled
-  result_no_dummy <- check_balance(
-    data,
-    c(race, sex, education),
-    qsmk,
-    make_dummy_vars = FALSE,
-    .metrics = "smd"
+  expect_warning(
+    result_no_dummy <- check_balance(
+      data,
+      c(race, sex, education),
+      qsmk,
+      make_dummy_vars = FALSE,
+      .metrics = "smd"
+    ),
+    class = "halfmoon_data_warning"
   )
   var_names_no_dummy <- unique(result_no_dummy$variable)
 
@@ -1607,4 +1615,372 @@ test_that("check_balance handles energy with other metrics", {
   energy_rows <- result[result$metric == "energy", ]
   expect_equal(nrow(energy_rows), 1)
   expect_true(is.na(energy_rows$variable[1]))
+})
+
+# =============================================================================
+# REFERENCE LEVEL RESOLUTION
+# =============================================================================
+
+test_that("check_balance resolves the reference level once for every metric", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance_basic(
+    data,
+    age,
+    qsmk,
+    .metrics = c("smd", "vr", "ks")
+  )
+
+  # The default reference is the first observed level of qsmk, so every metric
+  # compares group 1 against group 0
+  expect_equal(unique(result$group_level), "1")
+
+  expect_equal(
+    result$estimate[result$metric == "smd"],
+    bal_smd(data$age, data$qsmk, .reference_level = "0"),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    result$estimate[result$metric == "vr"],
+    bal_vr(data$age, data$qsmk, .reference_level = "0"),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    result$estimate[result$metric == "ks"],
+    bal_ks(data$age, data$qsmk, .reference_level = "0"),
+    tolerance = 1e-10
+  )
+})
+
+test_that("check_balance names the comparison group the way tidy_smd does", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance_basic(data, age, qsmk, .metrics = "smd")
+  reference <- tidy_smd(data, age, qsmk)
+
+  expect_equal(result$group_level, reference$qsmk)
+  # halfmoon reports the comparison group minus the reference group, which is
+  # the opposite sign to the smd package
+  expect_equal(result$estimate, -reference$smd, tolerance = 1e-10)
+})
+
+test_that("check_balance uses one reference scheme for a multi-level exposure", {
+  set.seed(4)
+  data <- data.frame(
+    x = stats::rnorm(90),
+    y = stats::rnorm(90),
+    g = rep(0:2, each = 30)
+  )
+
+  result <- check_balance(
+    data,
+    c(x, y),
+    g,
+    .metrics = c("smd", "vr", "ks"),
+    make_dummy_vars = FALSE
+  )
+
+  expect_true(all(is.finite(result$estimate)))
+  # The reference is the first observed level, so every metric reports the
+  # remaining levels as its comparison groups
+  comparison_levels <- setdiff(as.character(sort(unique(data$g))), "0")
+  for (metric in c("smd", "vr", "ks")) {
+    expect_setequal(
+      result$group_level[result$metric == metric],
+      comparison_levels
+    )
+  }
+})
+
+test_that("check_balance reads .reference_level = 0 as the level named 0", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance_basic(
+    data,
+    age,
+    qsmk,
+    .metrics = c("smd", "vr", "ks"),
+    .reference_level = 0
+  )
+
+  expect_true(all(is.finite(result$estimate)))
+  expect_equal(unique(result$group_level), "1")
+  expect_equal(
+    result$estimate[result$metric == "vr"],
+    bal_vr(data$age, data$qsmk, .reference_level = "0"),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    result$estimate[result$metric == "ks"],
+    bal_ks(data$age, data$qsmk, .reference_level = "0"),
+    tolerance = 1e-10
+  )
+})
+
+test_that("check_balance rejects an out-of-range .reference_level index", {
+  data <- get_nhefs_test_data()
+
+  expect_error(
+    check_balance_basic(
+      data,
+      age,
+      qsmk,
+      .metrics = c("smd", "vr", "ks"),
+      .reference_level = 5
+    ),
+    class = "halfmoon_range_error"
+  )
+})
+
+test_that("check_balance rejects a .reference_level that names no group", {
+  data <- get_nhefs_test_data()
+
+  expect_error(
+    check_balance_basic(
+      data,
+      age,
+      qsmk,
+      .metrics = "smd",
+      .reference_level = "typo"
+    ),
+    class = "halfmoon_reference_error"
+  )
+})
+
+test_that("check_balance strips a comparison suffix that a level value repeats", {
+  set.seed(7)
+  data <- data.frame(
+    x = stats::rnorm(90),
+    g = factor(
+      rep(c("t_vs_placebo", "control", "other"), each = 30),
+      levels = c("t_vs_placebo", "control", "other")
+    )
+  )
+
+  result <- check_balance(
+    data,
+    x,
+    g,
+    .metrics = "smd",
+    make_dummy_vars = FALSE
+  )
+
+  expect_setequal(result$group_level, c("control", "other"))
+})
+
+# =============================================================================
+# SELECTION AND DATA HANDLING
+# =============================================================================
+
+test_that("check_balance weights with a renamed weight column", {
+  data <- get_nhefs_test_data()
+
+  result <- check_balance_basic(
+    data,
+    age,
+    qsmk,
+    .weights = c(myw = w_ate),
+    .metrics = "smd"
+  )
+
+  expect_setequal(result$method, c("observed", "myw"))
+
+  weighted <- result$estimate[result$method == "myw"]
+  observed <- result$estimate[result$method == "observed"]
+
+  expect_equal(
+    weighted,
+    bal_smd(
+      data$age,
+      data$qsmk,
+      .weights = data$w_ate,
+      .reference_level = "0"
+    ),
+    tolerance = 1e-10
+  )
+  expect_false(isTRUE(all.equal(weighted, observed)))
+})
+
+test_that("check_balance labels a renamed covariate with its new name", {
+  data <- get_nhefs_test_data()
+  expected <- bal_smd(data$age, data$qsmk, .reference_level = "0")
+
+  result_dummies <- check_balance(
+    data,
+    c(myage = age),
+    qsmk,
+    .metrics = "smd",
+    make_dummy_vars = TRUE
+  )
+  expect_equal(result_dummies$variable, "myage")
+  expect_equal(result_dummies$estimate, expected, tolerance = 1e-10)
+
+  result_plain <- check_balance(
+    data,
+    c(myage = age),
+    qsmk,
+    .metrics = "smd",
+    make_dummy_vars = FALSE
+  )
+  expect_equal(result_plain$variable, "myage")
+  expect_equal(result_plain$estimate, expected, tolerance = 1e-10)
+})
+
+test_that("check_balance ignores the grouping of a grouped data frame", {
+  data <- get_nhefs_test_data()
+  grouped <- dplyr::group_by(data, sex)
+
+  result <- check_balance(grouped, c(age, wt71), qsmk, .metrics = "smd")
+
+  expect_equal(
+    result,
+    check_balance(data, c(age, wt71), qsmk, .metrics = "smd")
+  )
+  expect_setequal(unique(result$variable), c("age", "wt71"))
+})
+
+test_that("check_balance reads a logical covariate as a 0/1 numeric", {
+  data <- data.frame(
+    flag = c(rep(TRUE, 30), rep(FALSE, 20), rep(TRUE, 10), rep(FALSE, 40)),
+    g = rep(0:1, each = 50)
+  )
+  flag_num <- as.numeric(data$flag)
+
+  for (dummies in c(TRUE, FALSE)) {
+    result <- check_balance(
+      data,
+      flag,
+      g,
+      .metrics = c("smd", "vr", "ks"),
+      make_dummy_vars = dummies
+    )
+
+    expect_true(all(is.finite(result$estimate)))
+    expect_equal(
+      result$estimate[result$metric == "smd"],
+      bal_smd(flag_num, data$g),
+      tolerance = 1e-10
+    )
+    expect_equal(
+      result$estimate[result$metric == "vr"],
+      bal_vr(flag_num, data$g),
+      tolerance = 1e-10
+    )
+    expect_equal(
+      result$estimate[result$metric == "ks"],
+      bal_ks(flag_num, data$g),
+      tolerance = 1e-10
+    )
+  }
+})
+
+test_that("check_balance correlates a logical covariate with a continuous exposure", {
+  set.seed(8)
+  data <- data.frame(
+    flag = rep(c(TRUE, FALSE), each = 50),
+    g = stats::rnorm(100)
+  )
+
+  for (dummies in c(TRUE, FALSE)) {
+    result <- check_balance(
+      data,
+      flag,
+      g,
+      .metrics = "correlation",
+      make_dummy_vars = dummies
+    )
+
+    expect_equal(
+      result$estimate,
+      bal_corr(as.numeric(data$flag), data$g),
+      tolerance = 1e-10
+    )
+  }
+})
+
+# =============================================================================
+# UNUSED LEVELS AND FAILED COMBINATIONS
+# =============================================================================
+
+test_that("check_balance drops unused levels of a factor exposure", {
+  set.seed(5)
+  data <- data.frame(
+    x = stats::rnorm(60),
+    g = factor(
+      rep(c("a", "b", "c"), each = 20),
+      levels = c("a", "b", "c", "d")
+    )
+  )
+
+  result <- check_balance(
+    data,
+    x,
+    g,
+    .metrics = "smd",
+    make_dummy_vars = FALSE
+  )
+
+  expect_equal(nrow(result), 2)
+  expect_setequal(result$group_level, c("b", "c"))
+  expect_true(all(is.finite(result$estimate)))
+
+  dropped <- check_balance(
+    dplyr::mutate(data, g = droplevels(g)),
+    x,
+    g,
+    .metrics = "smd",
+    make_dummy_vars = FALSE
+  )
+  expect_equal(result, dropped)
+})
+
+test_that("check_balance reports one row per comparison level when a metric fails", {
+  data <- data.frame(
+    x = rep(c("low", "high"), 15),
+    g = factor(rep(c("a", "b", "c"), each = 10))
+  )
+
+  expect_warning(
+    result <- check_balance(
+      data,
+      x,
+      g,
+      .metrics = "smd",
+      make_dummy_vars = FALSE
+    ),
+    class = "halfmoon_data_warning"
+  )
+
+  expect_equal(nrow(result), 2)
+  expect_setequal(result$group_level, c("b", "c"))
+  expect_true(all(is.na(result$estimate)))
+})
+
+test_that("check_balance warns once about combinations it could not compute", {
+  data <- get_nhefs_test_data()
+
+  expect_warning(
+    result <- check_balance(
+      data,
+      c(race, sex),
+      qsmk,
+      .metrics = "smd",
+      make_dummy_vars = FALSE
+    ),
+    class = "halfmoon_data_warning"
+  )
+
+  expect_true(all(is.na(result$estimate)))
+})
+
+test_that("check_balance stays quiet about missing values it was asked to keep", {
+  data <- get_nhefs_test_data()
+  data$age[1:20] <- NA
+
+  keeps_na <- function() {
+    check_balance_basic(data, age, qsmk, .metrics = "smd", na.rm = FALSE)
+  }
+
+  expect_no_warning(keeps_na())
+  expect_true(is.na(keeps_na()$estimate))
 })

@@ -90,7 +90,12 @@ test_that("check_balance defaults to discrete metrics for a binary exposure", {
 })
 
 test_that("check_balance defaults to discrete metrics for a categorical exposure", {
-  result <- check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat)
+  # `alcoholfreq_cat` has missing values and `bal_energy()` refuses them, so the
+  # energy row is reported as missing and the call says so
+  expect_warning(
+    result <- check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat),
+    class = "halfmoon_data_warning"
+  )
 
   expect_setequal(unique(result$metric), c("smd", "vr", "ks", "energy"))
 })
