@@ -341,7 +341,12 @@ test_that("default results for discrete exposures are unchanged", {
     defaults$binary_weighted
   )
   expect_equal(
-    check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat),
+    check_balance(
+      nhefs_weights,
+      c(age, wt71, sex),
+      alcoholfreq_cat,
+      na.rm = TRUE
+    ),
     defaults$categorical_observed
   )
   expect_equal(
@@ -349,7 +354,8 @@ test_that("default results for discrete exposures are unchanged", {
       nhefs_weights,
       c(age, wt71, sex),
       alcoholfreq_cat,
-      .weights = c(w_cat_ate, w_cat_att_2_3wk)
+      .weights = c(w_cat_ate, w_cat_att_2_3wk),
+      na.rm = TRUE
     ),
     defaults$categorical_weighted
   )

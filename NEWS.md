@@ -1,5 +1,53 @@
 # halfmoon (development version)
 
+* `bal_smd()` now reports the comparison group minus the reference group, so a
+  positive value means the comparison group has the higher mean or proportion.
+  This is the convention the documentation has always described and the one
+  `cobalt::col_w_smd()` uses, but the estimate previously carried the opposite
+  sign. Every standardized mean difference, from `bal_smd()`, `check_balance()`,
+  and `plot_balance(abs_smd = FALSE)`, changes sign. Categorical results follow
+  the same convention: `X_vs_ref` is level `X` minus the reference level.
+
+* `bal_smd()` resolves `.reference_level` against the levels of the exposure
+  rather than the order in which those levels first appear in the data.
+  Estimates no longer depend on the row order, and a `.reference_level` that
+  names no group now raises a halfmoon error rather than passing through to the
+  smd package.
+
+* Functions that require a binary exposure count the levels an exposure
+  actually takes rather than the levels a factor declares. A factor with unused
+  levels and two observed groups is now valid input for binary `bal_smd()`,
+  `bal_vr()`, `bal_ks()`, `bal_qq()`, and `plot_mirror_distributions()`, all of
+  which previously rejected it for declaring too many levels. An exposure with
+  a single observed group now raises `halfmoon_group_error` in `bal_smd()`,
+  `bal_vr()`, and `bal_ks()`, instead of failing inside the smd package or
+  returning `NA` without comment, and in `bal_qq()`, which previously returned a
+  table pairing the observed group's quantiles with a column of missing values.
+  `bal_prognostic_score()` reports that same error for an exposure with one
+  observed group, where it previously reported a missing control level.
+
+* `bal_smd()`, `bal_vr()`, and `bal_ks()` treat a missing exposure the way they
+  treat a missing covariate or weight: with `na.rm = FALSE` the result is `NA`,
+  and with `na.rm = TRUE` the affected rows are dropped. `bal_vr()` and
+  `bal_ks()` previously dropped rows with a missing exposure without being
+  asked, and the categorical versions of all three did the same. A categorical
+  exposure with missing data now returns an all-`NA` named vector by default,
+  so calls on `nhefs_weights$alcoholfreq_cat` need `na.rm = TRUE`.
+
+* `bal_smd(na.rm = TRUE)` drops rows with missing weights instead of failing
+  inside the smd package, which only removes missing covariate values.
+
+* `bal_smd()`, `bal_vr()`, and `bal_ks()` return `NA` when a group carries no
+  weight. Zero weights are valid input, so a group they empty has no mean,
+  variance, or distribution to report. `bal_vr()` and `bal_ks()` previously
+  failed with a base R error about a missing value or an interpolation with no
+  points, and `bal_smd()` was worse: the smd package treats a group with no
+  weight as having a mean and variance of zero, so an undefined statistic came
+  back as a plausible number.
+
+* `bal_corr()` returns `NA` when the weights sum to zero, rather than failing
+  with a base R error about a missing value.
+
 * `check_balance()` gains an `exposure_type` argument, one of `"binary"`,
   `"categorical"`, or `"continuous"`. It defaults to `"auto"`, which reads the
   type from `.exposure` and reports what it found.

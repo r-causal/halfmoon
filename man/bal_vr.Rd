@@ -29,8 +29,12 @@ before computation. If \code{FALSE} (default), missing values in the input
 will produce \code{NA} in the output.}
 }
 \value{
-A numeric value representing the variance ratio. Values greater than 1
-indicate the comparison group has higher variance than the reference group.
+For a binary exposure, a numeric value representing the variance
+ratio. Values greater than 1 indicate the comparison group has higher
+variance than the reference group. For a categorical exposure, a named
+numeric vector with one element per non-reference level, named \code{X_vs_ref},
+holding the variance of level \code{X} divided by the variance of the reference
+level.
 }
 \description{
 Calculates the ratio of variances between two groups: var(comparison) / var(reference).
@@ -58,16 +62,17 @@ bal_vr(nhefs_weights$age, nhefs_weights$qsmk)
 bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
        .weights = nhefs_weights$w_ate)
 
-# Categorical exposure (returns named vector)
-bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+# Categorical exposure (returns named vector). This exposure has missing
+# values, so `na.rm = TRUE` is needed for a non-missing result.
+bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 
 # Specify reference level
 bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-       .reference_level = "2_3_per_week")
+       .reference_level = "2_3_per_week", na.rm = TRUE)
 
 # With categorical weights
 bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-       .weights = nhefs_weights$w_cat_ate)
+       .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 
 }
 \seealso{

@@ -12,9 +12,9 @@
     Code
       bal_prognostic_score(treated_only, outcome = wt82_71, .exposure = qsmk,
         .covariates = c(age, sex))
-    Condition <halfmoon_reference_error>
+    Condition <halfmoon_group_error>
       Error in `bal_prognostic_score()`:
-      ! No control observations found. Control level '0' not present in treatment variable.
+      ! Exposure variable must have exactly two levels, got 1
 
 # bal_prognostic_score errors when required arguments missing
 

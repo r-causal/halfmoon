@@ -40,15 +40,115 @@ create_test_data <- function(n = 100, seed = 123) {
 # TESTS FOR bal_smd()
 # =============================================================================
 
-test_that("bal_smd matches smd::smd estimate", {
+test_that("bal_smd maps each level to the matching smd::smd reference index", {
   set.seed(1)
   x <- rnorm(100)
   g <- factor(sample(c(0, 1), 100, replace = TRUE))
 
-  out_pkg <- bal_smd(.covariate = x, .exposure = g, .reference_level = 1)
-  out_base <- smd::smd(x, g, gref = 1)$estimate
+  # smd::smd() splits by factor level, so level "0" is gref 1 and level "1" is
+  # gref 2. halfmoon negates the estimate to report comparison minus reference.
+  expect_equal(
+    bal_smd(.covariate = x, .exposure = g, .reference_level = "0"),
+    -smd::smd(x, g, gref = 1)$estimate
+  )
+  expect_equal(
+    bal_smd(.covariate = x, .exposure = g, .reference_level = "1"),
+    -smd::smd(x, g, gref = 2)$estimate
+  )
 
-  expect_equal(out_pkg, out_base)
+  # The mapping must not depend on which level appears in the first row.
+  shuffled <- rev(seq_along(x))
+  expect_equal(
+    bal_smd(
+      .covariate = x[shuffled],
+      .exposure = g[shuffled],
+      .reference_level = "0"
+    ),
+    bal_smd(.covariate = x, .exposure = g, .reference_level = "0")
+  )
+})
+
+test_that("bal_smd is invariant to row order", {
+  set.seed(2024)
+  reordered <- order(nhefs_weights$qsmk, decreasing = TRUE)
+
+  expect_equal(
+    bal_smd(
+      nhefs_weights$age[reordered],
+      nhefs_weights$qsmk[reordered],
+      .reference_level = 0
+    ),
+    bal_smd(nhefs_weights$age, nhefs_weights$qsmk, .reference_level = 0)
+  )
+  expect_equal(
+    bal_smd(nhefs_weights$age[reordered], nhefs_weights$qsmk[reordered]),
+    bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
+  )
+
+  shuffled <- sample(nrow(nhefs_weights))
+  expect_equal(
+    bal_smd(
+      nhefs_weights$wt71[shuffled],
+      nhefs_weights$qsmk[shuffled],
+      .weights = nhefs_weights$w_ate[shuffled]
+    ),
+    bal_smd(
+      nhefs_weights$wt71,
+      nhefs_weights$qsmk,
+      .weights = nhefs_weights$w_ate
+    )
+  )
+})
+
+test_that("bal_smd resolves a named reference level to that level", {
+  g <- factor(rep(c("control", "treated"), each = 50))
+  set.seed(11)
+  x <- c(rnorm(50), rnorm(50, mean = 1))
+
+  expect_equal(
+    bal_smd(x, g, .reference_level = "control"),
+    bal_smd(x, g, .reference_level = 1)
+  )
+  expect_equal(
+    bal_smd(x, g, .reference_level = "treated"),
+    bal_smd(x, g, .reference_level = 2)
+  )
+})
+
+test_that("bal_smd rejects a reference level that names no group", {
+  expect_error(
+    bal_smd(
+      nhefs_weights$age,
+      nhefs_weights$qsmk,
+      .reference_level = "banana"
+    ),
+    class = "halfmoon_reference_error"
+  )
+  expect_error(
+    bal_smd(nhefs_weights$age, nhefs_weights$qsmk, .reference_level = 7),
+    class = "halfmoon_range_error"
+  )
+  expect_error(
+    bal_smd(nhefs_weights$age, nhefs_weights$qsmk, .reference_level = c(0, 1)),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("bal_smd reports the comparison group minus the reference group", {
+  set.seed(3)
+  g <- rep(c(0, 1), each = 50)
+  x <- c(rnorm(50, mean = 0), rnorm(50, mean = 10))
+
+  expect_gt(bal_smd(x, g, .reference_level = 0), 0)
+  expect_lt(bal_smd(x, g, .reference_level = 1), 0)
+
+  # People who quit smoking are older, so the estimate is positive with the
+  # non-quitters as the reference group.
+  expect_equal(
+    bal_smd(nhefs_weights$age, nhefs_weights$qsmk),
+    0.2822208,
+    tolerance = 1e-6
+  )
 })
 
 test_that("bal_smd handles different reference groups", {
@@ -728,13 +828,13 @@ test_that("bal_smd matches cobalt::col_w_smd for binary variables", {
   data <- create_test_data(seed = 789)
 
   # Binary variables should match exactly
-  # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
-  # to match cobalt's behavior for this test
+  # Note: cobalt reports the treated group minus the untreated group, so group
+  # 0 is the reference level for this comparison
   our_smd_bin <- bal_smd(
     .covariate = data$x_binary,
     .exposure = data$g_balanced,
     .weights = data$w_uniform,
-    .reference_level = 1
+    .reference_level = 0
   )
   cobalt_smd_bin <- cobalt::col_w_smd(
     matrix(data$x_binary, ncol = 1),
@@ -752,13 +852,13 @@ test_that("bal_smd is close to cobalt::col_w_smd for continuous variables", {
   data <- create_test_data(seed = 789)
 
   # Continuous variables should be close (different pooled variance approaches)
-  # Note: cobalt uses group 1 as reference, so we specify reference_group = 1
-  # to match cobalt's behavior for this test
+  # Note: cobalt reports the treated group minus the untreated group, so group
+  # 0 is the reference level for this comparison
   our_smd_cont <- bal_smd(
     .covariate = data$x_cont,
     .exposure = data$g_balanced,
     .weights = data$w_uniform,
-    .reference_level = 1
+    .reference_level = 0
   )
   cobalt_smd_cont <- cobalt::col_w_smd(
     matrix(data$x_cont, ncol = 1),
@@ -1866,25 +1966,30 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
   expect_true(propensity::is_psw(nhefs_weights$w_cat_ate))
   expect_true(propensity::is_psw(nhefs_weights$w_cat_att_none))
 
-  # Test that balance functions work directly with psw weights
+  # Test that balance functions work directly with psw weights. The categorical
+  # exposure and its weights both carry missing values, so na.rm = TRUE is
+  # needed for a non-missing result.
   result_smd <- bal_smd(
     nhefs_weights$age,
     nhefs_weights$alcoholfreq_cat,
-    .weights = nhefs_weights$w_cat_ate
+    .weights = nhefs_weights$w_cat_ate,
+    na.rm = TRUE
   )
   expect_true(all(is.finite(result_smd)))
 
   result_vr <- bal_vr(
     nhefs_weights$wt71,
     nhefs_weights$alcoholfreq_cat,
-    .weights = nhefs_weights$w_cat_att_none
+    .weights = nhefs_weights$w_cat_att_none,
+    na.rm = TRUE
   )
   expect_true(all(is.finite(result_vr) & result_vr > 0))
 
   result_ks <- bal_ks(
     nhefs_weights$age,
     nhefs_weights$alcoholfreq_cat,
-    .weights = nhefs_weights$w_cat_ato
+    .weights = nhefs_weights$w_cat_ato,
+    na.rm = TRUE
   )
   expect_true(all(is.finite(result_ks) & result_ks >= 0 & result_ks <= 1))
 
@@ -1895,7 +2000,8 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
     alcoholfreq_cat,
     .weights = w_cat_ate,
     .metrics = "smd",
-    include_observed = FALSE
+    include_observed = FALSE,
+    na.rm = TRUE
   )
   expect_s3_class(balance_results, "data.frame")
   expect_true(nrow(balance_results) > 0)
@@ -1988,4 +2094,140 @@ test_that("categorical bal_* functions still accept an integral index", {
     bal_smd(x, g, .reference_level = 2),
     bal_smd(x, g, .reference_level = "lt_12_per_year")
   )
+})
+
+# =============================================================================
+# NA, ZERO-WEIGHT, AND UNUSED-LEVEL POLICY
+# =============================================================================
+
+test_that("bal_smd with na.rm = TRUE drops rows with missing weights", {
+  set.seed(31)
+  x <- rnorm(40)
+  g <- rep(c(0, 1), each = 20)
+  w <- runif(40, 0.5, 1.5)
+  w[c(3, 25)] <- NA
+
+  keep <- !is.na(w)
+  expect_equal(
+    bal_smd(x, g, .weights = w, na.rm = TRUE),
+    bal_smd(x[keep], g[keep], .weights = w[keep], na.rm = TRUE)
+  )
+
+  psw_weights <- propensity::psw(w, estimand = "ate")
+  expect_equal(
+    bal_smd(x, g, .weights = psw_weights, na.rm = TRUE),
+    bal_smd(x[keep], g[keep], .weights = w[keep], na.rm = TRUE)
+  )
+})
+
+test_that("bal_smd with na.rm = TRUE drops rows with a missing exposure", {
+  set.seed(32)
+  x <- rnorm(30)
+  g <- rep(c(0, 1), each = 15)
+  g[c(2, 20)] <- NA
+
+  keep <- !is.na(g)
+  expect_equal(
+    bal_smd(x, g, na.rm = TRUE),
+    bal_smd(x[keep], g[keep])
+  )
+})
+
+test_that("bal_vr and bal_ks return NA for a missing exposure by default", {
+  x <- as.numeric(1:6)
+  g <- c(0, 0, 0, 1, 1, NA)
+
+  expect_true(is.na(bal_smd(x, g)))
+  expect_true(is.na(bal_vr(x, g)))
+  expect_true(is.na(bal_ks(x, g)))
+
+  expect_true(is.finite(bal_smd(x, g, na.rm = TRUE)))
+  expect_true(is.finite(bal_vr(x, g, na.rm = TRUE)))
+  expect_true(is.finite(bal_ks(x, g, na.rm = TRUE)))
+})
+
+test_that("binary bal_* functions return NA when a group has no weight", {
+  set.seed(33)
+  x <- rnorm(40)
+  g <- rep(c(0, 1), each = 20)
+  x_binary <- rep(c(0, 1, 1, 0), times = 10)
+
+  w_zero_comparison <- ifelse(g == 1, 0, 1)
+  w_zero_reference <- ifelse(g == 0, 0, 1)
+
+  # `smd:::n_mean_var()` reports a mean and variance of 0 for a group with no
+  # weight, so bal_smd has to catch this itself rather than trust the estimate
+  expect_true(is.na(bal_smd(x, g, .weights = w_zero_comparison)))
+  expect_true(is.na(bal_smd(x, g, .weights = w_zero_reference)))
+  expect_true(is.na(bal_vr(x, g, .weights = w_zero_comparison)))
+  expect_true(is.na(bal_vr(x, g, .weights = w_zero_reference)))
+  expect_true(is.na(bal_ks(x, g, .weights = w_zero_comparison)))
+  expect_true(is.na(bal_ks(x, g, .weights = w_zero_reference)))
+
+  expect_true(is.na(bal_smd(x_binary, g, .weights = w_zero_comparison)))
+  expect_true(is.na(bal_vr(x_binary, g, .weights = w_zero_comparison)))
+  expect_true(is.na(bal_ks(x_binary, g, .weights = w_zero_comparison)))
+
+  psw_zero <- propensity::psw(w_zero_comparison, estimand = "ate")
+  expect_true(is.na(bal_smd(x, g, .weights = psw_zero)))
+  expect_true(is.na(bal_vr(x, g, .weights = psw_zero)))
+  expect_true(is.na(bal_ks(x, g, .weights = psw_zero)))
+
+  # Rows dropped by na.rm can empty a group's weight just as zeros can
+  w_na <- ifelse(g == 1, NA_real_, 1)
+  expect_true(is.na(bal_smd(x, g, .weights = w_na, na.rm = TRUE)))
+})
+
+test_that("categorical bal_* functions return NA for a level with no weight", {
+  set.seed(37)
+  x <- rnorm(90)
+  g <- rep(c("low", "medium", "high"), each = 30)
+  w <- ifelse(g == "medium", 0, 1)
+
+  # The levels sort, so "high" is the reference and only the "medium"
+  # comparison is undefined
+  result <- bal_smd(x, g, .weights = w)
+  expect_true(is.na(result[["medium_vs_high"]]))
+  expect_true(is.finite(result[["low_vs_high"]]))
+
+  expect_true(is.na(bal_vr(x, g, .weights = w)[["medium_vs_high"]]))
+  expect_true(is.na(bal_ks(x, g, .weights = w)[["medium_vs_high"]]))
+})
+
+test_that("bal_corr returns NA when the weights sum to zero", {
+  set.seed(34)
+  x <- rnorm(30)
+  y <- rnorm(30)
+
+  expect_true(is.na(bal_corr(x, y, .weights = rep(0, 30))))
+
+  psw_zero <- propensity::psw(rep(0, 30), estimand = "ate")
+  expect_true(is.na(bal_corr(x, y, .weights = psw_zero)))
+
+  # Only the zero-weight rows survive the complete-case filter
+  w <- c(rep(0, 20), rep(NA, 10))
+  x[21:30] <- NA
+  expect_true(is.na(bal_corr(x, y, .weights = w, na.rm = TRUE)))
+})
+
+test_that("binary bal_* functions use observed levels, not declared ones", {
+  set.seed(35)
+  x <- rnorm(40)
+  f3 <- factor(rep(c("a", "b"), each = 20), levels = c("a", "b", "c"))
+
+  expect_equal(bal_smd(x, f3), bal_smd(x, droplevels(f3)))
+  expect_equal(bal_vr(x, f3), bal_vr(x, droplevels(f3)))
+  expect_equal(bal_ks(x, f3), bal_ks(x, droplevels(f3)))
+
+  expect_true(is.finite(bal_smd(x, f3)))
+})
+
+test_that("binary bal_* functions reject a single observed level", {
+  set.seed(36)
+  x <- rnorm(20)
+  f1 <- factor(rep("a", 20), levels = c("a", "b"))
+
+  expect_error(bal_smd(x, f1), class = "halfmoon_group_error")
+  expect_error(bal_vr(x, f1), class = "halfmoon_group_error")
+  expect_error(bal_ks(x, f1), class = "halfmoon_group_error")
 })

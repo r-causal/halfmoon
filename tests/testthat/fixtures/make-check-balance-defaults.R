@@ -18,16 +18,20 @@ check_balance_defaults <- list(
     qsmk,
     .weights = c(w_ate, w_att)
   ),
+  # `alcoholfreq_cat` has missing values, so na.rm = TRUE keeps the categorical
+  # entries comparing estimates rather than comparing missing values
   categorical_observed = check_balance(
     nhefs_weights,
     c(age, wt71, sex),
-    alcoholfreq_cat
+    alcoholfreq_cat,
+    na.rm = TRUE
   ),
   categorical_weighted = check_balance(
     nhefs_weights,
     c(age, wt71, sex),
     alcoholfreq_cat,
-    .weights = c(w_cat_ate, w_cat_att_2_3wk)
+    .weights = c(w_cat_ate, w_cat_att_2_3wk),
+    na.rm = TRUE
   )
 )
 

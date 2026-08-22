@@ -1,13 +1,20 @@
 # Group handling helper functions for the halfmoon package
 
-# Extract and validate group levels
+# Drop declared factor levels that no observation takes, so that a factor and
+# the values it actually holds describe the same set of groups
+drop_unused_levels <- function(group) {
+  if (is.factor(group)) droplevels(group) else group
+}
+
+# Extract and validate group levels. Levels are the OBSERVED levels: declared
+# order for a factor, sorted order otherwise.
 extract_group_levels <- function(
   group,
   require_binary = TRUE,
   call = rlang::caller_env()
 ) {
   levels <- if (is.factor(group)) {
-    levels(group)
+    levels(droplevels(group))
   } else {
     group |>
       stats::na.omit() |>

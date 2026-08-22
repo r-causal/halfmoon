@@ -1,3 +1,20 @@
+#' Does either group carry no weight?
+#'
+#' `validate_weights()` allows zero weights, so a group can end up with a total
+#' weight of zero. A weighted mean, variance, or empirical CDF is undefined
+#' there, and the statistic is missing rather than an error.
+#' @noRd
+has_zero_weight_group <- function(weights, idx_ref, idx_other) {
+  if (is.null(weights)) {
+    return(FALSE)
+  }
+
+  weights <- extract_weight_data(weights)
+  group_totals <- c(sum(weights[idx_ref]), sum(weights[idx_other]))
+
+  any(!is.finite(group_totals) | group_totals <= 0)
+}
+
 #' Balance Standardized Mean Difference (SMD)
 #'
 #' Calculates the standardized mean difference between two groups using the
@@ -14,9 +31,12 @@
 #' indicative of good balance between treatment groups.
 #'
 #' @inheritParams balance_params
-#' @return A numeric value representing the standardized mean difference.
-#'   Positive values indicate the comparison group has a higher mean than
-#'   the reference group.
+#' @return For a binary exposure, a numeric value: the standardized mean
+#'   difference of the comparison group minus the reference group. Positive
+#'   values indicate the comparison group has a higher mean than the reference
+#'   group. For a categorical exposure, a named numeric vector with one element
+#'   per non-reference level, named `X_vs_ref`, holding level `X` minus the
+#'   reference level.
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
@@ -27,16 +47,17 @@
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'         .weights = nhefs_weights$w_ate)
 #'
-#' # Categorical exposure (returns named vector)
-#' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#' # Categorical exposure (returns named vector). This exposure has missing
+#' # values, so `na.rm = TRUE` is needed for a non-missing result.
+#' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 #'
 #' # Specify reference level
 #' bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'         .reference_level = "daily")
+#'         .reference_level = "daily", na.rm = TRUE)
 #'
 #' # With categorical weights
 #' bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-#'         .weights = nhefs_weights$w_cat_ate)
+#'         .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 #'
 #' @export
 bal_smd <- function(
@@ -62,52 +83,58 @@ bal_smd <- function(
     ))
   }
 
-  # Handle missing values for binary exposures
-  if (!na.rm) {
-    # Check for missing values
-    if (is.null(.weights)) {
-      if (any(is.na(.covariate) | is.na(.exposure))) return(NA_real_)
-    } else {
-      if (any(is.na(.covariate) | is.na(.exposure) | is.na(.weights))) {
-        return(NA_real_)
-      }
+  # Binary exposure handling. `smd::smd()` splits the covariate by the levels of
+  # the exposure, so the reference index has to be a position in those levels
+  # rather than a position in the order the levels happen to appear.
+  .exposure <- drop_unused_levels(.exposure)
+  levels_g <- extract_group_levels(.exposure, require_binary = TRUE)
+  ref_level <- determine_reference_group(.exposure, .reference_level)
+  gref_index <- which(levels_g == ref_level)
+
+  w_data <- extract_weight_data(.weights)
+
+  # `smd::smd()` only removes missing covariate values, so filter the rows here
+  # and hand it complete data
+  if (na.rm) {
+    keep <- !is.na(.covariate) & !is.na(.exposure)
+    if (!is.null(w_data)) {
+      keep <- keep & !is.na(w_data)
     }
+    .covariate <- .covariate[keep]
+    .exposure <- .exposure[keep]
+    if (!is.null(w_data)) {
+      w_data <- w_data[keep]
+    }
+  } else if (
+    anyNA(.covariate) || anyNA(.exposure) || (!is.null(w_data) && anyNA(w_data))
+  ) {
+    return(NA_real_)
   }
 
-  # Binary exposure handling (existing code)
-  # Convert .reference_level to index for smd package
-  levels_g <- unique(stats::na.omit(.exposure))
-
-  # Validate we have exactly two levels
-  if (length(levels_g) != 2) {
-    abort(
-      "Exposure variable must have exactly two levels, got {length(levels_g)}",
-      error_class = "halfmoon_group_error"
-    )
+  # Both groups need at least one observation left to compare
+  idx_ref <- which(.exposure == ref_level)
+  idx_other <- which(.exposure != ref_level)
+  if (length(idx_ref) == 0 || length(idx_other) == 0) {
+    return(NA_real_)
   }
 
-  # Determine gref_index for smd package
-  if (is.null(.reference_level)) {
-    gref_index <- 1L
-  } else {
-    # If .reference_level is a level value, convert to index
-    if (.reference_level %in% levels_g) {
-      gref_index <- which(levels_g == .reference_level)
-    } else {
-      # Use it directly as an index
-      gref_index <- .reference_level
-    }
+  # `smd:::n_mean_var()` reports a mean and variance of 0 for a group with no
+  # weight, which would turn an undefined statistic into a plausible number
+  if (has_zero_weight_group(w_data, idx_ref, idx_other)) {
+    return(NA_real_)
   }
 
   res <- smd::smd(
     x = .covariate,
     g = .exposure,
-    w = extract_weight_data(.weights),
+    w = w_data,
     gref = gref_index,
-    na.rm = na.rm
+    na.rm = FALSE
   )
 
-  res$estimate
+  # `smd::smd()` reports the reference group minus the comparison group; the
+  # halfmoon convention is the comparison group minus the reference group
+  -res$estimate
 }
 
 
@@ -131,8 +158,12 @@ bal_smd <- function(
 #' for balance. Values substantially different from 1.0 suggest imbalanced variance.
 #'
 #' @inheritParams balance_params
-#' @return A numeric value representing the variance ratio. Values greater than 1
-#'   indicate the comparison group has higher variance than the reference group.
+#' @return For a binary exposure, a numeric value representing the variance
+#'   ratio. Values greater than 1 indicate the comparison group has higher
+#'   variance than the reference group. For a categorical exposure, a named
+#'   numeric vector with one element per non-reference level, named `X_vs_ref`,
+#'   holding the variance of level `X` divided by the variance of the reference
+#'   level.
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
@@ -143,16 +174,17 @@ bal_smd <- function(
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'        .weights = nhefs_weights$w_ate)
 #'
-#' # Categorical exposure (returns named vector)
-#' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#' # Categorical exposure (returns named vector). This exposure has missing
+#' # values, so `na.rm = TRUE` is needed for a non-missing result.
+#' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 #'
 #' # Specify reference level
 #' bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'        .reference_level = "2_3_per_week")
+#'        .reference_level = "2_3_per_week", na.rm = TRUE)
 #'
 #' # With categorical weights
 #' bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-#'        .weights = nhefs_weights$w_cat_ate)
+#'        .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 #'
 #' @export
 bal_vr <- function(
@@ -194,12 +226,15 @@ bal_vr <- function(
       na.rm = TRUE
     )
   } else {
+    # A missing exposure is dropped by the split above, so it has to be checked
+    # against the whole vector rather than the two groups
     if (
-      check_na_return(
-        .covariate[c(idx_ref, idx_other)],
-        extract_weight_data(.weights)[c(idx_ref, idx_other)] %||% NULL,
-        na.rm = FALSE
-      )
+      anyNA(.exposure) ||
+        check_na_return(
+          .covariate[c(idx_ref, idx_other)],
+          extract_weight_data(.weights)[c(idx_ref, idx_other)] %||% NULL,
+          na.rm = FALSE
+        )
     ) {
       return(NA_real_)
     }
@@ -207,6 +242,10 @@ bal_vr <- function(
 
   # Check if we have enough data after removing NAs
   if (length(idx_ref) == 0 || length(idx_other) == 0) {
+    return(NA_real_)
+  }
+  # A group carrying no weight contributes no variance to compare
+  if (has_zero_weight_group(.weights, idx_ref, idx_other)) {
     return(NA_real_)
   }
   # Compute variances
@@ -240,7 +279,7 @@ bal_vr <- function(
       mr <- sum(wr * xr) / sum(wr)
       # Use Bessel's correction for weighted sample variance
       denom <- sum(wr) - sum(wr^2) / sum(wr)
-      if (denom <= 0) {
+      if (!is.finite(denom) || denom <= 0) {
         sum(wr * (xr - mr)^2) / sum(wr)
       } else {
         sum(wr * (xr - mr)^2) / denom
@@ -254,7 +293,7 @@ bal_vr <- function(
       mo <- sum(wo * xo) / sum(wo)
       # Use Bessel's correction for weighted sample variance
       denom <- sum(wo) - sum(wo^2) / sum(wo)
-      if (denom <= 0) {
+      if (!is.finite(denom) || denom <= 0) {
         sum(wo * (xo - mo)^2) / sum(wo)
       } else {
         sum(wo * (xo - mo)^2) / denom
@@ -300,9 +339,12 @@ bal_vr <- function(
 #' between groups.
 #'
 #' @inheritParams balance_params
-#' @return A numeric value representing the KS statistic. Values range from 0 to 1,
-#'   with 0 indicating identical distributions and 1 indicating completely separate
-#'   distributions.
+#' @return For a binary exposure, a numeric value representing the KS
+#'   statistic. Values range from 0 to 1, with 0 indicating identical
+#'   distributions and 1 indicating completely separate distributions. For a
+#'   categorical exposure, a named numeric vector with one element per
+#'   non-reference level, named `X_vs_ref`, comparing level `X` with the
+#'   reference level.
 #' @family balance functions
 #' @seealso [check_balance()] for computing multiple balance metrics at once
 #' @examples
@@ -313,16 +355,17 @@ bal_vr <- function(
 #' bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
 #'        .weights = nhefs_weights$w_ate)
 #'
-#' # Categorical exposure (returns named vector)
-#' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+#' # Categorical exposure (returns named vector). This exposure has missing
+#' # values, so `na.rm = TRUE` is needed for a non-missing result.
+#' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 #'
 #' # Specify reference level
 #' bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-#'        .reference_level = "none")
+#'        .reference_level = "none", na.rm = TRUE)
 #'
 #' # With categorical weights
 #' bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-#'        .weights = nhefs_weights$w_cat_ate)
+#'        .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 #' @export
 bal_ks <- function(
   .covariate,
@@ -362,12 +405,15 @@ bal_ks <- function(
       na.rm = TRUE
     )
   } else {
+    # A missing exposure is dropped by the split above, so it has to be checked
+    # against the whole vector rather than the two groups
     if (
-      check_na_return(
-        .covariate[c(idx_ref, idx_other)],
-        extract_weight_data(.weights)[c(idx_ref, idx_other)] %||% NULL,
-        na.rm = FALSE
-      )
+      anyNA(.exposure) ||
+        check_na_return(
+          .covariate[c(idx_ref, idx_other)],
+          extract_weight_data(.weights)[c(idx_ref, idx_other)] %||% NULL,
+          na.rm = FALSE
+        )
     ) {
       return(NA_real_)
     }
@@ -375,6 +421,10 @@ bal_ks <- function(
 
   # Check if we have enough data after removing NAs
   if (length(idx_ref) == 0 || length(idx_other) == 0) {
+    return(NA_real_)
+  }
+  # A group carrying no weight has no distribution to compare
+  if (has_zero_weight_group(.weights, idx_ref, idx_other)) {
     return(NA_real_)
   }
   # For binary variables, KS statistic is just the difference in proportions
@@ -503,15 +553,21 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
     return(stats::cor(.x, .y))
   }
 
+  # Weights that sum to zero leave nothing to correlate
+  total_weight <- sum(.weights)
+  if (!is.finite(total_weight) || total_weight <= 0) {
+    return(NA_real_)
+  }
+
   # Compute weighted covariance
-  w_norm <- .weights / sum(.weights)
+  w_norm <- .weights / total_weight
   mx <- sum(w_norm * .x)
   my <- sum(w_norm * .y)
   cov <- sum(w_norm * (.x - mx) * (.y - my))
   vx <- sum(w_norm * (.x - mx)^2)
   vy <- sum(w_norm * (.y - my)^2)
 
-  if (vx <= 0 || vy <= 0) {
+  if (!is.finite(vx) || !is.finite(vy) || vx <= 0 || vy <= 0) {
     return(NA_real_)
   }
 

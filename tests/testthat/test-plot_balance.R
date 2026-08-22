@@ -187,7 +187,8 @@ test_that("plot_balance handles categorical exposures with facet_grid", {
     c(age, wt71),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = c("smd", "vr")
+    .metrics = c("smd", "vr"),
+    na.rm = TRUE
   )
 
   p <- plot_balance(balance_cat)
@@ -210,7 +211,8 @@ test_that("plot_balance handles categorical exposures with single metric", {
     c(age, wt71),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = "smd"
+    .metrics = "smd",
+    na.rm = TRUE
   )
 
   p <- plot_balance(balance_cat_single)
@@ -240,7 +242,8 @@ test_that("plot_balance correctly identifies categorical vs binary exposures", {
     nhefs_weights,
     c(age, education),
     alcoholfreq_cat,
-    .metrics = c("smd", "vr")
+    .metrics = c("smd", "vr"),
+    na.rm = TRUE
   )
 
   p_cat <- plot_balance(balance_cat)
@@ -338,7 +341,8 @@ test_that("plot_balance visual tests", {
     c(age, wt71, sex),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = c("smd", "vr", "ks")
+    .metrics = c("smd", "vr", "ks"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -352,7 +356,8 @@ test_that("plot_balance visual tests", {
     c(age, wt71, sex),
     alcoholfreq_cat,
     .weights = c(w_cat_ate, w_cat_att_2_3wk),
-    .metrics = "smd"
+    .metrics = "smd",
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -365,7 +370,8 @@ test_that("plot_balance visual tests", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .metrics = c("smd", "vr")
+    .metrics = c("smd", "vr"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -383,7 +389,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     alcoholfreq_cat,
     .reference_level = "daily",
     .weights = w_cat_ate,
-    .metrics = c("smd", "vr")
+    .metrics = c("smd", "vr"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -397,16 +404,13 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = c("smd", "energy")
+    .metrics = c("smd", "energy"),
+    na.rm = TRUE
   )
 
-  # Suppress ggplot2's "Removed 2 rows containing missing values" warning
-  # This happens when energy distance produces NA values for small sample sizes
-  suppressWarnings(
-    expect_doppelganger(
-      "balance-plot-categorical-with-energy",
-      plot_balance(balance_cat_energy)
-    )
+  expect_doppelganger(
+    "balance-plot-categorical-with-energy",
+    plot_balance(balance_cat_energy)
   )
 
   # Categorical with fixed scales
@@ -415,7 +419,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71, sex),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = c("smd", "vr", "ks")
+    .metrics = c("smd", "vr", "ks"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -429,7 +434,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71, sex),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = c("smd", "vr", "ks")
+    .metrics = c("smd", "vr", "ks"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -443,7 +449,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71),
     alcoholfreq_cat,
     .weights = c(w_cat_att_none, w_cat_att_2_3wk, w_cat_att_daily),
-    .metrics = "smd"
+    .metrics = "smd",
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -457,7 +464,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71, smokeintensity),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = "ks"
+    .metrics = "ks",
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -471,7 +479,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = "smd"
+    .metrics = "smd",
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -499,7 +508,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     ),
     alcoholfreq_cat,
     .weights = w_cat_ate,
-    .metrics = c("smd", "vr")
+    .metrics = c("smd", "vr"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(
@@ -513,7 +523,8 @@ test_that("plot_balance visual tests - more categorical scenarios", {
     c(age, wt71),
     alcoholfreq_cat,
     .weights = c(w_cat_ate, w_cat_ato, w_cat_atm),
-    .metrics = c("smd", "vr")
+    .metrics = c("smd", "vr"),
+    na.rm = TRUE
   )
 
   expect_doppelganger(

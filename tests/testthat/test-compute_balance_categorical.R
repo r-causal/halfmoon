@@ -2,8 +2,13 @@
 
 # Tests using real nhefs_weights data with categorical exposure
 test_that("categorical balance functions work with nhefs_weights data", {
-  # Test SMD with categorical exposure
-  result_smd <- bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+  # Test SMD with categorical exposure. The exposure has missing values, so
+  # na.rm = TRUE is needed for a non-missing result.
+  result_smd <- bal_smd(
+    nhefs_weights$age,
+    nhefs_weights$alcoholfreq_cat,
+    na.rm = TRUE
+  )
 
   expect_type(result_smd, "double")
   expect_length(result_smd, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
@@ -14,7 +19,8 @@ test_that("categorical balance functions work with nhefs_weights data", {
   result_ref <- bal_smd(
     nhefs_weights$age,
     nhefs_weights$alcoholfreq_cat,
-    .reference_level = "2_3_per_week"
+    .reference_level = "2_3_per_week",
+    na.rm = TRUE
   )
   expect_true(all(grepl("_vs_2_3_per_week$", names(result_ref))))
   expect_false(identical(result_smd, result_ref))
@@ -31,13 +37,21 @@ test_that("categorical balance functions work with nhefs_weights data", {
   expect_true(!anyNA(result_weighted))
 
   # Test VR
-  result_vr <- bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+  result_vr <- bal_vr(
+    nhefs_weights$age,
+    nhefs_weights$alcoholfreq_cat,
+    na.rm = TRUE
+  )
   expect_type(result_vr, "double")
   expect_length(result_vr, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
   expect_true(all(result_vr > 0))
 
   # Test KS
-  result_ks <- bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+  result_ks <- bal_ks(
+    nhefs_weights$age,
+    nhefs_weights$alcoholfreq_cat,
+    na.rm = TRUE
+  )
   expect_type(result_ks, "double")
   expect_length(result_ks, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
   expect_true(all(result_ks >= 0 & result_ks <= 1))
@@ -49,7 +63,8 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
     nhefs_weights,
     c(age, wt71),
     alcoholfreq_cat,
-    .metrics = "smd"
+    .metrics = "smd",
+    na.rm = TRUE
   )
 
   expect_s3_class(result, "data.frame")
@@ -57,6 +72,16 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
   expect_equal(nrow(result), 8)
   expect_equal(unique(result$metric), "smd")
   expect_true(!anyNA(result$estimate))
+
+  # The exposure has missing values, so the default reports missing estimates
+  result_missing <- check_balance(
+    nhefs_weights,
+    c(age, wt71),
+    alcoholfreq_cat,
+    .metrics = "smd"
+  )
+  expect_equal(nrow(result_missing), 8)
+  expect_true(all(is.na(result_missing$estimate)))
 
   # Test with weights
   result_weighted <- check_balance(
@@ -421,13 +446,13 @@ test_that("bal_smd categorical matches cobalt for 3-level exposure with binary c
 
   # Should match exactly for binary covariates
   expect_equal(
-    abs(unname(hm_result["medium_vs_low"])),
-    abs(unname(cobalt_medium_vs_low)),
+    unname(hm_result["medium_vs_low"]),
+    unname(cobalt_medium_vs_low),
     tolerance = 1e-10
   )
   expect_equal(
-    abs(unname(hm_result["high_vs_low"])),
-    abs(unname(cobalt_high_vs_low)),
+    unname(hm_result["high_vs_low"]),
+    unname(cobalt_high_vs_low),
     tolerance = 1e-10
   )
 })
@@ -458,8 +483,8 @@ test_that("bal_smd categorical with continuous covariate shows expected variance
   # For continuous covariates, expect ~0.5-1% difference due to variance calculation
   # halfmoon uses population variance, cobalt uses sample variance
   expect_equal(
-    abs(unname(hm_result["medium_vs_low"])),
-    abs(unname(cobalt_medium_vs_low)),
+    unname(hm_result["medium_vs_low"]),
+    unname(cobalt_medium_vs_low),
     tolerance = 0.01 # 1% tolerance for variance difference
   )
 })
@@ -507,13 +532,13 @@ test_that("bal_smd categorical matches cobalt with weights and binary covariate"
 
   # Should match exactly for binary covariates
   expect_equal(
-    abs(unname(hm_result["low_vs_high"])),
-    abs(unname(cobalt_low_vs_high)),
+    unname(hm_result["low_vs_high"]),
+    unname(cobalt_low_vs_high),
     tolerance = 1e-10
   )
   expect_equal(
-    abs(unname(hm_result["medium_vs_high"])),
-    abs(unname(cobalt_medium_vs_high)),
+    unname(hm_result["medium_vs_high"]),
+    unname(cobalt_medium_vs_high),
     tolerance = 1e-10
   )
 })
@@ -800,8 +825,8 @@ test_that("categorical balance with NA values matches cobalt behavior", {
   )[1]
 
   expect_equal(
-    abs(unname(hm_smd["medium_vs_low"])),
-    abs(unname(cobalt_medium_vs_low)),
+    unname(hm_smd["medium_vs_low"]),
+    unname(cobalt_medium_vs_low),
     tolerance = 1e-10
   )
 })
@@ -850,8 +875,128 @@ test_that("categorical balance with 4-level exposure matches cobalt pattern", {
   )[1]
 
   expect_equal(
-    abs(unname(hm_result["B_vs_A"])),
-    abs(unname(cobalt_b_vs_a)),
+    unname(hm_result["B_vs_A"]),
+    unname(cobalt_b_vs_a),
     tolerance = 1e-10
+  )
+})
+
+test_that("categorical bal_* functions are invariant to row order", {
+  data <- create_test_data_categorical(n = 300, seed = 77)
+  set.seed(78)
+  shuffled <- sample(nrow(data))
+
+  expect_equal(
+    bal_smd(data$age[shuffled], data$exposure[shuffled]),
+    bal_smd(data$age, data$exposure)
+  )
+  expect_equal(
+    bal_vr(data$age[shuffled], data$exposure[shuffled]),
+    bal_vr(data$age, data$exposure)
+  )
+  expect_equal(
+    bal_ks(data$age[shuffled], data$exposure[shuffled]),
+    bal_ks(data$age, data$exposure)
+  )
+  expect_equal(
+    bal_smd(
+      data$age[shuffled],
+      data$exposure[shuffled],
+      .weights = data$weights_att[shuffled],
+      .reference_level = "high"
+    ),
+    bal_smd(
+      data$age,
+      data$exposure,
+      .weights = data$weights_att,
+      .reference_level = "high"
+    )
+  )
+})
+
+test_that("categorical bal_* functions match cobalt on sign", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  data <- create_test_data_categorical(n = 300, seed = 321)
+
+  hm_result <- bal_smd(
+    .covariate = data$employed,
+    .exposure = data$exposure,
+    .reference_level = "low"
+  )
+
+  medium_low_indices <- data$exposure %in% c("medium", "low")
+  medium_low_binary <- create_binary_for_cobalt(data$exposure, "medium", "low")
+  cobalt_medium_vs_low <- cobalt::col_w_smd(
+    matrix(data$employed[medium_low_indices], ncol = 1),
+    treat = medium_low_binary[medium_low_indices],
+    std = TRUE,
+    bin.vars = TRUE
+  )[1]
+
+  expect_equal(
+    unname(hm_result["medium_vs_low"]),
+    unname(cobalt_medium_vs_low),
+    tolerance = 1e-10
+  )
+})
+
+test_that("categorical bal_* functions return all NA for missing data", {
+  data <- create_test_data_categorical(n = 300, seed = 99)
+  age_na <- data$age
+  age_na[c(5, 100)] <- NA
+  exposure_na <- data$exposure
+  exposure_na[c(7, 150)] <- NA
+  weights_na <- data$weights_att
+  weights_na[c(9, 200)] <- NA
+
+  # The exposure is a character vector, so the levels sort and "high" is first
+  expected_names <- c("low_vs_high", "medium_vs_high")
+
+  smd_na_covariate <- bal_smd(age_na, data$exposure)
+  expect_true(all(is.na(smd_na_covariate)))
+  expect_setequal(names(smd_na_covariate), expected_names)
+
+  expect_true(all(is.na(bal_smd(data$age, exposure_na))))
+  expect_true(all(is.na(bal_vr(data$age, exposure_na))))
+  expect_true(all(is.na(bal_ks(data$age, exposure_na))))
+  expect_true(all(is.na(
+    bal_smd(data$age, data$exposure, .weights = weights_na)
+  )))
+
+  # The binary path reports missing data the same way
+  binary_idx <- data$exposure %in% c("medium", "low")
+  expect_true(is.na(bal_smd(
+    age_na[binary_idx],
+    data$exposure[binary_idx]
+  )))
+})
+
+test_that("categorical bal_* functions drop missing rows with na.rm = TRUE", {
+  data <- create_test_data_categorical(n = 300, seed = 101)
+  weights_na <- data$weights_att
+  weights_na[c(9, 200)] <- NA
+
+  keep <- !is.na(weights_na)
+  expect_equal(
+    bal_smd(data$age, data$exposure, .weights = weights_na, na.rm = TRUE),
+    bal_smd(
+      data$age[keep],
+      data$exposure[keep],
+      .weights = weights_na[keep],
+      na.rm = TRUE
+    )
+  )
+
+  psw_weights <- propensity::psw(weights_na, estimand = "ate")
+  expect_equal(
+    bal_smd(data$age, data$exposure, .weights = psw_weights, na.rm = TRUE),
+    bal_smd(
+      data$age[keep],
+      data$exposure[keep],
+      .weights = weights_na[keep],
+      na.rm = TRUE
+    )
   )
 })

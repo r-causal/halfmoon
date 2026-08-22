@@ -134,6 +134,22 @@ compute_categorical_balance <- function(
 
   # Get non-reference levels
   comparison_levels <- setdiff(group_levels, ref_group)
+  result_names <- paste0(comparison_levels, "_vs_", ref_group)
+
+  # Subsetting to a pair of levels drops missing exposures silently, so missing
+  # data has to be caught before the pairwise comparisons
+  if (!na.rm) {
+    has_missing <- anyNA(group) ||
+      anyNA(covariate) ||
+      (!is.null(weights) && anyNA(extract_weight_data(weights)))
+
+    if (has_missing) {
+      return(stats::setNames(
+        rep(NA_real_, length(comparison_levels)),
+        result_names
+      ))
+    }
+  }
 
   # Calculate balance statistic for each comparison level vs reference
   results <- purrr::map_dbl(
@@ -148,7 +164,7 @@ compute_categorical_balance <- function(
   )
 
   # Name the results
-  names(results) <- paste0(comparison_levels, "_vs_", ref_group)
+  names(results) <- result_names
   results
 }
 

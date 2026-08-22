@@ -180,7 +180,7 @@ test_that("bal_prognostic_score errors with no control observations", {
       .exposure = qsmk,
       .covariates = c(age, sex)
     ),
-    "halfmoon_reference_error"
+    "halfmoon_group_error"
   )
 })
 

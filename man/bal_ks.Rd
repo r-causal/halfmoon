@@ -29,9 +29,12 @@ before computation. If \code{FALSE} (default), missing values in the input
 will produce \code{NA} in the output.}
 }
 \value{
-A numeric value representing the KS statistic. Values range from 0 to 1,
-with 0 indicating identical distributions and 1 indicating completely separate
-distributions.
+For a binary exposure, a numeric value representing the KS
+statistic. Values range from 0 to 1, with 0 indicating identical
+distributions and 1 indicating completely separate distributions. For a
+categorical exposure, a named numeric vector with one element per
+non-reference level, named \code{X_vs_ref}, comparing level \code{X} with the
+reference level.
 }
 \description{
 Computes the two-sample KS statistic comparing empirical cumulative distribution
@@ -62,16 +65,17 @@ bal_ks(nhefs_weights$age, nhefs_weights$qsmk)
 bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
        .weights = nhefs_weights$w_ate)
 
-# Categorical exposure (returns named vector)
-bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+# Categorical exposure (returns named vector). This exposure has missing
+# values, so `na.rm = TRUE` is needed for a non-missing result.
+bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 
 # Specify reference level
 bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-       .reference_level = "none")
+       .reference_level = "none", na.rm = TRUE)
 
 # With categorical weights
 bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-       .weights = nhefs_weights$w_cat_ate)
+       .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 }
 \seealso{
 \code{\link[=check_balance]{check_balance()}} for computing multiple balance metrics at once

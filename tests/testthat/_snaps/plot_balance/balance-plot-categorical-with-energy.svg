@@ -71,6 +71,8 @@
 </defs>
 <g clip-path='url(#cpMTAyLjIzfDM2MC4zOXw0MzcuNjd8NTMxLjc1)'>
 <rect x='102.23' y='437.67' width='258.16' height='94.08' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
+<circle cx='348.66' cy='484.71' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
+<circle cx='113.97' cy='484.71' r='2.33' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 <rect x='102.23' y='437.67' width='258.16' height='94.08' style='stroke-width: 1.07; stroke: #333333;' />
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
@@ -230,6 +232,12 @@
 <text transform='translate(629.33,484.71) rotate(90)' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: sans;' textLength='12.23px' lengthAdjust='spacingAndGlyphs'>NA</text>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
+<polyline points='163.12,534.49 163.12,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='237.14,534.49 237.14,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='311.15,534.49 311.15,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='163.12' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.25</text>
+<text x='237.14' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.50</text>
+<text x='311.15' y='542.74' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='17.13px' lengthAdjust='spacingAndGlyphs'>0.75</text>
 <polyline points='375.08,534.49 375.08,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='444.30,534.49 444.30,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='513.52,534.49 513.52,531.75 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
