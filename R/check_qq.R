@@ -89,6 +89,7 @@ check_qq <- function(
   } else {
     character(0)
   }
+  validate_method_labels(wt_names, call = rlang::current_env())
 
   # Get group levels. Only observed levels count, so a factor that declares
   # levels no observation takes is still binary input.
@@ -255,15 +256,19 @@ compute_method_quantiles <- function(
       comp_wts <- comp_wts[comp_keep]
     }
 
+    # Rows with a missing value or weight have already been refused or
+    # filtered above, so nothing is left for `na.rm` to drop here
     ref_q <- weighted_quantile(
       ref_data[[var_name]],
       quantiles,
-      .weights = ref_wts
+      .weights = ref_wts,
+      na.rm = TRUE
     )
     comp_q <- weighted_quantile(
       comp_data[[var_name]],
       quantiles,
-      .weights = comp_wts
+      .weights = comp_wts,
+      na.rm = TRUE
     )
   }
 
@@ -297,18 +302,21 @@ compute_method_quantiles <- function(
 #' - The result does not depend on the order of `values`.
 #' - The result is monotone in `quantiles`.
 #'
-#' Observations with zero weight contribute nothing and are excluded, as are
-#' observations with a missing value or a missing weight. This matters for
-#' matching weights, which are 0 or 1: the quantiles of a matched sample are the
-#' quantiles of the matched observations alone.
+#' Observations with zero weight contribute nothing and are excluded. This
+#' matters for matching weights, which are 0 or 1: the quantiles of a matched
+#' sample are the quantiles of the matched observations alone.
 #'
 #' @param values Numeric vector of values to compute quantiles for.
 #' @param quantiles Numeric vector of probabilities with values between 0 and 1.
 #' @param .weights Numeric vector of non-negative weights, same length as `values`.
+#' @param na.rm Logical. If `FALSE` (default), a missing value or a missing
+#'   weight makes every quantile missing. If `TRUE`, an observation with either
+#'   one missing is dropped and the quantiles are computed from the rest.
 #'
 #' @return Numeric vector of weighted quantiles corresponding to the requested
 #'   probabilities. Fewer than two observations with a positive weight leave the
-#'   quantiles undefined, and the result is `NA_real_`.
+#'   quantiles undefined, and the result is `NA_real_`, as does `na.rm = FALSE`
+#'   with a missing value or a missing weight.
 #'
 #' @examples
 #' # Equal weights (same as regular quantiles)
@@ -319,9 +327,10 @@ compute_method_quantiles <- function(
 #' weighted_quantile(1:10, c(0.25, 0.5, 0.75), 1:10)
 #'
 #' @export
-weighted_quantile <- function(values, quantiles, .weights) {
+weighted_quantile <- function(values, quantiles, .weights, na.rm = FALSE) {
   validate_numeric(values, "values")
   validate_numeric(quantiles, "quantiles")
+  validate_flag(na.rm, "na.rm")
 
   if (anyNA(quantiles) || any(quantiles < 0 | quantiles > 1)) {
     abort(
@@ -333,9 +342,15 @@ weighted_quantile <- function(values, quantiles, .weights) {
   validate_weights(.weights, length(values))
   .wts <- extract_weight_data(.weights)
 
-  # Zero-weight observations are not part of the weighted distribution, and
-  # missing values and weights cannot be placed in it
-  keep <- !is.na(values) & !is.na(.wts) & .wts > 0
+  # A missing value or a missing weight cannot be placed in the weighted
+  # distribution, so it either makes the quantiles missing or is dropped
+  incomplete <- is.na(values) | is.na(.wts)
+  if (!na.rm && any(incomplete)) {
+    return(rep(NA_real_, length(quantiles)))
+  }
+
+  # Zero-weight observations are not part of the weighted distribution
+  keep <- !incomplete & .wts > 0
   values <- values[keep]
   .wts <- .wts[keep]
 

@@ -220,3 +220,17 @@ test_that("bal_qq matches single method from check_qq", {
     qq_check_wt$unexposed_quantiles
   )
 })
+
+test_that("bal_qq rejects a weight method labeled observed", {
+  collided <- dplyr::rename(nhefs_weights, observed = w_ate)
+
+  expect_error(
+    bal_qq(collided, age, qsmk, .weights = observed),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    bal_qq(nhefs_weights, age, qsmk, .weights = c(observed = w_ate)),
+    class = "halfmoon_arg_error"
+  )
+})

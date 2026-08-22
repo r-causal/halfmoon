@@ -4,7 +4,7 @@
 \alias{weighted_quantile}
 \title{Compute weighted quantiles}
 \usage{
-weighted_quantile(values, quantiles, .weights)
+weighted_quantile(values, quantiles, .weights, na.rm = FALSE)
 }
 \arguments{
 \item{values}{Numeric vector of values to compute quantiles for.}
@@ -12,11 +12,16 @@ weighted_quantile(values, quantiles, .weights)
 \item{quantiles}{Numeric vector of probabilities with values between 0 and 1.}
 
 \item{.weights}{Numeric vector of non-negative weights, same length as \code{values}.}
+
+\item{na.rm}{Logical. If \code{FALSE} (default), a missing value or a missing
+weight makes every quantile missing. If \code{TRUE}, an observation with either
+one missing is dropped and the quantiles are computed from the rest.}
 }
 \value{
 Numeric vector of weighted quantiles corresponding to the requested
 probabilities. Fewer than two observations with a positive weight leave the
-quantiles undefined, and the result is \code{NA_real_}.
+quantiles undefined, and the result is \code{NA_real_}, as does \code{na.rm = FALSE}
+with a missing value or a missing weight.
 }
 \description{
 Calculate quantiles of a numeric vector with associated weights, using the
@@ -40,10 +45,9 @@ The definition has the properties you would expect of one:
 \item The result is monotone in \code{quantiles}.
 }
 
-Observations with zero weight contribute nothing and are excluded, as are
-observations with a missing value or a missing weight. This matters for
-matching weights, which are 0 or 1: the quantiles of a matched sample are the
-quantiles of the matched observations alone.
+Observations with zero weight contribute nothing and are excluded. This
+matters for matching weights, which are 0 or 1: the quantiles of a matched
+sample are the quantiles of the matched observations alone.
 }
 \examples{
 # Equal weights (same as regular quantiles)

@@ -89,7 +89,13 @@ add_ess_header <- function(
         by = "column"
       ) |>
       dplyr::mutate(
-        modify_stat_N = sum(.data$modify_stat_n, na.rm = TRUE)
+        # The header carries a row per column of the table, so the denominator
+        # is taken over the group columns rather than over whatever the other
+        # rows happen to hold
+        modify_stat_N = sum(
+          .data$modify_stat_n[is_group_stat_column(.data$column)],
+          na.rm = TRUE
+        )
       )
   } else {
     # with both a `tbl_svysummary(by)` value and an overall column
@@ -115,7 +121,7 @@ add_ess_header <- function(
         # they would without an overall column, the sum of the group ESS, and
         # the overall column is its own denominator.
         modify_stat_N = sum(
-          .data$modify_stat_n[.data$column != "stat_0"],
+          .data$modify_stat_n[is_group_stat_column(.data$column)],
           na.rm = TRUE
         ),
         modify_stat_N = ifelse(
@@ -157,4 +163,10 @@ ard_survey_ess <- function(data, by = NULL) {
       context = "survey_ess",
       stat_label = "Effective Sample Size"
     )
+}
+
+# gtsummary numbers the columns holding a `by` group `stat_1`, `stat_2`, and so
+# on, reserving `stat_0` for the overall column that `add_overall()` prepends.
+is_group_stat_column <- function(column) {
+  grepl("^stat_[1-9][0-9]*$", column)
 }

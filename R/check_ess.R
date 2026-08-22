@@ -43,7 +43,10 @@
 #'
 #' @return A tibble with columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
-#'   \item{group}{Character. The exposure level (if `.exposure` is provided).}
+#'   \item{group}{The exposure level, present only when `.exposure` is
+#'     provided. It keeps the type of `.exposure`, so a factor exposure gives a
+#'     factor and a numeric one gives a numeric. A continuous exposure is cut
+#'     into quantile groups, which gives a factor of `tile_labels`.}
 #'   \item{n}{Integer. The number of observations in the group whose weight is
 #'     not missing.}
 #'   \item{ess}{Numeric. The effective sample size.}
@@ -133,13 +136,35 @@ check_ess <- function(
   if (rlang::quo_is_null(wts_quo)) {
     # No weights provided, just use observed
     wts_names <- character()
+    wts_columns <- character()
   } else {
     wts_cols <- tidyselect::eval_select(wts_quo, .data)
     wts_names <- names(wts_cols)
+    # A renaming selection names the method, so the column it reads is tracked
+    # alongside the name the result reports
+    wts_columns <- names(.data)[wts_cols]
   }
 
+  validate_method_labels(wts_names, call = rlang::current_env())
+
   # Convert psw weight columns to numeric
-  wts_values <- lapply(wts_names, function(nm) extract_weight_data(.data[[nm]]))
+  wts_values <- lapply(
+    wts_columns,
+    function(nm) extract_weight_data(.data[[nm]])
+  )
+
+  # Each selected column must hold usable weights before any of them are
+  # summarized, so a non-numeric column fails with a halfmoon error rather than
+  # somewhere inside the effective sample size calculation
+  for (i in seq_along(wts_values)) {
+    validate_weights(
+      wts_values[[i]],
+      n = nrow(.data),
+      arg_name = wts_columns[[i]],
+      allow_null = FALSE,
+      call = rlang::current_env()
+    )
+  }
 
   # Add observed if requested
   if (include_observed || length(wts_names) == 0) {

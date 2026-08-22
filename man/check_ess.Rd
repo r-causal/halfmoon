@@ -41,7 +41,10 @@ observations with a missing weight are dropped before computation.}
 \value{
 A tibble with columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
-\item{group}{Character. The exposure level (if \code{.exposure} is provided).}
+\item{group}{The exposure level, present only when \code{.exposure} is
+provided. It keeps the type of \code{.exposure}, so a factor exposure gives a
+factor and a numeric one gives a numeric. A continuous exposure is cut
+into quantile groups, which gives a factor of \code{tile_labels}.}
 \item{n}{Integer. The number of observations in the group whose weight is
 not missing.}
 \item{ess}{Numeric. The effective sample size.}

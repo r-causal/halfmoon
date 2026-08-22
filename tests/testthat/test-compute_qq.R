@@ -349,3 +349,59 @@ test_that("check_qq returns expected quantile values", {
     result_explicit$exposed_quantiles < result_explicit$unexposed_quantiles
   ))
 })
+
+test_that("check_qq rejects a weight method labeled observed", {
+  collided <- dplyr::rename(nhefs_weights, observed = w_ate)
+
+  expect_error(
+    check_qq(collided, age, qsmk, .weights = observed),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    check_qq(nhefs_weights, age, qsmk, .weights = c(observed = w_ate)),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("weighted_quantile applies the two-tier na.rm policy", {
+  values <- c(1:9, NA_real_)
+  weights <- rep(1, 10)
+
+  expect_equal(
+    weighted_quantile(values, c(0.25, 0.5, 0.75), weights),
+    rep(NA_real_, 3)
+  )
+
+  expect_equal(
+    weighted_quantile(values, c(0.25, 0.5, 0.75), weights, na.rm = TRUE),
+    unname(stats::quantile(1:9, c(0.25, 0.5, 0.75)))
+  )
+
+  # A missing weight is missing data too
+  missing_weight <- c(rep(1, 9), NA_real_)
+  expect_equal(
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), missing_weight),
+    rep(NA_real_, 3)
+  )
+  expect_equal(
+    weighted_quantile(
+      1:10,
+      c(0.25, 0.5, 0.75),
+      missing_weight,
+      na.rm = TRUE
+    ),
+    unname(stats::quantile(1:9, c(0.25, 0.5, 0.75)))
+  )
+
+  # Complete data is unaffected by either setting
+  expect_equal(
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), rep(1, 10)),
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), rep(1, 10), na.rm = TRUE)
+  )
+
+  expect_error(
+    weighted_quantile(1:10, 0.5, rep(1, 10), na.rm = "yes"),
+    class = "halfmoon_arg_error"
+  )
+})

@@ -238,3 +238,41 @@ test_that("check_ess names its output columns when a selected column is method o
   expect_equal(result$group, c("a", "b", "a", "b"))
   expect_equal(result$ess, rep(2, 4))
 })
+
+test_that("check_ess rejects a weight method labeled observed", {
+  collided <- dplyr::rename(nhefs_weights, observed = w_ate)
+
+  expect_error(
+    check_ess(collided, .weights = observed, .exposure = qsmk),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    check_ess(
+      nhefs_weights,
+      .weights = c(observed = w_ate),
+      .exposure = qsmk
+    ),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("check_ess errors on a weight column that is not numeric", {
+  labelled <- dplyr::mutate(nhefs_weights, w_label = as.character(w_ate))
+
+  expect_error(
+    check_ess(labelled, .weights = c(w_ate, w_label)),
+    class = "halfmoon_type_error"
+  )
+})
+
+test_that("check_ess reads the column a renaming selection points at", {
+  renamed <- check_ess(nhefs_weights, .weights = c(ate = w_ate))
+  plain <- check_ess(nhefs_weights, .weights = w_ate)
+
+  expect_setequal(renamed$method, c("observed", "ate"))
+  expect_equal(
+    renamed$ess[renamed$method == "ate"],
+    plain$ess[plain$method == "w_ate"]
+  )
+})

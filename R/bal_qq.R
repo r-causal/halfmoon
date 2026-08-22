@@ -88,6 +88,7 @@ bal_qq <- function(
         call = rlang::current_env()
       )
     }
+    validate_method_labels(wt_names, call = rlang::current_env())
     wt_name <- wt_names[1]
   }
 

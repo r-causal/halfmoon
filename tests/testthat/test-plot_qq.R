@@ -197,3 +197,11 @@ test_that("plot_qq visual regression tests", {
     plot_qq(nhefs_weights, .fitted, qsmk, .weights = w_ate)
   )
 })
+
+test_that("plot_qq leaves the theme to the user", {
+  from_data <- plot_qq(nhefs_weights, age, qsmk)
+  from_object <- plot_qq(check_qq(nhefs_weights, age, qsmk))
+
+  expect_length(from_data$theme, 0)
+  expect_length(from_object$theme, 0)
+})

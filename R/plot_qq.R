@@ -243,6 +243,5 @@ plot_qq.halfmoon_qq <- function(.data, ...) {
       x = "Unexposed group quantiles",
       y = "Exposed group quantiles"
     ) +
-    ggplot2::theme_minimal() +
     ggplot2::coord_equal()
 }
