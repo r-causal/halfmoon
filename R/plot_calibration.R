@@ -77,6 +77,10 @@ plot_model_calibration <- function(x, ...) {
 #'   whole data.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
+#' @param binning_method Character; how the "breaks" method places its bins,
+#'   either "equal_width" (default) for bins of equal width on the predicted
+#'   probability scale or "quantile" for bins holding equal numbers of
+#'   observations. Ignored by the other methods.
 #' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
 #' @param conf_level Numeric in (0,1); confidence level for CIs (default = 0.95).
 #' @param window_size Numeric; size of each window for "windowed" method.
@@ -94,6 +98,7 @@ plot_model_calibration.data.frame <- function(
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -111,6 +116,15 @@ plot_model_calibration.data.frame <- function(
 
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".exposure")
+
+  # `geom_calibration()` passes its parameters straight to the stat, so the
+  # option is resolved to a single value here
+  binning_method <- match_option(
+    binning_method,
+    c("equal_width", "quantile"),
+    "binning_method",
+    call = rlang::current_env()
+  )
 
   check_columns(x, fitted_name, group_name)
 
@@ -130,6 +144,7 @@ plot_model_calibration.data.frame <- function(
     geom_calibration(
       method = method,
       bins = bins,
+      binning_method = binning_method,
       smooth = smooth,
       conf_level = conf_level,
       window_size = window_size,
@@ -186,6 +201,7 @@ plot_model_calibration.glm <- function(
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -206,6 +222,10 @@ plot_model_calibration.glm <- function(
   # For GLM/LM models, the response is the first column of the model frame
   .exposure <- model_frame[[1]]
 
+  # A calibration curve reads the response as the event indicator, so a model
+  # of anything other than a binary response has no observed rate to plot
+  validate_binary_response(.exposure, call = rlang::current_env())
+
   # Create a data frame for plotting
   plot_data <- data.frame(
     .fitted = .fitted,
@@ -220,6 +240,7 @@ plot_model_calibration.glm <- function(
     .focal_level = .focal_level,
     method = method,
     bins = bins,
+    binning_method = binning_method,
     smooth = smooth,
     conf_level = conf_level,
     window_size = window_size,

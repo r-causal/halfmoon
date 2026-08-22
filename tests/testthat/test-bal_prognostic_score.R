@@ -365,3 +365,27 @@ test_that("bal_prognostic_score refuses missing values when na.rm is FALSE", {
     class = "halfmoon_na_error"
   )
 })
+
+test_that("bal_prognostic_score errors when na.rm leaves no control observations", {
+  set.seed(11)
+  n <- 40
+  data <- data.frame(
+    outcome = rnorm(n),
+    exposure = rep(c(0, 1), each = n / 2),
+    x1 = rnorm(n)
+  )
+  # Every control row carries a missing covariate, so `na.rm = TRUE` drops the
+  # whole control group
+  data$x1[data$exposure == 0] <- NA_real_
+
+  expect_error(
+    bal_prognostic_score(
+      data,
+      .exposure = exposure,
+      outcome = outcome,
+      .covariates = x1,
+      na.rm = TRUE
+    ),
+    class = "halfmoon_group_error"
+  )
+})

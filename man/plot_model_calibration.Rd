@@ -17,6 +17,7 @@ plot_model_calibration(x, ...)
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -34,6 +35,7 @@ plot_model_calibration(x, ...)
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -51,6 +53,7 @@ plot_model_calibration(x, ...)
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -89,6 +92,11 @@ whole data.}
 \item{method}{Character; calibration method - "breaks", "logistic", or "windowed".}
 
 \item{bins}{Integer >1; number of bins for the "breaks" method.}
+
+\item{binning_method}{Character; how the "breaks" method places its bins,
+either "equal_width" (default) for bins of equal width on the predicted
+probability scale or "quantile" for bins holding equal numbers of
+observations. Ignored by the other methods.}
 
 \item{smooth}{Logical; for "logistic" method, use GAM smoothing if available.}
 

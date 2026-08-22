@@ -340,3 +340,47 @@ test_that("plot_model_calibration visual snapshot tests", {
   )
   expect_doppelganger("plot_calibration lm logistic with rug", p14)
 })
+
+test_that("plot_model_calibration refuses a model of a non-binary response", {
+  continuous_model <- lm(wt71 ~ age + sex, data = nhefs_weights)
+
+  expect_error(
+    plot_model_calibration(continuous_model),
+    class = "halfmoon_type_error"
+  )
+
+  three_level <- glm(
+    factor(education) ~ age,
+    data = subset(nhefs_weights, education %in% c(1, 2, 3)),
+    family = quasibinomial()
+  )
+  expect_error(
+    plot_model_calibration(three_level),
+    class = "halfmoon_type_error"
+  )
+})
+
+test_that("plot_model_calibration.data.frame takes binning_method directly", {
+  quantile_binned <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    binning_method = "quantile"
+  )
+  equal_binned <- plot_model_calibration(
+    nhefs_weights,
+    .fitted,
+    qsmk,
+    binning_method = "equal_width"
+  )
+
+  expect_s3_class(quantile_binned, "ggplot")
+  expect_false(identical(
+    suppress_calibration_warnings(
+      ggplot_build(quantile_binned)$data[[1]]
+    ),
+    suppress_calibration_warnings(
+      ggplot_build(equal_binned)$data[[1]]
+    )
+  ))
+})

@@ -248,15 +248,14 @@ check_model_roc_curve_imp <- function(
   for (wt_name in weight_vars) {
     weights <- .data[[wt_name]]
 
-    # Validate weights
-    if (!is.numeric(weights)) {
-      warn(
-        "Skipping non-numeric weight variable: {wt_name}",
-        warning_class = "halfmoon_data_warning",
-        call = call
-      )
-      next
-    }
+    # A column that does not hold weights is an error rather than a method
+    # quietly missing from the result
+    validate_weight_type(
+      weights,
+      arg_name = wt_name,
+      allow_null = FALSE,
+      call = call
+    )
 
     weights <- extract_weight_data(weights)
 
@@ -433,43 +432,31 @@ compute_roc_curve_imp <- function(
     weights <- extract_weight_data(weights)
   }
 
+  # Every package caller coerces the exposure before it gets here. A truth that
+  # arrives in another shape goes through the same coercion, so one policy
+  # decides which levels exist and which of them can be the event.
+  if (!is.factor(truth)) {
+    truth <- coerce_roc_truth(truth, call = call)
+  }
+
   # Convert to binary (1 = event, 0 = non-event)
   # Determine which level is the treatment/event
-  if (is.factor(truth)) {
-    truth_levels <- levels(truth)
-    if (!is.null(.focal_level)) {
-      # User specified treatment level
-      if (!.focal_level %in% truth_levels) {
-        abort(
-          "{.arg .focal_level} '{(.focal_level)}' not found in {.arg truth} levels: {.val {truth_levels}}",
-          error_class = "halfmoon_reference_error",
-          call = call
-        )
-      }
-      event_level <- .focal_level
-    } else {
-      # Default: use the last level as event
-      event_level <- truth_levels[[length(truth_levels)]]
+  truth_levels <- levels(truth)
+  if (!is.null(.focal_level)) {
+    # User specified treatment level
+    if (!.focal_level %in% truth_levels) {
+      abort(
+        "{.arg .focal_level} '{(.focal_level)}' not found in {.arg .exposure} levels: {.val {truth_levels}}",
+        error_class = "halfmoon_reference_error",
+        call = call
+      )
     }
-    truth_binary <- as.integer(truth == event_level)
+    event_level <- .focal_level
   } else {
-    # For non-factors, determine event level
-    unique_vals <- sort(unique(truth))
-    if (!is.null(.focal_level)) {
-      if (!.focal_level %in% unique_vals) {
-        abort(
-          "{.arg .focal_level} '{(.focal_level)}' not found in {.arg truth} values: {.val {unique_vals}}",
-          error_class = "halfmoon_reference_error",
-          call = call
-        )
-      }
-      event_level <- .focal_level
-    } else {
-      # Default: use the maximum value as event
-      event_level <- unique_vals[[length(unique_vals)]]
-    }
-    truth_binary <- as.integer(truth == event_level)
+    # Default: use the last level as event
+    event_level <- truth_levels[[length(truth_levels)]]
   }
+  truth_binary <- as.integer(truth == event_level)
 
   # Sort by decreasing estimate
   order_idx <- order(estimate, decreasing = TRUE)

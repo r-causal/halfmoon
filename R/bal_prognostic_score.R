@@ -251,17 +251,14 @@ bal_prognostic_score <- function(
     )
   }
 
-  # Check we have control observations
+  # The prognostic model is fit on the control group alone, so it needs rows
+  # left in that group after the missing-value policy has been applied
   n_control <- sum(is_control, na.rm = TRUE)
   if (n_control == 0) {
     abort(
-      paste0(
-        "No control observations found. ",
-        "Control level '",
-        control_level,
-        "' not present in treatment variable."
-      ),
-      error_class = "halfmoon_reference_error"
+      "No observations left in the control group {.val {control_level}} of {.arg {exposure_var}}",
+      error_class = "halfmoon_group_error",
+      call = rlang::current_env()
     )
   }
 

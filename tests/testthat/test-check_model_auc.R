@@ -587,3 +587,17 @@ test_that("AUC entry points agree with each other and with the curve", {
   expect_equal(from_check, from_curve, tolerance = 1e-10)
   expect_equal(from_check, expected, tolerance = 1e-10)
 })
+
+test_that("check_model_roc_curve errors on a weight column that is not numeric", {
+  labelled <- dplyr::mutate(nhefs_weights, w_label = as.character(w_ate))
+
+  expect_error(
+    check_model_roc_curve(labelled, qsmk, .fitted, .weights = w_label),
+    class = "halfmoon_type_error"
+  )
+
+  expect_error(
+    check_model_auc(labelled, qsmk, .fitted, .weights = w_label),
+    class = "halfmoon_type_error"
+  )
+})

@@ -44,7 +44,7 @@
       check_model_roc_curve(nhefs_weights, qsmk, .fitted, .focal_level = "invalid")
     Condition <halfmoon_reference_error>
       Error in `check_model_roc_curve()`:
-      ! `.focal_level` 'invalid' not found in `truth` levels: "0" and "1"
+      ! `.focal_level` 'invalid' not found in `.exposure` levels: "0" and "1"
 
 # check_model_roc_curve rejects missing weights with na.rm = FALSE
 
