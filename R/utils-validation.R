@@ -32,6 +32,32 @@ validate_flag <- function(
   invisible(x)
 }
 
+# Weight type validation on its own, for the callers that apply their own
+# policy to the values a weight column holds but still need the column to hold
+# weights at all. Accepts numeric vectors and any causal weight object, which
+# covers the psw objects from propensity and the bw objects from balancing.
+validate_weight_type <- function(
+  weights,
+  arg_name = ".weights",
+  allow_null = TRUE,
+  call = rlang::caller_env()
+) {
+  if (is.numeric(weights) || causalgenerics::is_causal_wt(weights)) {
+    return(invisible(weights))
+  }
+
+  type_message <- if (allow_null) {
+    "{.arg {arg_name}} must be numeric, a causal weight object, or {.code NULL}"
+  } else {
+    "{.arg {arg_name}} must be numeric or a causal weight object"
+  }
+  abort(
+    type_message,
+    error_class = "halfmoon_type_error",
+    call = call
+  )
+}
+
 # Weight validation. `n` is the length the weights must match; it defaults to
 # their own length, which skips that check for a caller that has nothing to
 # match them against. `allow_null` is for the callers where weights are
@@ -55,23 +81,13 @@ validate_weights <- function(
     )
   }
 
-  # Accept numeric vectors and any causal weight object, which covers the psw
-  # objects from propensity and the bw objects from balancing
-  is_valid_weights <- is.numeric(weights) ||
-    causalgenerics::is_causal_wt(weights)
+  validate_weight_type(
+    weights,
+    arg_name = arg_name,
+    allow_null = allow_null,
+    call = call
+  )
 
-  if (!is_valid_weights) {
-    type_message <- if (allow_null) {
-      "{.arg {arg_name}} must be numeric, a causal weight object, or {.code NULL}"
-    } else {
-      "{.arg {arg_name}} must be numeric or a causal weight object"
-    }
-    abort(
-      type_message,
-      error_class = "halfmoon_type_error",
-      call = call
-    )
-  }
   if (length(weights) != n) {
     abort(
       "{.arg {arg_name}} must have length {n}, got {length(weights)}",
@@ -208,4 +224,88 @@ filter_na_indices <- function(indices, data, weights = NULL, na.rm = FALSE) {
 is_categorical_exposure <- function(group) {
   levels <- unique(stats::na.omit(group))
   length(levels) > 2
+}
+
+#' Match one of a set of option strings
+#'
+#' Takes the first choice when the argument still holds its default vector, as
+#' `match.arg()` does, and otherwise requires a single value naming a choice.
+#' @noRd
+match_option <- function(
+  value,
+  choices,
+  arg,
+  call = rlang::caller_env()
+) {
+  if (identical(value, choices)) {
+    return(choices[[1]])
+  }
+
+  if (
+    !is.character(value) ||
+      length(value) != 1 ||
+      is.na(value) ||
+      !value %in% choices
+  ) {
+    abort(
+      "{.arg {arg}} must be one of: {.val {choices}}",
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+
+  value
+}
+
+#' Refuse a weight method that would collide with the unweighted rows
+#'
+#' Every `check_*()` result labels its unweighted rows `"observed"`. A weight
+#' column of that name, or a selection that renames one to it, would otherwise
+#' produce a second set of unweighted rows under the same label rather than the
+#' weighted results the caller asked for.
+#' @noRd
+validate_method_labels <- function(
+  method_names,
+  call = rlang::caller_env()
+) {
+  if ("observed" %in% method_names) {
+    abort(
+      c(
+        "{.arg .weights} cannot select a method named {.val observed}.",
+        i = "{.val observed} labels the unweighted rows of the result.",
+        i = "Rename the selection, as in {.code .weights = c(unweighted = observed)}."
+      ),
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+
+  invisible(method_names)
+}
+
+#' Require a model response that a calibration curve can read as an event
+#'
+#' Only observed values count, so a factor that declares levels no observation
+#' takes is still binary input.
+#' @noRd
+validate_binary_response <- function(
+  response,
+  arg_name = "x",
+  call = rlang::caller_env()
+) {
+  observed <- if (is.factor(response)) {
+    levels(droplevels(response))
+  } else {
+    sort(unique(stats::na.omit(response)))
+  }
+
+  if (length(observed) != 2) {
+    abort(
+      "The response of {.arg {arg_name}} must take exactly two values, got {length(observed)}",
+      error_class = "halfmoon_type_error",
+      call = call
+    )
+  }
+
+  invisible(response)
 }

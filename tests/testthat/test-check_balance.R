@@ -2082,3 +2082,25 @@ test_that("check_balance measures a weight column with missing values on its own
     )
   }
 })
+
+test_that("check_balance rejects a weight method labeled observed", {
+  collided <- dplyr::rename(nhefs_weights, observed = w_ate)
+
+  expect_error(
+    check_balance(collided, age, qsmk, .weights = observed),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    check_balance(nhefs_weights, age, qsmk, .weights = c(observed = w_ate)),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("check_balance reports only the column error when a variable is renamed onto another column", {
+  expect_snapshot(
+    error = TRUE,
+    cnd_class = TRUE,
+    check_balance(nhefs_weights, .vars = c(qsmk = age), .exposure = qsmk)
+  )
+})

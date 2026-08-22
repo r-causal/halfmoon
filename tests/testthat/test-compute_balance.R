@@ -2175,6 +2175,29 @@ test_that("check_balance with continuous exposure and energy metric matches bal_
   expect_equal(energy_estimate, direct, tolerance = 1e-8)
 })
 
+test_that("check_balance weighted continuous energy matches bal_energy", {
+  set.seed(2024)
+  n <- 120
+  df <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    a = rnorm(n),
+    w = runif(n, 0.5, 2)
+  )
+
+  cb <- check_balance(df, c(x1, x2), a, .weights = w, .metrics = "energy")
+  weighted_estimate <- cb$estimate[
+    cb$metric == "energy" & cb$method == "w"
+  ]
+
+  direct <- bal_energy(
+    .covariates = df[c("x1", "x2")],
+    .exposure = df$a,
+    .weights = df$w
+  )
+  expect_equal(weighted_estimate, direct, tolerance = 1e-8)
+})
+
 test_that("bal_energy validates criterion and criterion-specific arguments", {
   set.seed(1)
   n <- 60
@@ -2325,11 +2348,14 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
   expect_true(nrow(balance_results) > 0)
   expect_true(all(is.finite(balance_results$estimate)))
 
-  # Test weighted_quantile works with psw weights
+  # Test weighted_quantile works with psw weights. This weight column is
+  # missing for the observations with an unknown alcohol frequency, so the
+  # quantiles need `na.rm = TRUE` to be defined.
   quantiles <- weighted_quantile(
     nhefs_weights$age,
     c(0.25, 0.5, 0.75),
-    nhefs_weights$w_cat_ate
+    nhefs_weights$w_cat_ate,
+    na.rm = TRUE
   )
   expect_length(quantiles, 3)
   expect_true(all(is.finite(quantiles)))
@@ -2616,9 +2642,8 @@ test_that("bal_energy dcor criterion matches cobalt for weighted samples", {
   treatment <- rnorm(n)
   weights <- runif(n, 0.2, 4)
 
-  # cobalt scales the covariates and the standardizing denominator by the same
-  # weights it uses in the quadratic form when they are supplied as sampling
-  # weights, which is what bal_energy() does with its balancing weights
+  # The balancing weights enter only the quadratic form, which is what cobalt
+  # does when they are evaluated against an unweighted initialization
   expect_equal(
     bal_energy(
       covariates,
@@ -2630,9 +2655,9 @@ test_that("bal_energy dcor criterion matches cobalt for weighted samples", {
       cobalt::bal.init(
         covariates,
         treat = treatment,
-        s.weights = weights,
         stat = "distance.cor"
-      )
+      ),
+      weights = weights
     ),
     tolerance = 1e-8
   )
@@ -2744,6 +2769,89 @@ test_that("check_balance reports the weighted dependence distance for a continuo
       rep(1, n),
       dimension_adj = TRUE
     )$D_w,
+    tolerance = 1e-8
+  )
+})
+
+test_that("bal_energy rejects .focal_level for a non-focal estimand", {
+  set.seed(1)
+  n <- 60
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  exposure <- rbinom(n, 1, 0.5)
+
+  expect_error(
+    bal_energy(covariates, exposure, .focal_level = 1),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    bal_energy(covariates, exposure, estimand = "ATE", .focal_level = 1),
+    class = "halfmoon_arg_error"
+  )
+
+  # The focal estimands still take it
+  expect_no_error(
+    bal_energy(covariates, exposure, estimand = "ATT", .focal_level = 1)
+  )
+  expect_no_error(
+    bal_energy(covariates, exposure, estimand = "ATC", .focal_level = 0)
+  )
+})
+
+test_that("bal_energy dcor matches cobalt::bal.compute with evaluated weights", {
+  skip_if_not_installed("cobalt")
+
+  set.seed(2718)
+  n <- 90
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n), x3 = rbinom(n, 1, 0.4))
+  treatment <- rnorm(n)
+  weights <- runif(n, 0.5, 3)
+
+  init <- cobalt::bal.init(
+    covariates,
+    treat = treatment,
+    stat = "distance.cor"
+  )
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights, criterion = "dcor"),
+    cobalt::bal.compute(init, weights = weights),
+    tolerance = 1e-8
+  )
+
+  # The unweighted path is unchanged: it is the same statistic with uniform
+  # weights, and it still matches cobalt
+  expect_equal(
+    bal_energy(covariates, treatment, criterion = "dcor"),
+    cobalt::bal.compute(init),
+    tolerance = 1e-8
+  )
+})
+
+test_that("bal_energy unstandardized dcor matches cobalt distance.cov", {
+  skip_if_not_installed("cobalt")
+
+  set.seed(2718)
+  n <- 90
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  treatment <- rnorm(n)
+  weights <- runif(n, 0.5, 3)
+
+  init <- cobalt::bal.init(
+    covariates,
+    treat = treatment,
+    stat = "distance.cov"
+  )
+
+  expect_equal(
+    bal_energy(
+      covariates,
+      treatment,
+      .weights = weights,
+      criterion = "dcor",
+      standardized = FALSE
+    ),
+    cobalt::bal.compute(init, weights = weights),
     tolerance = 1e-8
   )
 })

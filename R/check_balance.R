@@ -336,7 +336,15 @@ check_balance <- function(
   # Replace the selected columns with the working copies, which carry the names
   # the results report and any transformations
   transformed_data <- .data[, !names(.data) %in% var_cols, drop = FALSE]
-  transformed_data <- dplyr::bind_cols(transformed_data, vars_data)
+  # A selection that renames a covariate onto a column it did not select leaves
+  # two columns of the same name. Repairing them quietly keeps the working copy
+  # an internal detail: the collision surfaces as the column error raised when
+  # the exposure or a weight can no longer be found.
+  transformed_data <- dplyr::bind_cols(
+    transformed_data,
+    vars_data,
+    .name_repair = "unique_quiet"
+  )
 
   # Update var_names to include all transformed variables
   var_names <- names(vars_data)
@@ -347,6 +355,7 @@ check_balance <- function(
   if (!rlang::quo_is_null(.weights)) {
     wts_selection <- tidyselect::eval_select(.weights, .data)
     wts_names <- names(wts_selection)
+    validate_method_labels(wts_names, call = rlang::current_env())
     weight_columns <- stats::setNames(names(.data)[wts_selection], wts_names)
   } else {
     wts_names <- NULL
@@ -355,6 +364,16 @@ check_balance <- function(
 
   # Validate exposure variable
   validate_column_exists(transformed_data, exposure_var, "data")
+
+  # The option is matched here rather than left to `match_exposure_type()` so
+  # that an unrecognized value raises a halfmoon-classed error like every other
+  # option argument in the package
+  exposure_type <- match_option(
+    exposure_type,
+    c("auto", "binary", "categorical", "continuous"),
+    "exposure_type",
+    call = rlang::current_env()
+  )
 
   exposure_type <- causalgenerics::match_exposure_type(
     exposure_type,

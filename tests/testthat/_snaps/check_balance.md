@@ -59,3 +59,11 @@
       i Metrics for a "binary" exposure: "smd", "vr", "ks", and "energy".
       i Set `exposure_type` to read `.exposure` as another type.
 
+# check_balance reports only the column error when a variable is renamed onto another column
+
+    Code
+      check_balance(nhefs_weights, .vars = c(qsmk = age), .exposure = qsmk)
+    Condition <halfmoon_column_error>
+      Error in `check_balance()`:
+      ! Column `qsmk` not found in `data`
+

@@ -75,7 +75,7 @@ test_that("check_balance announces nothing when exposure_type is supplied", {
 test_that("check_balance rejects an unknown exposure_type", {
   expect_error(
     check_balance(nhefs_weights, age, qsmk, exposure_type = "ordinal"),
-    "ordinal"
+    class = "halfmoon_arg_error"
   )
 })
 

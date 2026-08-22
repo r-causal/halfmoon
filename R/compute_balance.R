@@ -606,7 +606,8 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #'   target for `estimand = "ATT"` or `estimand = "ATC"`. Must name a level the
 #'   exposure takes. If `NULL` (default), the last observed level for `"ATT"`
 #'   and the first observed level for `"ATC"`, which on a 0/1 exposure are the
-#'   level `1` and the level `0`.
+#'   level `1` and the level `0`. Only `"ATT"` and `"ATC"` have a focal group,
+#'   so supplying `.focal_level` with any other `estimand` is an error.
 #' @param use_improved Logical. Use improved energy distance for ATE? Default is TRUE.
 #'   When TRUE, adds pairwise treatment comparisons for better group separation.
 #' @param standardized Logical. Only used when `criterion = "dcor"` for a
@@ -681,12 +682,16 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' weighting of the two marginal energy terms.
 #'
 #' `criterion = "dcor"` instead returns cobalt's `distance.cor` balance
-#' statistic, a weighted-variance-scaled distance correlation (or, with
+#' statistic, a variance-scaled distance correlation (or, with
 #' `standardized = FALSE`, the corresponding square-root distance covariance).
 #' This is a descriptive balance summary rather than a measure of weighted
-#' dependence. Following that reference implementation, a weighted distance
-#' covariance that is not positive, which a covariate with no variation
-#' produces, reports 0.
+#' dependence. The weights enter only the quadratic form that evaluates the
+#' dependence; the variances the distances are scaled by and the denominator
+#' that standardizes them describe the sample and are computed unweighted, so
+#' the value matches
+#' `cobalt::bal.compute(cobalt::bal.init(x, treat, stat = "distance.cor"), weights = w)`.
+#' Following that reference implementation, a distance covariance that is not
+#' positive, which a covariate with no variation produces, reports 0.
 #'
 #' @references
 #' Huling, J. D., & Mak, S. (2024). Energy Balancing of Covariate Distributions.
@@ -829,13 +834,13 @@ bal_energy_prepare <- function(
   na.rm = FALSE,
   call = rlang::caller_env()
 ) {
-  criterion <- match_energy_option(
+  criterion <- match_option(
     criterion,
     c("dependence", "dcor"),
     "criterion",
     call = call
   )
-  exposure_type <- match_energy_option(
+  exposure_type <- match_option(
     exposure_type,
     c("auto", "binary", "categorical", "continuous"),
     "exposure_type",
@@ -865,6 +870,19 @@ bal_energy_prepare <- function(
   if (!is.null(.focal_level) && length(.focal_level) != 1) {
     abort(
       "{.arg .focal_level} must be a single value or {.code NULL}",
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+
+  # Only a focal estimand has a focal group, so a focal level supplied with any
+  # other estimand names a target that the comparison never uses
+  if (!is.null(.focal_level) && !isTRUE(estimand %in% c("ATT", "ATC"))) {
+    abort(
+      c(
+        "{.arg .focal_level} applies only to {.arg estimand} {.val ATT} or {.val ATC}.",
+        i = "Set {.arg estimand} or drop {.arg .focal_level}."
+      ),
       error_class = "halfmoon_arg_error",
       call = call
     )
@@ -985,7 +1003,7 @@ bal_energy_prepare <- function(
     unique_groups <- levels(.exposure)
 
     if (!is.null(estimand) && estimand %in% c("ATT", "ATC")) {
-      .focal_level <- resolve_focal_level(
+      .focal_level <- resolve_energy_focal_level(
         .focal_level,
         unique_groups,
         estimand,
@@ -1010,44 +1028,13 @@ bal_energy_prepare <- function(
   )
 }
 
-#' Match one of a set of option strings
-#'
-#' Takes the first choice when the argument still holds its default vector, as
-#' `match.arg()` does, and otherwise requires a single value naming a choice.
-#' @noRd
-match_energy_option <- function(
-  value,
-  choices,
-  arg,
-  call = rlang::caller_env()
-) {
-  if (identical(value, choices)) {
-    return(choices[[1]])
-  }
-
-  if (
-    !is.character(value) ||
-      length(value) != 1 ||
-      is.na(value) ||
-      !value %in% choices
-  ) {
-    abort(
-      "{.arg {arg}} must be one of: {.val {choices}}",
-      error_class = "halfmoon_arg_error",
-      call = call
-    )
-  }
-
-  value
-}
-
 #' Resolve the focal level of a focal estimand
 #'
 #' `NULL` takes the last observed level for the ATT and the first for the ATC,
 #' so that the treated group is focal for the ATT on the usual 0/1 coding. A
 #' supplied value must name a level the exposure takes.
 #' @noRd
-resolve_focal_level <- function(
+resolve_energy_focal_level <- function(
   focal_level,
   unique_groups,
   estimand,
@@ -1460,6 +1447,14 @@ bal_energy_continuous <- function(
   # Normalize weights
   weights_norm <- .weights / sum(.weights)
 
+  # The balancing weights say how the sample is reweighted, not what the
+  # statistic is measured in. The scale the distances are taken on and the
+  # denominator that standardizes them are therefore properties of the sample,
+  # computed unweighted, and the balancing weights enter only the quadratic
+  # form that evaluates the dependence. This is the target-population reading
+  # `cobalt::bal.compute()` uses for a set of candidate weights.
+  scale_weights <- rep(1 / n_obs, n_obs)
+
   # Identify binary variables
   binary_vars <- purrr::map_lgl(as.data.frame(.covariates), \(x) {
     unique_vals <- unique(x)
@@ -1471,16 +1466,16 @@ bal_energy_continuous <- function(
     as.data.frame(.covariates),
     binary_vars,
     calculate_variance,
-    weights_norm = weights_norm
+    weights_norm = scale_weights
   )
 
   # Treatment variance
-  mean_t <- sum(weights_norm * treatment)
-  denom <- 1 - sum(weights_norm^2)
+  mean_t <- sum(scale_weights * treatment)
+  denom <- 1 - sum(scale_weights^2)
   if (denom <= 0) {
-    treatment_var <- sum(weights_norm * (treatment - mean_t)^2)
+    treatment_var <- sum(scale_weights * (treatment - mean_t)^2)
   } else {
-    treatment_var <- sum(weights_norm * (treatment - mean_t)^2) / denom
+    treatment_var <- sum(scale_weights * (treatment - mean_t)^2) / denom
   }
 
   # Avoid division by zero
@@ -1526,10 +1521,10 @@ bal_energy_continuous <- function(
   if (standardized) {
     # Compute denominators for standardization
     treat_denom <- sqrt(as.numeric(
-      t(weights_norm) %*% (treat_centered^2) %*% weights_norm
+      t(scale_weights) %*% (treat_centered^2) %*% scale_weights
     ))
     cov_denom <- sqrt(as.numeric(
-      t(weights_norm) %*% (cov_centered^2) %*% weights_norm
+      t(scale_weights) %*% (cov_centered^2) %*% scale_weights
     ))
     denom <- treat_denom * cov_denom
 

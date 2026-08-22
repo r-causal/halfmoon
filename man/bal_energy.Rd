@@ -49,7 +49,8 @@ For continuous treatments, only NULL is supported.
 target for \code{estimand = "ATT"} or \code{estimand = "ATC"}. Must name a level the
 exposure takes. If \code{NULL} (default), the last observed level for \code{"ATT"}
 and the first observed level for \code{"ATC"}, which on a 0/1 exposure are the
-level \code{1} and the level \code{0}.}
+level \code{1} and the level \code{0}. Only \code{"ATT"} and \code{"ATC"} have a focal group,
+so supplying \code{.focal_level} with any other \code{estimand} is an error.}
 
 \item{use_improved}{Logical. Use improved energy distance for ATE? Default is TRUE.
 When TRUE, adds pairwise treatment comparisons for better group separation.}
@@ -137,12 +138,16 @@ marginal distributions. The \code{dimension_adj} argument controls the relative
 weighting of the two marginal energy terms.
 
 \code{criterion = "dcor"} instead returns cobalt's \code{distance.cor} balance
-statistic, a weighted-variance-scaled distance correlation (or, with
+statistic, a variance-scaled distance correlation (or, with
 \code{standardized = FALSE}, the corresponding square-root distance covariance).
 This is a descriptive balance summary rather than a measure of weighted
-dependence. Following that reference implementation, a weighted distance
-covariance that is not positive, which a covariate with no variation
-produces, reports 0.
+dependence. The weights enter only the quadratic form that evaluates the
+dependence; the variances the distances are scaled by and the denominator
+that standardizes them describe the sample and are computed unweighted, so
+the value matches
+\code{cobalt::bal.compute(cobalt::bal.init(x, treat, stat = "distance.cor"), weights = w)}.
+Following that reference implementation, a distance covariance that is not
+positive, which a covariate with no variation produces, reports 0.
 }
 \examples{
 # Binary treatment
