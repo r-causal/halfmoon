@@ -331,8 +331,7 @@ plot_model_calibration.halfmoon_calibration <- function(
       y = "observed rate"
     ) +
     ggplot2::xlim(0, 1) +
-    ggplot2::coord_cartesian(ylim = c(0, 1)) +
-    ggplot2::theme_minimal()
+    ggplot2::coord_cartesian(ylim = c(0, 1))
 
   # Add rug if requested and we have the original data
   # Note: This won't work with pre-computed calibration data

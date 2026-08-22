@@ -384,3 +384,15 @@ test_that("plot_model_calibration.data.frame takes binning_method directly", {
     )
   ))
 })
+
+test_that("plot_model_calibration leaves the theme to the user", {
+  from_data <- plot_model_calibration(nhefs_weights, .fitted, qsmk)
+  from_object <- plot_model_calibration(
+    suppress_calibration_warnings(
+      check_model_calibration(nhefs_weights, .fitted, qsmk)
+    )
+  )
+
+  expect_length(from_data$theme, 0)
+  expect_length(from_object$theme, 0)
+})
