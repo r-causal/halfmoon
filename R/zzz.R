@@ -1,8 +1,5 @@
-.onLoad <- function(libname, pkgname) {
-  # Ensure propensity's namespace is loaded so its S3 methods are registered
-  # This is needed for psw objects in nhefs_weights to work properly without
-  # users having to explicitly load propensity
-  loadNamespace("propensity")
-
-  invisible()
-}
+# `nhefs_weights` carries `psw` columns from propensity. Importing from
+# propensity loads its namespace together with halfmoon's, which registers the
+# S3 methods those columns rely on without the user attaching propensity.
+#' @importFrom propensity is_psw
+NULL
