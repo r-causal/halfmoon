@@ -256,8 +256,45 @@
   `check_model_auc()` records the actual default of `TRUE`. The inherited text
   described a default of `FALSE`.
 
-# halfmoon 0.2.0
+* `check_model_calibration()` now defaults to `na.rm = TRUE`, matching
+  `check_model_roc_curve()` and `check_model_auc()`, and raises
+  `halfmoon_na_error` when `na.rm = FALSE` and `.fitted` or `.exposure` holds a
+  missing value. The `"windowed"` and `"logistic"` methods previously failed
+  with a base R error on such input.
 
-# halfmoon 0.1.0.9000
+* `check_model_calibration()` requires an exposure with exactly two observed
+  levels and raises `halfmoon_group_error` otherwise. An exposure that took a
+  single value previously became its own focal level and reported an observed
+  rate of 1 in every bin, and an exposure with more than two levels reported
+  one level against all the others without comment.
 
-* Added a `NEWS.md` file to track changes to the package.
+* `check_model_calibration()` and `plot_model_calibration()` resolve the default
+  `.focal_level` to the last OBSERVED level of the exposure, and validate a
+  supplied value against the observed levels. A factor with an unused trailing
+  declared level previously took that absent level as the event and reported an
+  observed rate of 0 in every bin. A `.focal_level` that names no observed level
+  now raises `halfmoon_reference_error` with the levels it could have named,
+  where the message previously failed to format.
+
+* `check_model_calibration()` reports a `.fitted` or `.exposure` column that does
+  not exist as `halfmoon_column_error`. The check was previously skipped
+  whenever `.focal_level` was supplied, which left a base R error from deeper in
+  the summary.
+
+* `check_model_calibration()` and `geom_calibration()` return a single
+  calibration bin, with a `halfmoon_data_warning`, when `.fitted` is constant.
+  Both binning methods previously failed with `'breaks' are not unique`.
+
+* The `"breaks"` method counts the observations whose outcome is known, so the
+  bin count, the observed rate, and the confidence interval share a denominator.
+  The interval was previously computed from a count inflated by rows whose
+  outcome was missing.
+
+* `geom_calibration()` passes `binning_method` to its line layer, so the line
+  now follows the same bins as the points and the ribbon rather than always
+  using equal-width bins.
+
+* `geom_calibration()` renders an empty layer for a group with nothing left to
+  summarize, rather than reporting `Computation failed in stat_calibration()`.
+  Missing values follow the ggplot2 convention for a stat: they are dropped, and
+  `na.rm = FALSE` reports how many rows went.

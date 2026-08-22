@@ -115,3 +115,12 @@
       Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
 
+# check_model_calibration reports an absent focal level clearly
+
+    Code
+      check_model_calibration(test_data, pred, obs, .focal_level = 99)
+    Condition <halfmoon_reference_error>
+      Error in `check_model_calibration()`:
+      ! `.focal_level` 99 not found in `.exposure`
+      i Observed levels: 0 and 1
+

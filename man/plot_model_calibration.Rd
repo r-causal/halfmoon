@@ -83,7 +83,8 @@ Can be unquoted (e.g., \code{.fitted}) or quoted (e.g., \code{".fitted"}).}
 Can be unquoted (e.g., \code{qsmk}) or quoted (e.g., \code{"qsmk"}).}
 
 \item{.focal_level}{Value indicating which level of \code{.exposure} represents treatment.
-If NULL (default), uses the last level for factors or max value for numeric.}
+If NULL (default), uses the last observed level, resolved once for the
+whole data.}
 
 \item{method}{Character; calibration method - "breaks", "logistic", or "windowed".}
 

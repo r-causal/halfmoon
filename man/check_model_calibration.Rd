@@ -17,7 +17,7 @@ check_model_calibration(
   window_size = 0.1,
   step_size = window_size/2,
   k = 10,
-  na.rm = FALSE
+  na.rm = TRUE
 )
 }
 \arguments{
@@ -49,7 +49,9 @@ the maximum value for numeric variables.}
 
 \item{k}{Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = \code{TRUE.} Default is 10.}
 
-\item{na.rm}{Logical; if \code{TRUE}, drop \code{NA} values before summarizing.}
+\item{na.rm}{Logical; if \code{TRUE} (the default), rows with a missing \code{.fitted}
+or \code{.exposure} value are dropped before summarizing. If \code{FALSE} and any
+such value is missing, the function raises \code{halfmoon_na_error}.}
 }
 \value{
 A tibble with columns:
@@ -77,6 +79,11 @@ A tibble with columns:
 computing mean prediction, observed rate, counts, and confidence intervals.
 Calibration represents the agreement between predicted probabilities and observed outcomes.
 Supports multiple methods for calibration assessment.
+}
+\details{
+\code{.exposure} must have exactly two observed levels. The default \code{.focal_level}
+is the last observed level, so declared factor levels that no observation
+takes are ignored rather than treated as the event.
 }
 \examples{
 # Using the included `nhefs_weights` dataset

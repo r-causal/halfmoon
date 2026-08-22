@@ -73,7 +73,8 @@ plot_model_calibration <- function(x, ...) {
 #' @param .exposure Column name of treatment/exposure variable.
 #'   Can be unquoted (e.g., `qsmk`) or quoted (e.g., `"qsmk"`).
 #' @param .focal_level Value indicating which level of `.exposure` represents treatment.
-#'   If NULL (default), uses the last level for factors or max value for numeric.
+#'   If NULL (default), uses the last observed level, resolved once for the
+#'   whole data.
 #' @param method Character; calibration method - "breaks", "logistic", or "windowed".
 #' @param bins Integer >1; number of bins for the "breaks" method.
 #' @param smooth Logical; for "logistic" method, use GAM smoothing if available.
@@ -110,6 +111,13 @@ plot_model_calibration.data.frame <- function(
 
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".exposure")
+
+  check_columns(x, fitted_name, group_name)
+
+  # The focal level is resolved once against the whole data and passed down
+  # explicitly, so that a facet that happens to hold a single group still
+  # summarizes the same event as the rest of the plot
+  .focal_level <- resolve_calibration_focal_level(x[[group_name]], .focal_level)
 
   # Create the base plot with new aesthetics
   p <- ggplot2::ggplot(

@@ -138,27 +138,18 @@ test_that("check_model_calibration handles edge cases", {
   expect_s3_class(result_empty, "tbl_df")
   expect_equal(nrow(result_empty), 0)
 
-  # Test all zeros (treatment level 0, so observed_rate should be 1)
+  # An exposure that never varies has no focal level to speak of
   all_zeros <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
-  result_zeros <- suppress_calibration_warnings(check_model_calibration(
-    all_zeros,
-    pred,
-    obs
-  ))
+  expect_error(
+    check_model_calibration(all_zeros, pred, obs),
+    class = "halfmoon_group_error"
+  )
 
-  expect_s3_class(result_zeros, "tbl_df")
-  expect_true(all(result_zeros$observed_rate == 1)) # All obs are 0, which becomes the treatment level
-
-  # Test all ones (treatment level 1, so observed_rate should be 1)
   all_ones <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
-  result_ones <- suppress_calibration_warnings(check_model_calibration(
-    all_ones,
-    pred,
-    obs
-  ))
-
-  expect_s3_class(result_ones, "tbl_df")
-  expect_true(all(result_ones$observed_rate == 1)) # All obs are 1, which becomes the treatment level
+  expect_error(
+    check_model_calibration(all_ones, pred, obs),
+    class = "halfmoon_group_error"
+  )
 })
 
 test_that("check_model_calibration handles NA values", {
@@ -187,16 +178,13 @@ test_that("check_model_calibration handles NA values", {
 
   expect_s3_class(result_na_rm, "tbl_df")
   expect_true(nrow(result_na_rm) > 0)
+  expect_equal(sum(result_na_rm$count), sum(stats::complete.cases(test_data)))
 
-  # Test with na.rm = FALSE (should have fewer complete cases)
-  result_na_keep <- suppress_calibration_warnings(check_model_calibration(
-    test_data,
-    pred,
-    obs,
-    na.rm = FALSE
-  ))
-
-  expect_s3_class(result_na_keep, "tbl_df")
+  # Test with na.rm = FALSE (missing values are refused)
+  expect_error(
+    check_model_calibration(test_data, pred, obs, na.rm = FALSE),
+    class = "halfmoon_na_error"
+  )
 })
 
 test_that("check_model_calibration works with logistic method", {
@@ -465,28 +453,42 @@ test_that("check_model_calibration handles edge cases with all methods", {
   expect_false(".bin" %in% names(result_windowed))
 })
 
-test_that("check_model_calibration handles all zeros and all ones", {
+test_that("check_model_calibration requires a varying exposure", {
   set.seed(123)
 
-  # All zeros - when .focal_level is not specified, 0 becomes the treatment level
-  # so observed_rate will be 1 (all observations match treatment level)
+  # An exposure with a single observed level cannot name a focal group
   zeros_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = rep(0, 50)
   )
 
-  # When all observations are 0, default .focal_level will be 0
-  # Test the actual behavior
-  result_breaks_zeros_default <- suppress_calibration_warnings(check_model_calibration(
-    zeros_data,
-    pred,
-    obs,
-    method = "breaks"
-  ))
-  # All values are 0 and .focal_level=0, so observed_rate=1
-  expect_true(all(result_breaks_zeros_default$observed_rate == 1))
+  ones_data <- data.frame(
+    pred = runif(50, 0, 1),
+    obs = rep(1, 50)
+  )
 
-  # Now test with mixed data where 1 is the treatment level
+  for (calibration_method in c("breaks", "windowed", "logistic")) {
+    expect_error(
+      check_model_calibration(
+        zeros_data,
+        pred,
+        obs,
+        method = calibration_method
+      ),
+      class = "halfmoon_group_error"
+    )
+    expect_error(
+      check_model_calibration(
+        ones_data,
+        pred,
+        obs,
+        method = calibration_method
+      ),
+      class = "halfmoon_group_error"
+    )
+  }
+
+  # Mixed data with an explicit focal level gives meaningful rates
   mixed_data <- data.frame(
     pred = runif(50, 0, 1),
     obs = c(rep(0, 25), rep(1, 25))
@@ -499,42 +501,9 @@ test_that("check_model_calibration handles all zeros and all ones", {
     method = "breaks",
     .focal_level = 1
   ))
-  # This should give us meaningful calibration metrics
   expect_true(all(
     result_mixed$observed_rate >= 0 & result_mixed$observed_rate <= 1
   ))
-
-  # All ones - default treatment level will be 1, so observed_rate = 1
-  ones_data <- data.frame(
-    pred = runif(50, 0, 1),
-    obs = rep(1, 50)
-  )
-
-  result_breaks_ones <- suppress_calibration_warnings(check_model_calibration(
-    ones_data,
-    pred,
-    obs,
-    method = "breaks"
-  ))
-  expect_true(all(result_breaks_ones$observed_rate == 1))
-
-  result_windowed_ones <- suppress_calibration_warnings(check_model_calibration(
-    ones_data,
-    pred,
-    obs,
-    method = "windowed"
-  ))
-  expect_true(all(result_windowed_ones$observed_rate == 1))
-
-  # Test the default behavior with all zeros
-  result_default_zeros <- suppress_calibration_warnings(check_model_calibration(
-    zeros_data,
-    pred,
-    obs,
-    method = "breaks"
-  ))
-  # With default .focal_level, all zeros means .focal_level=0, so observed_rate=1
-  expect_true(all(result_default_zeros$observed_rate == 1))
 })
 
 test_that("check_model_calibration handles NA values correctly", {
@@ -545,14 +514,17 @@ test_that("check_model_calibration handles NA values correctly", {
     obs = c(rbinom(45, 1, 0.5), rep(NA, 5))
   )
 
-  # Test with na.rm = FALSE (default)
-  result_false <- suppress_calibration_warnings(check_model_calibration(
-    test_data,
-    pred,
-    obs,
-    method = "breaks",
-    na.rm = FALSE
-  ))
+  # Missing values are refused when na.rm = FALSE
+  expect_error(
+    check_model_calibration(
+      test_data,
+      pred,
+      obs,
+      method = "breaks",
+      na.rm = FALSE
+    ),
+    class = "halfmoon_na_error"
+  )
 
   # Test with na.rm = TRUE
   result_true <- suppress_calibration_warnings(check_model_calibration(
@@ -563,7 +535,6 @@ test_that("check_model_calibration handles NA values correctly", {
     na.rm = TRUE
   ))
 
-  # na.rm = TRUE should have data, na.rm = FALSE might have less
   expect_true(sum(result_true$count) == 45)
 })
 
@@ -1281,4 +1252,319 @@ test_that("k parameter works in plot_calibration", {
   expect_doppelganger("plot_calibration k=5", p_k5)
   expect_doppelganger("plot_calibration k=10", p_k10)
   expect_doppelganger("plot_calibration k=20", p_k20)
+})
+
+test_that("check_model_calibration returns a single bin for constant .fitted", {
+  set.seed(123)
+  constant_data <- data.frame(
+    pred = rep(0.4, 50),
+    obs = rbinom(50, 1, 0.5)
+  )
+
+  for (binning in c("equal_width", "quantile")) {
+    expect_warning(
+      result <- suppress_calibration_warnings(check_model_calibration(
+        constant_data,
+        pred,
+        obs,
+        binning_method = binning
+      )),
+      class = "halfmoon_data_warning"
+    )
+
+    expect_equal(nrow(result), 1)
+    expect_equal(result$count, 50L)
+    expect_equal(result$predicted_rate, 0.4)
+    expect_equal(result$observed_rate, mean(constant_data$obs))
+  }
+})
+
+test_that("check_model_calibration refuses missing values when na.rm is FALSE", {
+  set.seed(123)
+  na_data <- data.frame(
+    pred = c(runif(45), rep(NA, 5)),
+    obs = c(rbinom(45, 1, 0.5), rep(NA, 5))
+  )
+
+  for (calibration_method in c("breaks", "logistic", "windowed")) {
+    expect_error(
+      check_model_calibration(
+        na_data,
+        pred,
+        obs,
+        method = calibration_method,
+        smooth = FALSE,
+        na.rm = FALSE
+      ),
+      class = "halfmoon_na_error"
+    )
+  }
+})
+
+test_that("check_model_calibration drops missing values by default", {
+  set.seed(123)
+  na_data <- data.frame(
+    pred = c(runif(45), rep(NA, 5)),
+    obs = c(rbinom(45, 1, 0.5), rep(NA, 5))
+  )
+
+  expect_identical(formals(check_model_calibration)$na.rm, TRUE)
+
+  for (calibration_method in c("breaks", "logistic", "windowed")) {
+    result <- suppress_calibration_warnings(check_model_calibration(
+      na_data,
+      pred,
+      obs,
+      method = calibration_method,
+      smooth = FALSE
+    ))
+
+    expect_s3_class(result, "tbl_df")
+    expect_gt(nrow(result), 0)
+    expect_false(anyNA(result$predicted_rate))
+    expect_false(anyNA(result$observed_rate))
+  }
+})
+
+test_that("the breaks method counts only non-missing outcomes", {
+  set.seed(123)
+  n <- 100
+  outcome <- rbinom(n, 1, 0.5)
+  outcome[91:100] <- NA
+
+  df <- tibble::tibble(x_var = runif(n), y_var = outcome)
+  result <- suppress_calibration_warnings(compute_calibration_breaks_imp(
+    df,
+    bins = 5,
+    binning_method = "equal_width",
+    conf_level = 0.95
+  ))
+
+  expect_equal(sum(result$count), sum(!is.na(outcome)))
+
+  bin_index <- as.integer(cut(
+    df$x_var,
+    breaks = seq(min(df$x_var), max(df$x_var), length.out = 6),
+    include.lowest = TRUE,
+    labels = FALSE
+  ))
+
+  for (i in seq_len(nrow(result))) {
+    in_bin <- bin_index == result$.bin[i]
+    events <- sum(outcome[in_bin], na.rm = TRUE)
+    n_obs <- sum(!is.na(outcome[in_bin]))
+    expect_equal(result$count[i], n_obs)
+    expect_equal(result$observed_rate[i], events / n_obs)
+    if (events > 0 && events < n_obs) {
+      ci <- stats::prop.test(events, n_obs, conf.level = 0.95)$conf.int
+      expect_equal(result$lower[i], ci[1])
+      expect_equal(result$upper[i], ci[2])
+    }
+  }
+})
+
+test_that("check_model_calibration validates columns when .focal_level is given", {
+  set.seed(123)
+  test_data <- data.frame(
+    pred = runif(50, 0, 1),
+    obs = rbinom(50, 1, 0.5)
+  )
+
+  expect_error(
+    check_model_calibration(test_data, "nonexistent", "obs", .focal_level = 1),
+    class = "halfmoon_column_error"
+  )
+
+  expect_error(
+    check_model_calibration(test_data, "pred", "nonexistent", .focal_level = 1),
+    class = "halfmoon_column_error"
+  )
+
+  condition <- rlang::catch_cnd(
+    check_model_calibration(test_data, "nonexistent", "obs", .focal_level = 1)
+  )
+  expect_equal(
+    rlang::call_name(conditionCall(condition)),
+    "check_model_calibration"
+  )
+})
+
+test_that("geom_calibration uses the requested binning method in every layer", {
+  set.seed(123)
+  skewed <- data.frame(
+    pred = rbeta(300, 1, 5),
+    obs = rbinom(300, 1, 0.3)
+  )
+
+  p <- ggplot(skewed, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration(binning_method = "quantile")
+
+  built <- suppress_calibration_warnings(ggplot_build(p))
+  layer_x <- lapply(built$data, function(layer) layer$x)
+
+  expect_equal(layer_x[[2]], layer_x[[1]])
+  expect_equal(layer_x[[3]], layer_x[[1]])
+})
+
+test_that("stat_calibration returns an empty layer instead of failing", {
+  set.seed(123)
+  all_missing <- data.frame(
+    pred = rep(NA_real_, 20),
+    obs = rbinom(20, 1, 0.5)
+  )
+
+  p <- ggplot(all_missing, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration(na.rm = TRUE)
+
+  built <- expect_no_warning(ggplot_build(p))
+  expect_equal(nrow(built$data[[1]]), 0)
+  expect_equal(nrow(built$data[[2]]), 0)
+})
+
+test_that("geom_calibration warns rather than failing on missing values", {
+  set.seed(123)
+  na_data <- data.frame(
+    pred = c(runif(45), rep(NA, 5)),
+    obs = c(rbinom(45, 1, 0.5), rep(NA, 5))
+  )
+
+  p <- ggplot(na_data, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration(na.rm = FALSE)
+
+  removal_warnings <- testthat::capture_warnings(
+    suppress_calibration_warnings(ggplot_build(p))
+  )
+  expect_gt(length(removal_warnings), 0)
+  expect_true(all(grepl("Removed", removal_warnings)))
+
+  built <- suppressWarnings(ggplot_build(p))
+  expect_gt(nrow(built$data[[2]]), 0)
+
+  p_quiet <- ggplot(na_data, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration(na.rm = TRUE)
+  expect_no_warning(suppress_calibration_warnings(ggplot_build(p_quiet)))
+})
+
+test_that("check_model_calibration refuses an exposure without two observed levels", {
+  set.seed(123)
+
+  zeros_data <- data.frame(pred = runif(50, 0, 1), obs = rep(0, 50))
+  expect_error(
+    check_model_calibration(zeros_data, pred, obs),
+    class = "halfmoon_group_error"
+  )
+
+  ones_data <- data.frame(pred = runif(50, 0, 1), obs = rep(1, 50))
+  expect_error(
+    check_model_calibration(ones_data, pred, obs),
+    class = "halfmoon_group_error"
+  )
+
+  single_level_factor <- data.frame(
+    pred = runif(50, 0, 1),
+    obs = factor(rep("0", 50), levels = c("0", "1"))
+  )
+  expect_error(
+    check_model_calibration(single_level_factor, pred, obs),
+    class = "halfmoon_group_error"
+  )
+
+  three_levels <- data.frame(
+    pred = runif(60, 0, 1),
+    obs = factor(rep(c("a", "b", "c"), 20))
+  )
+  expect_error(
+    check_model_calibration(three_levels, pred, obs),
+    class = "halfmoon_group_error"
+  )
+})
+
+test_that("check_model_calibration reports an absent focal level clearly", {
+  set.seed(123)
+  test_data <- data.frame(
+    pred = runif(50, 0, 1),
+    obs = rbinom(50, 1, 0.5)
+  )
+
+  expect_halfmoon_error(
+    check_model_calibration(test_data, pred, obs, .focal_level = 99),
+    "halfmoon_reference_error"
+  )
+})
+
+test_that("check_model_calibration ignores unused declared factor levels", {
+  set.seed(123)
+  n <- 60
+  observed <- factor(
+    sample(c("a", "b"), n, replace = TRUE),
+    levels = c("a", "b", "c")
+  )
+
+  with_unused <- data.frame(pred = runif(n), obs = observed)
+  dropped <- data.frame(pred = with_unused$pred, obs = droplevels(observed))
+
+  result_unused <- suppress_calibration_warnings(check_model_calibration(
+    with_unused,
+    pred,
+    obs
+  ))
+  result_dropped <- suppress_calibration_warnings(check_model_calibration(
+    dropped,
+    pred,
+    obs
+  ))
+
+  expect_equal(result_unused, result_dropped)
+  expect_false(all(result_unused$observed_rate == 0))
+})
+
+test_that("geom_calibration still renders a panel that lacks the focal level", {
+  set.seed(123)
+  n <- 200
+  faceted <- data.frame(
+    pred = runif(n),
+    obs = rbinom(n, 1, 0.5),
+    panel = rep(c("mixed", "control only"), each = n / 2)
+  )
+  faceted$obs[faceted$panel == "control only"] <- 0
+
+  p <- ggplot(faceted, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration() +
+    facet_wrap(~panel)
+
+  built <- expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
+  expect_gt(nrow(built$data[[2]]), 0)
+})
+
+test_that("the model diagnostic entry points share a missing value policy", {
+  set.seed(123)
+  n <- 200
+  na_data <- data.frame(
+    qsmk = factor(rbinom(n, 1, 0.5)),
+    .fitted = runif(n)
+  )
+  na_data$.fitted[1:5] <- NA
+  na_data$qsmk[6:10] <- NA
+
+  expect_s3_class(check_model_roc_curve(na_data, qsmk, .fitted), "tbl_df")
+  expect_s3_class(check_model_auc(na_data, qsmk, .fitted), "tbl_df")
+  expect_s3_class(
+    suppress_calibration_warnings(
+      check_model_calibration(na_data, .fitted, qsmk)
+    ),
+    "tbl_df"
+  )
+
+  expect_error(
+    check_model_roc_curve(na_data, qsmk, .fitted, na.rm = FALSE),
+    class = "halfmoon_na_error"
+  )
+  expect_error(
+    check_model_auc(na_data, qsmk, .fitted, na.rm = FALSE),
+    class = "halfmoon_na_error"
+  )
+  expect_error(
+    check_model_calibration(na_data, .fitted, qsmk, na.rm = FALSE),
+    class = "halfmoon_na_error"
+  )
 })
