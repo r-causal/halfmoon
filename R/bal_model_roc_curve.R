@@ -20,6 +20,8 @@
 #' @param .fitted The propensity score or fitted values (unquoted).
 #' @param .weights Optional single weight variable (unquoted). If NULL, computes
 #'   unweighted ROC curve.
+#' @param na.rm A logical value indicating whether to remove missing values
+#'   before computation. Defaults to `TRUE`.
 #' @inheritParams balance_params
 #' @inheritParams treatment_param
 #'
@@ -55,8 +57,18 @@ bal_model_roc_curve <- function(
   wts_quo <- rlang::enquo(.weights)
 
   # Extract column names
-  exposure_name <- names(tidyselect::eval_select(exposure_quo, .data))
-  estimate_name <- names(tidyselect::eval_select(estimate_quo, .data))
+  exposure_name <- eval_select_safely(
+    exposure_quo,
+    .data,
+    ".exposure",
+    call = rlang::current_env()
+  )
+  estimate_name <- eval_select_safely(
+    estimate_quo,
+    .data,
+    ".fitted",
+    call = rlang::current_env()
+  )
 
   if (length(exposure_name) != 1) {
     abort(
@@ -77,10 +89,18 @@ bal_model_roc_curve <- function(
   exposure <- .data[[exposure_name]]
   estimate <- .data[[estimate_name]]
 
+  exposure <- coerce_roc_truth(exposure, call = rlang::current_env())
+
   # Handle weights if provided
   weights <- NULL
+  weight_name <- NULL
   if (!rlang::quo_is_null(wts_quo)) {
-    weight_vars <- names(tidyselect::eval_select(wts_quo, .data))
+    weight_vars <- eval_select_safely(
+      wts_quo,
+      .data,
+      ".weights",
+      call = rlang::current_env()
+    )
     if (length(weight_vars) != 1) {
       abort(
         "{.arg .weights} must select exactly one variable or be NULL",
@@ -88,7 +108,8 @@ bal_model_roc_curve <- function(
         call = rlang::current_env()
       )
     }
-    weights <- extract_weight_data(.data[[weight_vars[1]]])
+    weight_name <- weight_vars[[1]]
+    weights <- extract_weight_data(.data[[weight_name]])
   }
 
   # Handle missing values
@@ -118,6 +139,18 @@ bal_model_roc_curve <- function(
         specificity = NA_real_
       ))
     }
+  }
+
+  # Zero and negative weights are dropped, as in check_model_roc_curve()
+  if (!is.null(weights)) {
+    keep <- drop_nonpositive_weights(
+      weights,
+      weight_name,
+      call = rlang::current_env()
+    )
+    exposure <- exposure[keep]
+    estimate <- estimate[keep]
+    weights <- weights[keep]
   }
 
   # Compute and return ROC curve

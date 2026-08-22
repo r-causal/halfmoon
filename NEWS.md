@@ -205,6 +205,57 @@
   propensity. The error message names a causal weight object instead of a
   `psw` object.
 
+* `check_model_auc()` and `bal_model_auc()` integrate the ROC curve in the order
+  the curve is drawn. The points were previously re-sorted by false positive
+  rate, which reversed each vertical run of the curve and paired the trapezoids
+  with the wrong corners whenever two points shared a false positive rate. Every
+  AUC can change slightly, and an AUC computed from a small sample or from
+  scores with many ties can change materially. The values now equal the weighted
+  Mann-Whitney concordance, so `bal_model_auc()` on truth `(1, 0, 1, 0)` with
+  scores `(4, 3, 2, 1)` reports `0.75` rather than `0.625`.
+
+* `check_model_roc_curve()` and `check_model_auc()` apply `na.rm` to the weight
+  columns as well as to the exposure and the fitted values. A missing weight
+  previously survived into the cumulative sums and produced a curve of missing
+  values, from which the AUC was computed over the surviving fragment. With
+  `na.rm = TRUE` the rows with a missing weight are dropped for that weight
+  column, and with `na.rm = FALSE` a missing weight raises `halfmoon_na_error`
+  naming the column.
+
+* `bal_model_auc()` and `bal_model_roc_curve()` require an exposure with exactly
+  two observed levels, as `check_model_auc()` and `check_model_roc_curve()`
+  already did. A three-level exposure previously compared one level against the
+  rest without comment, and a factor whose second declared level had no
+  observations picked that empty level as the event and returned an AUC near
+  zero. Unused declared levels are dropped, so a factor with two observed levels
+  is valid input and gives the same answer as the same factor with its levels
+  dropped.
+
+* `bal_model_auc()` and `bal_model_roc_curve()` drop observations with zero or
+  negative weights and warn with `halfmoon_data_warning`, matching
+  `check_model_auc()` and `check_model_roc_curve()`. Such weights previously
+  passed through and made the cumulative totals non-monotone, which sent
+  sensitivity and specificity outside `[0, 1]` and left the two layers reporting
+  different AUCs for the same input.
+
+* `.focal_level` defaults to the last observed level of the exposure, or the
+  maximum value of a numeric exposure, in the ROC and AUC functions. This is
+  what the documentation has always described; the code used the second level,
+  which is the same level for the binary input these functions accept.
+
+* `bal_model_auc()`, `bal_model_roc_curve()`, `check_model_auc()`, and
+  `check_model_roc_curve()` report a `.exposure`, `.fitted`, or `.weights`
+  column that does not exist as `halfmoon_column_error` naming the argument,
+  rather than passing through the `vctrs` subscript error from tidyselect. A
+  `.focal_level` that names no level of the exposure now reports
+  `check_model_roc_curve()` rather than the internal `compute_roc_curve_imp()`,
+  and a condition raised from `check_model_auc()` reports `check_model_auc()`
+  rather than the `check_model_roc_curve()` it delegates to.
+
+* The `na.rm` documentation for `bal_model_auc()`, `bal_model_roc_curve()`, and
+  `check_model_auc()` records the actual default of `TRUE`. The inherited text
+  described a default of `FALSE`.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

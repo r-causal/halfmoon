@@ -24,8 +24,7 @@ bal_model_roc_curve(
 unweighted ROC curve.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
-before computation. If \code{FALSE} (default), missing values in the input
-will produce \code{NA} in the output.}
+before computation. Defaults to \code{TRUE}.}
 
 \item{.focal_level}{The level of the outcome variable to consider as the
 treatment/event. If \code{NULL} (default), uses the last level for factors or
