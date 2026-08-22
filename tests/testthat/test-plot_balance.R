@@ -624,3 +624,58 @@ test_that("plot_balance draws the correlation reference line without warning", {
   p <- plot_balance(balance_data)
   expect_no_warning(ggplot2::ggplot_build(p))
 })
+
+test_that("plot_balance draws no empty layer when vline_xintercept is NULL", {
+  balance_data <- check_balance(
+    nhefs_weights,
+    c(age, education),
+    qsmk,
+    .weights = c(w_ate, w_att),
+    .metrics = "smd"
+  )
+
+  p <- plot_balance(balance_data, vline_xintercept = NULL)
+
+  is_vline <- vapply(
+    p$layers,
+    function(layer) inherits(layer$geom, "GeomVline"),
+    logical(1)
+  )
+  expect_false(any(is_vline))
+
+  rows <- vapply(
+    seq_along(p$layers),
+    function(i) nrow(ggplot2::layer_data(p, i)),
+    numeric(1)
+  )
+  expect_true(all(rows > 0))
+})
+
+test_that("plot_balance draws the smd reference line alongside other metrics", {
+  balance_data <- check_balance(
+    nhefs_weights,
+    c(age, education),
+    qsmk,
+    .weights = w_ate,
+    .metrics = c("smd", "vr")
+  )
+
+  p <- plot_balance(balance_data, vline_xintercept = 0.05)
+
+  is_vline <- vapply(
+    p$layers,
+    function(layer) inherits(layer$geom, "GeomVline"),
+    logical(1)
+  )
+  expect_equal(sum(is_vline), 1)
+
+  vline_data <- ggplot2::layer_data(p, which(is_vline))
+  expect_equal(vline_data$xintercept, 0.05)
+
+  # the threshold belongs to the smd facet alone
+  layout <- ggplot2::ggplot_build(p)$layout$layout
+  expect_equal(
+    as.character(vline_data$PANEL),
+    as.character(layout$PANEL[layout$metric == "smd"])
+  )
+})

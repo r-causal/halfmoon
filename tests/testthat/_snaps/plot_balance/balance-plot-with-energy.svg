@@ -40,6 +40,7 @@
 </defs>
 <g clip-path='url(#cpNDAwLjE1fDY0NC41OXwzOS40M3w1MzEuNzU=)'>
 <rect x='400.15' y='39.43' width='244.44' height='492.32' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
+<line x1='489.57' y1='531.75' x2='489.57' y2='39.43' style='stroke-width: 1.28; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='633.48,484.11 451.66,404.70 498.77,325.29 447.91,245.89 431.95,166.48 541.69,87.08 ' style='stroke-width: 1.71; stroke: #F8766D; stroke-linecap: butt;' />
 <polyline points='415.22,484.11 431.20,404.70 412.62,325.29 413.79,245.89 431.38,166.48 411.26,87.08 ' style='stroke-width: 1.71; stroke: #00BFC4; stroke-linecap: butt;' />
 <circle cx='633.48' cy='484.11' r='2.33' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />

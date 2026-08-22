@@ -62,6 +62,7 @@
 </defs>
 <g clip-path='url(#cpMjYwLjc0fDQ0OS45MnwzOS40M3w1MzEuNzU=)'>
 <rect x='260.74' y='39.43' width='189.19' height='492.32' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
+<line x1='281.08' y1='531.75' x2='281.08' y2='39.43' style='stroke-width: 1.28; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='302.53,490.72 275.43,422.35 282.45,353.97 274.87,285.59 272.49,217.21 288.85,148.84 290.15,80.46 ' style='stroke-width: 1.71; stroke: #F8766D; stroke-linecap: butt;' />
 <polyline points='269.99,490.72 272.37,422.35 269.60,353.97 269.78,285.59 272.40,217.21 269.40,148.84 270.13,80.46 ' style='stroke-width: 1.71; stroke: #00BA38; stroke-linecap: butt;' />
 <polyline points='270.74,490.72 271.29,422.35 269.66,353.97 269.97,285.59 269.47,217.21 272.34,148.84 269.69,80.46 ' style='stroke-width: 1.71; stroke: #619CFF; stroke-linecap: butt;' />

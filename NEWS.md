@@ -479,6 +479,12 @@
   `wdensity` was left upright for densities, so asking for any of the others
   drew both groups above the axis.
 
+* `plot_balance()` draws the SMD threshold in the SMD facet whether or not
+  other metrics are shown. `vline_xintercept`, `vline_color`, and `vlinewidth`
+  previously did nothing unless SMD was the only metric plotted, which made the
+  documented example a no-op. `vline_xintercept = NULL` now leaves the line out
+  instead of adding an empty layer to the plot.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000
