@@ -433,6 +433,33 @@
   call to `ess.default()`. A negative weight is now a `halfmoon_range_error`,
   where `bal_ess(c(1, -1))` previously returned 0.
 
+* `geom_roc()` and `stat_roc()` draw one curve per group when `group` is mapped
+  explicitly. Long data holding several weighting schemes previously collapsed
+  into a single curve that counted each subject once per scheme, so mapping
+  `group` gave a different answer from mapping `colour`.
+
+* `geom_roc()` and `stat_roc()` count only the observed levels of the
+  `exposure` aesthetic. A factor that declares a level no observation takes is
+  valid binary input, where it previously failed to compute, and the default
+  `.focal_level` is the last observed level rather than the last declared one.
+  A group that holds a single observed level is dropped with a warning and the
+  rest of the panel is still drawn.
+
+* `geom_roc()` and `stat_roc()` validate `.focal_level` against the observed
+  exposure values and raise `halfmoon_reference_error` for a value the data
+  does not take. An absent focal level previously drew a curve spanning the
+  full range of the panel, computed from no events at all.
+
+* `geom_roc()` and `stat_roc()` drop rows with a missing weight the way they
+  drop rows with a missing estimate or exposure: silently under
+  `na.rm = TRUE`, and with a report of the number of rows removed under
+  `na.rm = FALSE`. A missing weight previously spread through the curve under
+  `na.rm = FALSE`.
+
+* `plot_model_roc_curve()` labels the color aesthetic only when it maps one, so
+  a plot of a single method no longer reports that it is ignoring an unknown
+  label.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000
