@@ -17,7 +17,8 @@ plot_ess(
   label_size = 3,
   percent_scale = TRUE,
   reference_line_color = "gray50",
-  reference_line_type = "dashed"
+  reference_line_type = "dashed",
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -60,6 +61,10 @@ or on original scale (FALSE)? Default is TRUE.}
 \item{reference_line_color}{Color for the 100\% reference line. Default is "gray50".}
 
 \item{reference_line_type}{Line type for the reference line. Default is "dashed".}
+
+\item{na.rm}{Logical. If \code{FALSE} (default), a missing weight makes the
+effective sample size for that weighting method \code{NA}. If \code{TRUE},
+observations with a missing weight are dropped before computation.}
 }
 \value{
 A ggplot2 object.

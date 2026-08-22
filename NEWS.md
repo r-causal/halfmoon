@@ -408,6 +408,17 @@
   be selected, and the returned tibble still names its columns `method` and
   `group`.
 
+* `check_ess()` and `plot_ess()` gain `na.rm`, which defaults to `FALSE` as it
+  does in `ess()` and `bal_ess()`. A missing weight now produces an `NA`
+  effective sample size for that weighting method rather than being dropped
+  without notice. Pass `na.rm = TRUE` for the previous behavior.
+
+* `check_ess()` reports `n`, and therefore `ess_pct`, against the observations
+  whose weight is not missing. Weights of 90 ones and 10 missing values
+  previously reported an effective sample size of 90 as 90% of 100
+  observations. The 90 observations it was computed from are all weighted
+  equally, so it is now reported as 100%.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

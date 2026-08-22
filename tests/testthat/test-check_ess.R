@@ -149,11 +149,62 @@ test_that("check_ess handles NA values", {
   test_df <- nhefs_weights
   test_df$w_ate[1:10] <- NA
 
-  result <- check_ess(test_df, .weights = w_ate)
+  result <- check_ess(test_df, .weights = w_ate, na.rm = TRUE)
 
   # Should still compute ESS on non-NA values
   expect_true(!anyNA(result$ess))
   expect_true(all(result$ess > 0))
+  # the observed row counts every observation, the weighted row only those with
+  # a non-missing weight
+  expect_equal(result$n, c(nrow(test_df), nrow(test_df) - 10L))
+  expect_equal(result$ess_pct, result$ess / result$n * 100)
+})
+
+test_that("check_ess propagates missing weights unless na.rm = TRUE", {
+  test_df <- data.frame(w = c(rep(1, 90), rep(NA_real_, 10)))
+
+  dropped <- check_ess(
+    test_df,
+    .weights = w,
+    include_observed = FALSE,
+    na.rm = TRUE
+  )
+  expect_equal(dropped$n, 90L)
+  expect_equal(dropped$ess, ess(test_df$w, na.rm = TRUE))
+  expect_equal(dropped$ess, 90)
+  expect_equal(dropped$ess_pct, 100)
+
+  kept <- check_ess(test_df, .weights = w, include_observed = FALSE)
+  expect_equal(kept$n, 90L)
+  expect_equal(kept$ess, ess(test_df$w))
+  expect_true(is.na(kept$ess))
+  expect_true(is.na(kept$ess_pct))
+})
+
+test_that("check_ess passes na.rm through by exposure group", {
+  test_df <- data.frame(
+    w = c(rep(1, 45), rep(NA_real_, 5), rep(1, 50)),
+    qsmk = rep(c(0, 1), each = 50)
+  )
+
+  dropped <- check_ess(
+    test_df,
+    .weights = w,
+    .exposure = qsmk,
+    include_observed = FALSE,
+    na.rm = TRUE
+  )
+  expect_equal(dropped$n, c(45L, 50L))
+  expect_equal(dropped$ess, c(45, 50))
+  expect_equal(dropped$ess_pct, c(100, 100))
+
+  kept <- check_ess(
+    test_df,
+    .weights = w,
+    .exposure = qsmk,
+    include_observed = FALSE
+  )
+  expect_equal(kept$ess, c(NA_real_, 50))
 })
 
 test_that("check_ess works when .data holds columns named method or weight", {

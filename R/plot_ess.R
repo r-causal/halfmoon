@@ -89,7 +89,8 @@ plot_ess <- function(
   label_size = 3,
   percent_scale = TRUE,
   reference_line_color = "gray50",
-  reference_line_type = "dashed"
+  reference_line_type = "dashed",
+  na.rm = FALSE
 ) {
   # Check if .data is already ESS output
   is_ess_output <- all(c("method", "ess", "ess_pct", "n") %in% names(.data))
@@ -102,7 +103,8 @@ plot_ess <- function(
       .exposure = {{ .exposure }},
       include_observed = include_observed,
       n_tiles = n_tiles,
-      tile_labels = tile_labels
+      tile_labels = tile_labels,
+      na.rm = na.rm
     )
   }
 

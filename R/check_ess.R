@@ -17,6 +17,15 @@
 #' - For continuous exposures: The variable is divided into quantiles (using
 #'   `dplyr::ntile()`) and ESS is computed within each quantile
 #'
+#' A missing weight is a weight of unknown size, so with `na.rm = FALSE`, the
+#' default, `ess` and `ess_pct` are `NA` for a weighting method that has any
+#' missing weight. With `na.rm = TRUE`, the observations with a missing weight
+#' are dropped. Either way, `n` counts the observations whose weight is not
+#' missing, which is what `ess` is a share of, so `ess_pct` compares the
+#' effective sample size against the sample it was computed from. `n` therefore
+#' differs across weighting methods when they are missing for different
+#' observations.
+#'
 #' The function returns results in a tidy format suitable for plotting or
 #' further analysis.
 #'
@@ -28,13 +37,17 @@
 #'   groups to create. Default is 4 (quartiles).
 #' @param tile_labels Optional character vector of labels for the quantile groups
 #'   when `.exposure` is continuous. If NULL, uses "Q1", "Q2", etc.
+#' @param na.rm Logical. If `FALSE` (default), a missing weight makes the
+#'   effective sample size for that weighting method `NA`. If `TRUE`,
+#'   observations with a missing weight are dropped before computation.
 #'
 #' @return A tibble with columns:
 #'   \item{method}{Character. The weighting method ("observed" or weight variable name).}
 #'   \item{group}{Character. The exposure level (if `.exposure` is provided).}
-#'   \item{n}{Integer. The number of observations in the group.}
+#'   \item{n}{Integer. The number of observations in the group whose weight is
+#'     not missing.}
 #'   \item{ess}{Numeric. The effective sample size.}
-#'   \item{ess_pct}{Numeric. ESS as a percentage of the actual sample size.}
+#'   \item{ess_pct}{Numeric. ESS as a percentage of `n`.}
 #'
 #' @family balance functions
 #' @seealso [ess()] for the underlying ESS calculation, [plot_ess()] for visualization
@@ -60,6 +73,11 @@
 #' check_ess(nhefs_weights, .weights = w_ate, .exposure = qsmk,
 #'           include_observed = FALSE)
 #'
+#' # Drop observations with a missing weight
+#' weights_with_na <- nhefs_weights
+#' weights_with_na$w_ate[1:5] <- NA
+#' check_ess(weights_with_na, .weights = w_ate, na.rm = TRUE)
+#'
 #' @export
 check_ess <- function(
   .data,
@@ -67,7 +85,8 @@ check_ess <- function(
   .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
-  tile_labels = NULL
+  tile_labels = NULL,
+  na.rm = FALSE
 ) {
   # Validate inputs
   validate_data_frame(.data)
@@ -156,8 +175,8 @@ check_ess <- function(
     ess_data <- plot_data |>
       dplyr::group_by(.data$.ess_method, .data$.ess_group) |>
       dplyr::summarise(
-        n = dplyr::n(),
-        ess = ess(.data$.ess_weight, na.rm = TRUE),
+        n = sum(!is.na(.data$.ess_weight)),
+        ess = ess(.data$.ess_weight, na.rm = na.rm),
         ess_pct = ess / n * 100,
         .groups = "drop"
       ) |>
@@ -167,8 +186,8 @@ check_ess <- function(
     ess_data <- plot_data |>
       dplyr::group_by(.data$.ess_method) |>
       dplyr::summarise(
-        n = dplyr::n(),
-        ess = ess(.data$.ess_weight, na.rm = TRUE),
+        n = sum(!is.na(.data$.ess_weight)),
+        ess = ess(.data$.ess_weight, na.rm = na.rm),
         ess_pct = ess / n * 100,
         .groups = "drop"
       ) |>
