@@ -13,7 +13,7 @@ bal_prognostic_score(
   .reference_level = NULL,
   family = gaussian(),
   .weights = NULL,
-  na.rm = FALSE,
+  na.rm = TRUE,
   ...
 )
 }
@@ -43,7 +43,11 @@ continuous outcomes. Use \code{binomial()} for binary outcomes.}
 \item{.weights}{Optional weights for the outcome model. Can be a numeric vector
 or bare name of a variable in \code{.data}.}
 
-\item{na.rm}{Logical. Should missing values be removed? Defaults to FALSE.}
+\item{na.rm}{Logical. If \code{TRUE} (the default), rows with a missing value in
+any model variable, the exposure, or the weights are dropped before the
+model is fit, and the returned vector is shorter than \code{.data} by that many
+rows. If \code{FALSE} and any such value is missing, the function raises
+\code{halfmoon_na_error} rather than returning scores that are silently missing.}
 
 \item{...}{Additional arguments passed to \code{glm()}.}
 }

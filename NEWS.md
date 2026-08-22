@@ -298,3 +298,24 @@
   summarize, rather than reporting `Computation failed in stat_calibration()`.
   Missing values follow the ggplot2 convention for a stat: they are dropped, and
   `na.rm = FALSE` reports how many rows went.
+
+* `bal_prognostic_score()` resolves `.reference_level` against the exposure
+  itself rather than against its levels in sorted order, so a factor keeps its
+  declared order. On a factor whose declared control level was not the
+  alphabetically first, the outcome model was previously fit on the treated
+  group.
+
+* `bal_prognostic_score()` reports an exposure whose declared control level is
+  never observed as such, naming the absent level, rather than as a bare count
+  of levels.
+
+* `bal_prognostic_score()` now defaults to `na.rm = TRUE` and raises
+  `halfmoon_na_error` when `na.rm = FALSE` and a model variable, the exposure,
+  or a weight is missing. It previously returned a score vector with missing
+  values that later models would carry silently.
+
+# halfmoon 0.2.0
+
+# halfmoon 0.1.0.9000
+
+* Added a `NEWS.md` file to track changes to the package.

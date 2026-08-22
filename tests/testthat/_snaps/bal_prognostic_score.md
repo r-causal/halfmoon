@@ -14,7 +14,9 @@
         .covariates = c(age, sex))
     Condition <halfmoon_group_error>
       Error in `bal_prognostic_score()`:
-      ! Exposure variable must have exactly two levels, got 1
+      ! No control observations found in `.exposure` (`qsmk`).
+      x Declared level "0" never observed.
+      i A prognostic score is fit on the control group, so both groups must be present.
 
 # bal_prognostic_score errors when required arguments missing
 
@@ -31,4 +33,14 @@
     Condition <halfmoon_formula_error>
       Error in `bal_prognostic_score()`:
       ! `formula` must be a formula object.
+
+# bal_prognostic_score names the control level that is absent
+
+    Code
+      bal_prognostic_score(treated_only, outcome = y, .exposure = g, .covariates = x)
+    Condition <halfmoon_group_error>
+      Error in `bal_prognostic_score()`:
+      ! No control observations found in `.exposure` (`g`).
+      x Declared level "ctrl" never observed.
+      i A prognostic score is fit on the control group, so both groups must be present.
 

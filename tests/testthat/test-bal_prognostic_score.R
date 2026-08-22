@@ -114,19 +114,6 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   na_indices <- c(1, 5, 10, 15, 20) # Specific rows to set as NA
   data_with_na$wt82_71[na_indices] <- NA
 
-  # Without na.rm - predictions for NA outcome rows should be calculated
-  scores_with_na <- bal_prognostic_score(
-    data_with_na,
-    outcome = wt82_71,
-    .exposure = qsmk,
-    .covariates = c(age, sex),
-    na.rm = FALSE
-  )
-  expect_type(scores_with_na, "double")
-  expect_length(scores_with_na, nrow(data_with_na))
-  # Predictions should exist even for rows with NA outcomes
-  expect_false(anyNA(scores_with_na[na_indices]))
-
   # With na.rm - should exclude rows with NA outcomes
   scores_na_rm <- bal_prognostic_score(
     data_with_na,
@@ -144,16 +131,6 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   data_with_na_cov <- nhefs_weights
   cov_na_indices <- c(2, 7, 12)
   data_with_na_cov$age[cov_na_indices] <- NA
-
-  # Without na.rm - model should handle NAs (likely producing NA predictions)
-  scores_cov_na <- bal_prognostic_score(
-    data_with_na_cov,
-    outcome = wt82_71,
-    .exposure = qsmk,
-    .covariates = c(age, sex),
-    na.rm = FALSE
-  )
-  expect_length(scores_cov_na, nrow(data_with_na_cov))
 
   # With na.rm - should exclude rows with NA in any model variable
   scores_cov_na_rm <- bal_prognostic_score(
@@ -286,4 +263,105 @@ test_that("bal_prognostic_score handles formula with transformations", {
   )
 
   expect_false(all(scores_complex == scores_simple))
+})
+
+test_that("bal_prognostic_score respects the declared order of exposure levels", {
+  set.seed(123)
+  n <- 60
+  reversed <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    g = factor(
+      rep(c("treat", "ctrl"), length.out = n),
+      levels = c("treat", "ctrl")
+    )
+  )
+
+  scores <- bal_prognostic_score(
+    reversed,
+    outcome = y,
+    .exposure = g,
+    .covariates = x
+  )
+
+  fit_on_first_declared <- stats::glm(
+    y ~ x,
+    data = reversed[reversed$g == "treat", ]
+  )
+  expected <- as.numeric(stats::predict(
+    fit_on_first_declared,
+    newdata = reversed,
+    type = "response"
+  ))
+
+  expect_equal(scores, expected)
+})
+
+test_that("bal_prognostic_score names the control level that is absent", {
+  set.seed(123)
+  n <- 40
+  treated_only <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    g = factor(rep("treat", n), levels = c("ctrl", "treat"))
+  )
+
+  expect_halfmoon_error(
+    bal_prognostic_score(
+      treated_only,
+      outcome = y,
+      .exposure = g,
+      .covariates = x
+    ),
+    "halfmoon_group_error"
+  )
+})
+
+test_that("bal_prognostic_score drops missing values by default", {
+  expect_identical(formals(bal_prognostic_score)$na.rm, TRUE)
+
+  data_with_na <- nhefs_weights
+  na_indices <- c(1, 5, 10, 15, 20)
+  data_with_na$wt82_71[na_indices] <- NA
+
+  scores <- bal_prognostic_score(
+    data_with_na,
+    outcome = wt82_71,
+    .exposure = qsmk,
+    .covariates = c(age, sex)
+  )
+
+  expect_length(scores, nrow(data_with_na) - length(na_indices))
+  expect_false(anyNA(scores))
+})
+
+test_that("bal_prognostic_score refuses missing values when na.rm is FALSE", {
+  data_with_na <- nhefs_weights
+  data_with_na$wt82_71[c(1, 5, 10)] <- NA
+
+  expect_error(
+    bal_prognostic_score(
+      data_with_na,
+      outcome = wt82_71,
+      .exposure = qsmk,
+      .covariates = c(age, sex),
+      na.rm = FALSE
+    ),
+    class = "halfmoon_na_error"
+  )
+
+  data_with_na_weights <- nhefs_weights
+  data_with_na_weights$w_ate[1:3] <- NA
+
+  expect_error(
+    bal_prognostic_score(
+      data_with_na_weights,
+      outcome = wt82_71,
+      .exposure = qsmk,
+      .covariates = c(age, sex),
+      .weights = w_ate,
+      na.rm = FALSE
+    ),
+    class = "halfmoon_na_error"
+  )
 })
