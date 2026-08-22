@@ -405,3 +405,20 @@ test_that("weighted_quantile applies the two-tier na.rm policy", {
     class = "halfmoon_arg_error"
   )
 })
+
+test_that("check_qq reads the column a renaming selection points at", {
+  renamed <- check_qq(nhefs_weights, age, qsmk, .weights = c(ate = w_ate))
+  plain <- check_qq(nhefs_weights, age, qsmk, .weights = w_ate)
+
+  expect_setequal(renamed$method, c("observed", "ate"))
+  expect_equal(
+    renamed[
+      renamed$method == "ate",
+      c("exposed_quantiles", "unexposed_quantiles")
+    ],
+    plain[
+      plain$method == "w_ate",
+      c("exposed_quantiles", "unexposed_quantiles")
+    ]
+  )
+})

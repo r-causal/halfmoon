@@ -234,3 +234,10 @@ test_that("bal_qq rejects a weight method labeled observed", {
     class = "halfmoon_arg_error"
   )
 })
+
+test_that("bal_qq reads the column a renaming selection points at", {
+  renamed <- bal_qq(nhefs_weights, age, qsmk, .weights = c(ate = w_ate))
+  plain <- bal_qq(nhefs_weights, age, qsmk, .weights = w_ate)
+
+  expect_equal(renamed, plain)
+})

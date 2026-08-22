@@ -83,12 +83,15 @@ check_qq <- function(
     )
   }
 
-  # Get weight column names using tidyselect
-  wt_names <- if (!rlang::quo_is_null(wts_quo)) {
-    names(tidyselect::eval_select(wts_quo, .data))
+  # A renaming selection names the method, so the column it reads is tracked
+  # alongside the name the result reports
+  wt_columns <- if (!rlang::quo_is_null(wts_quo)) {
+    wts_selection <- tidyselect::eval_select(wts_quo, .data)
+    stats::setNames(names(.data)[wts_selection], names(wts_selection))
   } else {
     character(0)
   }
+  wt_names <- names(wt_columns)
   validate_method_labels(wt_names, call = rlang::current_env())
 
   # Get group levels. Only observed levels count, so a factor that declares
@@ -102,7 +105,7 @@ check_qq <- function(
       .data,
       var_name = var_name,
       exposure_name = exposure_name,
-      wt_names = wt_names
+      wt_names = unname(wt_columns)
     )
   }
 
@@ -119,9 +122,13 @@ check_qq <- function(
     methods <- c(methods, wt_names)
   }
 
-  # Compute quantiles for each method
-  qq_data <- purrr::map_df(
+  # Compute quantiles for each method. "observed" reads no column, so it maps
+  # to `NA` and the unweighted branch takes over.
+  method_columns <- unname(wt_columns[methods])
+
+  qq_data <- purrr::map2_df(
     methods,
+    method_columns,
     compute_method_quantiles,
     .data = .data,
     var_name = var_name,
@@ -191,7 +198,9 @@ validate_qq_complete <- function(
 #'
 #' Internal function to compute quantiles for one method (observed or weighted).
 #'
-#' @param method Character string indicating the method ("observed" or weight column name)
+#' @param method The name the result reports this method under
+#' @param wt_col The column the weights are read from, or `NA` for the
+#'   unweighted method. A renaming selection makes this differ from `method`.
 #' @param .data Data frame
 #' @param var_name Variable name to compute quantiles for
 #' @param exposure_name Group variable name
@@ -205,6 +214,7 @@ validate_qq_complete <- function(
 #' @noRd
 compute_method_quantiles <- function(
   method,
+  wt_col,
   .data,
   var_name,
   exposure_name,
@@ -217,7 +227,7 @@ compute_method_quantiles <- function(
   ref_data <- .data[.data[[exposure_name]] == ref_group, ]
   comp_data <- .data[.data[[exposure_name]] == comp_group, ]
 
-  if (method == "observed") {
+  if (is.na(wt_col)) {
     if (na.rm) {
       ref_data <- ref_data[!is.na(ref_data[[var_name]]), ]
       comp_data <- comp_data[!is.na(comp_data[[var_name]]), ]
@@ -236,15 +246,15 @@ compute_method_quantiles <- function(
     )
   } else {
     # Weighted quantiles
-    if (!method %in% names(ref_data) || !method %in% names(comp_data)) {
+    if (!wt_col %in% names(ref_data) || !wt_col %in% names(comp_data)) {
       abort(
-        "Weight column {.code {method}} not found in data",
+        "Weight column {.code {wt_col}} not found in data",
         error_class = "halfmoon_column_error"
       )
     }
 
-    ref_wts <- extract_weight_data(ref_data[[method]])
-    comp_wts <- extract_weight_data(comp_data[[method]])
+    ref_wts <- extract_weight_data(ref_data[[wt_col]])
+    comp_wts <- extract_weight_data(comp_data[[wt_col]])
 
     if (na.rm) {
       # A row is only usable when both the variable and its weight are observed

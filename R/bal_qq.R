@@ -77,10 +77,13 @@ bal_qq <- function(
   validate_column_exists(.data, var_name, ".var")
   validate_column_exists(.data, exposure_name, ".exposure")
 
-  # Get weight column if provided
+  # Get weight column if provided. A renaming selection names the method, so
+  # the column it reads is tracked separately from that name.
   wt_name <- NULL
+  wt_col <- NA_character_
   if (!rlang::quo_is_null(wts_quo)) {
-    wt_names <- names(tidyselect::eval_select(wts_quo, .data))
+    wts_selection <- tidyselect::eval_select(wts_quo, .data)
+    wt_names <- names(wts_selection)
     if (length(wt_names) != 1) {
       abort(
         "{.arg .weights} must select exactly one variable or be NULL",
@@ -89,7 +92,8 @@ bal_qq <- function(
       )
     }
     validate_method_labels(wt_names, call = rlang::current_env())
-    wt_name <- wt_names[1]
+    wt_name <- wt_names[[1]]
+    wt_col <- names(.data)[wts_selection][[1]]
   }
 
   # Get exposure levels. Only observed levels count, so a factor that declares
@@ -103,7 +107,7 @@ bal_qq <- function(
       .data,
       var_name = var_name,
       exposure_name = exposure_name,
-      wt_names = wt_name
+      wt_names = if (is.na(wt_col)) character(0) else wt_col
     )
   }
 
@@ -113,6 +117,7 @@ bal_qq <- function(
 
   compute_method_quantiles(
     method = wt_name %||% "observed",
+    wt_col = wt_col,
     .data = .data,
     var_name = var_name,
     exposure_name = exposure_name,
