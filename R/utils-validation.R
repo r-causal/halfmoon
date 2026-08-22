@@ -129,13 +129,14 @@ validate_not_empty <- function(
   invisible(x)
 }
 
-# Binary group validation
+# Binary group validation. Levels are the OBSERVED levels, so a factor
+# carrying a declared level that no observation takes is still binary input.
 validate_binary_group <- function(
   group,
   arg_name = "group",
   call = rlang::caller_env()
 ) {
-  levels <- unique(stats::na.omit(group))
+  levels <- extract_group_levels(group, require_binary = FALSE, call = call)
   if (length(levels) != 2) {
     abort(
       "{.arg {arg_name}} must have exactly two levels, got {length(levels)}",

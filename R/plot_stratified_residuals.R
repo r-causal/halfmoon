@@ -246,7 +246,7 @@ plot_stratified_residuals_impl <- function(
   validate_numeric(.residuals, ".residuals")
   validate_numeric(.ps_or_fitted, ".ps_or_fitted")
 
-  # Validate .exposure has exactly 2 levels
+  # Validate .exposure has exactly 2 observed levels
   validate_binary_group(..exposure, ".exposure", call = rlang::caller_env())
 
   # Check lengths
@@ -258,11 +258,12 @@ plot_stratified_residuals_impl <- function(
   )
   validate_equal_length(.residuals, ..exposure, ".residuals", "..exposure")
 
-  # Create data frame for plotting
+  # Create data frame for plotting. Only the observed groups are carried into
+  # the legend and the facets.
   plot_data <- data.frame(
     residuals = .residuals,
     x_var = .ps_or_fitted,
-    .exposure = as.factor(..exposure)
+    .exposure = drop_unused_levels(as.factor(..exposure))
   )
 
   # Handle missing values

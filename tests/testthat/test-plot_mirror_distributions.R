@@ -401,3 +401,70 @@ test_that("plot_mirror_distributions respects facet_scales parameter", {
 
   expect_doppelganger("free facet scales", p_free)
 })
+
+test_that("plot_mirror_distributions accepts an exposure with unused levels", {
+  df <- nhefs_weights
+  df$qsmk_extra <- factor(
+    as.character(df$qsmk),
+    levels = c(levels(df$qsmk), "never")
+  )
+
+  p <- plot_mirror_distributions(df, age, qsmk_extra)
+  expect_no_error(ggplot2::ggplot_build(p))
+
+  built <- ggplot2::layer_data(p, 1)
+  expect_lt(min(built$ymin), 0)
+  expect_gt(max(built$ymax), 0)
+})
+
+test_that("plot_mirror_distributions resolves the reference among observed levels", {
+  filtered <- dplyr::filter(
+    nhefs_weights,
+    alcoholfreq_cat != levels(alcoholfreq_cat)[1]
+  )
+  observed <- levels(droplevels(filtered$alcoholfreq_cat))
+
+  p <- plot_mirror_distributions(
+    filtered,
+    age,
+    alcoholfreq_cat,
+    type = "density"
+  )
+
+  expect_setequal(
+    unique(p$data$comparison),
+    paste0(observed[-1], " vs ", observed[1])
+  )
+
+  # every panel holds both sides of its comparison, so every panel is mirrored
+  built <- ggplot2::layer_data(p, 1)
+  expect_true(all(tapply(built$y, built$PANEL, min) < 0))
+  expect_true(all(tapply(built$y, built$PANEL, max) > 0))
+})
+
+test_that("plot_mirror_distributions rejects an unobserved reference level", {
+  expect_error(
+    plot_mirror_distributions(
+      nhefs_weights,
+      age,
+      alcoholfreq_cat,
+      .reference_level = "nonexistent"
+    ),
+    class = "halfmoon_reference_error"
+  )
+
+  filtered <- dplyr::filter(
+    nhefs_weights,
+    alcoholfreq_cat != levels(alcoholfreq_cat)[1]
+  )
+
+  expect_error(
+    plot_mirror_distributions(
+      filtered,
+      age,
+      alcoholfreq_cat,
+      .reference_level = levels(nhefs_weights$alcoholfreq_cat)[1]
+    ),
+    class = "halfmoon_reference_error"
+  )
+})
