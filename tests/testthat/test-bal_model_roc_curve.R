@@ -42,12 +42,12 @@ test_that("bal_model_roc_curve handles missing values", {
 test_that("bal_model_roc_curve validates inputs", {
   expect_halfmoon_error(
     bal_model_roc_curve(nhefs_weights, nonexistent, .fitted),
-    class = "halfmoon_arg_error"
+    class = "vctrs_error_subscript_oob"
   )
 
   expect_halfmoon_error(
     bal_model_roc_curve(nhefs_weights, qsmk, nonexistent),
-    class = "halfmoon_arg_error"
+    class = "vctrs_error_subscript_oob"
   )
 
   # Multiple weights should error

@@ -1,7 +1,7 @@
 # check_model_calibration provides clear error messages for missing columns
 
     Code
-      expr
+      check_model_calibration(test_data, "nonexistent", "obs")
     Condition <halfmoon_column_error>
       Error in `check_model_calibration()`:
       ! Column `nonexistent` not found in data
@@ -9,7 +9,7 @@
 ---
 
     Code
-      expr
+      check_model_calibration(test_data, "pred", "nonexistent")
     Condition <halfmoon_column_error>
       Error in `check_model_calibration()`:
       ! Column `nonexistent` not found in data
@@ -17,7 +17,7 @@
 # check_model_calibration method parameter validation
 
     Code
-      expr
+      check_model_calibration(test_data, pred, obs, method = "invalid")
     Condition <rlang_error>
       Error in `check_model_calibration()`:
       ! `method` must be one of "breaks", "logistic", or "windowed", not "invalid".
@@ -25,7 +25,7 @@
 # check_model_calibration validates input parameters
 
     Code
-      expr
+      check_model_calibration(test_data, pred, obs, method = "breaks", bins = 1)
     Condition <halfmoon_arg_error>
       Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
@@ -33,7 +33,7 @@
 ---
 
     Code
-      expr
+      check_model_calibration(test_data, pred, obs, method = "breaks", bins = 2.5)
     Condition <halfmoon_arg_error>
       Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
@@ -41,7 +41,7 @@
 ---
 
     Code
-      expr
+      check_model_calibration(test_data, nonexistent, obs)
     Condition <halfmoon_column_error>
       Error in `check_model_calibration()`:
       ! Column `nonexistent` not found in data
@@ -49,7 +49,7 @@
 # check_model_calibration provides helpful warnings for small cell sizes
 
     Code
-      expr
+      check_model_calibration(test_data, pred, obs, method = "breaks", bins = 10)
     Condition <halfmoon_data_warning>
       Warning in `check_model_calibration()`:
       Small sample sizes or extreme proportions detected in bins 6, 10 (n = 2, 10). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.
@@ -68,7 +68,7 @@
 # check_model_calibration provides helpful warnings for extreme proportions
 
     Code
-      expr
+      check_model_calibration(test_data, pred, obs, method = "breaks", bins = 10)
     Condition <halfmoon_data_warning>
       Warning in `check_model_calibration()`:
       Small sample sizes or extreme proportions detected in bins 1, 2, 3, 8, 9, 10 (n = 17, 16, 17, 16, 17, 17). Confidence intervals may be unreliable. Consider using fewer bins or a different calibration method.
@@ -86,7 +86,8 @@
 # check_model_calibration windowed method provides helpful warnings
 
     Code
-      expr
+      check_model_calibration(test_data, pred, obs, method = "windowed", window_size = 0.05,
+        step_size = 0.1)
     Condition <halfmoon_data_warning>
       Warning in `check_model_calibration()`:
       Small sample sizes or extreme proportions detected in windows centered at 0.4, 0.5, 0.6 (n = 3, 6, 6). Confidence intervals may be unreliable. Consider using a larger window size or a different calibration method.
@@ -101,7 +102,7 @@
 # check_model_calibration errors with invalid bins
 
     Code
-      expr
+      check_model_calibration(cal_data, pred, obs, bins = 1)
     Condition <halfmoon_arg_error>
       Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.
@@ -109,7 +110,7 @@
 ---
 
     Code
-      expr
+      check_model_calibration(cal_data, pred, obs, bins = 2.5)
     Condition <halfmoon_arg_error>
       Error in `check_model_calibration()`:
       ! `bins` must be an integer > 1.

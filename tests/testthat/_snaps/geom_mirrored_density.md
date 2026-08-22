@@ -1,7 +1,7 @@
 # geom_mirrored_density errors with 3+ groups
 
     Code
-      expr
+      ggplot_build(edu_group)
     Condition <rlang_error>
       Error in `geom_mirror_density()`:
       ! Problem while computing stat.
