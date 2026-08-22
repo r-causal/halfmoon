@@ -21,14 +21,17 @@ test_that("expect_halfmoon_warning asserts the class it is given", {
     "halfmoon_data_warning"
   )
 
-  # A mismatched class fails instead of passing. The unmatched warning is
+  # A mismatched class fails instead of passing. The failure is caught as the
+  # condition it is, which also stops the helper before it records a snapshot
+  # for a case that is not meant to have one. The unmatched warning is
   # re-emitted by testthat, so it is suppressed here.
   suppressWarnings(
-    expect_failure(
+    expect_error(
       expect_halfmoon_warning(
         warn("odd data", warning_class = "halfmoon_data_warning"),
         "halfmoon_type_warning"
-      )
+      ),
+      class = "expectation_failure"
     )
   )
 })
