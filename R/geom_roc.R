@@ -139,7 +139,19 @@ resolve_roc_focal_level <- function(
     call = call
   )
 
+  # An exposure with nothing observed leaves no curve to draw. The layer is
+  # empty either way, but silently so would look like a plot with no data
+  # rather than a plot whose exposure is missing.
   if (length(observed_levels) == 0) {
+    warn(
+      c(
+        "Drawing no ROC curve: {.field exposure} has no observed levels",
+        i = "Every value of {.field exposure} is missing."
+      ),
+      warning_class = "halfmoon_data_warning",
+      call = call
+    )
+
     return(NULL)
   }
 

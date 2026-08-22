@@ -70,3 +70,13 @@ test_that("geom_mirror_histogram mirrors a statistic chosen with after_stat()", 
   expect_lt(min(built$ymin), 0)
   expect_gt(max(built$ymax), 0)
 })
+
+test_that("geom_mirror_histogram names the geom and the group count", {
+  p <- ggplot2::ggplot(
+    nhefs_weights,
+    ggplot2::aes(.fitted, group = alcoholfreq_cat)
+  ) +
+    geom_mirror_histogram(bins = 20)
+
+  expect_snapshot(error = TRUE, cnd_class = TRUE, ggplot2::ggplot_build(p))
+})

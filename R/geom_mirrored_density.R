@@ -1,5 +1,13 @@
 #' Create mirrored density plots
 #'
+#' @details
+#' A mirrored density plot draws one group above the axis and the other below
+#' it, so a panel holding three or more groups has no partial plot to fall back
+#' on. That is an error, `halfmoon_group_error`, rather than a dropped group. It
+#' is a deliberate difference from [geom_roc()] and [geom_qq2()], where each
+#' group is drawn on its own and one that cannot be drawn is warned about and
+#' skipped.
+#'
 #' @inheritParams ggplot2::geom_density
 #' @param stat The statistical transformation to use on the data for this layer.
 #'   This should always be "density" (the default).
@@ -63,10 +71,16 @@ StatMirrorDensity <- ggplot2::ggproto(
         .groups = "drop"
       )
 
-    # Check for panels with more than 2 groups
+    # A mirrored plot draws one group above the axis and one below, so there
+    # is no partial rendering to fall back on and a third group is an error
+    # rather than a dropped group
     if (any(panel_groups$.n_groups > 2)) {
+      n_observed <- max(panel_groups$.n_groups)
       abort(
-        "Groups of three or greater not supported in `geom_mirror_density()`",
+        c(
+          "{.fun geom_mirror_density} draws at most two groups per panel, and a panel here has {n_observed}.",
+          i = "One group is drawn above the axis and one below, so there is no partial plot to draw."
+        ),
         error_class = "halfmoon_group_error"
       )
     }

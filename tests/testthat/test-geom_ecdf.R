@@ -141,3 +141,41 @@ test_that("geom_ecdf drops a group whose weights sum to zero", {
   expect_equal(length(unique(built$group)), 1)
   expect_equal(built$y, c(1, 2, 3, 4) / 4)
 })
+
+test_that("geom_ecdf draws the same weighted curve in either orientation", {
+  upright <- ggplot2::ggplot(
+    nhefs_weights,
+    ggplot2::aes(x = smokeyrs, color = qsmk)
+  ) +
+    geom_ecdf(ggplot2::aes(weights = w_ato))
+
+  flipped <- ggplot2::ggplot(
+    nhefs_weights,
+    ggplot2::aes(y = smokeyrs, color = qsmk)
+  ) +
+    geom_ecdf(ggplot2::aes(weights = w_ato), orientation = "y")
+
+  upright_data <- ggplot2::ggplot_build(upright)$data[[1]]
+  flipped_data <- ggplot2::ggplot_build(flipped)$data[[1]]
+
+  expect_equal(upright_data$x, flipped_data$y)
+  expect_equal(upright_data$y, flipped_data$x)
+  expect_true(all(flipped_data$flipped_aes))
+})
+
+test_that("geom_ecdf refuses negative weights", {
+  mixed_sign <- nhefs_weights
+  mixed_sign$w_signed <- ifelse(
+    seq_len(nrow(mixed_sign)) %% 2 == 0,
+    -mixed_sign$w_ate,
+    mixed_sign$w_ate
+  )
+
+  p <- ggplot2::ggplot(mixed_sign, ggplot2::aes(x = smokeyrs)) +
+    geom_ecdf(ggplot2::aes(weights = w_signed))
+
+  expect_error(
+    ggplot2::ggplot_build(p),
+    class = "halfmoon_range_error"
+  )
+})

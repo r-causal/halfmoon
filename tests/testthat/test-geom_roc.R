@@ -282,3 +282,23 @@ test_that("stat_roc validates .focal_level against the observed levels", {
 
   expect_no_error(ggplot_build(observed))
 })
+
+test_that("geom_roc warns when the exposure has no observed levels", {
+  all_missing <- nhefs_weights
+  all_missing$missing_exposure <- factor(
+    NA_character_,
+    levels = c("0", "1")
+  )
+
+  p <- ggplot2::ggplot(
+    all_missing,
+    ggplot2::aes(estimate = .fitted, exposure = missing_exposure)
+  ) +
+    geom_roc(na.rm = TRUE)
+
+  expect_warning(
+    built <- ggplot2::ggplot_build(p),
+    class = "halfmoon_data_warning"
+  )
+  expect_equal(nrow(built$data[[1]]), 0)
+})

@@ -21,11 +21,17 @@
 #' comparing multiple groups simultaneously. Choose QQ plots when you want to directly
 #' compare two groups with an easy-to-interpret 45-degree reference line.
 #'
+#' `geom_ecdf()` supports both orientations. Mapping the variable to `y`, or
+#' passing `orientation = "y"`, computes the same weighted curve and draws it
+#' across the panel instead of up it.
+#'
 #' @section Aesthetics: In addition to the aesthetics for
 #'   [`ggplot2::stat_ecdf()`], `geom_ecdf()` also accepts: \itemize{ \item
 #'   weights }
 #'
 #' @inheritParams ggplot2::stat_ecdf
+#' @param orientation The axis the curve runs along, `"x"` or `"y"`. Defaults to
+#'   `NA`, which reads the orientation from the aesthetics the layer is given.
 #'
 #' @return a geom
 #' @family ggplot2 functions
@@ -56,6 +62,7 @@ geom_ecdf <- function(
   n = NULL,
   pad = TRUE,
   na.rm = FALSE,
+  orientation = NA,
   show.legend = NA,
   inherit.aes = TRUE
 ) {
@@ -67,7 +74,13 @@ geom_ecdf <- function(
     position = position,
     show.legend = show.legend,
     inherit.aes = inherit.aes,
-    params = list(n = n, pad = pad, na.rm = na.rm, ...)
+    params = list(
+      n = n,
+      pad = pad,
+      na.rm = na.rm,
+      orientation = orientation,
+      ...
+    )
   )
 }
 
@@ -83,6 +96,17 @@ geom_ecdf <- function(
 #'   mass and there is no curve to draw.
 #' @noRd
 compute_weighted_ecdf <- function(x, weights, n = NULL, pad = TRUE) {
+  # A negative weight would make the cumulative sum non-monotone, which sends
+  # the curve back down and outside [0, 1]. `validate_weights()` refuses one
+  # everywhere else, so the geom does too.
+  if (any(weights < 0, na.rm = TRUE)) {
+    abort(
+      "{.field weights} cannot contain negative values",
+      error_class = "halfmoon_range_error",
+      call = quote(geom_ecdf())
+    )
+  }
+
   total <- sum(weights)
 
   # Every observation would have to contribute nothing, which leaves no
@@ -150,18 +174,36 @@ StatWeightedECDF <- ggplot2::ggproto(
       name = "geom_ecdf"
     )
   },
-  compute_group = function(data, scales, n = NULL, pad = TRUE) {
-    if (!"weights" %in% names(data)) {
-      return(ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad))
+  compute_group = function(
+    data,
+    scales,
+    n = NULL,
+    pad = TRUE,
+    flipped_aes = FALSE
+  ) {
+    # The curve is always computed over `x`; a flipped orientation swaps the
+    # aesthetics on the way in and back again on the way out, as the ggplot2
+    # stats do
+    data <- ggplot2::flip_data(data, flipped_aes)
+
+    result <- if (!"weights" %in% names(data)) {
+      ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad)
+    } else if (nrow(data) == 0) {
+      data.frame(x = numeric(0), ecdf = numeric(0))
+    } else {
+      compute_weighted_ecdf(data$x, data$weights, n = n, pad = pad)
     }
 
-    if (nrow(data) == 0) {
-      return(data.frame(x = numeric(0), ecdf = numeric(0)))
+    # A group whose weights carry no mass is dropped rather than drawn
+    if (is.null(result)) {
+      return(NULL)
     }
 
-    compute_weighted_ecdf(data$x, data$weights, n = n, pad = pad)
+    result$y <- result$ecdf
+    result$flipped_aes <- flipped_aes
+    ggplot2::flip_data(result, flipped_aes)
   },
-  required_aes = c("x"),
+  required_aes = c("x|y"),
   optional_aes = "weights",
   dropped_aes = c("weight", "weights")
 )
