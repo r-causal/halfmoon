@@ -175,14 +175,15 @@ plot_balance <- function(
 
   # A correlation is balanced at 0 rather than at the SMD threshold, so it gets
   # its own reference line, restricted to its own facet
+  # `geom_vline()` never inherits the plot's aesthetics, so it takes no
+  # `inherit.aes` argument of its own
   if ("correlation" %in% unique_metrics) {
     p <- p +
       ggplot2::geom_vline(
         data = tibble::tibble(metric = "correlation", xintercept = 0),
         mapping = ggplot2::aes(xintercept = .data$xintercept),
         color = vline_color,
-        linewidth = vlinewidth,
-        inherit.aes = FALSE
+        linewidth = vlinewidth
       )
   }
 

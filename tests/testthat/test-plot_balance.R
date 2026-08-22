@@ -591,3 +591,25 @@ test_that("plot_balance marks the correlation reference at zero", {
 
   expect_equal(vline_intercepts(plot_balance(smd_data)), 0.1)
 })
+
+test_that("plot_balance draws the correlation reference line without warning", {
+  withr::local_seed(20260817)
+  n <- 200
+  continuous_data <- tibble::tibble(
+    z1 = stats::rnorm(n),
+    z2 = stats::rnorm(n)
+  )
+  continuous_data$exposure <- continuous_data$z1 + stats::rnorm(n)
+
+  balance_data <- check_balance(
+    continuous_data,
+    c(z1, z2),
+    exposure,
+    .metrics = "correlation"
+  )
+
+  expect_no_warning(plot_balance(balance_data))
+
+  p <- plot_balance(balance_data)
+  expect_no_warning(ggplot2::ggplot_build(p))
+})
