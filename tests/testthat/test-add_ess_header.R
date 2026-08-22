@@ -1,3 +1,12 @@
+# A skip at the top level of a test file skips the whole file, so the packages
+# the fixtures below attach are required once for every test here rather than
+# inside each one
+skip_if_not_installed("survey")
+skip_if_not_installed("gtsummary")
+skip_if_not_installed("dplyr")
+skip_if_not_installed("cards")
+skip_if_not_installed("cardx")
+
 suppressPackageStartupMessages(library(survey))
 suppressPackageStartupMessages(library(gtsummary))
 suppressPackageStartupMessages(library(dplyr))

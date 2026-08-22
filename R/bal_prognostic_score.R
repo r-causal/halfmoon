@@ -16,7 +16,7 @@
 #' 3. Returns these scores for balance assessment
 #'
 #' This approach is particularly useful when:
-#' - The outcome model includes non-linearities or interactions
+#' - The outcome model includes nonlinear terms or interactions
 #' - You want to ensure balance on outcome-relevant variables
 #' - Traditional propensity score balance checks may miss important imbalances
 #'

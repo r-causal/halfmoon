@@ -74,7 +74,7 @@ rather than just the treatment assignment. The procedure:
 
 This approach is particularly useful when:
 \itemize{
-\item The outcome model includes non-linearities or interactions
+\item The outcome model includes nonlinear terms or interactions
 \item You want to ensure balance on outcome-relevant variables
 \item Traditional propensity score balance checks may miss important imbalances
 }
