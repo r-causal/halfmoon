@@ -108,7 +108,7 @@ test_that("validation errors show correct function context", {
     cnd_class = TRUE,
     check_balance(
       data.frame(),
-      .vars = dplyr::everything(),
+      .vars = age,
       .exposure = qsmk
     )
   )

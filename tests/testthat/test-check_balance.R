@@ -2104,3 +2104,17 @@ test_that("check_balance reports only the column error when a variable is rename
     check_balance(nhefs_weights, .vars = c(qsmk = age), .exposure = qsmk)
   )
 })
+
+test_that("check_balance refuses empty data before it reads a selection", {
+  # No columns at all
+  expect_error(
+    check_balance(data.frame(), .vars = age, .exposure = qsmk),
+    class = "halfmoon_empty_error"
+  )
+
+  # Columns, but no rows
+  expect_error(
+    check_balance(nhefs_weights[0, ], .vars = age, .exposure = qsmk),
+    class = "halfmoon_empty_error"
+  )
+})

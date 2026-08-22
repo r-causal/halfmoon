@@ -77,10 +77,10 @@
 ---
 
     Code
-      check_balance(data.frame(), .vars = dplyr::everything(), .exposure = qsmk)
+      check_balance(data.frame(), .vars = age, .exposure = qsmk)
     Condition <halfmoon_empty_error>
       Error in `check_balance()`:
-      ! No variables selected for `.vars`
+      ! `.data` must have at least one row and one column
 
 # errors have correct custom classes
 

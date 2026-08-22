@@ -138,6 +138,7 @@ check_balance <- function(
   interactions = FALSE
 ) {
   validate_data_frame(.data)
+  validate_data_not_empty(.data, call = rlang::current_env())
 
   # Grouping would add the grouping variables to every selection, so the
   # groups are dropped and the data is read as a plain data frame

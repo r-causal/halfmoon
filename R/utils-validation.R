@@ -309,3 +309,25 @@ validate_binary_response <- function(
 
   invisible(response)
 }
+
+#' Refuse data that holds nothing to compute on
+#'
+#' A selection evaluated against an empty frame fails inside tidyselect, which
+#' reports a missing column rather than the empty data that is the real problem,
+#' so the check runs before any selection does.
+#' @noRd
+validate_data_not_empty <- function(
+  data,
+  arg_name = ".data",
+  call = rlang::caller_env()
+) {
+  if (ncol(data) == 0 || nrow(data) == 0) {
+    abort(
+      "{.arg {arg_name}} must have at least one row and one column",
+      error_class = "halfmoon_empty_error",
+      call = call
+    )
+  }
+
+  invisible(data)
+}
