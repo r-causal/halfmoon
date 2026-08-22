@@ -193,6 +193,10 @@ create_dummy_variables <- function(
   binary_as_single = TRUE,
   return_mapping = FALSE
 ) {
+  # A logical column is already a 0/1 indicator, so it is read as one rather
+  # than expanded into dummies for TRUE and FALSE
+  data <- purrr::modify_if(data, is.logical, as.numeric)
+
   # Identify categorical variables (factors and character variables)
   categorical_vars <- purrr::map_lgl(
     data,
