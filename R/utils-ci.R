@@ -23,24 +23,6 @@ calculate_prop_ci <- function(x, n, conf_level = 0.95) {
   )
 }
 
-#' Calculate confidence interval using normal approximation
-#'
-#' @param rate The observed rate/proportion
-#' @param n Sample size
-#' @param conf_level Confidence level (default 0.95)
-#' @return Named list with lower and upper bounds
-#' @keywords internal
-calculate_normal_ci <- function(rate, n, conf_level = 0.95) {
-  alpha <- 1 - conf_level
-  z_score <- stats::qnorm(1 - alpha / 2)
-  se <- sqrt(rate * (1 - rate) / n)
-
-  list(
-    lower = max(0, rate - z_score * se),
-    upper = min(1, rate + z_score * se)
-  )
-}
-
 #' Get z-score for confidence level
 #'
 #' @param conf_level Confidence level (default 0.95)

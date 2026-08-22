@@ -307,17 +307,11 @@ compute_calibration_breaks_imp <- function(
   result$observed_rate <- n_events / n_total
   result <- result[c(".bin", "predicted_rate", "observed_rate", "count")]
 
-  # Handle edge cases up front:
-  # - total count must be positive
-  # - number of events must be non-negative
-  # - events cannot exceed total count
-  # - events must be greater than 0 (no empty bins)
-  # - events must be less than total (no full bins)
-  valid_mask <- n_total > 0 &
-    n_events >= 0 &
-    n_events <= n_total &
-    n_events > 0 &
-    n_events < n_total
+  # A bin needs observations to say anything about a rate. A bin in which every
+  # observation is an event, or none is, still does: `prop.test()` gives it a
+  # one sided interval, where the normal approximation would give it a width of
+  # zero and assert impossible certainty.
+  valid_mask <- n_total > 0
 
   # Check for small cell sizes that might cause warnings
   small_cells <- n_total < 10
@@ -352,19 +346,7 @@ compute_calibration_breaks_imp <- function(
     result$upper[valid_indices] <- purrr::map_dbl(ci_results, \(x) x$upper)
   }
 
-  # For edge cases, use normal approximation with purrr
-  edge_cases <- which(!valid_mask & n_total > 0)
-  if (length(edge_cases) > 0) {
-    edge_results <- purrr::map(
-      edge_cases,
-      \(x) calculate_normal_ci(result$observed_rate[x], n_total[x], conf_level)
-    )
-
-    result$lower[edge_cases] <- purrr::map_dbl(edge_results, \(x) x$lower)
-    result$upper[edge_cases] <- purrr::map_dbl(edge_results, \(x) x$upper)
-  }
-
-  # Set NA for completely invalid cases
+  # A bin holding no observations has no rate to bound
   invalid_mask <- n_total == 0
   result$lower[invalid_mask] <- NA_real_
   result$upper[invalid_mask] <- NA_real_
@@ -421,7 +403,6 @@ compute_calibration_windowed_imp <- function(
 ) {
   steps <- seq(0, 1, by = step_size)
   n_steps <- length(steps)
-  z_score <- get_z_score(conf_level)
   half_window <- window_size / 2
 
   window_results <- purrr::map(
@@ -430,7 +411,6 @@ compute_calibration_windowed_imp <- function(
     data_x = df$x_var,
     data_y = df$y_var,
     half_window = half_window,
-    z_score = z_score,
     conf_level = conf_level
   )
 
@@ -484,7 +464,6 @@ calculate_window_statistics <- function(
   data_x,
   data_y,
   half_window,
-  z_score,
   conf_level
 ) {
   {
@@ -506,31 +485,20 @@ calculate_window_statistics <- function(
       n_events <- sum(data_y[in_window])
       event_rate <- n_events / n_total
 
-      # Calculate confidence intervals
-      if (n_events > 0 && n_events < n_total) {
-        ci <- calculate_prop_ci(n_events, n_total, conf_level)
-        list(
-          predicted_rate = .x,
-          observed_rate = event_rate,
-          lower = ci$lower,
-          upper = ci$upper,
-          valid = TRUE,
-          n_total = n_total,
-          n_events = n_events
-        )
-      } else {
-        # For edge cases, use normal approximation
-        ci <- calculate_normal_ci(event_rate, n_total, conf_level)
-        list(
-          predicted_rate = .x,
-          observed_rate = event_rate,
-          lower = ci$lower,
-          upper = ci$upper,
-          valid = TRUE,
-          n_total = n_total,
-          n_events = n_events
-        )
-      }
+      # A window in which every observation is an event, or none is, gets the
+      # same one sided interval as any other, rather than the width of zero the
+      # normal approximation gives at a rate of 0 or 1
+      ci <- calculate_prop_ci(n_events, n_total, conf_level)
+
+      list(
+        predicted_rate = .x,
+        observed_rate = event_rate,
+        lower = ci$lower,
+        upper = ci$upper,
+        valid = TRUE,
+        n_total = n_total,
+        n_events = n_events
+      )
     } else {
       # Invalid window
       list(valid = FALSE)

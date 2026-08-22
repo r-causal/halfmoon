@@ -62,7 +62,7 @@
       3     3         0.236          0.167    18 0.0441 0.423
       4     4         0.340          0.2      15 0.0531 0.486
       5     5         0.434          0.333    21 0.155  0.569
-      6     6         0.495          0         2 0      0    
+      6     6         0.495          0         2 0      0.802
       7    10         0.941          0.2      10 0.0354 0.558
 
 # check_model_calibration provides helpful warnings for extreme proportions
@@ -76,12 +76,12 @@
       # A tibble: 6 x 6
          .bin predicted_rate observed_rate count lower upper
         <int>          <dbl>         <dbl> <int> <dbl> <dbl>
-      1     1         0.0567             0    17     0     0
-      2     2         0.154              0    16     0     0
-      3     3         0.257              0    17     0     0
-      4     8         0.746              1    16     1     1
-      5     9         0.840              1    17     1     1
-      6    10         0.938              1    17     1     1
+      1     1         0.0567             0    17 0     0.229
+      2     2         0.154              0    16 0     0.241
+      3     3         0.257              0    17 0     0.229
+      4     8         0.746              1    16 0.759 1    
+      5     9         0.840              1    17 0.771 1    
+      6    10         0.938              1    17 0.771 1    
 
 # check_model_calibration windowed method provides helpful warnings
 

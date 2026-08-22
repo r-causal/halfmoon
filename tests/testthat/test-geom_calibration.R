@@ -1638,3 +1638,92 @@ test_that("the model diagnostic entry points share a missing value policy", {
     class = "halfmoon_na_error"
   )
 })
+
+test_that("boundary calibration bins carry a real confidence interval", {
+  set.seed(42)
+  n <- 400
+  # A well separated model puts whole bins at a rate of 0 or 1
+  separated <- data.frame(
+    pred = c(runif(n / 2, 0, 0.2), runif(n / 2, 0.8, 1)),
+    obs = c(rep(0, n / 2), rep(1, n / 2))
+  )
+
+  result <- suppress_calibration_warnings(check_model_calibration(
+    separated,
+    pred,
+    obs,
+    bins = 10
+  ))
+
+  zero_event <- result[result$observed_rate == 0, ]
+  all_event <- result[result$observed_rate == 1, ]
+  expect_gt(nrow(zero_event), 0)
+  expect_gt(nrow(all_event), 0)
+
+  for (i in seq_len(nrow(zero_event))) {
+    expected <- suppressWarnings(
+      stats::prop.test(0, zero_event$count[i])$conf.int
+    )
+    expect_gt(zero_event$upper[i], 0)
+    expect_equal(zero_event$lower[i], expected[1], tolerance = 1e-8)
+    expect_equal(zero_event$upper[i], expected[2], tolerance = 1e-8)
+  }
+
+  for (i in seq_len(nrow(all_event))) {
+    bin_count <- all_event$count[i]
+    expected <- suppressWarnings(
+      stats::prop.test(bin_count, bin_count)$conf.int
+    )
+    expect_lt(all_event$lower[i], 1)
+    expect_equal(all_event$lower[i], expected[1], tolerance = 1e-8)
+    expect_equal(all_event$upper[i], expected[2], tolerance = 1e-8)
+  }
+})
+
+test_that("boundary calibration windows carry a real confidence interval", {
+  set.seed(42)
+  n <- 400
+  separated <- data.frame(
+    pred = c(runif(n / 2, 0, 0.2), runif(n / 2, 0.8, 1)),
+    obs = c(rep(0, n / 2), rep(1, n / 2))
+  )
+
+  window_size <- 0.1
+  result <- suppress_calibration_warnings(check_model_calibration(
+    separated,
+    pred,
+    obs,
+    method = "windowed",
+    window_size = window_size
+  ))
+
+  window_count <- function(center) {
+    half_window <- window_size / 2
+    sum(
+      separated$pred >= max(0, center - half_window) &
+        separated$pred <= min(1, center + half_window)
+    )
+  }
+
+  zero_event <- result[result$observed_rate == 0, ]
+  all_event <- result[result$observed_rate == 1, ]
+  expect_gt(nrow(zero_event), 0)
+  expect_gt(nrow(all_event), 0)
+
+  for (i in seq_len(nrow(zero_event))) {
+    expected <- suppressWarnings(
+      stats::prop.test(0, window_count(zero_event$predicted_rate[i]))$conf.int
+    )
+    expect_gt(zero_event$upper[i], 0)
+    expect_equal(zero_event$lower[i], expected[1], tolerance = 1e-8)
+    expect_equal(zero_event$upper[i], expected[2], tolerance = 1e-8)
+  }
+
+  for (i in seq_len(nrow(all_event))) {
+    n_window <- window_count(all_event$predicted_rate[i])
+    expected <- suppressWarnings(stats::prop.test(n_window, n_window)$conf.int)
+    expect_lt(all_event$lower[i], 1)
+    expect_equal(all_event$lower[i], expected[1], tolerance = 1e-8)
+    expect_equal(all_event$upper[i], expected[2], tolerance = 1e-8)
+  }
+})

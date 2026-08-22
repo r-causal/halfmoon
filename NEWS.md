@@ -309,6 +309,15 @@
   `plot()` and `autoplot()` dispatch on a result with no rows the way they do on
   every other result.
 
+* The `"breaks"` and `"windowed"` calibration methods report a real confidence
+  interval for a bin or window in which every observation is an event, or none
+  is. Such bins are routine for a well separated propensity model, and both
+  methods previously fell back to a normal approximation whose standard error is
+  exactly zero at a rate of 0 or 1, so they reported `[0, 0]` or `[1, 1]` and
+  asserted certainty they had no basis for. A bin of 0 events out of 116 now
+  reports `[0, 0.038]`, as `prop.test()` gives it. Interval values change for
+  those bins only.
+
 * `bal_prognostic_score()` resolves `.reference_level` against the exposure
   itself rather than against its levels in sorted order, so a factor keeps its
   declared order. On a factor whose declared control level was not the
