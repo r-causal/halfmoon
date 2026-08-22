@@ -422,3 +422,95 @@ test_that("check_qq reads the column a renaming selection points at", {
     ]
   )
 })
+
+# A frozen copy of the plotting positions, kept here so that a rewrite of the
+# helper has to reproduce the endpoints it produces today rather than only the
+# quantiles they happen to interpolate to
+reference_quantile_positions <- function(values, weights) {
+  last <- c(values[-1] != values[-length(values)], TRUE)
+
+  upper_wt <- cumsum(weights)[last]
+  value_wt <- diff(c(0, upper_wt))
+  lower_wt <- upper_wt - value_wt
+  n_values <- diff(c(0, which(last)))
+  mean_wt <- value_wt / n_values
+
+  lower <- lower_wt + (mean_wt - mean_wt[1]) / 2
+  upper <- upper_wt - (mean_wt + mean_wt[1]) / 2
+
+  probs <- c(rbind(lower, upper)) / upper[length(upper)]
+  values <- rep(values[last], each = 2)
+  distinct <- !duplicated(probs)
+
+  list(probs = probs[distinct], values = values[distinct])
+}
+
+test_that("weighted_quantile_positions keeps every endpoint that differs", {
+  withr::local_seed(2024)
+
+  cases <- list(
+    all_singletons = list(values = 1:10, weights = rep(1, 10)),
+    heavy_ties = list(
+      values = sort(sample(1:5, 40, replace = TRUE)),
+      weights = stats::runif(40, 0.5, 3)
+    ),
+    mixed = list(
+      values = c(1, 1, 2, 3, 3, 3, 4),
+      weights = c(2, 1, 5, 1, 1, 1, 3)
+    ),
+    single_value = list(values = c(5, 5, 5), weights = c(1, 2, 3)),
+    two_singletons = list(values = c(1, 2), weights = c(1, 4)),
+    # A singleton whose two endpoints land an ulp apart rather than exactly
+    # equal, so both of them are still needed
+    inexact_singleton = list(
+      values = c(-0.7, -0.5, 0.2, 0.7, 1.7, 2.6),
+      weights = c(1.756, 2.19, 1.794, 2.087, 2.001, 2.76)
+    )
+  )
+
+  for (nm in names(cases)) {
+    expect_identical(
+      weighted_quantile_positions(cases[[nm]]$values, cases[[nm]]$weights),
+      reference_quantile_positions(cases[[nm]]$values, cases[[nm]]$weights),
+      info = nm
+    )
+  }
+
+  # The endpoints of a singleton are equal on paper but are computed through
+  # different expressions, so rounding can separate them. Six distinct values
+  # give twelve endpoints, of which five coincide exactly here and one pair
+  # does not.
+  positions <- weighted_quantile_positions(
+    cases$inexact_singleton$values,
+    cases$inexact_singleton$weights
+  )
+  expect_length(positions$probs, 7)
+})
+
+test_that("weighted_quantile_positions matches its reference under fuzzing", {
+  withr::local_seed(2024)
+
+  for (i in 1:500) {
+    n <- sample(2:12, 1)
+    values <- sort(round(stats::rnorm(n), 1))
+    weights <- round(stats::runif(n, 0.5, 3), 3)
+
+    expect_identical(
+      weighted_quantile_positions(values, weights),
+      reference_quantile_positions(values, weights),
+      info = paste("case", i)
+    )
+  }
+})
+
+test_that("weighted_quantile interpolates over distinct plotting positions", {
+  # A weight large enough to absorb the others leaves every position equal in
+  # floating point. Duplicated positions would make `stats::approx()` average
+  # across distinct values and warn about it, so they are dropped first.
+  absorbing_weight <- function() {
+    weighted_quantile(c(1, 2, 3, 4), c(0.25, 0.5, 0.75), c(1e16, 1, 1, 1))
+  }
+
+  expect_no_warning(absorbing_weight())
+  expect_equal(absorbing_weight(), c(1.25, 1.5, 1.75))
+})

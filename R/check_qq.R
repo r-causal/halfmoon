@@ -412,7 +412,12 @@ weighted_quantile_positions <- function(values, weights) {
   values <- rep(values[last], each = 2)
 
   # A value taken by a single observation spans no probability at all, so it
-  # only needs one of its two endpoints
+  # only needs one of its two endpoints. The test has to be equality of the
+  # endpoints rather than the observation count behind them: the two are
+  # algebraically equal for a singleton but reach that value through different
+  # expressions, so they can land an ulp apart and both be needed. Comparing
+  # the endpoints is also what keeps duplicates away from `stats::approx()`
+  # when a wide spread of weights collapses the interleaving.
   distinct <- !duplicated(probs)
 
   list(probs = probs[distinct], values = values[distinct])

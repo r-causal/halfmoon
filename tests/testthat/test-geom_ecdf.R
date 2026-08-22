@@ -179,3 +179,69 @@ test_that("geom_ecdf refuses negative weights", {
     class = "halfmoon_range_error"
   )
 })
+
+test_that("compute_weighted_ecdf aggregates ties by value", {
+  # The aggregation this replaced: group the weights by distinct value and sum
+  # each group. It is the reference the current cumulative form must match.
+  split_weighted_ecdf <- function(x, weights, n = NULL, pad = TRUE) {
+    total <- sum(weights)
+    ordered <- order(x)
+    x <- x[ordered]
+    weights <- weights[ordered]
+
+    values <- unique(x)
+    cumulative <- cumsum(vapply(
+      split(weights, match(x, values)),
+      sum,
+      numeric(1)
+    ))
+
+    grid <- if (is.null(n)) values else seq(min(x), max(x), length.out = n)
+    if (pad) {
+      grid <- c(-Inf, grid, Inf)
+    }
+
+    ecdf <- if (length(values) == 1) {
+      ifelse(grid < values, 0, 1)
+    } else {
+      stats::approxfun(
+        values,
+        cumulative / total,
+        method = "constant",
+        yleft = 0,
+        yright = 1,
+        f = 0,
+        ties = "ordered"
+      )(grid)
+    }
+
+    data.frame(x = grid, ecdf = ecdf)
+  }
+
+  withr::local_seed(2024)
+  x <- stats::rnorm(200)
+  weights <- stats::runif(200, 0, 3)
+  tied <- round(x, 1)
+
+  cases <- list(
+    default = list(x = x, weights = weights),
+    grid = list(x = x, weights = weights, n = 25),
+    unpadded = list(x = x, weights = weights, pad = FALSE),
+    heavy_ties = list(x = tied, weights = weights),
+    heavy_ties_grid = list(x = tied, weights = weights, n = 25),
+    zero_weights = list(
+      x = tied,
+      weights = replace(weights, seq(1, 200, by = 5), 0)
+    ),
+    single_value = list(x = rep(3, 10), weights = weights[1:10]),
+    single_observation = list(x = 3, weights = 1)
+  )
+
+  for (nm in names(cases)) {
+    expect_equal(
+      do.call(compute_weighted_ecdf, cases[[nm]]),
+      do.call(split_weighted_ecdf, cases[[nm]]),
+      info = nm
+    )
+  }
+})

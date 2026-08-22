@@ -125,12 +125,12 @@ compute_weighted_ecdf <- function(x, weights, n = NULL, pad = TRUE) {
   x <- x[ordered]
   weights <- weights[ordered]
 
-  values <- unique(x)
-  cumulative <- cumsum(vapply(
-    split(weights, match(x, values)),
-    sum,
-    numeric(1)
-  ))
+  # `x` is sorted, so the running weight at the last observation of each
+  # distinct value is already that value's aggregate; tied observations need no
+  # separate grouping pass
+  last <- c(x[-1] != x[-length(x)], TRUE)
+  values <- x[last]
+  cumulative <- cumsum(weights)[last]
 
   grid <- if (is.null(n)) values else seq(min(x), max(x), length.out = n)
   if (pad) {

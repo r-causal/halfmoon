@@ -14,7 +14,9 @@ extract_group_levels <- function(
   call = rlang::caller_env()
 ) {
   levels <- if (is.factor(group)) {
-    levels(droplevels(group))
+    # `droplevels()` would rebuild the whole factor just to read its used
+    # levels back off; counting the codes answers the same question
+    levels(group)[tabulate(group, nlevels(group)) > 0]
   } else {
     group |>
       stats::na.omit() |>
