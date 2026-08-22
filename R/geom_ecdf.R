@@ -71,25 +71,97 @@ geom_ecdf <- function(
   )
 }
 
+#' Evaluate a weighted ECDF on the same grid `stat_ecdf()` uses
+#'
+#' @param x The variable the ECDF is computed over
+#' @param weights The weight of each observation, already numeric
+#' @param n Number of points to interpolate along, or `NULL` for the observed
+#'   values
+#' @param pad Add `-Inf` and `Inf` so the curve spans the panel?
+#'
+#' @return A data frame of `x` and `ecdf`, or `NULL` when the weights carry no
+#'   mass and there is no curve to draw.
+#' @noRd
+compute_weighted_ecdf <- function(x, weights, n = NULL, pad = TRUE) {
+  total <- sum(weights)
+
+  # Every observation would have to contribute nothing, which leaves no
+  # distribution to describe rather than a curve of zeroes
+  if (total <= 0) {
+    warn(
+      "Dropping a group whose {.field weights} sum to {.val {total}}",
+      warning_class = "halfmoon_data_warning",
+      call = quote(geom_ecdf())
+    )
+
+    return(NULL)
+  }
+
+  ordered <- order(x)
+  x <- x[ordered]
+  weights <- weights[ordered]
+
+  values <- unique(x)
+  cumulative <- cumsum(vapply(
+    split(weights, match(x, values)),
+    sum,
+    numeric(1)
+  ))
+
+  grid <- if (is.null(n)) values else seq(min(x), max(x), length.out = n)
+  if (pad) {
+    grid <- c(-Inf, grid, Inf)
+  }
+
+  # A single observed value leaves nothing to interpolate between, so the step
+  # is placed by hand
+  ecdf <- if (length(values) == 1) {
+    ifelse(grid < values, 0, 1)
+  } else {
+    stats::approxfun(
+      values,
+      cumulative / total,
+      method = "constant",
+      yleft = 0,
+      yright = 1,
+      f = 0,
+      ties = "ordered"
+    )(grid)
+  }
+
+  data.frame(x = grid, ecdf = ecdf)
+}
+
 StatWeightedECDF <- ggplot2::ggproto(
   "StatWeightedECDF",
   ggplot2::StatEcdf,
-  compute_group = function(data, scales, n = NULL, pad = NULL) {
+  setup_data = function(data, params) {
+    # A weight of `NA` would otherwise spread through the cumulative sum and
+    # take the whole curve with it. `remove_missing()` reports the dropped rows
+    # unless `na.rm = TRUE` asks for them to go quietly.
     if ("weights" %in% names(data)) {
-      # Extract numeric data from psw weights if present
       data$weights <- extract_weight_data(data$weights)
-      data <- data[order(data$x), ]
-      # ggplot2 3.4.1 changed this stat's name from `y` to `ecdf`
-      if (packageVersion("ggplot2") >= "3.4.1") {
-        data$ecdf <- cumsum(data$weights) / sum(data$weights)
-      } else {
-        data$y <- cumsum(data$weights) / sum(data$weights)
-      }
-      data
-    } else {
-      ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad)
     }
+
+    ggplot2::remove_missing(
+      data,
+      na.rm = params$na.rm %||% FALSE,
+      vars = intersect(c("x", "weights"), names(data)),
+      name = "geom_ecdf"
+    )
+  },
+  compute_group = function(data, scales, n = NULL, pad = TRUE) {
+    if (!"weights" %in% names(data)) {
+      return(ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad))
+    }
+
+    if (nrow(data) == 0) {
+      return(data.frame(x = numeric(0), ecdf = numeric(0)))
+    }
+
+    compute_weighted_ecdf(data$x, data$weights, n = n, pad = pad)
   },
   required_aes = c("x"),
-  optional_aes = "weights"
+  optional_aes = "weights",
+  dropped_aes = c("weight", "weights")
 )

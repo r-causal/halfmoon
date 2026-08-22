@@ -460,6 +460,18 @@
   a plot of a single method no longer reports that it is ignoring an unknown
   label.
 
+* `geom_ecdf()` honors `pad` and `n` when weights are mapped. The weighted
+  curve previously ignored both, so it neither reached the edges of the panel
+  nor could be interpolated onto a grid, and it stepped once per observation
+  rather than once per distinct value, which placed the steps of tied values
+  wrongly.
+
+* `geom_ecdf()` drops rows with a missing weight, silently under
+  `na.rm = TRUE` and with a report of the number of rows removed under
+  `na.rm = FALSE`. A single missing weight previously turned the whole curve
+  into missing values. A group whose weights sum to zero is dropped with a
+  warning, where it previously returned `NaN` for every point.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000
