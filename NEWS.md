@@ -299,6 +299,16 @@
   Missing values follow the ggplot2 convention for a stat: they are dropped, and
   `na.rm = FALSE` reports how many rows went.
 
+* `geom_calibration()` resolves the default `.focal_level` once from the whole
+  layer, before it is split into panels, and validates a supplied value against
+  the levels the exposure takes. A facet holding a single group previously took
+  that group as the event and reported an observed rate of 1 throughout, so a
+  numeric exposure and the same values as a factor disagreed on the same panel.
+
+* `check_model_calibration()` classes an empty result `halfmoon_calibration`, so
+  `plot()` and `autoplot()` dispatch on a result with no rows the way they do on
+  every other result.
+
 * `bal_prognostic_score()` resolves `.reference_level` against the exposure
   itself rather than against its levels in sorted order, so a factor keeps its
   declared order. On a factor whose declared control level was not the

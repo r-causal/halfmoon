@@ -1527,13 +1527,83 @@ test_that("geom_calibration still renders a panel that lacks the focal level", {
     panel = rep(c("mixed", "control only"), each = n / 2)
   )
   faceted$obs[faceted$panel == "control only"] <- 0
+  faceted$obs_factor <- factor(faceted$obs, levels = c("0", "1"))
 
-  p <- ggplot(faceted, aes(.fitted = pred, .exposure = obs)) +
-    geom_calibration() +
-    facet_wrap(~panel)
+  # A panel holding only the control group reports a rate of 0, not a rate
+  # computed against a focal level resolved from that panel alone
+  mixed_only <- faceted[faceted$panel == "mixed", ]
+  expected_mixed <- suppress_calibration_warnings(check_model_calibration(
+    mixed_only,
+    pred,
+    obs,
+    .focal_level = 1
+  ))
 
-  built <- expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
-  expect_gt(nrow(built$data[[2]]), 0)
+  for (exposure in c("obs", "obs_factor")) {
+    p <- ggplot(faceted, aes(.fitted = pred, .exposure = .data[[exposure]])) +
+      geom_calibration() +
+      facet_wrap(~panel)
+
+    built <- expect_no_error(suppress_calibration_warnings(ggplot_build(p)))
+    line_data <- built$data[[2]]
+    layout <- built$layout$layout
+
+    control_panel <- line_data[
+      line_data$PANEL == layout$PANEL[layout$panel == "control only"],
+    ]
+    mixed_panel <- line_data[
+      line_data$PANEL == layout$PANEL[layout$panel == "mixed"],
+    ]
+
+    expect_gt(nrow(control_panel), 0)
+    expect_equal(control_panel$y, rep(0, nrow(control_panel)))
+
+    expect_equal(mixed_panel$y, expected_mixed$observed_rate)
+    expect_equal(mixed_panel$x, expected_mixed$predicted_rate)
+  }
+})
+
+test_that("geom_calibration validates a supplied focal level once", {
+  set.seed(123)
+  n <- 100
+  test_data <- data.frame(
+    pred = runif(n),
+    obs = rbinom(n, 1, 0.5)
+  )
+
+  p <- ggplot(test_data, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration(.focal_level = 99)
+
+  expect_error(
+    suppress_calibration_warnings(ggplot_build(p)),
+    class = "halfmoon_reference_error"
+  )
+
+  p_valid <- ggplot(test_data, aes(.fitted = pred, .exposure = obs)) +
+    geom_calibration(.focal_level = 0)
+
+  built <- suppress_calibration_warnings(ggplot_build(p_valid))
+  expected <- suppress_calibration_warnings(check_model_calibration(
+    test_data,
+    pred,
+    obs,
+    .focal_level = 0
+  ))
+  expect_equal(built$data[[2]]$y, expected$observed_rate)
+})
+
+test_that("check_model_calibration classes an empty result", {
+  empty_data <- data.frame(pred = numeric(0), obs = numeric(0))
+
+  for (calibration_method in c("breaks", "logistic", "windowed")) {
+    result <- check_model_calibration(
+      empty_data,
+      pred,
+      obs,
+      method = calibration_method
+    )
+    expect_s3_class(result, "halfmoon_calibration")
+  }
 })
 
 test_that("the model diagnostic entry points share a missing value policy", {

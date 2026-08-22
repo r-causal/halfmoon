@@ -105,7 +105,9 @@ check_model_calibration <- function(
   }
 
   if (nrow(df) == 0) {
-    return(empty_calibration(method))
+    result <- empty_calibration(method)
+    class(result) <- c("halfmoon_calibration", class(result))
+    return(result)
   }
 
   # The focal level is resolved against the whole data, before any binning, so
@@ -559,6 +561,19 @@ StatCalibration <- ggplot2::ggproto(
     params$step_size <- params$step_size %||% (params$window_size / 2)
     params$.focal_level <- params$.focal_level %||% NULL
     params$k <- params$k %||% 10
+
+    # `setup_params()` sees the whole layer before it is split into panels, so
+    # the focal level is resolved once here and carried into every panel.
+    # Resolving it per panel would let a panel holding a single group take that
+    # group as the event and report a rate of 1 throughout.
+    if (!is.null(data[[".exposure"]])) {
+      params$.focal_level <- resolve_calibration_focal_level(
+        data[[".exposure"]],
+        params$.focal_level,
+        call = quote(geom_calibration())
+      )
+    }
+
     params
   },
   compute_panel = function(
