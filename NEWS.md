@@ -40,6 +40,10 @@
   and complex vectors each produced a value: `bal_ess(factor("a"))` returned
   `1.8`. `ess(rep(0, 5))` and `ess(numeric(0))` still return `NaN`.
 
+* An argument that is neither a column name nor something that evaluates to one
+  now reports the function the user called, such as `check_qq()`, rather than
+  the internal handler frame `value[[3L]](cond)`.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

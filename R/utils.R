@@ -62,7 +62,8 @@ get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
         error = function(e2) {
           abort(
             "{.code {arg_name}} must be a column name (quoted or unquoted)",
-            error_class = "halfmoon_type_error"
+            error_class = "halfmoon_type_error",
+            call = call
           )
         }
       )
@@ -75,7 +76,8 @@ get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
       } else {
         abort(
           "{.code {arg_name}} must be a column name (quoted or unquoted)",
-          error_class = "halfmoon_type_error"
+          error_class = "halfmoon_type_error",
+          call = call
         )
       }
     }
