@@ -80,8 +80,8 @@ test_that("check_qq handles NA values correctly", {
 
   # Should work with na.rm = TRUE
   result <- check_qq(df, age, qsmk, na.rm = TRUE)
-  expect_false(any(is.na(result$exposed_quantiles)))
-  expect_false(any(is.na(result$unexposed_quantiles)))
+  expect_false(anyNA(result$exposed_quantiles))
+  expect_false(anyNA(result$unexposed_quantiles))
 
   # Should have NAs with na.rm = FALSE
   expect_halfmoon_error(check_qq(df, age, qsmk), "halfmoon_na_error")

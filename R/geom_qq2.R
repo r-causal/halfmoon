@@ -185,7 +185,7 @@ process_aesthetic_group <- function(
   )
 
   # Add weight if present
-  if (!is.null(combined_data$weight) && all(!is.na(combined_data$weight))) {
+  if (!is.null(combined_data$weight) && !anyNA(combined_data$weight)) {
     temp_data$.wts <- extract_weight_data(combined_data$weight)
     wts_arg <- ".wts"
   } else {
@@ -251,9 +251,9 @@ StatQq2 <- ggplot2::ggproto(
     if (is.null(.reference_level)) {
       if (is.factor(data$treatment)) {
         # Factor - use the last level
-        .reference_level <- levels(data$treatment)[length(levels(
+        .reference_level <- levels(data$treatment)[nlevels(
           data$treatment
-        ))]
+        )]
       } else {
         # Numeric or character
         treatment_values <- unique(data$treatment[!is.na(data$treatment)])
@@ -309,7 +309,7 @@ StatQq2 <- ggplot2::ggproto(
       )
 
       # Add weight if present
-      if (!is.null(data$weight) && all(!is.na(data$weight))) {
+      if (!is.null(data$weight) && !anyNA(data$weight)) {
         temp_data$.wts <- extract_weight_data(data$weight)
         wts_arg <- ".wts"
       } else {

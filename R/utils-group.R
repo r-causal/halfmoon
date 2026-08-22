@@ -75,7 +75,7 @@ create_treatment_indicator <- function(group, .focal_level = NULL) {
 
   if (is.null(.focal_level)) {
     if (is.factor(group)) {
-      .focal_level <- levels(group)[length(levels(group))]
+      .focal_level <- levels(group)[nlevels(group)]
     } else {
       .focal_level <- max(unique_levels, na.rm = TRUE)
     }

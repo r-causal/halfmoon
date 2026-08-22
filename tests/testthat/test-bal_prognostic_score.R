@@ -9,7 +9,7 @@ test_that("bal_prognostic_score works with tidyselect interface", {
 
   expect_type(scores, "double")
   expect_length(scores, nrow(nhefs_weights))
-  expect_false(any(is.na(scores[!is.na(nhefs_weights$wt82_71)])))
+  expect_false(anyNA(scores[!is.na(nhefs_weights$wt82_71)]))
 
   # Test with quoted column names
   scores_quoted <- bal_prognostic_score(
@@ -125,7 +125,7 @@ test_that("bal_prognostic_score handles na.rm parameter correctly", {
   expect_type(scores_with_na, "double")
   expect_length(scores_with_na, nrow(data_with_na))
   # Predictions should exist even for rows with NA outcomes
-  expect_false(any(is.na(scores_with_na[na_indices])))
+  expect_false(anyNA(scores_with_na[na_indices]))
 
   # With na.rm - should exclude rows with NA outcomes
   scores_na_rm <- bal_prognostic_score(

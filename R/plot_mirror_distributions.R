@@ -136,7 +136,7 @@ plot_mirror_distributions <- function(
   validate_column_exists(.data, var_name, ".var")
   validate_column_exists(.data, group_name, ".exposure")
 
-  if (!na.rm && any(is.na(.data[[var_name]]))) {
+  if (!na.rm && anyNA(.data[[var_name]])) {
     abort(
       "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
       error_class = "halfmoon_na_error",

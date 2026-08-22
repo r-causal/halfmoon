@@ -491,16 +491,16 @@ test_that("bal_corr handles edge cases", {
   x_zero <- rep(1, 100)
   y_normal <- rnorm(100)
 
-  expect_halfmoon_warning(
+  expect_halfmoon_warning({
     cor_zero <- bal_corr(x_zero, y_normal)
-  )
+  })
   expect_true(is.na(cor_zero))
 
   # Both zero variance should return NA
   y_zero <- rep(2, 100)
-  expect_halfmoon_warning(
+  expect_halfmoon_warning({
     cor_both_zero <- bal_corr(x_zero, y_zero)
-  )
+  })
   expect_true(is.na(cor_both_zero))
 })
 

@@ -111,23 +111,6 @@ validate_binary_group <- function(
   invisible(levels)
 }
 
-# Reference group validation
-validate_reference_group <- function(
-  reference_group,
-  levels,
-  arg_name = "reference_group",
-  call = rlang::caller_env()
-) {
-  if (!reference_group %in% levels) {
-    abort(
-      "{.arg {arg_name}} {.val {reference_group}} not found in grouping variable",
-      error_class = "halfmoon_reference_error",
-      call = call
-    )
-  }
-  invisible(reference_group)
-}
-
 # Data frame validation
 validate_data_frame <- function(
   data,
@@ -169,7 +152,7 @@ check_na_return <- function(..., na.rm = FALSE) {
   }
 
   values <- list(...)
-  any(vapply(values, function(x) any(is.na(x)), logical(1)))
+  any(vapply(values, anyNA, logical(1)))
 }
 
 # Filter indices based on NA values

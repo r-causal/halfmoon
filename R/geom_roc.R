@@ -199,7 +199,7 @@ compute_roc_for_group <- function(data, na.rm, .focal_level, group_id) {
   # Convert exposure to binary
   if (is.null(.focal_level)) {
     .focal_level <- if (is.factor(exposure)) {
-      levels(exposure)[length(levels(exposure))]
+      levels(exposure)[nlevels(exposure)]
     } else {
       max(unique_exposure)
     }

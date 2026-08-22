@@ -102,11 +102,11 @@ bal_model_auc <- function(
     }
   } else {
     if (is.null(weights)) {
-      na_present <- any(is.na(exposure)) || any(is.na(estimate))
+      na_present <- anyNA(exposure) || anyNA(estimate)
     } else {
-      na_present <- any(is.na(exposure)) ||
-        any(is.na(estimate)) ||
-        any(is.na(weights))
+      na_present <- anyNA(exposure) ||
+        anyNA(estimate) ||
+        anyNA(weights)
     }
     if (na_present) {
       return(NA_real_)

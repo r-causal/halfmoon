@@ -100,7 +100,7 @@ plot_qq.default <- function(
   }
 
   # Check for NA values
-  if (!na.rm && any(is.na(.data[[var_name]]))) {
+  if (!na.rm && anyNA(.data[[var_name]])) {
     abort(
       "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
       error_class = "halfmoon_na_error"

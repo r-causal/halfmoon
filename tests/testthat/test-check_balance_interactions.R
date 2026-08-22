@@ -62,9 +62,8 @@ test_that("check_balance does not create interactions between levels of same var
 })
 
 test_that("is_valid_interaction_combo works with mapping", {
-  # Direct test of the helper function
-  # Note: This requires access to the internal function
-  check_combo <- halfmoon:::is_valid_interaction_combo
+  # Direct test of the internal helper function
+  check_combo <- is_valid_interaction_combo
 
   # Test with mapping (the primary approach)
   mapping <- list(

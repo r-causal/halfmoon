@@ -152,6 +152,6 @@ test_that("check_ess handles NA values", {
   result <- check_ess(test_df, .weights = w_ate)
 
   # Should still compute ESS on non-NA values
-  expect_true(all(!is.na(result$ess)))
+  expect_true(!anyNA(result$ess))
   expect_true(all(result$ess > 0))
 })

@@ -41,7 +41,7 @@ test_that("plot_balance handles energy metric with NA variable", {
 
   # Check that NA variable was replaced
   plot_data <- ggplot2::ggplot_build(p)$plot$data
-  expect_false(any(is.na(plot_data$variable)))
+  expect_false(anyNA(plot_data$variable))
   expect_true("overall (multivariate)" %in% plot_data$variable)
 })
 

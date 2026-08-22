@@ -48,7 +48,7 @@ test_that("bal_qq handles missing values", {
   # With na.rm = TRUE
   qq_data <- bal_qq(nhefs_na, age, qsmk, na.rm = TRUE)
   expect_s3_class(qq_data, "tbl_df")
-  expect_false(any(is.na(qq_data$exposed_quantiles)))
+  expect_false(anyNA(qq_data$exposed_quantiles))
 
   # With na.rm = FALSE should error
   expect_halfmoon_error(

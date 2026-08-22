@@ -8,7 +8,7 @@ test_that("categorical balance functions work with nhefs_weights data", {
   expect_type(result_smd, "double")
   expect_length(result_smd, 4) # 5 levels - 1 reference = 4 comparisons (NA excluded)
   expect_true(all(grepl("_vs_", names(result_smd))))
-  expect_true(all(!is.na(result_smd)))
+  expect_true(!anyNA(result_smd))
 
   # Test with different reference group
   result_ref <- bal_smd(
@@ -28,7 +28,7 @@ test_that("categorical balance functions work with nhefs_weights data", {
     .weights = nhefs_with_weights$w_cat_ate
   )
   expect_length(result_weighted, 4) # 5 levels - 1 reference = 4 (unknown excluded)
-  expect_true(all(!is.na(result_weighted)))
+  expect_true(!anyNA(result_weighted))
 
   # Test VR
   result_vr <- bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
@@ -56,7 +56,7 @@ test_that("check_balance integrates categorical exposure from nhefs_weights", {
   # 2 variables × 4 comparisons = 8 rows (5 levels - 1 reference = 4 comparisons, NA excluded)
   expect_equal(nrow(result), 8)
   expect_equal(unique(result$metric), "smd")
-  expect_true(all(!is.na(result$estimate)))
+  expect_true(!anyNA(result$estimate))
 
   # Test with weights
   result_weighted <- check_balance(
@@ -162,7 +162,7 @@ test_that("bal_smd works with categorical exposures", {
   expect_type(result, "double")
   expect_length(result, 2) # 3 levels - 1 reference = 2 comparisons
   expect_true(!is.null(names(result)))
-  expect_true(all(!is.na(result)))
+  expect_true(!anyNA(result))
 
   # Check naming convention
   expect_true(all(grepl("_vs_", names(result))))
@@ -179,7 +179,7 @@ test_that("bal_smd works with categorical exposures", {
     .weights = data$weights_att
   )
   expect_length(result_weighted, 2)
-  expect_true(all(!is.na(result_weighted)))
+  expect_true(!anyNA(result_weighted))
 
   # Check that weights are being used (results should differ from unweighted)
   # Using a less strict test since the effect might be small
@@ -195,13 +195,13 @@ test_that("bal_vr works with categorical exposures", {
   expect_type(result, "double")
   expect_length(result, 2)
   expect_true(!is.null(names(result)))
-  expect_true(all(!is.na(result)))
+  expect_true(!anyNA(result))
   expect_true(all(result > 0)) # Variance ratios should be positive
 
   # Test with binary covariate
   result_binary <- bal_vr(data$employed, data$exposure)
   expect_length(result_binary, 2)
-  expect_true(all(!is.na(result_binary)))
+  expect_true(!anyNA(result_binary))
   expect_true(all(result_binary > 0))
 })
 
@@ -214,7 +214,7 @@ test_that("bal_ks works with categorical exposures", {
   expect_type(result, "double")
   expect_length(result, 2)
   expect_true(!is.null(names(result)))
-  expect_true(all(!is.na(result)))
+  expect_true(!anyNA(result))
   expect_true(all(result >= 0 & result <= 1)) # KS statistic bounded [0,1]
 })
 
@@ -286,7 +286,7 @@ test_that("categorical balance handles missing values correctly", {
 
   # Test na.rm = TRUE
   result_no_na <- bal_smd(data$age, data$exposure, na.rm = TRUE)
-  expect_false(any(is.na(result_no_na)))
+  expect_false(anyNA(result_no_na))
   expect_length(result_no_na, 2)
 })
 
@@ -356,7 +356,7 @@ test_that("categorical balance works with ordered factors", {
 
   result <- bal_smd(data$age, data$exposure_ordered)
   expect_length(result, 2)
-  expect_true(all(!is.na(result)))
+  expect_true(!anyNA(result))
 
   # Should maintain order in results
   expect_true(

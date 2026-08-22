@@ -249,7 +249,7 @@ check_balance <- function(
               categorical_cols <- original_vars_data[categorical_check]
               binary_check <- purrr::map_lgl(categorical_cols, \(x) {
                 n_levels <- if (is.factor(x)) {
-                  length(levels(x))
+                  nlevels(x)
                 } else {
                   length(unique(x))
                 }

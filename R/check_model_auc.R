@@ -204,7 +204,7 @@ check_model_roc_curve <- function(
     }
   }
 
-  if (length(levels(truth)) != 2) {
+  if (nlevels(truth) != 2) {
     abort(
       "{.arg .exposure} must have exactly 2 levels",
       error_class = "halfmoon_group_error",
@@ -220,7 +220,7 @@ check_model_roc_curve <- function(
     estimate <- estimate[complete_cases]
     .data <- .data[complete_cases, , drop = FALSE]
   } else {
-    if (any(is.na(truth)) || any(is.na(estimate))) {
+    if (anyNA(truth) || anyNA(estimate)) {
       abort(
         "Missing values found and {.code na.rm = FALSE}",
         error_class = "halfmoon_na_error"

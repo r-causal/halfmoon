@@ -1267,7 +1267,7 @@ test_that("check_balance dummy variables include all levels for multi-level vari
   expect_gt(length(education_dummies), 1)
 
   # Check that we have the expected number of education levels
-  n_education_levels <- length(levels(data$education))
+  n_education_levels <- nlevels(data$education)
   expect_equal(length(education_dummies), n_education_levels)
 })
 
@@ -1601,7 +1601,7 @@ test_that("check_balance handles energy with other metrics", {
   # SMD rows should have variable names
   smd_rows <- result[result$metric == "smd", ]
   expect_equal(sort(unique(smd_rows$variable)), c("age", "wt71"))
-  expect_true(all(!is.na(smd_rows$variable)))
+  expect_true(!anyNA(smd_rows$variable))
 
   # Energy row should have NA for variable
   energy_rows <- result[result$metric == "energy", ]

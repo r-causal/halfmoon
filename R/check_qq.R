@@ -101,13 +101,13 @@ check_qq <- function(
   # Check for missing values if na.rm = FALSE
   if (!na.rm) {
     var_data <- .data[[var_name]]
-    if (any(is.na(var_data))) {
+    if (anyNA(var_data)) {
       abort(
         "Variable {.code {var_name}} contains missing values and {.arg na.rm = FALSE}",
         error_class = "halfmoon_na_error"
       )
     }
-    if (any(is.na(exposure_var))) {
+    if (anyNA(exposure_var)) {
       abort(
         "Exposure variable {.code {exposure_name}} contains missing values and {.arg na.rm = FALSE}",
         error_class = "halfmoon_na_error"

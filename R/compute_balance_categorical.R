@@ -135,37 +135,6 @@ compute_categorical_balance <- function(
   results
 }
 
-#' Internal: Expand categorical balance results to tidy format
-#'
-#' @param cat_results Named vector of balance statistics from categorical functions
-#' @param variable_name Name of the variable
-#' @param metric_name Name of the metric (smd, vr, ks)
-#' @param method_name Name of the method (observed or weight name)
-#'
-#' @return Data frame with expanded results
-#' @noRd
-.expand_categorical_results <- function(
-  cat_results,
-  variable_name,
-  metric_name,
-  method_name
-) {
-  # Extract comparison info from names
-  pattern <- "^(.+)_vs_(.+)$"
-  matches <- regexec(pattern, names(cat_results))
-  comparison_info <- do.call(rbind, regmatches(names(cat_results), matches))
-
-  data.frame(
-    variable = variable_name,
-    group_level = comparison_info[, 2],
-    reference_level = comparison_info[, 3],
-    method = method_name,
-    metric = metric_name,
-    estimate = unname(cat_results),
-    stringsAsFactors = FALSE
-  )
-}
-
 # Helper functions --------------------------------------------------------
 
 compute_pairwise_balance <- function(
