@@ -59,6 +59,11 @@
   report the function the user called, such as `bal_vr()`, rather than the
   internal helper `split_by_group()`.
 
+* `.weights` is now validated with `causalgenerics::is_causal_wt()`, so any
+  causal weight object is accepted rather than only the `psw` objects from
+  propensity. The error message names a causal weight object instead of a psw
+  object.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

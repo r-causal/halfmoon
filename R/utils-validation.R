@@ -27,12 +27,14 @@ validate_weights <- function(
     return(invisible(weights))
   }
 
-  # Accept both numeric vectors and psw objects from propensity package
-  is_valid_weights <- is.numeric(weights) || propensity::is_psw(weights)
+  # Accept numeric vectors and any causal weight object, which covers the psw
+  # objects from propensity and the bw objects from balancing
+  is_valid_weights <- is.numeric(weights) ||
+    causalgenerics::is_causal_wt(weights)
 
   if (!is_valid_weights) {
     abort(
-      "{.arg {arg_name}} must be numeric, a psw object, or {.code NULL}",
+      "{.arg {arg_name}} must be numeric, a causal weight object, or {.code NULL}",
       error_class = "halfmoon_type_error",
       call = call
     )
