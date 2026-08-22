@@ -296,6 +296,22 @@ create_group_signature <- function(group_data, aes_cols) {
   }
 }
 
+# Reflect a mirrored group's computed statistics below the axis. Every
+# statistic the underlying stat computes is negated, not only the count, so
+# that `after_stat()` picks up the mirroring whichever one it asks for. Which
+# statistics a stat computes depends on the stat and on the ggplot2 version, so
+# only the columns present are touched. The count of observations, `n`, is a
+# sample size rather than a height and stays positive.
+mirror_computed_stats <- function(data) {
+  computed <- c("count", "density", "scaled", "ncount", "ndensity", "wdensity")
+
+  for (column in intersect(computed, names(data))) {
+    data[[column]] <- -data[[column]]
+  }
+
+  data
+}
+
 # Extract numeric data from weights (handles both numeric and psw objects)
 extract_weight_data <- function(weights) {
   if (is.null(weights)) {

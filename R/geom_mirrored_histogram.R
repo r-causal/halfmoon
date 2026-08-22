@@ -135,7 +135,7 @@ StatMirrorCount <- ggplot2::ggproto(
 
     # Apply mirroring if needed
     if (length(should_mirror) == 1 && should_mirror) {
-      data$count <- -data$count
+      data <- mirror_computed_stats(data)
     }
 
     data

@@ -472,6 +472,13 @@
   into missing values. A group whose weights sum to zero is dropped with a
   warning, where it previously returned `NaN` for every point.
 
+* `geom_mirror_histogram()` and `geom_mirror_density()` mirror every statistic
+  their stat computes, so `after_stat(density)`, `after_stat(ncount)`,
+  `after_stat(ndensity)`, and `after_stat(wdensity)` are drawn below the axis
+  for the mirrored group. Only `count` was mirrored for histograms, and
+  `wdensity` was left upright for densities, so asking for any of the others
+  drew both groups above the axis.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

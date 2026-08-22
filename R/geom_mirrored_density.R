@@ -135,10 +135,7 @@ StatMirrorDensity <- ggplot2::ggproto(
 
     # Apply mirroring if needed
     if (length(should_mirror) == 1 && should_mirror) {
-      data$density <- -data$density
-      data$count <- -data$count
-      data$scaled <- -data$scaled
-      data$ndensity <- -data$ndensity
+      data <- mirror_computed_stats(data)
     }
 
     data
