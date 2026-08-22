@@ -18,3 +18,5 @@ CLAUDE.md
 ^\.vscode$
 ^\.beads$
 ^\.git$
+^\.braid\.toml$
+^\.braid-project$
