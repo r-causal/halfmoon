@@ -51,10 +51,10 @@
 ---
 
     Code
-      check_balance(nhefs_weights, .vars = age, .group = rep(1, nrow(nhefs_weights)))
-    Condition <simpleError>
+      check_balance(constant_exposure, .vars = age, .exposure = constant_group)
+    Condition <halfmoon_group_error>
       Error in `check_balance()`:
-      ! unused argument (.group = rep(1, nrow(nhefs_weights)))
+      ! Exposure variable must have at least two levels for metrics: "smd", "vr", "ks", and "energy". Got 1 level.
 
 ---
 
@@ -68,18 +68,19 @@
 # validation errors show correct function context
 
     Code
-      check_balance(nhefs_weights, .vars = age, .group = "not_numeric")
-    Condition <simpleError>
+      check_balance(character_exposure, .vars = age, .exposure = qsmk_chr,
+        exposure_type = "continuous")
+    Condition <halfmoon_type_error>
       Error in `check_balance()`:
-      ! unused argument (.group = "not_numeric")
+      ! Exposure variable must be numeric when treated as continuous
 
 ---
 
     Code
-      check_balance(data.frame(), .vars = age, .group = qsmk)
-    Condition <simpleError>
+      check_balance(data.frame(), .vars = dplyr::everything(), .exposure = qsmk)
+    Condition <halfmoon_empty_error>
       Error in `check_balance()`:
-      ! unused argument (.group = qsmk)
+      ! No variables selected for `.vars`
 
 # errors have correct custom classes
 
