@@ -1,5 +1,77 @@
 # halfmoon (development version)
 
+* `geom_ecdf()` supports a flipped orientation. Mapping the variable to `y`, or
+  passing `orientation = "y"`, computes the same weighted curve and draws it
+  across the panel. It previously ignored the request and drew the curve as if
+  the variable had been mapped to `x`.
+
+* `geom_ecdf()` raises `halfmoon_range_error` for a negative weight, which made
+  the cumulative distribution non-monotone, consistent with the weight
+  validation everywhere else in the package.
+
+* `geom_roc()` emits a `halfmoon_data_warning` when the exposure has no observed
+  levels, rather than drawing an empty layer without comment.
+
+* `geom_mirror_histogram()` and `geom_mirror_density()` name the geom and the
+  observed group count when a panel holds three or more groups. This is still
+  an error, deliberately: a mirrored plot draws one group above the axis and one
+  below, so there is no partial plot to fall back on.
+
+* `weighted_quantile()` gains `na.rm`. With the default `FALSE` a missing value
+  or a missing weight now makes every quantile `NA_real_`, matching the policy
+  the `bal_*()` functions follow; `na.rm = TRUE` drops the observation and
+  computes the quantiles from the rest, which is what the function always did.
+  `check_qq()`, `bal_qq()`, `plot_qq()`, and `geom_qq2()` apply their own
+  missing-value policy before they call it, so their results are unchanged.
+
+* `plot_qq()` no longer applies `ggplot2::theme_minimal()` to a `halfmoon_qq`
+  object. Both methods now leave the theme to the user, as the other halfmoon
+  plotting functions do.
+
+* `plot_model_calibration()` gains a documented `binning_method` argument, which
+  was previously reachable only through `...`.
+
+* `plot_model_calibration()` raises `halfmoon_type_error` for a `glm` or `lm`
+  whose response does not take exactly two observed values. A calibration curve
+  reads the response as the event indicator, so a model of anything else
+  produced a curve with no meaning.
+
+* `bal_prognostic_score()` raises `halfmoon_group_error`, rather than
+  `halfmoon_reference_error`, when no control observations are left to fit the
+  prognostic model on, which `na.rm = TRUE` can cause by dropping them all.
+
+* `check_model_roc_curve()` and `check_model_auc()` raise `halfmoon_type_error`
+  naming a selected weight column that does not hold weights. They previously
+  warned and left that method out of the result, which reported fewer methods
+  than the call asked for.
+
+* `bal_energy(criterion = "dcor")` lets the weights enter only the quadratic
+  form that evaluates the dependence. The variances the distances are scaled by
+  and the denominator that standardizes them are properties of the sample and
+  are now computed unweighted. Weighted values change, and they now match
+  `cobalt::bal.compute(cobalt::bal.init(x, treat, stat = "distance.cor"), weights = w)`
+  rather than the `s.weights` initialization, which reweighted the scale along
+  with the sample. The unweighted value is unchanged.
+
+* `check_balance()`, `check_qq()`, `bal_qq()`, and `check_ess()` refuse a weight
+  method named `"observed"`, whether the column carries that name or the
+  selection renames one to it, with `halfmoon_arg_error`. That label names the
+  unweighted rows, so the selection previously produced a duplicate set of
+  unweighted results instead of the weighted ones.
+
+* `check_ess()` validates every selected weight column before it summarizes any
+  of them, so a non-numeric column raises `halfmoon_type_error` naming the
+  column. It also reads the column a renaming selection points at, where it
+  previously looked for a column named after the method.
+
+* `bal_energy()` raises `halfmoon_arg_error` when `.focal_level` is supplied
+  with an `estimand` other than `"ATT"` or `"ATC"`. The focal level had no
+  target to name there and was silently ignored.
+
+* `check_balance()` raises `halfmoon_arg_error` for an `exposure_type` that is
+  not one of its documented values, matching every other option argument in the
+  package.
+
 * `weighted_quantile()` computes the weighted generalization of the definition
   `stats::quantile()` uses by default, `type = 7`. A constant positive weight
   now reproduces
@@ -228,8 +300,12 @@
   resolved rather than from the count of distinct exposure values. A numeric
   exposure with many repeated values, such as a change score on a bounded
   count, reads as categorical and now contributes a between-group energy
-  distance instead of a continuous one. Pass `exposure_type = "continuous"` for
-  the previous behavior. A direct call to `bal_energy()` is unchanged.
+  distance instead of a continuous one. The change runs the other way too: a
+  numeric exposure with few distinct values in a small sample, such as eight
+  distinct values across twenty rows, reads as continuous and now contributes a
+  continuous energy distance instead of a between-group one. Pass
+  `exposure_type` explicitly for the previous behavior. A direct call to
+  `bal_energy()` is unchanged.
 
 * `plot_balance()` marks the reference for the correlation metric at 0.
 
