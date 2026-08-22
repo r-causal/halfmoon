@@ -20,7 +20,7 @@
       check_qq(df, age, three_groups)
     Condition <halfmoon_group_error>
       Error in `check_qq()`:
-      ! Exposure variable must have exactly 2 levels
+      ! Exposure variable must have exactly two levels, got 3
 
 # check_qq handles NA values correctly
 
@@ -29,4 +29,12 @@
     Condition <halfmoon_na_error>
       Error in `check_qq()`:
       ! Variable `age` contains missing values and `na.rm = FALSE`
+
+# check_qq validates missing weights
+
+    Code
+      check_qq(df, x, g, .weights = w)
+    Condition <halfmoon_na_error>
+      Error in `check_qq()`:
+      ! Weight variable `w` contains missing values and `na.rm = FALSE`
 

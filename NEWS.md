@@ -1,5 +1,73 @@
 # halfmoon (development version)
 
+* `weighted_quantile()` computes the weighted generalization of the definition
+  `stats::quantile()` uses by default, `type = 7`. A constant positive weight
+  now reproduces
+  `stats::quantile(values, quantiles)` exactly, the result is invariant to the
+  order of `values` and to the scale of the weights, and it is monotone in
+  `quantiles`. It previously inverted the weighted empirical cumulative
+  distribution function, which returned lower values than `stats::quantile()`
+  did for the same data. Every weighted QQ value changes, and the
+  weighted and observed quantiles in `check_qq()`, `bal_qq()`, `plot_qq()`, and
+  `geom_qq2()` are now computed the same way.
+
+* `weighted_quantile()` excludes observations with zero weight instead of
+  averaging them into the neighboring quantiles. Matching weights are 0 or 1, so
+  the quantiles of a matched sample are now the quantiles of the matched
+  observations, where the unmatched observations previously pulled them toward
+  the whole sample. Fewer than two observations with a positive weight leave the
+  quantiles undefined and return `NA_real_`, where two observations with one
+  zero weight previously raised an error from `stats::approx()`.
+
+* `weighted_quantile()` validates its arguments. A probability outside `[0, 1]`
+  or a negative weight raises `halfmoon_range_error`, a non-numeric argument
+  raises `halfmoon_type_error`, and weights whose length does not match `values`
+  raise `halfmoon_length_error`. Each previously produced a quiet wrong answer
+  or an error about interpolation.
+
+* `check_qq()`, `bal_qq()`, `plot_qq()`, and `geom_qq2()` resolve
+  `.reference_level` the way the rest of the package does: it names the
+  reference group, which is the unexposed group, and defaults to the first
+  observed level. A level can be given by value or by position. The default
+  output is unchanged, since the exposed group is still the level that is not
+  the reference, but an explicit `.reference_level` now names the opposite group
+  from before.
+
+* `plot_qq()` and `geom_qq2()` put the reference (unexposed) group on the x axis
+  and the exposed group on the y axis. `plot_qq()` on a data frame previously
+  transposed the plot that `plot_qq()` on a `check_qq()` result drew. Both
+  methods now use `coord_equal()`.
+
+* `check_qq()`, `bal_qq()`, and `plot_qq()` count only the observed levels of
+  the exposure. A factor that declares a level no observation takes is valid
+  binary input, and an exposure with one observed level raises
+  `halfmoon_group_error` rather than returning a column of missing values.
+
+* `check_qq()`, `bal_qq()`, and `plot_qq()` treat missing weights the way they
+  treat a missing variable or exposure: with `na.rm = FALSE` they raise
+  `halfmoon_na_error` naming the weight column, and with `na.rm = TRUE` they
+  drop the rows. Missing weights were previously dropped without comment under
+  either setting. `plot_qq()` also raises `halfmoon_na_error` for a missing
+  exposure, which is new: it previously checked `.var` alone and dropped rows
+  with a missing exposure without comment.
+
+* `geom_qq2()` requires the `treatment` aesthetic to have exactly two observed
+  levels and raises `halfmoon_group_error` otherwise. A treatment with three or
+  more levels previously pooled every level other than the reference into a
+  single group and drew that comparison without comment.
+
+* `geom_qq2()` drops a group that holds a single treatment level, with a warning
+  naming the group's observed level, and draws the rest of the panel. Such a
+  group previously discarded every curve in the panel.
+
+* `geom_qq2()` keeps the weighting when some weights are missing. A single
+  missing weight previously discarded the weights of every observation and drew
+  the unweighted QQ plot.
+
+* `geom_qq2()` draws one curve per group when `group` is mapped explicitly. The
+  groups were previously pooled into a single curve, which counted each
+  observation once per group.
+
 * `check_balance()` resolves `.reference_level` once for the whole call and uses
   the result for every metric and every label. It previously resolved the
   argument one way for the standardized mean difference and another way for the

@@ -32,17 +32,23 @@ different weighting schemes. Default is NULL (unweighted).}
 \item{include_observed}{Logical. If using \code{.weights}, also compute observed
 (unweighted) quantiles? Defaults to TRUE.}
 
-\item{.reference_level}{The reference treatment level to use for comparisons.
-If \code{NULL} (default), uses the last level for factors or the maximum value for numeric variables.}
+\item{.reference_level}{The level of \code{.exposure} to treat as the reference,
+the unexposed group whose quantiles are returned in \code{unexposed_quantiles}.
+Either a level of \code{.exposure} or its position among the observed levels.
+If \code{NULL} (default), the first observed level is used.}
 
-\item{na.rm}{Logical; if TRUE, drop NA values before computation.}
+\item{na.rm}{Logical. If \code{FALSE} (default), missing values in \code{.var},
+\code{.exposure}, or any weight raise an error. If \code{TRUE}, rows with missing
+values are dropped before computation.}
 }
 \value{
 A tibble with class "halfmoon_qq" containing columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
-\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
+\item{exposed_quantiles}{Numeric. The quantile value for the exposed group,
+the level of \code{.exposure} that is not the reference level.}
+\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed
+group, the reference level of \code{.exposure}.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable
@@ -50,10 +56,11 @@ between treatment groups. This function computes the quantiles for both
 groups and returns a tidy data frame suitable for plotting or further analysis.
 }
 \details{
-This function computes the data needed for quantile-quantile plots by calculating
-corresponding quantiles from two distributions. The computation uses the inverse
-of the empirical cumulative distribution function (ECDF). For weighted data,
-it first computes the weighted ECDF and then inverts it to obtain quantiles.
+This function computes the data needed for quantile-quantile plots by
+calculating corresponding quantiles from two distributions. Unweighted
+quantiles come from \code{\link[stats:quantile]{stats::quantile()}}; weighted quantiles come from
+\code{\link[=weighted_quantile]{weighted_quantile()}}, which uses the same definition, so a constant weight
+reproduces the observed quantiles.
 }
 \examples{
 # Basic QQ data (observed only)

@@ -6,10 +6,11 @@
 #' suitable for plotting or further analysis.
 #'
 #' @details
-#' This function computes the data needed for quantile-quantile plots by calculating
-#' corresponding quantiles from two distributions. The computation uses the inverse
-#' of the empirical cumulative distribution function (ECDF). For weighted data,
-#' it first computes the weighted ECDF and then inverts it to obtain quantiles.
+#' This function computes the data needed for quantile-quantile plots by
+#' calculating corresponding quantiles from two distributions. Unweighted
+#' quantiles come from [stats::quantile()]; weighted quantiles come from
+#' [weighted_quantile()], which uses the same definition, so a constant weight
+#' reproduces the observed quantiles.
 #'
 #' When the distributions of a variable are similar between treatment groups
 #' (indicating good balance), the QQ plot points will lie close to the diagonal
@@ -22,13 +23,20 @@
 #'   unweighted quantiles.
 #' @param quantiles Numeric vector of quantiles to compute. Default is
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
-#' @inheritParams balance_params
-#' @inheritParams treatment_param
+#' @param .reference_level The level of `.exposure` to treat as the reference,
+#'   the unexposed group whose quantiles are returned in `unexposed_quantiles`.
+#'   Either a level of `.exposure` or its position among the observed levels.
+#'   If `NULL` (default), the first observed level is used.
+#' @param na.rm Logical. If `FALSE` (default), missing values in `.var`,
+#'   `.exposure`, or `.weights` raise an error. If `TRUE`, rows with missing
+#'   values are dropped before computation.
 #'
 #' @return A tibble with columns:
 #'   \item{quantile}{Numeric. The quantile probability (0-1).}
-#'   \item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
-#'   \item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
+#'   \item{exposed_quantiles}{Numeric. The quantile value for the exposed group,
+#'     the level of `.exposure` that is not the reference level.}
+#'   \item{unexposed_quantiles}{Numeric. The quantile value for the unexposed
+#'     group, the reference level of `.exposure`.}
 #'
 #' @family balance functions
 #' @seealso [check_qq()] for computing QQ data across multiple weights,
@@ -63,15 +71,11 @@ bal_qq <- function(
   var_name <- get_column_name(var_quo, ".var")
   exposure_name <- get_column_name(exposure_quo, ".exposure")
 
-  # Validate inputs
-  validate_data_frame(.data, call = rlang::caller_env())
-  validate_column_exists(.data, var_name, ".var", call = rlang::caller_env())
-  validate_column_exists(
-    .data,
-    exposure_name,
-    ".exposure",
-    call = rlang::caller_env()
-  )
+  # Validate inputs. The helpers default to the calling function's frame, so
+  # the error reports bal_qq() rather than whatever called it.
+  validate_data_frame(.data)
+  validate_column_exists(.data, var_name, ".var")
+  validate_column_exists(.data, exposure_name, ".exposure")
 
   # Get weight column if provided
   wt_name <- NULL
@@ -87,96 +91,33 @@ bal_qq <- function(
     wt_name <- wt_names[1]
   }
 
-  # Get exposure levels
+  # Get exposure levels. Only observed levels count, so a factor that declares
+  # levels no observation takes is still binary input.
   exposure_var <- .data[[exposure_name]]
   exposure_levels <- extract_group_levels(exposure_var)
 
-  # Validate binary exposure
-  validate_binary_group(
-    exposure_levels,
-    exposure_name,
-    call = rlang::caller_env()
-  )
-
   # Check for missing values if na.rm = FALSE
   if (!na.rm) {
-    var_data <- .data[[var_name]]
-    if (anyNA(var_data)) {
-      abort(
-        "Variable {.code {var_name}} contains missing values and {.arg na.rm = FALSE}",
-        error_class = "halfmoon_na_error",
-        call = rlang::current_env()
-      )
-    }
-    if (anyNA(exposure_var)) {
-      abort(
-        "Exposure variable {.code {exposure_name}} contains missing values and {.arg na.rm = FALSE}",
-        error_class = "halfmoon_na_error",
-        call = rlang::current_env()
-      )
-    }
-  }
-
-  # Handle NULL .reference_level - use same logic as check_qq
-  if (is.null(.reference_level)) {
-    if (is.factor(exposure_var)) {
-      # For factors, use the last level
-      .reference_level <- exposure_levels[length(exposure_levels)]
-    } else {
-      # For numeric, use the maximum value
-      .reference_level <- max(exposure_levels)
-    }
-  }
-
-  # Validate .reference_level exists
-  if (!.reference_level %in% exposure_levels) {
-    abort(
-      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .exposure} levels: {.val {exposure_levels}}",
-      error_class = "halfmoon_reference_error",
-      call = rlang::current_env()
+    validate_qq_complete(
+      .data,
+      var_name = var_name,
+      exposure_name = exposure_name,
+      wt_names = wt_name
     )
   }
 
-  # Use .reference_level as reference group (same as check_qq)
-  ref_group <- .reference_level
-  comp_group <- setdiff(exposure_levels, .reference_level)
+  # The reference level is the unexposed group; the other level is exposed
+  ref_group <- determine_reference_group(exposure_var, .reference_level)
+  comp_group <- setdiff(exposure_levels, ref_group)
 
-  # Filter data by group
-  ref_data <- .data[exposure_var == ref_group, ]
-  comp_data <- .data[exposure_var == comp_group, ]
-
-  if (na.rm) {
-    ref_data <- ref_data[!is.na(ref_data[[var_name]]), ]
-    comp_data <- comp_data[!is.na(comp_data[[var_name]]), ]
-  }
-
-  # Get values
-  ref_vals <- ref_data[[var_name]]
-  comp_vals <- comp_data[[var_name]]
-
-  # Compute quantiles
-  if (is.null(wt_name)) {
-    # Standard quantiles
-    ref_q <- stats::quantile(ref_vals, probs = quantiles, na.rm = FALSE)
-    comp_q <- stats::quantile(comp_vals, probs = quantiles, na.rm = FALSE)
-  } else {
-    # Weighted quantiles
-    ref_wts <- extract_weight_data(ref_data[[wt_name]])
-    comp_wts <- extract_weight_data(comp_data[[wt_name]])
-
-    if (na.rm) {
-      ref_wts <- ref_wts[!is.na(ref_data[[var_name]])]
-      comp_wts <- comp_wts[!is.na(comp_data[[var_name]])]
-    }
-
-    ref_q <- weighted_quantile(ref_vals, quantiles, .weights = ref_wts)
-    comp_q <- weighted_quantile(comp_vals, quantiles, .weights = comp_wts)
-  }
-
-  # Return tibble
-  tibble::tibble(
-    quantile = quantiles,
-    exposed_quantiles = ref_q,
-    unexposed_quantiles = comp_q
-  )
+  compute_method_quantiles(
+    method = wt_name %||% "observed",
+    .data = .data,
+    var_name = var_name,
+    exposure_name = exposure_name,
+    ref_group = ref_group,
+    comp_group = comp_group,
+    quantiles = quantiles,
+    na.rm = na.rm
+  )[, c("quantile", "exposed_quantiles", "unexposed_quantiles")]
 }

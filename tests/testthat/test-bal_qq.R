@@ -84,23 +84,9 @@ test_that("bal_qq validates inputs", {
 })
 
 test_that("bal_qq works with different treatment levels", {
-  # Default treatment level should be 1 (last level) - same as check_qq
+  # The default reference level is the first observed level, 0
   qq_default <- bal_qq(nhefs_weights, age, qsmk, quantiles = c(0.25, 0.5, 0.75))
 
-  # Explicit treatment level = 1
-  qq_1 <- bal_qq(
-    nhefs_weights,
-    age,
-    qsmk,
-    .reference_level = 1,
-    quantiles = c(0.25, 0.5, 0.75)
-  )
-
-  # Default should match explicit .focal_level = 1
-  expect_equal(qq_default$exposed_quantiles, qq_1$exposed_quantiles)
-  expect_equal(qq_default$unexposed_quantiles, qq_1$unexposed_quantiles)
-
-  # Explicit treatment level = 0
   qq_0 <- bal_qq(
     nhefs_weights,
     age,
@@ -109,14 +95,92 @@ test_that("bal_qq works with different treatment levels", {
     quantiles = c(0.25, 0.5, 0.75)
   )
 
-  # Treated and untreated should swap
+  expect_equal(qq_default$exposed_quantiles, qq_0$exposed_quantiles)
+  expect_equal(qq_default$unexposed_quantiles, qq_0$unexposed_quantiles)
+
+  # Explicit reference level = 1
+  qq_1 <- bal_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .reference_level = 1,
+    quantiles = c(0.25, 0.5, 0.75)
+  )
+
+  # Exposed and unexposed should swap
   expect_equal(qq_1$exposed_quantiles, qq_0$unexposed_quantiles)
   expect_equal(qq_1$unexposed_quantiles, qq_0$exposed_quantiles)
 
+  # A numeric level that matches no value is read as a position
+  qq_index <- bal_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .reference_level = 2,
+    quantiles = c(0.25, 0.5, 0.75)
+  )
+  expect_equal(qq_index$exposed_quantiles, qq_1$exposed_quantiles)
+
   # Invalid treatment level should error
   expect_halfmoon_error(
-    bal_qq(nhefs_weights, age, qsmk, .reference_level = 2),
+    bal_qq(nhefs_weights, age, qsmk, .reference_level = "invalid"),
     class = "halfmoon_reference_error"
+  )
+
+  # Out of range positions should error
+  expect_halfmoon_error(
+    bal_qq(nhefs_weights, age, qsmk, .reference_level = 3),
+    class = "halfmoon_range_error"
+  )
+})
+
+test_that("bal_qq uses observed exposure levels", {
+  df <- data.frame(
+    x = c(1:10, 21:30),
+    g = factor(rep(c("a", "b"), each = 10), levels = c("a", "b", "c"))
+  )
+  dropped <- df
+  dropped$g <- droplevels(dropped$g)
+
+  expect_equal(
+    bal_qq(df, x, g, quantiles = c(0.25, 0.75)),
+    bal_qq(dropped, x, g, quantiles = c(0.25, 0.75))
+  )
+
+  one_level <- data.frame(
+    x = 1:10,
+    g = factor(rep("a", 10), levels = c("a", "b"))
+  )
+  expect_error(
+    bal_qq(one_level, x, g),
+    class = "halfmoon_group_error"
+  )
+})
+
+test_that("bal_qq validates missing weights", {
+  df <- data.frame(
+    x = c(1:10, 21:30),
+    g = rep(0:1, each = 10),
+    w = c(NA, rep(1, 19))
+  )
+
+  expect_halfmoon_error(
+    bal_qq(df, x, g, .weights = w),
+    class = "halfmoon_na_error"
+  )
+
+  result <- bal_qq(
+    df,
+    x,
+    g,
+    .weights = w,
+    na.rm = TRUE,
+    quantiles = c(0.25, 0.75)
+  )
+  complete <- df[!is.na(df$w), ]
+  expect_equal(
+    result$unexposed_quantiles,
+    unname(stats::quantile(complete$x[complete$g == 0], c(0.25, 0.75)))
   )
 })
 
