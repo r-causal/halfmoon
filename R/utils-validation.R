@@ -173,39 +173,3 @@ is_categorical_exposure <- function(group) {
   levels <- unique(stats::na.omit(group))
   length(levels) > 2
 }
-
-# Get exposure type
-get_exposure_type <- function(group, call = rlang::caller_env()) {
-  levels <- unique(stats::na.omit(group))
-  n_levels <- length(levels)
-
-  if (n_levels == 2) {
-    "binary"
-  } else if (n_levels > 2) {
-    "categorical"
-  } else if (n_levels == 1) {
-    abort(
-      "Exposure variable has only one level",
-      error_class = "halfmoon_group_error",
-      call = call
-    )
-  } else {
-    abort(
-      "Exposure variable has no non-missing values",
-      error_class = "halfmoon_empty_error",
-      call = call
-    )
-  }
-}
-
-# Validate exposure type
-validate_exposure_type <- function(
-  group,
-  arg_name = "group",
-  call = rlang::caller_env()
-) {
-  exposure_type <- get_exposure_type(group, call = call)
-
-  # For now, just return the type - validation happens in get_exposure_type
-  invisible(exposure_type)
-}

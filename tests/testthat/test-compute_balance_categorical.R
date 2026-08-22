@@ -256,21 +256,12 @@ test_that("check_balance integrates categorical exposures correctly", {
   expect_true(all(c("observed", "weights_att") %in% result_weighted$method))
 })
 
-test_that("categorical exposure validation works correctly", {
+test_that("is_categorical_exposure identifies exposures with more than two levels", {
   data <- create_test_data_categorical()
 
-  # Test is_categorical_exposure
   expect_true(is_categorical_exposure(data$exposure))
   expect_false(is_categorical_exposure(c(0, 1, 1, 0))) # Binary
   expect_false(is_categorical_exposure(c(1, 1, 1, 1))) # Single level
-
-  # Test get_exposure_type
-  expect_equal(get_exposure_type(data$exposure), "categorical")
-  expect_equal(get_exposure_type(c(0, 1, 1, 0)), "binary")
-  expect_halfmoon_error(
-    get_exposure_type(c(1, 1, 1, 1)),
-    "halfmoon_group_error"
-  )
 })
 
 test_that("categorical balance handles missing values correctly", {
