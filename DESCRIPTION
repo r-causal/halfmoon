@@ -37,6 +37,7 @@ Suggests:
     cobalt,
     covr,
     independenceWeights,
+    MatchIt,
     mgcv,
     survey,
     testthat (>= 3.1.5),
