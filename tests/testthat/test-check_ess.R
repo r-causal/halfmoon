@@ -155,3 +155,35 @@ test_that("check_ess handles NA values", {
   expect_true(!anyNA(result$ess))
   expect_true(all(result$ess > 0))
 })
+
+test_that("check_ess works when .data holds columns named method or weight", {
+  test_df <- data.frame(
+    weight = c(70, 80, 90, 100),
+    method = c("a", "b", "a", "b"),
+    qsmk = c(0, 0, 1, 1),
+    w = c(1, 1, 1, 1)
+  )
+
+  result <- check_ess(test_df, .weights = w)
+  expect_named(result, c("method", "n", "ess", "ess_pct"))
+  expect_equal(result$method, c("observed", "w"))
+  expect_equal(result$ess, c(4, 4))
+
+  grouped <- check_ess(test_df, .weights = w, .exposure = qsmk)
+  expect_named(grouped, c("method", "group", "n", "ess", "ess_pct"))
+  expect_equal(nrow(grouped), 4)
+  expect_equal(grouped$ess, rep(2, 4))
+})
+
+test_that("check_ess names its output columns when a selected column is method or weight", {
+  test_df <- data.frame(
+    weight = c(1, 1, 2, 2),
+    method = c("a", "a", "b", "b")
+  )
+
+  result <- check_ess(test_df, .weights = weight, .exposure = method)
+  expect_named(result, c("method", "group", "n", "ess", "ess_pct"))
+  expect_equal(result$method, c("observed", "observed", "weight", "weight"))
+  expect_equal(result$group, c("a", "b", "a", "b"))
+  expect_equal(result$ess, rep(2, 4))
+})

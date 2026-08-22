@@ -401,6 +401,13 @@
   or a weight is missing. It previously returned a score vector with missing
   values that later models would carry silently.
 
+* `check_ess()` and `plot_ess()` work on a data frame that has a column named
+  `method` or `weight`. Reshaping the data previously collided with the names
+  of the columns `check_ess()` builds, so any such data frame raised
+  `Names must be unique`. A weight or exposure column with either name may also
+  be selected, and the returned tibble still names its columns `method` and
+  `group`.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

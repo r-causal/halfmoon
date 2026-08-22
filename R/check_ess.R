@@ -95,20 +95,16 @@ check_ess <- function(
       }
 
       # Create tile groups
-      .data$.ess_group <- dplyr::ntile(group_var, n_tiles)
-
-      # Apply labels
       if (is.null(tile_labels)) {
         tile_labels <- paste0("Q", seq_len(n_tiles))
       }
-      .data$.ess_group <- factor(
-        .data$.ess_group,
+      group_values <- factor(
+        dplyr::ntile(group_var, n_tiles),
         levels = seq_len(n_tiles),
         labels = tile_labels
       )
-      group_col <- ".ess_group"
     } else {
-      group_col <- group_name
+      group_values <- group_var
     }
   }
 
@@ -121,61 +117,62 @@ check_ess <- function(
   } else {
     wts_cols <- tidyselect::eval_select(wts_quo, .data)
     wts_names <- names(wts_cols)
-
-    # Convert psw weight columns to numeric
-    for (wts_name in wts_names) {
-      .data[[wts_name]] <- extract_weight_data(.data[[wts_name]])
-    }
   }
+
+  # Convert psw weight columns to numeric
+  wts_values <- lapply(wts_names, function(nm) extract_weight_data(.data[[nm]]))
 
   # Add observed if requested
   if (include_observed || length(wts_names) == 0) {
-    .data$.observed <- 1
-    wts_names <- c(".observed", wts_names)
+    wts_values <- c(list(rep(1, nrow(.data))), wts_values)
+    wts_names <- c("observed", wts_names)
   }
 
-  # Reshape to long format
+  # Reshape to long format. The reshaped frame holds only internal names, so a
+  # column of `.data` named "method" or "weight" cannot collide with the
+  # reshaped columns, and a selected column with either name keeps its own
+  # meaning in the returned tibble.
+  wts_ids <- paste0(".ess_weight_", seq_along(wts_names))
+  names(wts_values) <- wts_ids
+  ess_input <- tibble::new_tibble(wts_values, nrow = nrow(.data))
+
+  if (has_group) {
+    ess_input[[".ess_group"]] <- group_values
+  }
+
   plot_data <- tidyr::pivot_longer(
-    .data,
-    cols = dplyr::all_of(wts_names),
-    names_to = "method",
-    values_to = "weight"
+    ess_input,
+    cols = dplyr::all_of(wts_ids),
+    names_to = ".ess_method",
+    values_to = ".ess_weight"
   )
 
-  # Clean up method names
-  plot_data$method <- ifelse(
-    plot_data$method == ".observed",
-    "observed",
-    plot_data$method
-  )
+  # Restore the user-facing method names
+  plot_data$.ess_method <- wts_names[match(plot_data$.ess_method, wts_ids)]
 
   # Calculate ESS
   if (has_group) {
     # Group-wise ESS
     ess_data <- plot_data |>
-      dplyr::group_by(method, .data[[group_col]]) |>
+      dplyr::group_by(.data$.ess_method, .data$.ess_group) |>
       dplyr::summarise(
         n = dplyr::n(),
-        ess = ess(weight, na.rm = TRUE),
+        ess = ess(.data$.ess_weight, na.rm = TRUE),
         ess_pct = ess / n * 100,
         .groups = "drop"
       ) |>
-      dplyr::rename(group = !!group_col)
+      dplyr::rename(method = ".ess_method", group = ".ess_group")
   } else {
     # Overall ESS
     ess_data <- plot_data |>
-      dplyr::group_by(method) |>
+      dplyr::group_by(.data$.ess_method) |>
       dplyr::summarise(
         n = dplyr::n(),
-        ess = ess(weight, na.rm = TRUE),
+        ess = ess(.data$.ess_weight, na.rm = TRUE),
         ess_pct = ess / n * 100,
         .groups = "drop"
-      )
-  }
-
-  # Clean up temporary columns
-  if (has_group && is_continuous && ".ess_group" %in% names(ess_data)) {
-    ess_data <- dplyr::select(ess_data, -.ess_group)
+      ) |>
+      dplyr::rename(method = ".ess_method")
   }
 
   # Add halfmoon_ess class
