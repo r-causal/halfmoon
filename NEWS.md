@@ -44,6 +44,21 @@
   now reports the function the user called, such as `check_qq()`, rather than
   the internal handler frame `value[[3L]](cond)`.
 
+* `.reference_level` must name a single group. A value longer than one, or `NA`,
+  is now a `halfmoon_arg_error` instead of the base R error
+  `the condition has length > 1`.
+
+* A `.reference_level` used as a position must be a whole number. Previously
+  `bal_vr(x, g, .reference_level = 1.5)` silently truncated to the first level
+  and returned that answer; it is now a `halfmoon_arg_error`. A numeric that
+  equals one of the exposure's level values is still read as that value rather
+  than as a position, so `.reference_level = 0` on a 0/1 exposure still means
+  the level `0`.
+
+* Errors raised while resolving the exposure levels or the reference level now
+  report the function the user called, such as `bal_vr()`, rather than the
+  internal helper `split_by_group()`.
+
 # halfmoon 0.2.0
 
 # halfmoon 0.1.0.9000

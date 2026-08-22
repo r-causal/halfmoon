@@ -1910,3 +1910,82 @@ test_that("balance functions work seamlessly with psw objects from propensity pa
   expect_length(quantiles, 3)
   expect_true(all(is.finite(quantiles)))
 })
+
+test_that("binary bal_* functions reject an invalid `.reference_level`", {
+  set.seed(2024)
+  x <- rnorm(100)
+  g <- rep(c(0, 1), each = 50)
+
+  expect_error(
+    bal_vr(x, g, .reference_level = c(0, 1)),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_ks(x, g, .reference_level = c(0, 1)),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_vr(x, g, .reference_level = 1.5),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_ks(x, g, .reference_level = 1.5),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("binary bal_* functions resolve `.reference_level` by value first", {
+  set.seed(2024)
+  x <- rnorm(100)
+  g <- rep(c(0, 1), each = 50)
+
+  # 0 and 1 are level values, so they name levels rather than positions
+  expect_equal(bal_vr(x, g, .reference_level = 0), bal_vr(x, g))
+  expect_equal(
+    bal_vr(x, g, .reference_level = 1),
+    1 / bal_vr(x, g, .reference_level = 0)
+  )
+
+  # An integral index still resolves positionally when it is not a level value
+  g_factor <- factor(g, levels = c(0, 1), labels = c("a", "b"))
+  expect_equal(
+    bal_vr(x, g_factor, .reference_level = 2),
+    bal_vr(x, g_factor, .reference_level = "b")
+  )
+  expect_equal(
+    bal_ks(x, g_factor, .reference_level = 1),
+    bal_ks(x, g_factor, .reference_level = "a")
+  )
+})
+
+test_that("categorical bal_* functions reject an invalid `.reference_level`", {
+  x <- nhefs_weights$age
+  g <- nhefs_weights$alcoholfreq_cat
+
+  expect_error(
+    bal_smd(x, g, .reference_level = c("none", "daily")),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_smd(x, g, .reference_level = 1.5),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_vr(x, g, .reference_level = 2.5),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_ks(x, g, .reference_level = 2.5),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("categorical bal_* functions still accept an integral index", {
+  x <- nhefs_weights$age
+  g <- nhefs_weights$alcoholfreq_cat
+
+  expect_equal(
+    bal_smd(x, g, .reference_level = 2),
+    bal_smd(x, g, .reference_level = "lt_12_per_year")
+  )
+})

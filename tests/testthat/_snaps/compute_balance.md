@@ -28,7 +28,7 @@
     Code
       bal_vr(.covariate = data$x_cont, .exposure = rep(1, 100))
     Condition <halfmoon_group_error>
-      Error in `split_by_group()`:
+      Error in `bal_vr()`:
       ! Exposure variable must have exactly two levels, got 1
 
 ---
@@ -53,7 +53,7 @@
     Code
       bal_ks(.covariate = data$x_cont, .exposure = rep(1, 100))
     Condition <halfmoon_group_error>
-      Error in `split_by_group()`:
+      Error in `bal_ks()`:
       ! Exposure variable must have exactly two levels, got 1
 
 ---
