@@ -126,11 +126,7 @@ compute_categorical_balance <- function(
   }
 
   # Determine reference group
-  ref_group <- determine_reference_group_categorical(
-    group_levels,
-    reference_group,
-    call = call
-  )
+  ref_group <- determine_reference_group(group, reference_group, call = call)
 
   # Get non-reference levels
   comparison_levels <- setdiff(group_levels, ref_group)
@@ -210,40 +206,4 @@ create_binary_comparison <- function(group, comp_level, ref_group) {
   binary_group[group == comp_level] <- 1
   binary_group[group == ref_group] <- 0
   binary_group
-}
-
-# Determine reference group for categorical exposures
-determine_reference_group_categorical <- function(
-  group_levels,
-  reference_group = NULL,
-  call = rlang::caller_env()
-) {
-  if (is.null(reference_group)) {
-    # Default to first level
-    return(group_levels[1])
-  }
-
-  validate_reference_group_scalar(reference_group, call = call)
-
-  # Check if the value exists in the group levels
-  if (reference_group %in% group_levels) {
-    return(reference_group)
-  }
-
-  # If numeric, treat as index
-  if (is.numeric(reference_group)) {
-    validate_reference_group_index(
-      reference_group,
-      length(group_levels),
-      call = call
-    )
-    return(group_levels[reference_group])
-  }
-
-  # Otherwise, it's an invalid reference group
-  abort(
-    "{.arg reference_group} {.val {reference_group}} not found in grouping variable",
-    error_class = "halfmoon_reference_error",
-    call = call
-  )
 }

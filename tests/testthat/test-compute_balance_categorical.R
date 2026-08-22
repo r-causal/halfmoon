@@ -1000,3 +1000,18 @@ test_that("categorical bal_* functions drop missing rows with na.rm = TRUE", {
     )
   )
 })
+
+test_that("a categorical reference level that names no group reports .reference_level", {
+  exposure <- factor(rep(c("a", "b", "c"), each = 10))
+  covariate <- seq_along(exposure)
+
+  expect_error(
+    bal_smd(covariate, exposure, .reference_level = "nope"),
+    regexp = "`\\.reference_level`",
+    class = "halfmoon_reference_error"
+  )
+  expect_error(
+    bal_vr(covariate, exposure, .reference_level = 10),
+    class = "halfmoon_range_error"
+  )
+})
