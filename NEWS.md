@@ -61,8 +61,8 @@
 
 * `.weights` is now validated with `causalgenerics::is_causal_wt()`, so any
   causal weight object is accepted rather than only the `psw` objects from
-  propensity. The error message names a causal weight object instead of a psw
-  object.
+  propensity. The error message names a causal weight object instead of a
+  `psw` object.
 
 # halfmoon 0.2.0
 
