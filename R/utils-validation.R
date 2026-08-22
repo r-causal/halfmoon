@@ -16,6 +16,22 @@ validate_numeric <- function(
   invisible(x)
 }
 
+# Single TRUE/FALSE validation
+validate_flag <- function(
+  x,
+  arg_name = deparse(substitute(x)),
+  call = rlang::caller_env()
+) {
+  if (!is.logical(x) || length(x) != 1 || is.na(x)) {
+    abort(
+      "{.arg {arg_name}} must be a single {.code TRUE} or {.code FALSE}",
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+  invisible(x)
+}
+
 # Weight validation
 validate_weights <- function(
   weights,

@@ -42,6 +42,51 @@
   categorical exposure now reports one missing row per comparison level instead
   of a single row labeled with one of them.
 
+* `bal_energy()` compares the weighted groups against an unweighted target
+  population for `estimand = "ATE"`. It previously used the balancing weights
+  for both sides of the comparison, which understated the energy distance when
+  the weights improved balance and overstated it when they did not. Every
+  weighted ATE energy distance changes, and the values now agree with
+  `cobalt::bal.compute(stat = "energy.dist", estimand = "ATE")`.
+
+* `bal_energy()` compares against the unweighted focal group for
+  `estimand = "ATT"` and `estimand = "ATC"`. Weighting the focal group as well
+  left the focal target with no effect, so `"ATT"` and `"ATC"` both returned the
+  between-group energy distance whatever the weights were. They now differ from
+  each other and from the between-group distance, and agree with cobalt. With
+  uniform weights all three statistics still coincide, as the definitions
+  require.
+
+* `bal_energy()` defaults `.focal_level` to the last observed level of the
+  exposure for `estimand = "ATT"` and the first for `estimand = "ATC"`, and
+  validates a supplied value against the levels the exposure takes. It
+  previously coerced the levels to numbers to find the focal group, so a
+  text-valued exposure selected no group at all and returned a negative energy
+  distance alongside a coercion warning, as did a `.focal_level` that named no
+  group. A value that names no group now raises `halfmoon_reference_error`.
+
+* `bal_energy()` reads the levels a factor exposure actually takes, so a
+  declared level with no observations no longer divides by a group size of
+  zero.
+
+* `bal_energy()` returns `NA_real_` when `na.rm = FALSE` and the covariates, the
+  exposure, or the weights contain missing values, where it previously raised
+  `halfmoon_na_error`. This follows the convention that the atomic balance
+  functions report missing values rather than refusing them, and it means
+  `check_balance()` reports an energy row of `NA` without a warning instead of
+  treating the metric as one it could not compute.
+
+* `bal_energy()` gains an `exposure_type` argument, mirroring the one in
+  `check_balance()`, so the continuous or the categorical statistic can be
+  asked for directly. The default `"auto"` keeps the existing rule, which is now
+  documented: a numeric exposure taking more than ten unique values is treated
+  as continuous.
+
+* `bal_energy()` raises `halfmoon_arg_error` for an option argument that is not
+  a single value. `estimand = character(0)`, `criterion = character(0)`, and
+  a length-2 `na.rm` previously produced a base R error, carrying no halfmoon
+  class, about a condition of length zero.
+
 * `bal_smd()` now reports the comparison group minus the reference group, so a
   positive value means the comparison group has the higher mean or proportion.
   This is the convention the documentation has always described and the one

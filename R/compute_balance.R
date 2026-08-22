@@ -585,20 +585,28 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' @param .covariates A data frame or matrix containing the .covariates to compare.
 #' @param .exposure A vector (factor or numeric) indicating group membership. For
 #'   binary and multi-category treatments, must have 2+ unique levels. For
-#'   continuous treatments, should be numeric.
+#'   continuous treatments, should be numeric. When `exposure_type` is `"auto"`,
+#'   a numeric exposure taking more than ten unique values is treated as
+#'   continuous and returns the continuous-exposure statistic instead of an
+#'   energy distance between groups; set `exposure_type` or wrap the exposure in
+#'   `factor()` to force the categorical reading.
 #' @param .weights An optional numeric vector of weights. If provided, must
 #'   have the same length as rows in `.covariates`. All weights must be non-negative.
 #' @param estimand Character string specifying the estimand. Options are:
 #'   - NULL (default): Pure between-group energy distance comparing distributions
-#'   - "ATE": Energy distance weighted to reflect balance for estimating average
-#'     treatment effects across the entire population
-#'   - "ATT": Energy distance weighted to reflect balance for the treated .exposure,
-#'     measuring how well controls match the treated distribution
-#'   - "ATC": Energy distance weighted to reflect balance for the control .exposure,
-#'     measuring how well treated units match the control distribution
+#'   - "ATE": Energy distance between each weighted group and the unweighted full
+#'     sample, the target population of an average treatment effect
+#'   - "ATT": Energy distance between each weighted group and the unweighted
+#'     focal group, measuring how well the other groups match the treated
+#'     distribution
+#'   - "ATC": The same statistic with the control group as the focal group,
+#'     measuring how well the treated units match the control distribution
 #'   For continuous treatments, only NULL is supported.
-#' @param .focal_level The treatment level for ATT/ATC. If `NULL` (default),
-#'   automatically determined based on estimand.
+#' @param .focal_level The treatment level whose unweighted distribution is the
+#'   target for `estimand = "ATT"` or `estimand = "ATC"`. Must name a level the
+#'   exposure takes. If `NULL` (default), the last observed level for `"ATT"`
+#'   and the first observed level for `"ATC"`, which on a 0/1 exposure are the
+#'   level `1` and the level `0`.
 #' @param use_improved Logical. Use improved energy distance for ATE? Default is TRUE.
 #'   When TRUE, adds pairwise treatment comparisons for better group separation.
 #' @param standardized Logical. Only used when `criterion = "dcor"` for a
@@ -618,11 +626,19 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #'   `criterion = "dcor"`. Binary and multi-category exposures accept only the
 #'   default; `dimension_adj = FALSE` with a non-continuous exposure is an
 #'   error.
+#' @param exposure_type The type of exposure `.exposure` holds: one of "binary",
+#'   "categorical", or "continuous", or "auto" (default) to read the type from
+#'   the exposure. "binary" and "categorical" name the same energy distance
+#'   between groups. Under "auto", a numeric exposure taking more than ten
+#'   unique values is treated as continuous and anything else as categorical.
 #' @param na.rm A logical value indicating whether to remove missing values
-#'   before computation. If `FALSE` (default), missing values result in
-#'   an error (energy distance cannot be computed with missing data).
+#'   before computation. If `FALSE` (default), a missing value in the
+#'   covariates, the exposure, or the weights returns `NA`. If `TRUE`, rows with
+#'   missing values are dropped before computation.
 #'
-#' @return A numeric value. For binary and multi-category exposures, the energy
+#' @return A numeric value, or `NA_real_` when `na.rm = FALSE` and the
+#'   covariates, the exposure, or the weights contain missing values. For binary
+#'   and multi-category exposures, the energy
 #'   distance between groups, where lower values indicate better balance and 0
 #'   indicates identical distributions. For a continuous exposure with
 #'   `criterion = "dependence"`, the weighted dependence distance \eqn{D(w)},
@@ -637,6 +653,13 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' and implemented following Huling & Mak (2024) and Huling et al. (2024).
 #' The calculation uses a quadratic form: \eqn{w^T P w + q^T w + k},
 #' where the components depend on the estimand.
+#'
+#' An estimand names a target distribution that the weighted groups are compared
+#' against, and that target is always an unweighted distribution of the sample
+#' at hand: the whole sample for `"ATE"`, and the focal group for `"ATT"` and
+#' `"ATC"`. Weighting the target as well would compare the weighted groups
+#' against themselves, which no weighting could fail. With uniform weights
+#' `"ATT"` and `"ATC"` therefore reduce to the between-group energy distance.
 #'
 #' For binary variables in the .covariates, variance is calculated as p(1-p)
 #' rather than sample variance to prevent over-weighting.
@@ -660,7 +683,9 @@ bal_corr <- function(.x, .y, .weights = NULL, na.rm = FALSE) {
 #' statistic, a weighted-variance-scaled distance correlation (or, with
 #' `standardized = FALSE`, the corresponding square-root distance covariance).
 #' This is a descriptive balance summary rather than a measure of weighted
-#' dependence.
+#' dependence. Following that reference implementation, a weighted distance
+#' covariance that is not positive, which a covariate with no variation
+#' produces, reports 0.
 #'
 #' @references
 #' Huling, J. D., & Mak, S. (2024). Energy Balancing of Covariate Distributions.
@@ -707,6 +732,7 @@ bal_energy <- function(
   standardized = TRUE,
   criterion = c("dependence", "dcor"),
   dimension_adj = TRUE,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
   na.rm = FALSE
 ) {
   bal_energy_impl(
@@ -719,17 +745,17 @@ bal_energy <- function(
     standardized = standardized,
     criterion = criterion,
     dimension_adj = dimension_adj,
-    na.rm = na.rm,
-    exposure_type = NULL
+    exposure_type = exposure_type,
+    na.rm = na.rm
   )
 }
 
 #' The body of `bal_energy()`
 #'
-#' `exposure_type` names the type the exposure should be treated as. `NULL`
-#' leaves the choice to the shape of the exposure, which is what a direct call
-#' to `bal_energy()` does. `call` keeps errors pointing at the function the user
-#' called.
+#' `exposure_type` names the type the exposure should be treated as, with
+#' `"auto"` leaving the choice to the shape of the exposure, which is what a
+#' direct call to `bal_energy()` does. `call` keeps errors pointing at the
+#' function the user called.
 #'
 #' @noRd
 bal_energy_impl <- function(
@@ -742,29 +768,102 @@ bal_energy_impl <- function(
   standardized = TRUE,
   criterion = c("dependence", "dcor"),
   dimension_adj = TRUE,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
   na.rm = FALSE,
-  exposure_type = NULL,
   call = rlang::caller_env()
 ) {
-  # Input validation
-  if (length(criterion) > 1) {
-    criterion <- criterion[[1]]
-  }
-  if (!is.character(criterion) || !criterion %in% c("dependence", "dcor")) {
-    abort(
-      "{.arg criterion} must be one of: {.val dependence} or {.val dcor}",
-      error_class = "halfmoon_arg_error",
-      call = call
-    )
+  prepared <- bal_energy_prepare(
+    .covariates = .covariates,
+    .exposure = .exposure,
+    .weights = .weights,
+    estimand = estimand,
+    .focal_level = .focal_level,
+    use_improved = use_improved,
+    standardized = standardized,
+    criterion = criterion,
+    dimension_adj = dimension_adj,
+    exposure_type = exposure_type,
+    na.rm = na.rm,
+    call = call
+  )
+
+  if (is.null(prepared)) {
+    return(NA_real_)
   }
 
-  if (
-    !is.logical(dimension_adj) ||
-      length(dimension_adj) != 1 ||
-      is.na(dimension_adj)
-  ) {
+  # The distance correlation scales its distances by the weighted variances, so
+  # unlike the other criteria it has no weight-independent part to prepare
+  if (prepared$is_continuous && prepared$criterion == "dcor") {
+    return(bal_energy_continuous(
+      .covariates = prepared$covariates,
+      treatment = prepared$exposure,
+      .weights = prepared$weights,
+      standardized = prepared$standardized
+    ))
+  }
+
+  bal_energy_evaluate(bal_energy_init(prepared), prepared$weights)
+}
+
+# Helper functions for bal_energy() - internal use only
+
+#' Validate the arguments of `bal_energy()` and apply its missing-value policy
+#'
+#' Returns everything the statistic needs, or `NULL` when the missing values the
+#' caller asked to keep make the statistic undefined. The result carries no
+#' weighting decisions, so the caller can form the weight-independent pieces of
+#' the statistic once and reuse them across several weight vectors.
+#' @noRd
+bal_energy_prepare <- function(
+  .covariates,
+  .exposure,
+  .weights = NULL,
+  estimand = NULL,
+  .focal_level = NULL,
+  use_improved = TRUE,
+  standardized = TRUE,
+  criterion = c("dependence", "dcor"),
+  dimension_adj = TRUE,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
+  na.rm = FALSE,
+  call = rlang::caller_env()
+) {
+  criterion <- match_energy_option(
+    criterion,
+    c("dependence", "dcor"),
+    "criterion",
+    call = call
+  )
+  exposure_type <- match_energy_option(
+    exposure_type,
+    c("auto", "binary", "categorical", "continuous"),
+    "exposure_type",
+    call = call
+  )
+
+  validate_flag(dimension_adj, "dimension_adj", call = call)
+  validate_flag(use_improved, "use_improved", call = call)
+  validate_flag(standardized, "standardized", call = call)
+  validate_flag(na.rm, "na.rm", call = call)
+
+  if (!is.null(estimand)) {
+    if (
+      !is.character(estimand) ||
+        length(estimand) != 1 ||
+        is.na(estimand) ||
+        !estimand %in% c("ATE", "ATT", "ATC")
+    ) {
+      abort(
+        "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}",
+        error_class = "halfmoon_arg_error",
+        call = call
+      )
+    }
+  }
+
+  if (!is.null(.focal_level) && length(.focal_level) != 1) {
     abort(
-      "{.arg dimension_adj} must be a single {.code TRUE} or {.code FALSE}",
+      "{.arg .focal_level} must be a single value or {.code NULL}",
       error_class = "halfmoon_arg_error",
       call = call
     )
@@ -799,55 +898,34 @@ bal_energy_impl <- function(
     call = call
   )
   validate_weights(.weights, nrow(.covariates), call = call)
+  .weights <- extract_weight_data(.weights)
 
-  if (!is.null(estimand) && !estimand %in% c("ATE", "ATT", "ATC")) {
-    abort(
-      "{.arg estimand} must be one of: {.val ATE}, {.val ATT}, {.val ATC}, or {.code NULL}",
-      error_class = "halfmoon_arg_error",
-      call = call
-    )
+  # Missing values the caller asked to keep leave the statistic undefined
+  if (
+    !na.rm &&
+      (anyNA(.covariates) || anyNA(.exposure) || anyNA(.weights))
+  ) {
+    return(NULL)
   }
 
-  if (!na.rm && anyNA(.covariates)) {
-    abort(
-      "Energy distance cannot be computed with missing values in {.arg .covariates}. Set {.arg na.rm = TRUE} or remove missing values.",
-      error_class = "halfmoon_na_error",
-      call = call
-    )
-  }
-
-  if (!na.rm && anyNA(.exposure)) {
-    abort(
-      "Energy distance cannot be computed with missing values in {.arg group}. Set {.arg na.rm = TRUE} or remove missing values.",
-      error_class = "halfmoon_na_error",
-      call = call
-    )
-  }
-
-  if (!na.rm && !is.null(.weights) && anyNA(.weights)) {
-    abort(
-      "Energy distance cannot be computed with missing values in {.arg .weights}. Set {.arg na.rm = TRUE} or remove missing values.",
-      error_class = "halfmoon_na_error",
-      call = call
-    )
-  }
-
-  # Remove missing values if requested
+  # Rows dropped for a missing weight belong to that weight vector alone, so a
+  # caller reusing the prepared pieces across weight vectors is told about them
+  weights_reduced_rows <- FALSE
   if (na.rm) {
     complete_cases <- stats::complete.cases(.covariates, .exposure)
     if (!is.null(.weights)) {
+      weights_reduced_rows <- anyNA(.weights[complete_cases])
       complete_cases <- complete_cases & !is.na(.weights)
-      .weights <- extract_weight_data(.weights)[complete_cases]
+      .weights <- .weights[complete_cases]
     }
     .covariates <- .covariates[complete_cases, , drop = FALSE]
     .exposure <- .exposure[complete_cases]
 
     if (nrow(.covariates) == 0) {
-      return(NA_real_)
+      return(NULL)
     }
   }
 
-  # Determine treatment type
   unique_groups <- unique(.exposure)
   n_groups <- length(unique_groups)
 
@@ -860,11 +938,19 @@ bal_energy_impl <- function(
     )
   }
 
-  # Determine if treatment is continuous
-  is_continuous <- if (is.null(exposure_type)) {
-    is.numeric(.exposure) && n_groups > 10
-  } else {
-    exposure_type == "continuous"
+  is_continuous <- switch(
+    exposure_type,
+    auto = is.numeric(.exposure) && n_groups > 10,
+    continuous = TRUE,
+    FALSE
+  )
+
+  if (is_continuous && !is.numeric(.exposure)) {
+    abort(
+      "Exposure variable must be numeric when treated as continuous",
+      error_class = "halfmoon_type_error",
+      call = call
+    )
   }
 
   if (is_continuous && !is.null(estimand)) {
@@ -891,109 +977,197 @@ bal_energy_impl <- function(
         call = call
       )
     }
+
+    # Groups are the levels the exposure actually takes, in their declared
+    # order for a factor and sorted otherwise
+    .exposure <- droplevels(as.factor(.exposure))
+    unique_groups <- levels(.exposure)
+
+    if (!is.null(estimand) && estimand %in% c("ATT", "ATC")) {
+      .focal_level <- resolve_focal_level(
+        .focal_level,
+        unique_groups,
+        estimand,
+        call = call
+      )
+    }
   }
 
-  # For continuous treatments, compute the requested criterion
-  if (is_continuous) {
-    if (criterion == "dependence") {
-      return(bal_energy_dependence(
-        covariates = .covariates,
-        treatment = .exposure,
-        weights = extract_weight_data(.weights),
-        dimension_adj = dimension_adj
-      ))
+  list(
+    covariates = .covariates,
+    exposure = .exposure,
+    weights = .weights,
+    unique_groups = unique_groups,
+    is_continuous = is_continuous,
+    estimand = estimand,
+    focal_level = .focal_level,
+    use_improved = use_improved,
+    standardized = standardized,
+    criterion = criterion,
+    dimension_adj = dimension_adj,
+    weights_reduced_rows = weights_reduced_rows
+  )
+}
+
+#' Match one of a set of option strings
+#'
+#' Takes the first choice when the argument still holds its default vector, as
+#' `match.arg()` does, and otherwise requires a single value naming a choice.
+#' @noRd
+match_energy_option <- function(
+  value,
+  choices,
+  arg,
+  call = rlang::caller_env()
+) {
+  if (identical(value, choices)) {
+    return(choices[[1]])
+  }
+
+  if (
+    !is.character(value) ||
+      length(value) != 1 ||
+      is.na(value) ||
+      !value %in% choices
+  ) {
+    abort(
+      "{.arg {arg}} must be one of: {.val {choices}}",
+      error_class = "halfmoon_arg_error",
+      call = call
+    )
+  }
+
+  value
+}
+
+#' Resolve the focal level of a focal estimand
+#'
+#' `NULL` takes the last observed level for the ATT and the first for the ATC,
+#' so that the treated group is focal for the ATT on the usual 0/1 coding. A
+#' supplied value must name a level the exposure takes.
+#' @noRd
+resolve_focal_level <- function(
+  focal_level,
+  unique_groups,
+  estimand,
+  call = rlang::caller_env()
+) {
+  if (is.null(focal_level)) {
+    if (estimand == "ATT") {
+      return(unique_groups[[length(unique_groups)]])
     }
-    return(bal_energy_continuous(
-      .covariates = .covariates,
-      treatment = .exposure,
-      .weights = extract_weight_data(.weights),
-      standardized = standardized
+    return(unique_groups[[1]])
+  }
+
+  focal_level <- as.character(focal_level)
+  if (!focal_level %in% unique_groups) {
+    abort(
+      "{.arg .focal_level} must name a level of {.arg .exposure}: {.val {unique_groups}}",
+      error_class = "halfmoon_reference_error",
+      call = call
+    )
+  }
+
+  focal_level
+}
+
+#' Form the parts of the energy distance that do not depend on the weights
+#'
+#' The distance matrix and the target terms are fixed by the covariates and the
+#' exposure alone, so a caller reporting several weightings of one sample forms
+#' them once and evaluates each weight vector against them.
+#' @noRd
+bal_energy_init <- function(prepared) {
+  if (prepared$is_continuous) {
+    return(bal_energy_dependence_init(
+      covariates = prepared$covariates,
+      treatment = prepared$exposure,
+      dimension_adj = prepared$dimension_adj
     ))
   }
 
-  # For discrete treatments, proceed with energy distance
-  # Convert group to factor for consistent handling
-  .exposure <- as.factor(.exposure)
-  unique_groups <- levels(.exposure)
-  n_groups <- length(unique_groups)
-
-  # Default weights
-  if (is.null(.weights)) {
-    .weights <- rep(1, nrow(.covariates))
-  }
-
-  # Normalize weights by group
-  weights_numeric <- extract_weight_data(.weights)
-  weights_normalized <- weights_numeric
-  for (g in unique_groups) {
-    group_mask <- .exposure == g
-    if (any(group_mask)) {
-      group_weights <- weights_numeric[group_mask]
-      weights_normalized[group_mask] <- group_weights / mean(group_weights)
-    }
-  }
-
   # Identify binary variables (checking each column)
-  binary_vars <- purrr::map_lgl(as.data.frame(.covariates), \(x) {
+  binary_vars <- purrr::map_lgl(as.data.frame(prepared$covariates), \(x) {
     unique_vals <- unique(x)
     length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))
   })
 
-  # Standardize .covariates
-  standardized_.covariates <- bal_energy_standardize(
-    .covariates = .covariates,
-    weights = weights_normalized,
-    binary_vars = binary_vars,
-    use_weights = is.null(.weights) # Only use weights for standardization when no weights provided
+  standardized_covariates <- bal_energy_standardize(
+    .covariates = prepared$covariates,
+    binary_vars = binary_vars
   )
 
-  # Compute distance matrix
-  distance_matrix <- as.matrix(dist(standardized_.covariates))
+  distance_matrix <- as.matrix(dist(standardized_covariates))
 
-  # Create treatment indicators
-  treatment_indicators <- model.matrix(~ .exposure - 1)
+  exposure <- prepared$exposure
+  treatment_indicators <- model.matrix(~ exposure - 1)
+  n_obs <- nrow(distance_matrix)
 
-  # Compute energy distance components based on estimand
-  if (is.null(estimand)) {
+  components <- if (is.null(prepared$estimand)) {
     # Between-group energy distance only
-    components <- bal_energy_between_group(
+    bal_energy_between_group(
       distance_matrix = distance_matrix,
       treatment_indicators = treatment_indicators,
-      unique_groups = unique_groups
+      unique_groups = prepared$unique_groups
     )
-  } else if (estimand == "ATE") {
-    # Average treatment effect
-    components <- bal_energy_ate(
+  } else if (prepared$estimand == "ATE") {
+    # Average treatment effect: the target is the unweighted full sample
+    bal_energy_ate(
       distance_matrix = distance_matrix,
       treatment_indicators = treatment_indicators,
-      unique_groups = unique_groups,
-      weights_normalized = weights_normalized / sum(weights_normalized),
-      use_improved = use_improved
+      unique_groups = prepared$unique_groups,
+      target_dist = rep(1 / n_obs, n_obs),
+      use_improved = prepared$use_improved
     )
-  } else if (estimand %in% c("ATT", "ATC")) {
-    # Average treatment effect on treated/controls
-    components <- bal_energy_att_atc(
+  } else {
+    # Average treatment effect on treated/controls: the target is the
+    # unweighted focal group
+    bal_energy_att_atc(
       distance_matrix = distance_matrix,
       treatment_indicators = treatment_indicators,
-      unique_groups = unique_groups,
-      .weights = weights_normalized,
-      .exposure = .exposure,
-      .focal_level = .focal_level,
-      estimand = estimand
+      unique_groups = prepared$unique_groups,
+      .exposure = exposure,
+      .focal_level = prepared$focal_level
     )
   }
 
-  # Compute final energy distance using quadratic form
-  energy_distance <- as.numeric(
-    t(weights_normalized) %*% components$P %*% weights_normalized
-  ) +
-    sum(components$q * weights_normalized) +
-    components$k
-
-  energy_distance
+  list(
+    kind = "discrete",
+    P = components$P,
+    q = components$q,
+    k = components$k,
+    exposure = exposure,
+    unique_groups = prepared$unique_groups
+  )
 }
 
-# Helper functions for bal_energy() - internal use only
+#' Evaluate a prepared energy statistic at one weight vector
+#' @noRd
+bal_energy_evaluate <- function(init, weights) {
+  if (init$kind == "dependence") {
+    return(bal_energy_dependence_evaluate(init, weights))
+  }
+
+  n_obs <- nrow(init$P)
+  if (is.null(weights)) {
+    weights <- rep(1, n_obs)
+  }
+
+  # Normalize weights by group
+  weights_normalized <- weights
+  for (g in init$unique_groups) {
+    group_mask <- init$exposure == g
+    if (any(group_mask)) {
+      group_weights <- weights[group_mask]
+      weights_normalized[group_mask] <- group_weights / mean(group_weights)
+    }
+  }
+
+  # Compute final energy distance using quadratic form
+  as.numeric(t(weights_normalized) %*% init$P %*% weights_normalized) +
+    sum(init$q * weights_normalized) +
+    init$k
+}
 
 #' Calculate variance for a single covariate
 #' @noRd
@@ -1014,62 +1188,28 @@ calculate_variance <- function(col, is_binary, weights_norm) {
 
 #' Calculate scaling factor for a single covariate
 #' @noRd
-calculate_scaling_factor <- function(col, is_binary, weights_norm = NULL) {
-  if (is.null(weights_norm)) {
-    # Unweighted case
-    if (is_binary) {
-      p <- mean(col)
-      sqrt(p * (1 - p))
-    } else {
-      sd(col)
-    }
+calculate_scaling_factor <- function(col, is_binary) {
+  if (is_binary) {
+    p <- mean(col)
+    sqrt(p * (1 - p))
   } else {
-    # Weighted case
-    if (is_binary) {
-      weighted_mean <- sum(weights_norm * col)
-      sqrt(weighted_mean * (1 - weighted_mean))
-    } else {
-      weighted_mean <- sum(weights_norm * col)
-      # Use Bessel's correction for weighted variance
-      denom <- 1 - sum(weights_norm^2)
-      if (denom <= 0) {
-        # Fall back to biased estimator if correction fails
-        weighted_var <- sum(weights_norm * (col - weighted_mean)^2)
-      } else {
-        weighted_var <- sum(weights_norm * (col - weighted_mean)^2) / denom
-      }
-      sqrt(weighted_var)
-    }
+    sd(col)
   }
 }
 
 #' Standardize .covariates for energy distance calculation
+#'
+#' The spread of each covariate is measured over the whole sample rather than
+#' under the weights, so that the distance matrix describes one fixed geometry
+#' whatever weighting is being assessed. This is what cobalt does with its
+#' sampling weights.
 #' @noRd
-bal_energy_standardize <- function(
-  .covariates,
-  weights,
-  binary_vars,
-  use_weights = TRUE
-) {
-  if (use_weights) {
-    # Normalize weights
-    weights_norm <- weights / sum(weights)
-
-    scaling_factors <- purrr::map2_dbl(
-      as.data.frame(.covariates),
-      binary_vars,
-      calculate_scaling_factor,
-      weights_norm = weights_norm
-    )
-  } else {
-    # Use unweighted standardization (to match cobalt when weights are provided)
-    scaling_factors <- purrr::map2_dbl(
-      as.data.frame(.covariates),
-      binary_vars,
-      calculate_scaling_factor,
-      weights_norm = NULL
-    )
-  }
+bal_energy_standardize <- function(.covariates, binary_vars) {
+  scaling_factors <- purrr::map2_dbl(
+    as.data.frame(.covariates),
+    binary_vars,
+    calculate_scaling_factor
+  )
 
   # Avoid division by zero
   scaling_factors[scaling_factors == 0] <- 1
@@ -1120,12 +1260,16 @@ bal_energy_between_group <- function(
 }
 
 #' Compute ATE energy distance components
+#'
+#' `target_dist` is the distribution the weighted groups are compared against,
+#' which for the ATE is the unweighted full sample: a uniform vector summing
+#' to 1.
 #' @noRd
 bal_energy_ate <- function(
   distance_matrix,
   treatment_indicators,
   unique_groups,
-  weights_normalized,
+  target_dist,
   use_improved
 ) {
   n_obs <- nrow(distance_matrix)
@@ -1158,43 +1302,31 @@ bal_energy_ate <- function(
 
   # Compute q vector
   q <- 2 *
-    as.vector(weights_normalized %*% distance_matrix) *
+    as.vector(target_dist %*% distance_matrix) *
     rowSums(normalized_indicators)
 
   # Compute k constant
   k <- -n_groups *
     as.numeric(
-      weights_normalized %*% distance_matrix %*% weights_normalized
+      target_dist %*% distance_matrix %*% target_dist
     )
 
   list(P = P, q = q, k = k)
 }
 
 #' Compute ATT/ATC energy distance components
+#'
+#' The target distribution is the unweighted focal group, so `.focal_level` has
+#' already been resolved to a level the exposure takes.
 #' @noRd
 bal_energy_att_atc <- function(
   distance_matrix,
   treatment_indicators,
   unique_groups,
-  .weights,
   .exposure,
-  .focal_level,
-  estimand
+  .focal_level
 ) {
-  n_obs <- nrow(distance_matrix)
   n_groups <- length(unique_groups)
-
-  # Determine focal group
-  if (is.null(.focal_level)) {
-    if (estimand == "ATT") {
-      # For binary, use the "treatment" group (typically coded as 1)
-      .focal_level <- unique_groups[which.max(as.numeric(unique_groups))]
-    } else {
-      # ATC
-      # Use the "control" group (typically coded as 0)
-      .focal_level <- unique_groups[which.min(as.numeric(unique_groups))]
-    }
-  }
 
   # Compute group sizes
   group_sizes <- colSums(treatment_indicators)
@@ -1207,8 +1339,7 @@ bal_energy_att_atc <- function(
 
   # Identify focal group observations
   focal_mask <- .exposure == .focal_level
-  focal_weights <- extract_weight_data(.weights)[focal_mask]
-  focal_weights_norm <- focal_weights / sum(focal_weights)
+  focal_target <- rep(1 / sum(focal_mask), sum(focal_mask))
 
   # Compute P matrix
   P <- -distance_matrix * nn_matrix
@@ -1216,22 +1347,22 @@ bal_energy_att_atc <- function(
   # Compute q vector using focal group
   q <- 2 *
     as.vector(
-      focal_weights_norm %*% distance_matrix[focal_mask, , drop = FALSE]
+      focal_target %*% distance_matrix[focal_mask, , drop = FALSE]
     ) *
     rowSums(normalized_indicators)
 
   # Compute k constant using focal group
   k <- -n_groups *
     as.numeric(
-      focal_weights_norm %*%
+      focal_target %*%
         distance_matrix[focal_mask, focal_mask, drop = FALSE] %*%
-        focal_weights_norm
+        focal_target
     )
 
   list(P = P, q = q, k = k)
 }
 
-#' Compute the weighted dependence distance D(w) for continuous treatments
+#' Form the weight-independent parts of the dependence distance D(w)
 #'
 #' Native implementation of the D(w) statistic of Huling, Greifer, and Chen
 #' (2023), matching `independenceWeights::weighted_energy_stats(A, X, w,
@@ -1239,20 +1370,13 @@ bal_energy_att_atc <- function(
 #' formed once and shared across the weighted distance covariance and the two
 #' marginal energy terms.
 #' @noRd
-bal_energy_dependence <- function(
+bal_energy_dependence_init <- function(
   covariates,
   treatment,
-  weights,
   dimension_adj
 ) {
   n_obs <- nrow(covariates)
   n_cov <- ncol(covariates)
-
-  # Weights normalized to mean 1 (unit weights when none supplied)
-  if (is.null(weights)) {
-    weights <- rep(1, n_obs)
-  }
-  weights <- weights / mean(weights)
 
   # Distance matrices on unscaled covariates and treatment, formed once
   cov_dist <- as.matrix(dist(covariates))
@@ -1292,15 +1416,29 @@ bal_energy_dependence <- function(
     adj_cov <- 0.5
   }
 
-  quad_matrix <- dcov_matrix +
-    q_energy_treat * adj_treat +
-    q_energy_cov * adj_cov
-  quad_part <- as.numeric(t(weights) %*% quad_matrix %*% weights)
-  lin_vec <- 2 * (row_energy_treat * adj_treat + row_energy_cov * adj_cov)
-  lin_part <- as.numeric(weights %*% lin_vec)
-  const_part <- -mean_cov_dist * adj_cov - mean_treat_dist * adj_treat
+  list(
+    kind = "dependence",
+    n_obs = n_obs,
+    quad_matrix = dcov_matrix +
+      q_energy_treat * adj_treat +
+      q_energy_cov * adj_cov,
+    lin_vec = 2 * (row_energy_treat * adj_treat + row_energy_cov * adj_cov),
+    const_part = -mean_cov_dist * adj_cov - mean_treat_dist * adj_treat
+  )
+}
 
-  quad_part + lin_part + const_part
+#' Evaluate the dependence distance D(w) at one weight vector
+#' @noRd
+bal_energy_dependence_evaluate <- function(init, weights) {
+  # Weights normalized to mean 1 (unit weights when none supplied)
+  if (is.null(weights)) {
+    weights <- rep(1, init$n_obs)
+  }
+  weights <- weights / mean(weights)
+
+  as.numeric(t(weights) %*% init$quad_matrix %*% weights) +
+    as.numeric(weights %*% init$lin_vec) +
+    init$const_part
 }
 
 #' Compute distance correlation for continuous treatments

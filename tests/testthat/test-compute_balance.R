@@ -1243,6 +1243,282 @@ test_that("bal_energy handles different estimands", {
   expect_false(all(
     c(energy_ate, energy_att, energy_atc, energy_between) == energy_ate
   ))
+
+  # Unweighted, the focal target is the focal group's own distribution, so both
+  # focal estimands reduce to the between-group energy distance.
+  expect_equal(energy_att, energy_between, tolerance = 1e-8)
+  expect_equal(energy_atc, energy_between, tolerance = 1e-8)
+
+  # The ATE targets the whole unweighted sample instead, so it does not.
+  expect_false(isTRUE(all.equal(energy_ate, energy_between)))
+})
+
+test_that("bal_energy matches cobalt for weighted binary estimands", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  set.seed(11)
+  n <- 80
+  covariates <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    x3 = rbinom(n, 1, 0.4)
+  )
+  treatment <- rbinom(n, 1, 0.5)
+  weights <- runif(n, 0.3, 3)
+
+  cobalt_energy <- function(estimand = NULL, focal = NULL, improved = TRUE) {
+    init <- cobalt::bal.init(
+      covariates,
+      treat = treatment,
+      stat = "energy.dist",
+      estimand = estimand,
+      focal = focal,
+      improved = improved
+    )
+    cobalt::bal.compute(init, weights = weights)
+  }
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATE"),
+    cobalt_energy("ATE"),
+    tolerance = 1e-8
+  )
+
+  expect_equal(
+    bal_energy(
+      covariates,
+      treatment,
+      .weights = weights,
+      estimand = "ATE",
+      use_improved = FALSE
+    ),
+    cobalt_energy("ATE", improved = FALSE),
+    tolerance = 1e-8
+  )
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATT"),
+    cobalt_energy("ATT", focal = "1"),
+    tolerance = 1e-8
+  )
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATC"),
+    cobalt_energy("ATC", focal = "0"),
+    tolerance = 1e-8
+  )
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights),
+    cobalt_energy(),
+    tolerance = 1e-8
+  )
+
+  # Weights that vary inside the focal group move the weighted focal
+  # distribution away from its unweighted target, so the focal estimands no
+  # longer collapse onto the between-group distance.
+  expect_false(isTRUE(all.equal(
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATT"),
+    bal_energy(covariates, treatment, .weights = weights)
+  )))
+  expect_false(isTRUE(all.equal(
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATT"),
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATC")
+  )))
+})
+
+test_that("bal_energy matches cobalt for a weighted multi-category ATE", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  set.seed(2027)
+  n <- 90
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  treatment <- factor(sample(c("a", "b", "c"), n, replace = TRUE))
+  weights <- runif(n, 0.3, 3)
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights, estimand = "ATE"),
+    cobalt::bal.compute(
+      cobalt::bal.init(
+        covariates,
+        treat = treatment,
+        stat = "energy.dist",
+        estimand = "ATE"
+      ),
+      weights = weights
+    ),
+    tolerance = 1e-8
+  )
+})
+
+test_that("bal_energy defaults the focal level to an observed level of any type", {
+  set.seed(707)
+  n <- 100
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  numeric_treatment <- rbinom(n, 1, 0.5)
+  text_treatment <- factor(
+    ifelse(numeric_treatment == 1, "treated", "control"),
+    levels = c("control", "treated")
+  )
+  weights <- runif(n, 0.3, 3)
+
+  text_energy <- function(estimand) {
+    bal_energy(
+      covariates,
+      text_treatment,
+      .weights = weights,
+      estimand = estimand
+    )
+  }
+
+  for (estimand in c("ATT", "ATC")) {
+    expect_no_warning(text_energy(estimand))
+
+    numeric_energy <- bal_energy(
+      covariates,
+      numeric_treatment,
+      .weights = weights,
+      estimand = estimand
+    )
+
+    expect_equal(text_energy(estimand), numeric_energy, tolerance = 1e-8)
+    expect_gte(text_energy(estimand), 0)
+  }
+
+  # ATT takes the last observed level and ATC the first, so naming those levels
+  # reproduces the defaults.
+  expect_equal(
+    bal_energy(
+      covariates,
+      text_treatment,
+      .weights = weights,
+      estimand = "ATT",
+      .focal_level = "treated"
+    ),
+    bal_energy(
+      covariates,
+      text_treatment,
+      .weights = weights,
+      estimand = "ATT"
+    ),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    bal_energy(
+      covariates,
+      text_treatment,
+      .weights = weights,
+      estimand = "ATC",
+      .focal_level = "control"
+    ),
+    bal_energy(
+      covariates,
+      text_treatment,
+      .weights = weights,
+      estimand = "ATC"
+    ),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_energy reads the observed levels of a factor exposure", {
+  set.seed(808)
+  n <- 60
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  declared <- factor(
+    sample(c("a", "b"), n, replace = TRUE),
+    levels = c("a", "b", "unused")
+  )
+
+  for (estimand in list(NULL, "ATE", "ATT", "ATC")) {
+    expect_equal(
+      bal_energy(covariates, declared, estimand = estimand),
+      bal_energy(covariates, droplevels(declared), estimand = estimand),
+      tolerance = 1e-10
+    )
+  }
+})
+
+test_that("bal_energy validates .focal_level", {
+  set.seed(909)
+  n <- 60
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  treatment <- rbinom(n, 1, 0.5)
+
+  expect_error(
+    bal_energy(
+      covariates,
+      treatment,
+      estimand = "ATT",
+      .focal_level = "typo"
+    ),
+    class = "halfmoon_reference_error"
+  )
+
+  expect_error(
+    bal_energy(
+      covariates,
+      treatment,
+      estimand = "ATC",
+      .focal_level = c("0", "1")
+    ),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    bal_energy(
+      covariates,
+      treatment,
+      estimand = "ATT",
+      .focal_level = character(0)
+    ),
+    class = "halfmoon_arg_error"
+  )
+
+  # A value that names a level is accepted whatever type it is supplied as
+  expect_equal(
+    bal_energy(covariates, treatment, estimand = "ATT", .focal_level = 1),
+    bal_energy(covariates, treatment, estimand = "ATT", .focal_level = "1"),
+    tolerance = 1e-10
+  )
+})
+
+test_that("bal_energy rejects option arguments that are not single values", {
+  set.seed(1010)
+  n <- 40
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  treatment <- rbinom(n, 1, 0.5)
+
+  expect_error(
+    bal_energy(covariates, treatment, estimand = character(0)),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_energy(covariates, treatment, estimand = c("ATE", "ATT")),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_energy(covariates, treatment, criterion = character(0)),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_energy(covariates, treatment, exposure_type = character(0)),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_energy(covariates, treatment, use_improved = logical(0)),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_energy(covariates, treatment, standardized = NA),
+    class = "halfmoon_arg_error"
+  )
+  expect_error(
+    bal_energy(covariates, treatment, na.rm = c(TRUE, FALSE)),
+    class = "halfmoon_arg_error"
+  )
 })
 
 test_that("bal_energy handles multi-category treatments", {
@@ -1340,30 +1616,72 @@ test_that("bal_energy handles binary variables", {
   expect_true(energy >= 0)
 })
 
-test_that("bal_energy handles missing values", {
+test_that("bal_energy reports missing values it is asked to keep as NA", {
   data <- create_test_data()
   covs <- data.frame(x = data$x_cont, y = data$x_skewed)
-
-  # Introduce missing values
   covs$x[data$na_indices] <- NA
 
-  # Should error when na.rm = FALSE
-  expect_halfmoon_error(
+  # A missing covariate, exposure, or weight is the NA sentinel, not an error
+  expect_identical(
     bal_energy(
       .covariates = covs,
       .exposure = data$g_balanced,
       na.rm = FALSE
     ),
-    "halfmoon_na_error"
+    NA_real_
   )
 
-  # Should work when na.rm = TRUE
-  energy_na.rm <- bal_energy(
-    .covariates = covs,
-    .exposure = data$g_balanced,
-    na.rm = TRUE
+  exposure_na <- data$g_balanced
+  exposure_na[data$na_indices] <- NA
+  expect_identical(
+    bal_energy(
+      .covariates = data.frame(x = data$x_cont, y = data$x_skewed),
+      .exposure = exposure_na
+    ),
+    NA_real_
   )
-  expect_true(is.finite(energy_na.rm) || is.na(energy_na.rm))
+
+  weights_na <- data$w_uniform
+  weights_na[data$na_indices] <- NA
+  expect_identical(
+    bal_energy(
+      .covariates = data.frame(x = data$x_cont, y = data$x_skewed),
+      .exposure = data$g_balanced,
+      .weights = weights_na
+    ),
+    NA_real_
+  )
+
+  # A continuous exposure follows the same policy
+  expect_identical(
+    bal_energy(
+      .covariates = covs,
+      .exposure = rnorm(nrow(covs))
+    ),
+    NA_real_
+  )
+})
+
+test_that("bal_energy drops incomplete rows when na.rm is TRUE", {
+  data <- create_test_data()
+  covs <- data.frame(x = data$x_cont, y = data$x_skewed)
+  covs$x[data$na_indices] <- NA
+  complete <- !is.na(covs$x)
+
+  expect_equal(
+    bal_energy(
+      .covariates = covs,
+      .exposure = data$g_balanced,
+      .weights = data$w_uniform,
+      na.rm = TRUE
+    ),
+    bal_energy(
+      .covariates = covs[complete, ],
+      .exposure = data$g_balanced[complete],
+      .weights = data$w_uniform[complete]
+    ),
+    tolerance = 1e-10
+  )
 })
 
 test_that("bal_energy use_improved parameter works", {
@@ -2230,4 +2548,202 @@ test_that("binary bal_* functions reject a single observed level", {
   expect_error(bal_smd(x, f1), class = "halfmoon_group_error")
   expect_error(bal_vr(x, f1), class = "halfmoon_group_error")
   expect_error(bal_ks(x, f1), class = "halfmoon_group_error")
+})
+
+test_that("bal_energy takes an exposure_type that forces either path", {
+  set.seed(88)
+  n <- 90
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  many_valued <- sample(1:12, n, replace = TRUE)
+  few_valued <- sample(1:8, n, replace = TRUE)
+
+  # "auto" keeps the documented rule: more than ten unique numeric values are
+  # read as continuous, ten or fewer as categorical
+  expect_equal(
+    bal_energy(covariates, many_valued),
+    bal_energy(covariates, many_valued, exposure_type = "continuous"),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    bal_energy(covariates, few_valued),
+    bal_energy(covariates, few_valued, exposure_type = "categorical"),
+    tolerance = 1e-10
+  )
+
+  # Forcing the categorical path is the same as calling factor() on the exposure
+  expect_equal(
+    bal_energy(covariates, many_valued, exposure_type = "categorical"),
+    bal_energy(covariates, factor(many_valued)),
+    tolerance = 1e-10
+  )
+
+  # Forcing the continuous path reads the same numbers as a continuous exposure
+  expect_false(isTRUE(all.equal(
+    bal_energy(covariates, few_valued, exposure_type = "continuous"),
+    bal_energy(covariates, few_valued)
+  )))
+
+  # "binary" and "categorical" name the same path
+  expect_equal(
+    bal_energy(covariates, few_valued, exposure_type = "binary"),
+    bal_energy(covariates, few_valued, exposure_type = "categorical"),
+    tolerance = 1e-10
+  )
+
+  # A factor holds no numbers to read as continuous
+  expect_error(
+    bal_energy(
+      covariates,
+      factor(few_valued),
+      exposure_type = "continuous"
+    ),
+    class = "halfmoon_type_error"
+  )
+
+  expect_error(
+    bal_energy(covariates, few_valued, exposure_type = "ordinal"),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("bal_energy dcor criterion matches cobalt for weighted samples", {
+  skip_if_not_installed("cobalt")
+  skip_on_cran()
+
+  set.seed(4)
+  n <- 60
+  covariates <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
+  treatment <- rnorm(n)
+  weights <- runif(n, 0.2, 4)
+
+  # cobalt scales the covariates and the standardizing denominator by the same
+  # weights it uses in the quadratic form when they are supplied as sampling
+  # weights, which is what bal_energy() does with its balancing weights
+  expect_equal(
+    bal_energy(
+      covariates,
+      treatment,
+      .weights = weights,
+      criterion = "dcor"
+    ),
+    cobalt::bal.compute(
+      cobalt::bal.init(
+        covariates,
+        treat = treatment,
+        s.weights = weights,
+        stat = "distance.cor"
+      )
+    ),
+    tolerance = 1e-8
+  )
+})
+
+test_that("bal_energy dcor criterion reports zero for a non-positive distance covariance", {
+  set.seed(66)
+  n <- 40
+  treatment <- rnorm(n)
+
+  # A covariate with no variation leaves an all-zero double-centered distance
+  # matrix, so the weighted distance covariance is exactly zero. cobalt's
+  # distance.cor reports zero for a non-positive distance covariance and so does
+  # bal_energy(), rather than an NaN from the standardizing denominator.
+  expect_identical(
+    bal_energy(
+      data.frame(x = rep(2, n)),
+      treatment,
+      criterion = "dcor"
+    ),
+    0
+  )
+  expect_identical(
+    bal_energy(
+      data.frame(x = rep(2, n)),
+      treatment,
+      criterion = "dcor",
+      standardized = FALSE
+    ),
+    0
+  )
+})
+
+test_that("bal_energy dependence criterion expands a factor covariate", {
+  skip_if_not_installed("independenceWeights")
+  skip_on_cran()
+
+  set.seed(3131)
+  n <- 120
+  f <- factor(sample(c("a", "b", "c"), n, replace = TRUE))
+  g <- factor(sample(c("no", "yes"), n, replace = TRUE))
+  covariates <- data.frame(x1 = rnorm(n), f = f, g = g)
+  treatment <- rnorm(n)
+  weights <- runif(n, 0.2, 3)
+
+  # A multi-level factor becomes one indicator per level and a two-level factor
+  # becomes a single 0/1 indicator, with the numeric columns kept first
+  expanded <- cbind(
+    x1 = covariates$x1,
+    fa = as.numeric(f == "a"),
+    fb = as.numeric(f == "b"),
+    fc = as.numeric(f == "c"),
+    g = as.numeric(g) - 1
+  )
+
+  expect_equal(
+    bal_energy(covariates, treatment, .weights = weights),
+    independenceWeights::weighted_energy_stats(
+      treatment,
+      expanded,
+      weights,
+      dimension_adj = TRUE
+    )$D_w,
+    tolerance = 1e-8
+  )
+})
+
+test_that("check_balance reports the weighted dependence distance for a continuous exposure", {
+  skip_if_not_installed("independenceWeights")
+  skip_on_cran()
+
+  set.seed(2028)
+  n <- 130
+  df <- data.frame(
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    a = rnorm(n),
+    w1 = runif(n, 0.2, 3),
+    w2 = runif(n, 0.5, 2)
+  )
+  covariate_matrix <- as.matrix(df[c("x1", "x2")])
+
+  result <- check_balance(
+    df,
+    c(x1, x2),
+    a,
+    .weights = c(w1, w2),
+    .metrics = "energy"
+  )
+
+  for (method in c("w1", "w2")) {
+    expect_equal(
+      result$estimate[result$method == method],
+      independenceWeights::weighted_energy_stats(
+        df$a,
+        covariate_matrix,
+        df[[method]],
+        dimension_adj = TRUE
+      )$D_w,
+      tolerance = 1e-8
+    )
+  }
+
+  expect_equal(
+    result$estimate[result$method == "observed"],
+    independenceWeights::weighted_energy_stats(
+      df$a,
+      covariate_matrix,
+      rep(1, n),
+      dimension_adj = TRUE
+    )$D_w,
+    tolerance = 1e-8
+  )
 })

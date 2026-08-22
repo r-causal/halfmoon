@@ -113,14 +113,6 @@
       Error in `bal_energy()`:
       ! For continuous treatments, `estimand` must be `NULL`
 
-# bal_energy handles missing values
-
-    Code
-      bal_energy(.covariates = covs, .exposure = data$g_balanced, na.rm = FALSE)
-    Condition <halfmoon_na_error>
-      Error in `bal_energy()`:
-      ! Energy distance cannot be computed with missing values in `.covariates`. Set `na.rm = TRUE` or remove missing values.
-
 # bal_energy error handling
 
     Code

@@ -14,6 +14,7 @@ bal_energy(
   standardized = TRUE,
   criterion = c("dependence", "dcor"),
   dimension_adj = TRUE,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
   na.rm = FALSE
 )
 }
@@ -22,7 +23,11 @@ bal_energy(
 
 \item{.exposure}{A vector (factor or numeric) indicating group membership. For
 binary and multi-category treatments, must have 2+ unique levels. For
-continuous treatments, should be numeric.}
+continuous treatments, should be numeric. When \code{exposure_type} is \code{"auto"},
+a numeric exposure taking more than ten unique values is treated as
+continuous and returns the continuous-exposure statistic instead of an
+energy distance between groups; set \code{exposure_type} or wrap the exposure in
+\code{factor()} to force the categorical reading.}
 
 \item{.weights}{An optional numeric vector of weights. If provided, must
 have the same length as rows in \code{.covariates}. All weights must be non-negative.}
@@ -30,17 +35,21 @@ have the same length as rows in \code{.covariates}. All weights must be non-nega
 \item{estimand}{Character string specifying the estimand. Options are:
 \itemize{
 \item NULL (default): Pure between-group energy distance comparing distributions
-\item "ATE": Energy distance weighted to reflect balance for estimating average
-treatment effects across the entire population
-\item "ATT": Energy distance weighted to reflect balance for the treated .exposure,
-measuring how well controls match the treated distribution
-\item "ATC": Energy distance weighted to reflect balance for the control .exposure,
-measuring how well treated units match the control distribution
+\item "ATE": Energy distance between each weighted group and the unweighted full
+sample, the target population of an average treatment effect
+\item "ATT": Energy distance between each weighted group and the unweighted
+focal group, measuring how well the other groups match the treated
+distribution
+\item "ATC": The same statistic with the control group as the focal group,
+measuring how well the treated units match the control distribution
 For continuous treatments, only NULL is supported.
 }}
 
-\item{.focal_level}{The treatment level for ATT/ATC. If \code{NULL} (default),
-automatically determined based on estimand.}
+\item{.focal_level}{The treatment level whose unweighted distribution is the
+target for \code{estimand = "ATT"} or \code{estimand = "ATC"}. Must name a level the
+exposure takes. If \code{NULL} (default), the last observed level for \code{"ATT"}
+and the first observed level for \code{"ATC"}, which on a 0/1 exposure are the
+level \code{1} and the level \code{0}.}
 
 \item{use_improved}{Logical. Use improved energy distance for ATE? Default is TRUE.
 When TRUE, adds pairwise treatment comparisons for better group separation.}
@@ -65,12 +74,21 @@ of the number of covariates, or split them evenly (\code{FALSE}). Ignored when
 default; \code{dimension_adj = FALSE} with a non-continuous exposure is an
 error.}
 
+\item{exposure_type}{The type of exposure \code{.exposure} holds: one of "binary",
+"categorical", or "continuous", or "auto" (default) to read the type from
+the exposure. "binary" and "categorical" name the same energy distance
+between groups. Under "auto", a numeric exposure taking more than ten
+unique values is treated as continuous and anything else as categorical.}
+
 \item{na.rm}{A logical value indicating whether to remove missing values
-before computation. If \code{FALSE} (default), missing values result in
-an error (energy distance cannot be computed with missing data).}
+before computation. If \code{FALSE} (default), a missing value in the
+covariates, the exposure, or the weights returns \code{NA}. If \code{TRUE}, rows with
+missing values are dropped before computation.}
 }
 \value{
-A numeric value. For binary and multi-category exposures, the energy
+A numeric value, or \code{NA_real_} when \code{na.rm = FALSE} and the
+covariates, the exposure, or the weights contain missing values. For binary
+and multi-category exposures, the energy
 distance between groups, where lower values indicate better balance and 0
 indicates identical distributions. For a continuous exposure with
 \code{criterion = "dependence"}, the weighted dependence distance \eqn{D(w)},
@@ -91,6 +109,13 @@ Energy distance is based on the energy statistics framework (Székely & Rizzo, 2
 and implemented following Huling & Mak (2024) and Huling et al. (2024).
 The calculation uses a quadratic form: \eqn{w^T P w + q^T w + k},
 where the components depend on the estimand.
+
+An estimand names a target distribution that the weighted groups are compared
+against, and that target is always an unweighted distribution of the sample
+at hand: the whole sample for \code{"ATE"}, and the focal group for \code{"ATT"} and
+\code{"ATC"}. Weighting the target as well would compare the weighted groups
+against themselves, which no weighting could fail. With uniform weights
+\code{"ATT"} and \code{"ATC"} therefore reduce to the between-group energy distance.
 
 For binary variables in the .covariates, variance is calculated as p(1-p)
 rather than sample variance to prevent over-weighting.
@@ -114,7 +139,9 @@ weighting of the two marginal energy terms.
 statistic, a weighted-variance-scaled distance correlation (or, with
 \code{standardized = FALSE}, the corresponding square-root distance covariance).
 This is a descriptive balance summary rather than a measure of weighted
-dependence.
+dependence. Following that reference implementation, a weighted distance
+covariance that is not positive, which a covariate with no variation
+produces, reports 0.
 }
 \examples{
 # Binary treatment
