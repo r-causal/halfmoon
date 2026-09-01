@@ -98,8 +98,9 @@ plot_mirror_distributions(
 - .reference_level:
 
   The reference group level for categorical exposures (\>2 levels). Can
-  be a string (group level) or numeric (position). Defaults to 1 (first
-  level). Only used when .exposure has more than 2 levels.
+  be a string (group level) or numeric (position among the observed
+  levels). Defaults to the first observed level. Only used when
+  .exposure has more than 2 levels.
 
 - facet_scales:
 

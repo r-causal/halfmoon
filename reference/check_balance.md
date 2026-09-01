@@ -17,7 +17,7 @@ check_balance(
   .metrics = NULL,
   exposure_type = c("auto", "binary", "categorical", "continuous"),
   include_observed = TRUE,
-  .reference_level = 1L,
+  .reference_level = NULL,
   na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
@@ -70,8 +70,11 @@ check_balance(
 
 - .reference_level:
 
-  The reference group level to use for comparisons. Defaults to 1 (first
-  level). Ignored for a continuous exposure.
+  The level of `.exposure` the other levels are compared against. If
+  `NULL` (default), the first observed level. A value that matches a
+  level is taken as that level; a numeric value that matches no level is
+  taken as a position among the observed levels. Ignored for a
+  continuous exposure.
 
 - na.rm:
 
@@ -211,16 +214,16 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = c(w_ate, w_att))
 #> # A tibble: 21 × 5
 #>    variable group_level method   metric estimate
 #>    <chr>    <chr>       <chr>    <chr>     <dbl>
-#>  1 age      0           observed ks      0.130  
-#>  2 age      0           w_ate    ks      0.0293 
-#>  3 age      0           w_att    ks      0.0362 
-#>  4 age      0           observed smd     0.282  
-#>  5 age      0           w_ate    smd     0.00585
-#>  6 age      0           w_att    smd     0.0122 
-#>  7 age      0           observed vr      1.07   
-#>  8 age      0           w_ate    vr      1.01   
-#>  9 age      0           w_att    vr      1.01   
-#> 10 wt71     0           observed ks      0.0700 
+#>  1 age      1           observed ks      0.130  
+#>  2 age      1           w_ate    ks      0.0293 
+#>  3 age      1           w_att    ks      0.0362 
+#>  4 age      1           observed smd     0.282  
+#>  5 age      1           w_ate    smd     0.00585
+#>  6 age      1           w_att    smd     0.0122 
+#>  7 age      1           observed vr      1.07   
+#>  8 age      1           w_ate    vr      1.01   
+#>  9 age      1           w_att    vr      1.01   
+#> 10 wt71     1           observed ks      0.0700 
 #> # ℹ 11 more rows
 
 # With specific metrics only
@@ -229,8 +232,8 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .metrics = c("smd", "energy"))
 #> # A tibble: 3 × 5
 #>   variable group_level method   metric estimate
 #>   <chr>    <chr>       <chr>    <chr>     <dbl>
-#> 1 age      0           observed smd      0.282 
-#> 2 wt71     0           observed smd      0.133 
+#> 1 age      1           observed smd      0.282 
+#> 2 wt71     1           observed smd      0.133 
 #> 3 NA       NA          observed energy   0.0503
 
 # Categorical exposure
@@ -240,16 +243,16 @@ check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat,
 #> # A tibble: 75 × 5
 #>    variable group_level    method          metric estimate
 #>    <chr>    <chr>          <chr>           <chr>     <dbl>
-#>  1 age      lt_12_per_year observed        ks       0.196 
-#>  2 age      1_4_per_month  observed        ks       0.291 
-#>  3 age      2_3_per_week   observed        ks       0.264 
-#>  4 age      daily          observed        ks       0.177 
-#>  5 age      lt_12_per_year w_cat_ate       ks       0.0696
-#>  6 age      1_4_per_month  w_cat_ate       ks       0.0455
-#>  7 age      2_3_per_week   w_cat_ate       ks       0.0503
-#>  8 age      daily          w_cat_ate       ks       0.0476
-#>  9 age      lt_12_per_year w_cat_att_2_3wk ks       0.164 
-#> 10 age      1_4_per_month  w_cat_att_2_3wk ks       0.137 
+#>  1 age      lt_12_per_year observed        ks           NA
+#>  2 age      1_4_per_month  observed        ks           NA
+#>  3 age      2_3_per_week   observed        ks           NA
+#>  4 age      daily          observed        ks           NA
+#>  5 age      lt_12_per_year w_cat_ate       ks           NA
+#>  6 age      1_4_per_month  w_cat_ate       ks           NA
+#>  7 age      2_3_per_week   w_cat_ate       ks           NA
+#>  8 age      daily          w_cat_ate       ks           NA
+#>  9 age      lt_12_per_year w_cat_att_2_3wk ks           NA
+#> 10 age      1_4_per_month  w_cat_att_2_3wk ks           NA
 #> # ℹ 65 more rows
 
 # Specify reference group for categorical exposure
@@ -259,16 +262,16 @@ check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat,
 #> # A tibble: 24 × 5
 #>    variable group_level    method   metric estimate
 #>    <chr>    <chr>          <chr>    <chr>     <dbl>
-#>  1 age      none           observed smd     -0.334 
-#>  2 age      lt_12_per_year observed smd      0.0725
-#>  3 age      1_4_per_month  observed smd      0.329 
-#>  4 age      2_3_per_week   observed smd     -0.265 
-#>  5 age      none           observed vr       0.789 
-#>  6 age      lt_12_per_year observed vr       1.00  
-#>  7 age      1_4_per_month  observed vr       0.965 
-#>  8 age      2_3_per_week   observed vr       1.02  
-#>  9 sex      none           observed smd     -0.494 
-#> 10 sex      lt_12_per_year observed smd     -0.826 
+#>  1 age      none           observed smd          NA
+#>  2 age      lt_12_per_year observed smd          NA
+#>  3 age      1_4_per_month  observed smd          NA
+#>  4 age      2_3_per_week   observed smd          NA
+#>  5 age      none           observed vr           NA
+#>  6 age      lt_12_per_year observed vr           NA
+#>  7 age      1_4_per_month  observed vr           NA
+#>  8 age      2_3_per_week   observed vr           NA
+#>  9 sex      none           observed smd          NA
+#> 10 sex      lt_12_per_year observed smd          NA
 #> # ℹ 14 more rows
 
 # Exclude observed results
@@ -278,12 +281,12 @@ check_balance(nhefs_weights, c(age, wt71), qsmk, .weights = w_ate,
 #> # A tibble: 7 × 5
 #>   variable group_level method metric estimate
 #>   <chr>    <chr>       <chr>  <chr>     <dbl>
-#> 1 age      0           w_ate  ks      0.0293 
-#> 2 age      0           w_ate  smd     0.00585
-#> 3 age      0           w_ate  vr      1.01   
-#> 4 wt71     0           w_ate  ks      0.0358 
-#> 5 wt71     0           w_ate  smd    -0.00903
-#> 6 wt71     0           w_ate  vr      1.00   
+#> 1 age      1           w_ate  ks      0.0293 
+#> 2 age      1           w_ate  smd     0.00585
+#> 3 age      1           w_ate  vr      1.01   
+#> 4 wt71     1           w_ate  ks      0.0358 
+#> 5 wt71     1           w_ate  smd    -0.00903
+#> 6 wt71     1           w_ate  vr      1.00   
 #> 7 NA       NA          w_ate  energy  0.00217
 
 # Use correlation for continuous exposure
@@ -322,31 +325,34 @@ check_balance(nhefs_weights, c(age, sex, race), qsmk)
 #> # A tibble: 10 × 5
 #>    variable group_level method   metric estimate
 #>    <chr>    <chr>       <chr>    <chr>     <dbl>
-#>  1 age      0           observed ks       0.130 
-#>  2 age      0           observed smd      0.282 
-#>  3 age      0           observed vr       1.07  
-#>  4 race     0           observed ks       0.0568
-#>  5 race     0           observed smd     -0.177 
-#>  6 race     0           observed vr       0.652 
-#>  7 sex      0           observed ks       0.0799
-#>  8 sex      0           observed smd     -0.160 
-#>  9 sex      0           observed vr       0.996 
+#>  1 age      1           observed ks       0.130 
+#>  2 age      1           observed smd      0.282 
+#>  3 age      1           observed vr       1.07  
+#>  4 race     1           observed ks       0.0568
+#>  5 race     1           observed smd     -0.177 
+#>  6 race     1           observed vr       0.652 
+#>  7 sex      1           observed ks       0.0799
+#>  8 sex      1           observed smd     -0.160 
+#>  9 sex      1           observed vr       0.996 
 #> 10 NA       NA          observed energy   0.0641
 
 # Without dummy variables for categorical variables
 check_balance(nhefs_weights, c(age, sex, race), qsmk, make_dummy_vars = FALSE)
 #> ℹ Treating `.exposure` as binary
+#> Warning: Could not compute 6 balance combinations, reported as `NA`.
+#> ℹ Affected metrics: "smd", "vr", and "ks".
+#> ℹ Affected variables: "sex" and "race".
 #> # A tibble: 10 × 5
 #>    variable group_level method   metric estimate
 #>    <chr>    <chr>       <chr>    <chr>     <dbl>
-#>  1 age      0           observed ks       0.130 
-#>  2 age      0           observed smd      0.282 
-#>  3 age      0           observed vr       1.07  
-#>  4 race     0           observed ks      NA     
-#>  5 race     0           observed smd     NA     
-#>  6 race     0           observed vr      NA     
-#>  7 sex      0           observed ks      NA     
-#>  8 sex      0           observed smd     NA     
-#>  9 sex      0           observed vr      NA     
+#>  1 age      1           observed ks       0.130 
+#>  2 age      1           observed smd      0.282 
+#>  3 age      1           observed vr       1.07  
+#>  4 race     1           observed ks      NA     
+#>  5 race     1           observed smd     NA     
+#>  6 race     1           observed vr      NA     
+#>  7 sex      1           observed ks      NA     
+#>  8 sex      1           observed smd     NA     
+#>  9 sex      1           observed vr      NA     
 #> 10 NA       NA          observed energy   0.0641
 ```

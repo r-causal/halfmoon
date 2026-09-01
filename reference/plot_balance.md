@@ -52,18 +52,16 @@ plot_balance(
 
 - vline_xintercept:
 
-  The X intercept, passed to
-  [`ggplot2::geom_vline()`](https://ggplot2.tidyverse.org/reference/geom_abline.html).
+  The balance threshold marked in the SMD facet. Defaults to 0.1. `NULL`
+  draws no threshold.
 
 - vline_color:
 
-  The vertical line color, passed to
-  [`ggplot2::geom_vline()`](https://ggplot2.tidyverse.org/reference/geom_abline.html).
+  Color of the reference lines. Defaults to `"grey70"`.
 
 - vlinewidth:
 
-  The vertical line size, passed to
-  [`ggplot2::geom_vline()`](https://ggplot2.tidyverse.org/reference/geom_abline.html).
+  Width of the reference lines. Defaults to 0.6.
 
 ## Value
 
@@ -100,6 +98,11 @@ Different metrics have different interpretations:
 - **Correlation**: For continuous exposures, measures association with
   covariates. Its facet draws a reference line at 0, the value weighting
   aims for.
+
+- **Reference lines**: Each metric is balanced at its own value, so a
+  reference line is drawn in the facet of the metric it belongs to. The
+  SMD facet takes a line at `vline_xintercept`, whether or not other
+  metrics are shown, and `vline_xintercept = NULL` leaves it out.
 
 - **Energy**: Multivariate balance metric applied to all variables
   simultaneously.
@@ -150,8 +153,12 @@ plot_balance(balance_data, abs_smd = FALSE)
 plot_balance(balance_data, facet_scales = "fixed")
 
 
-# Customize threshold lines
+# Customize the threshold marked in the SMD facet
 plot_balance(balance_data, vline_xintercept = 0.05)
+
+
+# Or leave the threshold out
+plot_balance(balance_data, vline_xintercept = NULL)
 
 
 # Categorical exposure example
@@ -165,4 +172,8 @@ balance_cat <- check_balance(
 )
 #> ℹ Treating `.exposure` as categorical
 plot_balance(balance_cat)
+#> Warning: Removed 48 rows containing missing values or values outside the scale range
+#> (`geom_line()`).
+#> Warning: Removed 48 rows containing missing values or values outside the scale range
+#> (`geom_point()`).
 ```

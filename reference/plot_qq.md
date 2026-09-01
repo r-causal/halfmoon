@@ -65,13 +65,16 @@ plot_qq(.data, ...)
 
 - .reference_level:
 
-  The reference treatment level to use for comparisons. If `NULL`
-  (default), uses the last level for factors or the maximum value for
-  numeric variables.
+  The level of `.exposure` to treat as the reference, the unexposed
+  group plotted on the x axis. Either a level of `.exposure` or its
+  position among the observed levels. If `NULL` (default), the first
+  observed level is used.
 
 - na.rm:
 
-  Logical; if TRUE, drop NA values before computation.
+  Logical. If `FALSE` (default), missing values in `.var`, `.exposure`,
+  or `.weights` raise an error. If `TRUE`, rows with missing values are
+  dropped before computation.
 
 ## Value
 
@@ -82,7 +85,8 @@ A ggplot2 object.
 QQ plots display the quantiles of one distribution against the quantiles
 of another. Perfect distributional balance appears as points along the
 45-degree line (y = x). This function automatically adds this reference
-line and appropriate axis labels.
+line and appropriate axis labels. The reference (unexposed) group is on
+the x axis and the exposed group is on the y axis.
 
 For an alternative visualization of the same information, see
 [`geom_ecdf()`](https://r-causal.github.io/halfmoon/reference/geom_ecdf.md),

@@ -18,7 +18,7 @@ bal_prognostic_score(
   .reference_level = NULL,
   family = gaussian(),
   .weights = NULL,
-  na.rm = FALSE,
+  na.rm = TRUE,
   ...
 )
 ```
@@ -71,7 +71,12 @@ bal_prognostic_score(
 
 - na.rm:
 
-  Logical. Should missing values be removed? Defaults to FALSE.
+  Logical. If `TRUE` (the default), rows with a missing value in any
+  model variable, the exposure, or the weights are dropped before the
+  model is fit, and the returned vector is shorter than `.data` by that
+  many rows. If `FALSE` and any such value is missing, the function
+  raises `halfmoon_na_error` rather than returning scores that are
+  silently missing.
 
 - ...:
 
@@ -97,7 +102,7 @@ the outcome rather than just the treatment assignment. The procedure:
 
 This approach is particularly useful when:
 
-- The outcome model includes non-linearities or interactions
+- The outcome model includes nonlinear terms or interactions
 
 - You want to ensure balance on outcome-relevant variables
 
@@ -144,12 +149,12 @@ check_balance(nhefs_with_prog, prog_score, qsmk, .weights = w_ate)
 #> # A tibble: 8 × 5
 #>   variable   group_level method   metric  estimate
 #>   <chr>      <chr>       <chr>    <chr>      <dbl>
-#> 1 prog_score 0           observed ks      0.124   
-#> 2 prog_score 0           w_ate    ks      0.0316  
-#> 3 prog_score 0           observed smd    -0.267   
-#> 4 prog_score 0           w_ate    smd     0.00305 
-#> 5 prog_score 0           observed vr      1.06    
-#> 6 prog_score 0           w_ate    vr      1.01    
+#> 1 prog_score 1           observed ks      0.124   
+#> 2 prog_score 1           w_ate    ks      0.0316  
+#> 3 prog_score 1           observed smd    -0.267   
+#> 4 prog_score 1           w_ate    smd     0.00305 
+#> 5 prog_score 1           observed vr      1.06    
+#> 6 prog_score 1           w_ate    vr      1.01    
 #> 7 NA         NA          observed energy  0.0442  
 #> 8 NA         NA          w_ate    energy  0.000954
 

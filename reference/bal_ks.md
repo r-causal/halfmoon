@@ -46,9 +46,11 @@ bal_ks(
 
 ## Value
 
-A numeric value representing the KS statistic. Values range from 0 to 1,
-with 0 indicating identical distributions and 1 indicating completely
-separate distributions.
+For a binary exposure, a numeric value representing the KS statistic.
+Values range from 0 to 1, with 0 indicating identical distributions and
+1 indicating completely separate distributions. For a categorical
+exposure, a named numeric vector with one element per non-reference
+level, named `X_vs_ref`, comparing level `X` with the reference level.
 
 ## Details
 
@@ -98,8 +100,9 @@ bal_ks(nhefs_weights$wt71, nhefs_weights$qsmk,
        .weights = nhefs_weights$w_ate)
 #> [1] 0.03583763
 
-# Categorical exposure (returns named vector)
-bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+# Categorical exposure (returns named vector). This exposure has missing
+# values, so `na.rm = TRUE` is needed for a non-missing result.
+bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>              0.1956535              0.2913630              0.2637864 
 #>          daily_vs_none 
@@ -107,7 +110,7 @@ bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 
 # Specify reference level
 bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-       .reference_level = "none")
+       .reference_level = "none", na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>              0.1956535              0.2913630              0.2637864 
 #>          daily_vs_none 
@@ -115,7 +118,7 @@ bal_ks(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
 
 # With categorical weights
 bal_ks(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-       .weights = nhefs_weights$w_cat_ate)
+       .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>             0.07483474             0.05665006             0.07013520 
 #>          daily_vs_none 

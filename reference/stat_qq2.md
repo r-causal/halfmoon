@@ -56,7 +56,10 @@ stat_qq2(
 
 - .reference_level:
 
-  The reference treatment level to use for comparisons.
+  The level of the `treatment` aesthetic to treat as the reference, the
+  unexposed group plotted on the x axis. Either a level of `treatment`
+  or its position among the observed levels. If `NULL` (default), the
+  first observed level is used.
 
 - include_observed:
 

@@ -44,8 +44,7 @@ check_model_auc(
 - na.rm:
 
   A logical value indicating whether to remove missing values before
-  computation. If `FALSE` (default), missing values in the input will
-  produce `NA` in the output.
+  computation. Defaults to `TRUE`.
 
 - .focal_level:
 

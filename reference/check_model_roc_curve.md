@@ -47,7 +47,8 @@ check_model_roc_curve(
 - .focal_level:
 
   The level of `.exposure` to consider as the treatment/event. Default
-  is NULL, which uses the second level.
+  is NULL, which uses the last observed level for factors or the maximum
+  value for numeric variables.
 
 ## Value
 

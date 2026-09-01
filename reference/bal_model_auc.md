@@ -39,8 +39,7 @@ bal_model_auc(
 - na.rm:
 
   A logical value indicating whether to remove missing values before
-  computation. If `FALSE` (default), missing values in the input will
-  produce `NA` in the output.
+  computation. Defaults to `TRUE`.
 
 - .focal_level:
 
@@ -91,9 +90,9 @@ Other balance functions:
 ``` r
 # Unweighted AUC
 bal_model_auc(nhefs_weights, qsmk, .fitted)
-#> [1] 0.6626473
+#> [1] 0.6626505
 
 # Weighted AUC
 bal_model_auc(nhefs_weights, qsmk, .fitted, w_ate)
-#> [1] 0.5017247
+#> [1] 0.5017256
 ```

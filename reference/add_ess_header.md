@@ -34,6 +34,19 @@ add_ess_header(
 
 a 'gtsummary' table
 
+## Details
+
+The header statistics available to `header` are the ESS of the column
+(`n`), the total the columns are a share of (`N`), and that share (`p`).
+ESS is not additive, so the ESS of the whole sample is not the total
+that the group ESS values divide up. For a table with a
+`gtsummary::tbl_svysummary(by =)` variable, `N` is therefore the sum of
+the group ESS values and `p` is each group's share of that sum, whether
+or not the table also has an overall column from
+[`gtsummary::add_overall()`](https://www.danieldsjoberg.com/gtsummary/reference/add_overall.html).
+The overall column reports the ESS of the whole sample as both `n` and
+`N`, so its `p` is 1.
+
 ## Examples
 
 ``` r

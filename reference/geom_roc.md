@@ -62,9 +62,11 @@ geom_roc(
 
 - .focal_level:
 
-  The level of the outcome variable to consider as the treatment/event.
-  If `NULL` (default), uses the last level for factors or the maximum
-  value for numeric variables.
+  The level of the `exposure` aesthetic to treat as the event. Must be a
+  level the data actually takes; a declared factor level that no
+  observation takes is not accepted. If `NULL` (default), the last
+  observed level is used, which is the maximum value for numeric
+  exposures.
 
 - ...:
 
@@ -73,6 +75,16 @@ geom_roc(
 ## Value
 
 A ggplot2 layer.
+
+## Details
+
+A curve compares two exposure levels, so each curve is drawn from the
+rows that share an aesthetic signature, with the exposure level excluded
+from that signature. Mapping `group` explicitly makes each group a curve
+of its own, which keeps long data holding several weighting schemes from
+being pooled into a single curve. A group that holds only one observed
+exposure level is dropped with a warning, and the remaining curves are
+still drawn.
 
 ## See also
 

@@ -151,6 +151,18 @@ geom_mirror_density(
 
 a geom
 
+## Details
+
+A mirrored density plot draws one group above the axis and the other
+below it, so a panel holding three or more groups has no partial plot to
+fall back on. That is an error, `halfmoon_group_error`, rather than a
+dropped group. It is a deliberate difference from
+[`geom_roc()`](https://r-causal.github.io/halfmoon/reference/geom_roc.md)
+and
+[`geom_qq2()`](https://r-causal.github.io/halfmoon/reference/geom_qq2.md),
+where each group is drawn on its own and one that cannot be drawn is
+warned about and skipped.
+
 ## See also
 
 Other ggplot2 functions:

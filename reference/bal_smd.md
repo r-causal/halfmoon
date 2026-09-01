@@ -45,9 +45,12 @@ bal_smd(
 
 ## Value
 
-A numeric value representing the standardized mean difference. Positive
-values indicate the comparison group has a higher mean than the
-reference group.
+For a binary exposure, a numeric value: the standardized mean difference
+of the comparison group minus the reference group. Positive values
+indicate the comparison group has a higher mean than the reference
+group. For a categorical exposure, a named numeric vector with one
+element per non-reference level, named `X_vs_ref`, holding level `X`
+minus the reference level.
 
 ## Details
 
@@ -84,15 +87,16 @@ Other balance functions:
 ``` r
 # Binary exposure
 bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
-#> [1] -0.2822208
+#> [1] 0.2822208
 
 # With weights
 bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
         .weights = nhefs_weights$w_ate)
-#> [1] 0.009030294
+#> [1] -0.009030294
 
-# Categorical exposure (returns named vector)
-bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+# Categorical exposure (returns named vector). This exposure has missing
+# values, so `na.rm = TRUE` is needed for a non-missing result.
+bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>             -0.4101980             -0.6853829             -0.6122164 
 #>          daily_vs_none 
@@ -100,15 +104,15 @@ bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 
 # Specify reference level
 bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-        .reference_level = "daily")
+        .reference_level = "daily", na.rm = TRUE)
 #>           none_vs_daily lt_12_per_year_vs_daily  1_4_per_month_vs_daily 
-#>             -0.33378882              0.07250964              0.32898774 
+#>              0.33378882             -0.07250964             -0.32898774 
 #>   2_3_per_week_vs_daily 
 #>             -0.26514253 
 
 # With categorical weights
 bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-        .weights = nhefs_weights$w_cat_ate)
+        .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>            -0.07400341            -0.08935937            -0.06519465 
 #>          daily_vs_none 

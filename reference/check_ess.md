@@ -13,7 +13,8 @@ check_ess(
   .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
-  tile_labels = NULL
+  tile_labels = NULL,
+  na.rm = FALSE
 )
 ```
 
@@ -50,6 +51,12 @@ check_ess(
   Optional character vector of labels for the quantile groups when
   `.exposure` is continuous. If NULL, uses "Q1", "Q2", etc.
 
+- na.rm:
+
+  Logical. If `FALSE` (default), a missing weight makes the effective
+  sample size for that weighting method `NA`. If `TRUE`, observations
+  with a missing weight are dropped before computation.
+
 ## Value
 
 A tibble with columns:
@@ -60,11 +67,15 @@ A tibble with columns:
 
 - group:
 
-  Character. The exposure level (if `.exposure` is provided).
+  The exposure level, present only when `.exposure` is provided. It
+  keeps the type of `.exposure`, so a factor exposure gives a factor and
+  a numeric one gives a numeric. A continuous exposure is cut into
+  quantile groups, which gives a factor of `tile_labels`.
 
 - n:
 
-  Integer. The number of observations in the group.
+  Integer. The number of observations in the group whose weight is not
+  missing.
 
 - ess:
 
@@ -72,7 +83,7 @@ A tibble with columns:
 
 - ess_pct:
 
-  Numeric. ESS as a percentage of the actual sample size.
+  Numeric. ESS as a percentage of `n`.
 
 ## Details
 
@@ -93,6 +104,15 @@ exposure level:
   (using
   [`dplyr::ntile()`](https://dplyr.tidyverse.org/reference/ntile.html))
   and ESS is computed within each quantile
+
+A missing weight is a weight of unknown size, so with `na.rm = FALSE`,
+the default, `ess` and `ess_pct` are `NA` for a weighting method that
+has any missing weight. With `na.rm = TRUE`, the observations with a
+missing weight are dropped. Either way, `n` counts the observations
+whose weight is not missing, which is what `ess` is a share of, so
+`ess_pct` compares the effective sample size against the sample it was
+computed from. `n` therefore differs across weighting methods when they
+are missing for different observations.
 
 The function returns results in a tidy format suitable for plotting or
 further analysis.
@@ -160,7 +180,7 @@ check_ess(nhefs_weights, .weights = w_cat_ate, .exposure = alcoholfreq_cat)
 #>  9 w_cat_ate 1_4_per_month    494 452.     91.6
 #> 10 w_cat_ate 2_3_per_week     219 181.     82.8
 #> 11 w_cat_ate daily            325 246.     75.7
-#> 12 w_cat_ate NA                 5 NaN     NaN  
+#> 12 w_cat_ate NA                 0  NA      NA  
 
 # ESS by quartiles of a continuous variable
 check_ess(nhefs_weights, .weights = w_ate, .exposure = age, n_tiles = 4)
@@ -197,4 +217,14 @@ check_ess(nhefs_weights, .weights = w_ate, .exposure = qsmk,
 #>   <chr>  <fct> <int> <dbl>   <dbl>
 #> 1 w_ate  0      1163 1129.    97.0
 #> 2 w_ate  1       403  326.    80.9
+
+# Drop observations with a missing weight
+weights_with_na <- nhefs_weights
+weights_with_na$w_ate[1:5] <- NA
+check_ess(weights_with_na, .weights = w_ate, na.rm = TRUE)
+#> # A tibble: 2 × 4
+#>   method       n   ess ess_pct
+#>   <chr>    <int> <dbl>   <dbl>
+#> 1 observed  1566 1566    100  
+#> 2 w_ate     1561 1010.    64.7
 ```

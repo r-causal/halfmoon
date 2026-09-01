@@ -17,6 +17,7 @@ plot_model_calibration(
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -35,6 +36,7 @@ plot_model_calibration(
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -53,6 +55,7 @@ plot_model_calibration(
   .focal_level = NULL,
   method = "breaks",
   bins = 10,
+  binning_method = c("equal_width", "quantile"),
   smooth = TRUE,
   conf_level = 0.95,
   window_size = 0.1,
@@ -98,8 +101,8 @@ plot_model_calibration(
 - .focal_level:
 
   Value indicating which level of `.exposure` represents treatment. If
-  NULL (default), uses the last level for factors or max value for
-  numeric.
+  NULL (default), uses the last observed level, resolved once for the
+  whole data.
 
 - method:
 
@@ -108,6 +111,13 @@ plot_model_calibration(
 - bins:
 
   Integer \>1; number of bins for the "breaks" method.
+
+- binning_method:
+
+  Character; how the "breaks" method places its bins, either
+  "equal_width" (default) for bins of equal width on the predicted
+  probability scale or "quantile" for bins holding equal numbers of
+  observations. Ignored by the other methods.
 
 - smooth:
 

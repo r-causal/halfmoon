@@ -79,6 +79,7 @@ plot_df <- check_balance(
   .weights = c(w_ate, w_att, w_atm, w_ato),
   .metrics = "smd"
 )
+#> ℹ Treating `.exposure` as binary
 
 ggplot(
   plot_df,
@@ -164,6 +165,7 @@ balance_results <- check_balance(
   .weights = c(w_ate, w_att, w_atm, w_ato),
   .metrics = c("smd", "vr", "ks", "energy")
 )
+#> ℹ Treating `.exposure` as binary
 
 # Visualize balance across metrics
 ggplot(balance_results, aes(x = abs(estimate), y = variable)) +
@@ -218,6 +220,7 @@ match_smd <- check_balance(
   .exposure = treat,
   .metrics = "smd"
 )
+#> ℹ Treating `.exposure` as binary
 
 plot_balance(match_smd)
 ```
@@ -258,6 +261,7 @@ many_matched_smds <- check_balance(
   .weights = c(m.out1, m.out2),
   .metrics = "smd"
 )
+#> ℹ Treating `.exposure` as binary
 
 plot_balance(many_matched_smds)
 ```

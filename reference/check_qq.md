@@ -53,13 +53,16 @@ check_qq(
 
 - .reference_level:
 
-  The reference treatment level to use for comparisons. If `NULL`
-  (default), uses the last level for factors or the maximum value for
-  numeric variables.
+  The level of `.exposure` to treat as the reference, the unexposed
+  group whose quantiles are returned in `unexposed_quantiles`. Either a
+  level of `.exposure` or its position among the observed levels. If
+  `NULL` (default), the first observed level is used.
 
 - na.rm:
 
-  Logical; if TRUE, drop NA values before computation.
+  Logical. If `FALSE` (default), missing values in `.var`, `.exposure`,
+  or any weight raise an error. If `TRUE`, rows with missing values are
+  dropped before computation.
 
 ## Value
 
@@ -75,19 +78,24 @@ A tibble with class "halfmoon_qq" containing columns:
 
 - exposed_quantiles:
 
-  Numeric. The quantile value for the exposed group.
+  Numeric. The quantile value for the exposed group, the level of
+  `.exposure` that is not the reference level.
 
 - unexposed_quantiles:
 
-  Numeric. The quantile value for the unexposed group.
+  Numeric. The quantile value for the unexposed group, the reference
+  level of `.exposure`.
 
 ## Details
 
 This function computes the data needed for quantile-quantile plots by
-calculating corresponding quantiles from two distributions. The
-computation uses the inverse of the empirical cumulative distribution
-function (ECDF). For weighted data, it first computes the weighted ECDF
-and then inverts it to obtain quantiles.
+calculating corresponding quantiles from two distributions. Unweighted
+quantiles come from
+[`stats::quantile()`](https://rdrr.io/r/stats/quantile.html); weighted
+quantiles come from
+[`weighted_quantile()`](https://r-causal.github.io/halfmoon/reference/weighted_quantile.md),
+which uses the same definition, so a constant weight reproduces the
+observed quantiles.
 
 ## See also
 

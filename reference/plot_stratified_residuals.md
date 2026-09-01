@@ -3,7 +3,7 @@
 Create diagnostic plots to assess differences between .exposure group
 after adjustment. This function plots residuals from an outcome model
 against propensity scores (or fitted values), stratified by .exposure
-group, to reveal model mis-specification.
+group, to reveal model misspecification.
 
 ## Usage
 

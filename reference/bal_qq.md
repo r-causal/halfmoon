@@ -45,14 +45,16 @@ bal_qq(
 
 - .reference_level:
 
-  The reference group level for comparisons. Can be either a group level
-  value or a numeric index. If `NULL` (default), uses the first level.
+  The level of `.exposure` to treat as the reference, the unexposed
+  group whose quantiles are returned in `unexposed_quantiles`. Either a
+  level of `.exposure` or its position among the observed levels. If
+  `NULL` (default), the first observed level is used.
 
 - na.rm:
 
-  A logical value indicating whether to remove missing values before
-  computation. If `FALSE` (default), missing values in the input will
-  produce `NA` in the output.
+  Logical. If `FALSE` (default), missing values in `.var`, `.exposure`,
+  or `.weights` raise an error. If `TRUE`, rows with missing values are
+  dropped before computation.
 
 ## Value
 
@@ -64,19 +66,24 @@ A tibble with columns:
 
 - exposed_quantiles:
 
-  Numeric. The quantile value for the exposed group.
+  Numeric. The quantile value for the exposed group, the level of
+  `.exposure` that is not the reference level.
 
 - unexposed_quantiles:
 
-  Numeric. The quantile value for the unexposed group.
+  Numeric. The quantile value for the unexposed group, the reference
+  level of `.exposure`.
 
 ## Details
 
 This function computes the data needed for quantile-quantile plots by
-calculating corresponding quantiles from two distributions. The
-computation uses the inverse of the empirical cumulative distribution
-function (ECDF). For weighted data, it first computes the weighted ECDF
-and then inverts it to obtain quantiles.
+calculating corresponding quantiles from two distributions. Unweighted
+quantiles come from
+[`stats::quantile()`](https://rdrr.io/r/stats/quantile.html); weighted
+quantiles come from
+[`weighted_quantile()`](https://r-causal.github.io/halfmoon/reference/weighted_quantile.md),
+which uses the same definition, so a constant weight reproduces the
+observed quantiles.
 
 When the distributions of a variable are similar between treatment
 groups (indicating good balance), the QQ plot points will lie close to
@@ -129,16 +136,16 @@ bal_qq(nhefs_weights, age, qsmk, .weights = w_ate)
 #> # A tibble: 99 × 3
 #>    quantile exposed_quantiles unexposed_quantiles
 #>       <dbl>             <dbl>               <dbl>
-#>  1     0.01              25                    25
-#>  2     0.02              25                    25
-#>  3     0.03              25.3                  25
-#>  4     0.04              26                    26
-#>  5     0.05              26                    26
-#>  6     0.06              26                    26
-#>  7     0.07              27                    27
-#>  8     0.08              27                    27
-#>  9     0.09              28                    27
-#> 10     0.1               28                    28
+#>  1     0.01                25                25  
+#>  2     0.02                25                25  
+#>  3     0.03                26                25  
+#>  4     0.04                26                26  
+#>  5     0.05                26                26  
+#>  6     0.06                26                26  
+#>  7     0.07                27                27  
+#>  8     0.08                27                27  
+#>  9     0.09                28                27.1
+#> 10     0.1                 28                28  
 #> # ℹ 89 more rows
 
 # Custom quantiles
@@ -149,8 +156,8 @@ bal_qq(nhefs_weights, age, qsmk, .weights = w_ate,
 #>      <dbl>             <dbl>               <dbl>
 #> 1      0.1              28                    28
 #> 2      0.2              32                    31
-#> 3      0.3              34.1                  35
-#> 4      0.4              39                    39
+#> 3      0.3              34.8                  35
+#> 4      0.4              39.1                  39
 #> 5      0.5              43                    43
 #> 6      0.6              47                    47
 #> 7      0.7              51                    50

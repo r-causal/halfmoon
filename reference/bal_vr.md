@@ -46,9 +46,12 @@ bal_vr(
 
 ## Value
 
-A numeric value representing the variance ratio. Values greater than 1
-indicate the comparison group has higher variance than the reference
-group.
+For a binary exposure, a numeric value representing the variance ratio.
+Values greater than 1 indicate the comparison group has higher variance
+than the reference group. For a categorical exposure, a named numeric
+vector with one element per non-reference level, named `X_vs_ref`,
+holding the variance of level `X` divided by the variance of the
+reference level.
 
 ## Details
 
@@ -98,8 +101,9 @@ bal_vr(nhefs_weights$wt71, nhefs_weights$qsmk,
        .weights = nhefs_weights$w_ate)
 #> [1] 1.000901
 
-# Categorical exposure (returns named vector)
-bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+# Categorical exposure (returns named vector). This exposure has missing
+# values, so `na.rm = TRUE` is needed for a non-missing result.
+bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>               1.271705               1.223574               1.295637 
 #>          daily_vs_none 
@@ -107,7 +111,7 @@ bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
 
 # Specify reference level
 bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-       .reference_level = "2_3_per_week")
+       .reference_level = "2_3_per_week", na.rm = TRUE)
 #>           none_vs_2_3_per_week lt_12_per_year_vs_2_3_per_week 
 #>                      0.7718213                      0.9815290 
 #>  1_4_per_month_vs_2_3_per_week          daily_vs_2_3_per_week 
@@ -115,7 +119,7 @@ bal_vr(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
 
 # With categorical weights
 bal_vr(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-       .weights = nhefs_weights$w_cat_ate)
+       .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 #> lt_12_per_year_vs_none  1_4_per_month_vs_none   2_3_per_week_vs_none 
 #>              0.8819113              0.8610861              0.8629089 
 #>          daily_vs_none 

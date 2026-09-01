@@ -58,9 +58,11 @@ stat_roc(
 
 - .focal_level:
 
-  The level of the outcome variable to consider as the treatment/event.
-  If `NULL` (default), uses the last level for factors or the maximum
-  value for numeric variables.
+  The level of the `exposure` aesthetic to treat as the event. Must be a
+  level the data actually takes; a declared factor level that no
+  observation takes is not accepted. If `NULL` (default), the last
+  observed level is used, which is the maximum value for numeric
+  exposures.
 
 - ...:
 

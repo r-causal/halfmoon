@@ -17,6 +17,7 @@ geom_ecdf(
   n = NULL,
   pad = TRUE,
   na.rm = FALSE,
+  orientation = NA,
   show.legend = NA,
   inherit.aes = TRUE
 )
@@ -142,6 +143,11 @@ geom_ecdf(
   If `FALSE` (the default), removes missing values with a warning. If
   `TRUE` silently removes missing values.
 
+- orientation:
+
+  The axis the curve runs along, `"x"` or `"y"`. Defaults to `NA`, which
+  reads the orientation from the aesthetics the layer is given.
+
 - show.legend:
 
   logical. Should this layer be included in the legends? `NA`, the
@@ -184,6 +190,10 @@ Choose ECDF plots when you want to see the full cumulative distribution
 or when comparing multiple groups simultaneously. Choose QQ plots when
 you want to directly compare two groups with an easy-to-interpret
 45-degree reference line.
+
+`geom_ecdf()` supports both orientations. Mapping the variable to `y`,
+or passing `orientation = "y"`, computes the same weighted curve and
+draws it across the panel instead of up it.
 
 ## Aesthetics
 

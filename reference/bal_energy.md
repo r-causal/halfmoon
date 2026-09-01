@@ -18,6 +18,7 @@ bal_energy(
   standardized = TRUE,
   criterion = c("dependence", "dcor"),
   dimension_adj = TRUE,
+  exposure_type = c("auto", "binary", "categorical", "continuous"),
   na.rm = FALSE
 )
 ```
@@ -32,7 +33,12 @@ bal_energy(
 
   A vector (factor or numeric) indicating group membership. For binary
   and multi-category treatments, must have 2+ unique levels. For
-  continuous treatments, should be numeric.
+  continuous treatments, should be numeric. When `exposure_type` is
+  `"auto"`, a numeric exposure taking more than ten unique values is
+  treated as continuous and returns the continuous-exposure statistic
+  instead of an energy distance between groups; set `exposure_type` or
+  wrap the exposure in [`factor()`](https://rdrr.io/r/base/factor.html)
+  to force the categorical reading.
 
 - .weights:
 
@@ -46,21 +52,27 @@ bal_energy(
   - NULL (default): Pure between-group energy distance comparing
     distributions
 
-  - "ATE": Energy distance weighted to reflect balance for estimating
-    average treatment effects across the entire population
+  - "ATE": Energy distance between each weighted group and the
+    unweighted full sample, the target population of an average
+    treatment effect
 
-  - "ATT": Energy distance weighted to reflect balance for the treated
-    .exposure, measuring how well controls match the treated
-    distribution
+  - "ATT": Energy distance between each weighted group and the
+    unweighted focal group, measuring how well the other groups match
+    the treated distribution
 
-  - "ATC": Energy distance weighted to reflect balance for the control
-    .exposure, measuring how well treated units match the control
-    distribution For continuous treatments, only NULL is supported.
+  - "ATC": The same statistic with the control group as the focal group,
+    measuring how well the treated units match the control distribution
+    For continuous treatments, only NULL is supported.
 
 - .focal_level:
 
-  The treatment level for ATT/ATC. If `NULL` (default), automatically
-  determined based on estimand.
+  The treatment level whose unweighted distribution is the target for
+  `estimand = "ATT"` or `estimand = "ATC"`. Must name a level the
+  exposure takes. If `NULL` (default), the last observed level for
+  `"ATT"` and the first observed level for `"ATC"`, which on a 0/1
+  exposure are the level `1` and the level `0`. Only `"ATT"` and `"ATC"`
+  have a focal group, so supplying `.focal_level` with any other
+  `estimand` is an error.
 
 - use_improved:
 
@@ -93,17 +105,30 @@ bal_energy(
   only the default; `dimension_adj = FALSE` with a non-continuous
   exposure is an error.
 
+- exposure_type:
+
+  The type of exposure `.exposure` holds: one of "binary",
+  "categorical", or "continuous", or "auto" (default) to read the type
+  from the exposure. "binary" and "categorical" name the same energy
+  distance between groups. Under "auto", a numeric exposure taking more
+  than ten unique values is treated as continuous and anything else as
+  categorical.
+
 - na.rm:
 
   A logical value indicating whether to remove missing values before
-  computation. If `FALSE` (default), missing values result in an error
-  (energy distance cannot be computed with missing data).
+  computation. If `FALSE` (default), a missing value in the covariates,
+  the exposure, or the weights returns `NA`. If `TRUE`, rows with
+  missing values are dropped before computation.
 
 ## Value
 
-A numeric value. For binary and multi-category exposures, the energy
-distance between groups, where lower values indicate better balance and
-0 indicates identical distributions. For a continuous exposure with
+A numeric value, or `NA_real_` when `na.rm = FALSE` and the covariates,
+the exposure, or the weights contain missing values, and also when
+`na.rm = TRUE` leaves no rows to compute on. For binary and
+multi-category exposures, the energy distance between groups, where
+lower values indicate better balance and 0 indicates identical
+distributions. For a continuous exposure with
 `criterion = "dependence"`, the weighted dependence distance \\D(w)\\,
 which is 0 if and only if the weighted joint distribution of the
 exposure and covariates factorizes into their unweighted marginals;
@@ -117,6 +142,14 @@ Energy distance is based on the energy statistics framework (Székely &
 Rizzo, 2004) and implemented following Huling & Mak (2024) and Huling et
 al. (2024). The calculation uses a quadratic form: \\w^T P w + q^T w +
 k\\, where the components depend on the estimand.
+
+An estimand names a target distribution that the weighted groups are
+compared against, and that target is always an unweighted distribution
+of the sample at hand: the whole sample for `"ATE"`, and the focal group
+for `"ATT"` and `"ATC"`. Weighting the target as well would compare the
+weighted groups against themselves, which no weighting could fail. With
+uniform weights `"ATT"` and `"ATC"` therefore reduce to the
+between-group energy distance.
 
 For binary variables in the .covariates, variance is calculated as
 p(1-p) rather than sample variance to prevent over-weighting.
@@ -138,10 +171,16 @@ argument controls the relative weighting of the two marginal energy
 terms.
 
 `criterion = "dcor"` instead returns cobalt's `distance.cor` balance
-statistic, a weighted-variance-scaled distance correlation (or, with
+statistic, a variance-scaled distance correlation (or, with
 `standardized = FALSE`, the corresponding square-root distance
 covariance). This is a descriptive balance summary rather than a measure
-of weighted dependence.
+of weighted dependence. The weights enter only the quadratic form that
+evaluates the dependence; the variances the distances are scaled by and
+the denominator that standardizes them describe the sample and are
+computed unweighted, so the value matches
+`cobalt::bal.compute(cobalt::bal.init(x, treat, stat = "distance.cor"), weights = w)`.
+Following that reference implementation, a distance covariance that is
+not positive, which a covariate with no variation produces, reports 0.
 
 ## References
 

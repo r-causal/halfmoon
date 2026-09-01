@@ -22,7 +22,7 @@ check_model_calibration(
   window_size = 0.1,
   step_size = window_size/2,
   k = 10,
-  na.rm = FALSE
+  na.rm = TRUE
 )
 ```
 
@@ -85,7 +85,9 @@ check_model_calibration(
 
 - na.rm:
 
-  Logical; if `TRUE`, drop `NA` values before summarizing.
+  Logical; if `TRUE` (the default), rows with a missing `.fitted` or
+  `.exposure` value are dropped before summarizing. If `FALSE` and any
+  such value is missing, the function raises `halfmoon_na_error`.
 
 ## Value
 
@@ -115,6 +117,12 @@ A tibble with columns:
 
   - `upper`: upper bound of CI
 
+## Details
+
+`.exposure` must have exactly two observed levels. The default
+`.focal_level` is the last observed level, so declared factor levels
+that no observation takes are ignored rather than treated as the event.
+
 ## Examples
 
 ``` r
@@ -136,7 +144,7 @@ check_model_calibration(nhefs_weights, .fitted, qsmk)
 #>  7     7         0.516         0.511     45 0.360  0.661
 #>  8     8         0.591         0.773     22 0.542  0.913
 #>  9     9         0.648         0.375      8 0.102  0.741
-#> 10    10         0.738         1          3 1      1    
+#> 10    10         0.738         1          3 0.310  1    
 
 # Logistic method with smoothing
 check_model_calibration(nhefs_weights, .fitted, qsmk, method = "logistic")
@@ -177,6 +185,6 @@ check_model_calibration(nhefs_weights, .fitted, qsmk, method = "windowed")
 #> 12           0.6         0.724  0.525  0.866
 #> 13           0.65        0.625  0.359  0.837
 #> 14           0.7         0.6    0.170  0.927
-#> 15           0.75        1      1      1    
-#> 16           0.8         1      1      1    
+#> 15           0.75        1      0.310  1    
+#> 16           0.8         1      0.0546 1    
 ```

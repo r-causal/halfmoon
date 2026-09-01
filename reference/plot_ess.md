@@ -21,7 +21,8 @@ plot_ess(
   label_size = 3,
   percent_scale = TRUE,
   reference_line_color = "gray50",
-  reference_line_type = "dashed"
+  reference_line_type = "dashed",
+  na.rm = FALSE
 )
 ```
 
@@ -94,6 +95,12 @@ plot_ess(
 - reference_line_type:
 
   Line type for the reference line. Default is "dashed".
+
+- na.rm:
+
+  Logical. If `FALSE` (default), a missing weight makes the effective
+  sample size for that weighting method `NA`. If `TRUE`, observations
+  with a missing weight are dropped before computation.
 
 ## Value
 
