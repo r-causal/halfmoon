@@ -26,6 +26,10 @@
 #'   \item **Correlation**: For continuous exposures, measures association with
 #'     covariates. Its facet draws a reference line at 0, the value weighting
 #'     aims for.
+#'   \item **Reference lines**: Each metric is balanced at its own value, so a
+#'     reference line is drawn in the facet of the metric it belongs to. The SMD
+#'     facet takes a line at `vline_xintercept`, whether or not other metrics
+#'     are shown, and `vline_xintercept = NULL` leaves it out.
 #'   \item **Energy**: Multivariate balance metric applied to all variables
 #'     simultaneously.
 #' }
@@ -37,6 +41,10 @@
 #'   "free" to allow different scales for different metrics. Options are
 #'   "fixed", "free_x", "free_y", or "free".
 #' @inheritParams tidysmd::geom_love
+#' @param vline_xintercept The balance threshold marked in the SMD facet.
+#'   Defaults to 0.1. `NULL` draws no threshold.
+#' @param vline_color Color of the reference lines. Defaults to `"grey70"`.
+#' @param vlinewidth Width of the reference lines. Defaults to 0.6.
 #' @return A ggplot2 object
 #' @family balance functions
 #' @seealso [check_balance()] for computing balance metrics, [geom_love()] for
@@ -59,8 +67,11 @@
 #' # With fixed scales across facets
 #' plot_balance(balance_data, facet_scales = "fixed")
 #'
-#' # Customize threshold lines
+#' # Customize the threshold marked in the SMD facet
 #' plot_balance(balance_data, vline_xintercept = 0.05)
+#'
+#' # Or leave the threshold out
+#' plot_balance(balance_data, vline_xintercept = NULL)
 #'
 #' # Categorical exposure example
 #' # Automatically uses facet_grid to show each group comparison
@@ -170,32 +181,44 @@ plot_balance <- function(
   # Compute unique metrics once to avoid redundant computation
   unique_metrics <- unique(.df$metric)
 
-  # Determine if we should show vline (only for SMD when it's the only metric)
-  show_vline <- "smd" %in% unique_metrics && length(unique_metrics) == 1
+  # Each metric is balanced at its own value: an SMD against the threshold, a
+  # correlation against zero. Giving a line the rows of the metric it belongs
+  # to keeps it in that metric's facet, so the threshold still reaches the SMD
+  # facet of a plot that shows several metrics.
+  # `geom_vline()` never inherits the plot's aesthetics, so it takes no
+  # `inherit.aes` argument of its own
+  reference_lines <- dplyr::bind_rows(
+    if ("smd" %in% unique_metrics && !is.null(vline_xintercept)) {
+      tibble::tibble(metric = "smd", xintercept = vline_xintercept)
+    },
+    if ("correlation" %in% unique_metrics) {
+      tibble::tibble(metric = "correlation", xintercept = 0)
+    }
+  )
 
-  # A correlation is balanced at 0 rather than at the SMD threshold, so it gets
-  # its own reference line, restricted to its own facet
-  if ("correlation" %in% unique_metrics) {
+  if (nrow(reference_lines) > 0) {
     p <- p +
       ggplot2::geom_vline(
-        data = tibble::tibble(metric = "correlation", xintercept = 0),
+        data = reference_lines,
         mapping = ggplot2::aes(xintercept = .data$xintercept),
         color = vline_color,
-        linewidth = vlinewidth,
-        inherit.aes = FALSE
+        linewidth = vlinewidth
       )
   }
 
-  # Add geom_love for non-energy metrics
+  # Add geom_love for non-energy metrics. Its own reference line spans every
+  # facet and cannot be turned off without leaving an empty layer behind, so
+  # the lines above stand in for it.
+  love_layers <- geom_love(
+    data = function(x) dplyr::filter(x, metric != "energy"),
+    linewidth = linewidth,
+    point_size = point_size,
+    vline_color = vline_color,
+    vlinewidth = vlinewidth
+  )
+
   p <- p +
-    geom_love(
-      data = function(x) dplyr::filter(x, metric != "energy"),
-      linewidth = linewidth,
-      point_size = point_size,
-      vline_xintercept = if (show_vline) vline_xintercept else NULL,
-      vline_color = vline_color,
-      vlinewidth = vlinewidth
-    )
+    purrr::discard(love_layers, \(layer) inherits(layer$geom, "GeomVline"))
 
   # Add points for energy metric (no lines since only one point per method)
   if ("energy" %in% unique_metrics) {

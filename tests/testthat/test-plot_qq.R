@@ -3,9 +3,68 @@ test_that("plot_qq creates basic QQ plot", {
 
   expect_s3_class(p, "ggplot")
   expect_equal(length(p$layers), 2) # points + abline
-  # With NULL .focal_level, uses last level (1) as reference
+  # With NULL .reference_level, the first observed level (0) is the reference
+  # group and goes on the x axis
+  expect_equal(p$labels$x, "age (qsmk = 0)")
+  expect_equal(p$labels$y, "age (qsmk = 1)")
+})
+
+test_that("plot_qq puts the reference group on the x axis", {
+  p <- plot_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .reference_level = 1,
+    quantiles = c(0.25, 0.5, 0.75)
+  )
+
   expect_equal(p$labels$x, "age (qsmk = 1)")
   expect_equal(p$labels$y, "age (qsmk = 0)")
+
+  qq <- bal_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .reference_level = 1,
+    quantiles = c(0.25, 0.5, 0.75)
+  )
+  built <- ggplot2::layer_data(p, 1)
+  expect_equal(built$x, qq$unexposed_quantiles)
+  expect_equal(built$y, qq$exposed_quantiles)
+})
+
+test_that("plot_qq methods agree on point coordinates", {
+  quantiles <- c(0.1, 0.5, 0.9)
+  p_default <- plot_qq(nhefs_weights, age, qsmk, quantiles = quantiles)
+  p_qq <- plot_qq(check_qq(nhefs_weights, age, qsmk, quantiles = quantiles))
+
+  expect_equal(
+    ggplot2::layer_data(p_default, 1)[, c("x", "y")],
+    ggplot2::layer_data(p_qq, 2)[, c("x", "y")]
+  )
+})
+
+test_that("plot_qq uses observed exposure levels", {
+  df <- data.frame(
+    x = c(1:10, 21:30),
+    g = factor(rep(c("a", "b"), each = 10), levels = c("a", "b", "c"))
+  )
+  dropped <- df
+  dropped$g <- droplevels(dropped$g)
+
+  expect_equal(
+    ggplot2::layer_data(plot_qq(df, x, g, quantiles = c(0.25, 0.75)), 1),
+    ggplot2::layer_data(plot_qq(dropped, x, g, quantiles = c(0.25, 0.75)), 1)
+  )
+
+  one_level <- data.frame(
+    x = 1:10,
+    g = factor(rep("a", 10), levels = c("a", "b"))
+  )
+  expect_halfmoon_error(
+    plot_qq(one_level, x, g),
+    "halfmoon_group_error"
+  )
 })
 
 test_that("plot_qq works with weights", {
@@ -88,26 +147,6 @@ test_that("plot_qq errors with non-binary groups", {
   )
 })
 
-test_that("weighted_quantile works correctly", {
-  # Test with simple data
-  values <- 1:10
-  weights <- rep(1, 10)
-  quantiles <- c(0.25, 0.5, 0.75)
-
-  result <- weighted_quantile(values, quantiles, .weights = weights)
-  # With equal weights, should be close to regular quantiles
-  # but not exactly equal due to interpolation method
-  expected <- stats::quantile(values, quantiles)
-  expect_equal(result, c(2.5, 5, 7.5))
-
-  # Test with non-uniform weights
-  weights <- c(rep(1, 5), rep(2, 5))
-  result <- weighted_quantile(values, quantiles, .weights = weights)
-
-  # Should be weighted towards higher values
-  expect_true(all(result > c(2.5, 5, 7.5)))
-})
-
 test_that("plot_qq handles NA values", {
   # Add some NA values
   df <- nhefs_weights
@@ -157,4 +196,12 @@ test_that("plot_qq visual regression tests", {
     "qq plot propensity score",
     plot_qq(nhefs_weights, .fitted, qsmk, .weights = w_ate)
   )
+})
+
+test_that("plot_qq leaves the theme to the user", {
+  from_data <- plot_qq(nhefs_weights, age, qsmk)
+  from_object <- plot_qq(check_qq(nhefs_weights, age, qsmk))
+
+  expect_length(from_data$theme, 0)
+  expect_length(from_object$theme, 0)
 })

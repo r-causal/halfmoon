@@ -42,8 +42,9 @@
 #' @param alpha Numeric; transparency level for fills. Default is 0.6.
 #' @param na.rm Logical; if TRUE, drop NA values before plotting.
 #' @param .reference_level The reference group level for categorical exposures (>2 levels).
-#'   Can be a string (group level) or numeric (position). Defaults to 1 (first level).
-#'   Only used when .exposure has more than 2 levels.
+#'   Can be a string (group level) or numeric (position among the observed
+#'   levels). Defaults to the first observed level. Only used when .exposure has
+#'   more than 2 levels.
 #' @param facet_scales Character. Scale specification for facets. Defaults to
 #'   "fixed" to match ggplot2's default behavior. Options are
 #'   "fixed", "free_x", "free_y", or "free". Use "free_y" to allow different
@@ -136,7 +137,7 @@ plot_mirror_distributions <- function(
   validate_column_exists(.data, var_name, ".var")
   validate_column_exists(.data, group_name, ".exposure")
 
-  if (!na.rm && any(is.na(.data[[var_name]]))) {
+  if (!na.rm && anyNA(.data[[var_name]])) {
     abort(
       "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
       error_class = "halfmoon_na_error",
@@ -146,8 +147,9 @@ plot_mirror_distributions <- function(
 
   group_var <- .data[[group_name]]
 
-  # Check if we have a categorical exposure (>2 levels)
-  # Always use actual unique values in the data, not factor levels
+  # Check if we have a categorical exposure (>2 levels). Levels are the
+  # OBSERVED levels, so a declared factor level that no observation takes is
+  # neither counted here nor eligible as the reference group.
   group_levels <- sort(unique(group_var[!is.na(group_var)]))
   if (is.factor(group_var)) {
     # Convert to character to ensure proper comparison
@@ -174,10 +176,7 @@ plot_mirror_distributions <- function(
       )
       comparison_df
     })
-  } else if (length(group_levels) == 2) {
-    # Binary exposure - no transformation needed
-    group_levels <- extract_group_levels(group_var, require_binary = TRUE)
-  } else {
+  } else if (length(group_levels) != 2) {
     abort(
       "Exposure variable must have at least two levels",
       error_class = "halfmoon_group_error"

@@ -1,7 +1,7 @@
 # Regression fixture for the default output of `check_balance()` with binary and
-# categorical exposures. The saved list pins the results a default call produced
-# before `check_balance()` resolved metrics from the exposure type, so the
-# accompanying test can show that type resolution leaves those results untouched.
+# categorical exposures. The saved list pins the results a default call produces,
+# so the accompanying test can show that resolving metrics from the exposure type
+# leaves those results untouched.
 # Regenerate only when a change to the default output is intended.
 
 pkgload::load_all(quiet = TRUE)
@@ -18,16 +18,20 @@ check_balance_defaults <- list(
     qsmk,
     .weights = c(w_ate, w_att)
   ),
+  # `alcoholfreq_cat` has missing values, so na.rm = TRUE keeps the categorical
+  # entries comparing estimates rather than comparing missing values
   categorical_observed = check_balance(
     nhefs_weights,
     c(age, wt71, sex),
-    alcoholfreq_cat
+    alcoholfreq_cat,
+    na.rm = TRUE
   ),
   categorical_weighted = check_balance(
     nhefs_weights,
     c(age, wt71, sex),
     alcoholfreq_cat,
-    .weights = c(w_cat_ate, w_cat_att_2_3wk)
+    .weights = c(w_cat_ate, w_cat_att_2_3wk),
+    na.rm = TRUE
   )
 )
 

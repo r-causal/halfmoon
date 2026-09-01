@@ -73,6 +73,7 @@ export(tidy_smd)
 export(weighted_quantile)
 importFrom(causalgenerics,ess)
 importFrom(ggplot2,autoplot)
+importFrom(propensity,is_psw)
 importFrom(rlang,
   "%||%",
   .data,

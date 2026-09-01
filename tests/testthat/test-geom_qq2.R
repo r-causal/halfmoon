@@ -118,6 +118,176 @@ test_that("plot_qq and geom_qq2 produce equivalent results", {
   expect_equal(data1, data2, tolerance = 1e-10)
 })
 
+test_that("stat_qq2 keeps weighting when some weights are missing", {
+  probs <- c(0.25, 0.5, 0.75)
+  df <- nhefs_weights
+  df$w <- as.numeric(df$w_ate)
+  df$w[1:5] <- NA
+  complete <- df[!is.na(df$w), ]
+
+  p <- ggplot2::ggplot(
+    df,
+    ggplot2::aes(sample = age, treatment = qsmk, weight = w)
+  ) +
+    geom_qq2(quantiles = probs)
+  built <- ggplot2::layer_data(p, 1)
+
+  expected <- check_qq(
+    complete,
+    age,
+    qsmk,
+    .weights = w,
+    include_observed = FALSE,
+    quantiles = probs
+  )
+  expect_equal(built$x, expected$unexposed_quantiles)
+  expect_equal(built$y, expected$exposed_quantiles)
+
+  # the weights are actually used, rather than silently discarded
+  unweighted <- check_qq(complete, age, qsmk, quantiles = probs)
+  expect_false(isTRUE(all.equal(built$y, unweighted$exposed_quantiles)))
+
+  # with na.rm = FALSE, dropped rows are reported
+  p_reported <- ggplot2::ggplot(
+    df,
+    ggplot2::aes(sample = age, treatment = qsmk, weight = w)
+  ) +
+    geom_qq2(quantiles = probs, na.rm = FALSE)
+  expect_warning(ggplot2::ggplot_build(p_reported), "Removed 5 rows")
+})
+
+test_that("stat_qq2 keeps an explicit group aesthetic separate", {
+  probs <- c(0.25, 0.5, 0.75)
+  long_data <- nhefs_weights |>
+    dplyr::mutate(dplyr::across(c(w_ate, w_att), as.numeric)) |>
+    tidyr::pivot_longer(
+      cols = c(w_ate, w_att),
+      names_to = "weight_type",
+      values_to = "weight"
+    )
+
+  grouped <- ggplot2::ggplot(
+    long_data,
+    ggplot2::aes(
+      sample = age,
+      treatment = qsmk,
+      weight = weight,
+      group = weight_type
+    )
+  ) +
+    geom_qq2(quantiles = probs)
+  coloured <- ggplot2::ggplot(
+    long_data,
+    ggplot2::aes(
+      sample = age,
+      treatment = qsmk,
+      weight = weight,
+      colour = weight_type
+    )
+  ) +
+    geom_qq2(quantiles = probs)
+
+  grouped_data <- ggplot2::layer_data(grouped, 1)
+  coloured_data <- ggplot2::layer_data(coloured, 1)
+
+  expect_equal(length(unique(grouped_data$group)), 2)
+  expect_equal(nrow(grouped_data), 2 * length(probs))
+  expect_equal(grouped_data[, c("x", "y")], coloured_data[, c("x", "y")])
+})
+
+test_that("stat_qq2 requires two observed treatment levels", {
+  df <- nhefs_weights
+  df$three_groups <- rep(1:3, length.out = nrow(df))
+
+  p <- ggplot2::ggplot(
+    df,
+    ggplot2::aes(sample = age, treatment = three_groups)
+  ) +
+    geom_qq2()
+
+  expect_error(
+    ggplot2::ggplot_build(p),
+    class = "halfmoon_group_error"
+  )
+})
+
+test_that("stat_qq2 skips a group without two treatment levels", {
+  probs <- c(0.25, 0.75)
+  df <- nhefs_weights
+  df$grp <- "both"
+  df$grp[df$qsmk == 1][1:50] <- "one"
+
+  p <- ggplot2::ggplot(
+    df,
+    ggplot2::aes(sample = age, treatment = qsmk, group = grp)
+  ) +
+    geom_qq2(quantiles = probs)
+
+  expect_warning(
+    built <- ggplot2::layer_data(p, 1),
+    class = "halfmoon_data_warning"
+  )
+
+  # the group that can be compared is still drawn
+  expected <- check_qq(
+    df[df$grp == "both", ],
+    age,
+    qsmk,
+    quantiles = probs
+  )
+  expect_equal(nrow(built), length(probs))
+  expect_equal(built$x, expected$unexposed_quantiles)
+  expect_equal(built$y, expected$exposed_quantiles)
+})
+
+test_that("the QQ functions agree on identical input", {
+  probs <- c(0.1, 0.5, 0.9)
+
+  from_bal <- bal_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .weights = w_ate,
+    quantiles = probs
+  )
+  from_check <- check_qq(
+    nhefs_weights,
+    age,
+    qsmk,
+    .weights = w_ate,
+    include_observed = FALSE,
+    quantiles = probs
+  )
+  from_geom <- ggplot2::layer_data(
+    ggplot2::ggplot(
+      nhefs_weights,
+      ggplot2::aes(sample = age, treatment = qsmk, weight = w_ate)
+    ) +
+      geom_qq2(quantiles = probs),
+    1
+  )
+  from_plot <- ggplot2::layer_data(
+    plot_qq(
+      nhefs_weights,
+      age,
+      qsmk,
+      .weights = w_ate,
+      include_observed = FALSE,
+      quantiles = probs
+    ),
+    1
+  )
+
+  expect_equal(from_bal$exposed_quantiles, from_check$exposed_quantiles)
+  expect_equal(from_bal$unexposed_quantiles, from_check$unexposed_quantiles)
+
+  # the reference (unexposed) group is on the x axis in every plot
+  expect_equal(from_geom$x, from_bal$unexposed_quantiles)
+  expect_equal(from_geom$y, from_bal$exposed_quantiles)
+  expect_equal(from_plot$x, from_bal$unexposed_quantiles)
+  expect_equal(from_plot$y, from_bal$exposed_quantiles)
+})
+
 # vdiffr visual regression tests
 test_that("geom_qq2 visual regression tests", {
   withr::local_seed(123)

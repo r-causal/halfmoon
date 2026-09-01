@@ -29,9 +29,12 @@ before computation. If \code{FALSE} (default), missing values in the input
 will produce \code{NA} in the output.}
 }
 \value{
-A numeric value representing the standardized mean difference.
-Positive values indicate the comparison group has a higher mean than
-the reference group.
+For a binary exposure, a numeric value: the standardized mean
+difference of the comparison group minus the reference group. Positive
+values indicate the comparison group has a higher mean than the reference
+group. For a categorical exposure, a named numeric vector with one element
+per non-reference level, named \code{X_vs_ref}, holding level \code{X} minus the
+reference level.
 }
 \description{
 Calculates the standardized mean difference between two groups using the
@@ -55,16 +58,17 @@ bal_smd(nhefs_weights$age, nhefs_weights$qsmk)
 bal_smd(nhefs_weights$wt71, nhefs_weights$qsmk,
         .weights = nhefs_weights$w_ate)
 
-# Categorical exposure (returns named vector)
-bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat)
+# Categorical exposure (returns named vector). This exposure has missing
+# values, so `na.rm = TRUE` is needed for a non-missing result.
+bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat, na.rm = TRUE)
 
 # Specify reference level
 bal_smd(nhefs_weights$age, nhefs_weights$alcoholfreq_cat,
-        .reference_level = "daily")
+        .reference_level = "daily", na.rm = TRUE)
 
 # With categorical weights
 bal_smd(nhefs_weights$wt71, nhefs_weights$alcoholfreq_cat,
-        .weights = nhefs_weights$w_cat_ate)
+        .weights = nhefs_weights$w_cat_ate, na.rm = TRUE)
 
 }
 \seealso{

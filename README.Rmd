@@ -11,6 +11,11 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+
+# Attaching halfmoon pulls in its dependencies, which report which of their
+# shared S3 methods won. That report depends on the order the packages happen
+# to be installed in, so it is kept out of the rendered README.
+suppressMessages(library(halfmoon))
 ```
 
 # halfmoon <img src="man/figures/logo.png" align="right" height="138" />

@@ -61,14 +61,15 @@ test_that("error messages show user-facing function names", {
     plot_stratified_residuals(model)
   )
 
-  # Test check_balance with wrong group levels
+  # Test check_balance with a single-level exposure
+  constant_exposure <- dplyr::mutate(nhefs_weights, constant_group = 1)
   expect_snapshot(
     error = TRUE,
     cnd_class = TRUE,
     check_balance(
-      nhefs_weights,
+      constant_exposure,
       .vars = age,
-      .group = rep(1, nrow(nhefs_weights))
+      .exposure = constant_group
     )
   )
 
@@ -86,13 +87,18 @@ test_that("error messages show user-facing function names", {
 
 test_that("validation errors show correct function context", {
   # Test numeric validation
+  character_exposure <- dplyr::mutate(
+    nhefs_weights,
+    qsmk_chr = as.character(qsmk)
+  )
   expect_snapshot(
     error = TRUE,
     cnd_class = TRUE,
     check_balance(
-      nhefs_weights,
+      character_exposure,
       .vars = age,
-      .group = "not_numeric"
+      .exposure = qsmk_chr,
+      exposure_type = "continuous"
     )
   )
 
@@ -103,7 +109,7 @@ test_that("validation errors show correct function context", {
     check_balance(
       data.frame(),
       .vars = age,
-      .group = qsmk
+      .exposure = qsmk
     )
   )
 })

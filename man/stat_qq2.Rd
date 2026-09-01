@@ -36,7 +36,10 @@ stat_qq2(
 
 \item{quantiles}{Numeric vector of quantiles to compute.}
 
-\item{.reference_level}{The reference treatment level to use for comparisons.}
+\item{.reference_level}{The level of the \code{treatment} aesthetic to treat as
+the reference, the unexposed group plotted on the x axis. Either a level of
+\code{treatment} or its position among the observed levels. If \code{NULL} (default),
+the first observed level is used.}
 
 \item{include_observed}{For compatibility with qq(). When weights are present,
 this determines if an additional "observed" group is added. Default FALSE

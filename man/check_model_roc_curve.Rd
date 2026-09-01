@@ -28,7 +28,8 @@ check_model_roc_curve(
 \item{na.rm}{Remove missing values? Default TRUE.}
 
 \item{.focal_level}{The level of \code{.exposure} to consider as the treatment/event.
-Default is NULL, which uses the second level.}
+Default is NULL, which uses the last observed level for factors or the
+maximum value for numeric variables.}
 }
 \value{
 A tibble with class "halfmoon_roc" containing ROC curve data.

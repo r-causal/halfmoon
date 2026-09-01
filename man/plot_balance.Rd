@@ -29,13 +29,12 @@ to TRUE. Does not affect other metrics which are already non-negative.}
 
 \item{point_size}{The point size, passed to \code{\link[ggplot2:geom_point]{ggplot2::geom_point()}}.}
 
-\item{vline_xintercept}{The X intercept, passed to \code{\link[ggplot2:geom_abline]{ggplot2::geom_vline()}}.}
+\item{vline_xintercept}{The balance threshold marked in the SMD facet.
+Defaults to 0.1. \code{NULL} draws no threshold.}
 
-\item{vline_color}{The vertical line color, passed to
-\code{\link[ggplot2:geom_abline]{ggplot2::geom_vline()}}.}
+\item{vline_color}{Color of the reference lines. Defaults to \code{"grey70"}.}
 
-\item{vlinewidth}{The vertical line size, passed to
-\code{\link[ggplot2:geom_abline]{ggplot2::geom_vline()}}.}
+\item{vlinewidth}{Width of the reference lines. Defaults to 0.6.}
 }
 \value{
 A ggplot2 object
@@ -67,6 +66,10 @@ better distributional balance.
 \item \strong{Correlation}: For continuous exposures, measures association with
 covariates. Its facet draws a reference line at 0, the value weighting
 aims for.
+\item \strong{Reference lines}: Each metric is balanced at its own value, so a
+reference line is drawn in the facet of the metric it belongs to. The SMD
+facet takes a line at \code{vline_xintercept}, whether or not other metrics
+are shown, and \code{vline_xintercept = NULL} leaves it out.
 \item \strong{Energy}: Multivariate balance metric applied to all variables
 simultaneously.
 }
@@ -89,8 +92,11 @@ plot_balance(balance_data, abs_smd = FALSE)
 # With fixed scales across facets
 plot_balance(balance_data, facet_scales = "fixed")
 
-# Customize threshold lines
+# Customize the threshold marked in the SMD facet
 plot_balance(balance_data, vline_xintercept = 0.05)
+
+# Or leave the threshold out
+plot_balance(balance_data, vline_xintercept = NULL)
 
 # Categorical exposure example
 # Automatically uses facet_grid to show each group comparison

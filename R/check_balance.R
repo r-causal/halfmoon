@@ -58,8 +58,11 @@
 #' @param exposure_type The type of exposure `.exposure` holds: one of "binary",
 #'   "categorical", or "continuous". Defaults to "auto", which detects the type
 #'   from the data and reports what it found.
-#' @param .reference_level The reference group level to use for comparisons.
-#'   Defaults to 1 (first level). Ignored for a continuous exposure.
+#' @param .reference_level The level of `.exposure` the other levels are
+#'   compared against. If `NULL` (default), the first observed level. A value
+#'   that matches a level is taken as that level; a numeric value that matches
+#'   no level is taken as a position among the observed levels. Ignored for a
+#'   continuous exposure.
 #' @inheritParams balance_params
 #' @param make_dummy_vars Logical. Transform categorical variables to dummy
 #'   variables using `model.matrix()`? Defaults to TRUE. When TRUE, categorical
@@ -127,7 +130,7 @@ check_balance <- function(
   .metrics = NULL,
   exposure_type = c("auto", "binary", "categorical", "continuous"),
   include_observed = TRUE,
-  .reference_level = 1L,
+  .reference_level = NULL,
   na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
@@ -135,10 +138,20 @@ check_balance <- function(
   interactions = FALSE
 ) {
   validate_data_frame(.data)
+  validate_data_not_empty(.data, call = rlang::current_env())
+
+  # Grouping would add the grouping variables to every selection, so the
+  # groups are dropped and the data is read as a plain data frame
+  .data <- dplyr::ungroup(.data)
 
   # Convert inputs to character vectors for consistent handling
   exposure_var <- rlang::as_name(rlang::enquo(.exposure))
-  var_names <- names(tidyselect::eval_select(rlang::enquo(.vars), .data))
+
+  # A selection can rename what it selects, so the columns to read and the
+  # names to report are tracked separately
+  vars_selection <- tidyselect::eval_select(rlang::enquo(.vars), .data)
+  var_cols <- names(.data)[vars_selection]
+  var_names <- names(vars_selection)
 
   if (length(var_names) == 0) {
     abort(
@@ -148,13 +161,16 @@ check_balance <- function(
     )
   }
 
-  transformed_data <- .data
-  original_vars <- var_names
+  # The selected covariates under the names the results will report. A logical
+  # covariate is a 0/1 indicator, so it is read as one rather than refused by
+  # the balance functions.
+  selected_data <- .data[vars_selection]
+  names(selected_data) <- var_names
+  selected_data <- purrr::modify_if(selected_data, is.logical, as.numeric)
+
+  vars_data <- selected_data
 
   if (make_dummy_vars || squares || cubes || interactions) {
-    # Extract just the variables we're working with
-    vars_data <- dplyr::select(.data, dplyr::all_of(var_names))
-
     # Track variable origins for interaction filtering
     dummy_var_mapping <- list()
 
@@ -235,7 +251,7 @@ check_balance <- function(
         if (ncol(original_numeric) > 1) {
           # For interactions with binary categorical variables, we need to expand them
           # Get the original data to check for binary categoricals
-          original_vars_data <- dplyr::select(.data, dplyr::all_of(var_names))
+          original_vars_data <- selected_data
 
           # Identify which numeric variables were originally binary categoricals
           binary_categorical_names <- character()
@@ -249,7 +265,7 @@ check_balance <- function(
               categorical_cols <- original_vars_data[categorical_check]
               binary_check <- purrr::map_lgl(categorical_cols, \(x) {
                 n_levels <- if (is.factor(x)) {
-                  length(levels(x))
+                  nlevels(x)
                 } else {
                   length(unique(x))
                 }
@@ -316,28 +332,49 @@ check_balance <- function(
         }
       }
     }
-
-    # Replace the variables in the transformed data
-    transformed_data <- transformed_data[,
-      !names(transformed_data) %in% original_vars,
-      drop = FALSE
-    ]
-    transformed_data <- dplyr::bind_cols(transformed_data, vars_data)
-
-    # Update var_names to include all transformed variables
-    var_names <- names(vars_data)
   }
 
-  # Handle weights using proper NSE - capture quosure and check if null
+  # Replace the selected columns with the working copies, which carry the names
+  # the results report and any transformations
+  transformed_data <- .data[, !names(.data) %in% var_cols, drop = FALSE]
+  # A selection that renames a covariate onto a column it did not select leaves
+  # two columns of the same name. Repairing them quietly keeps the working copy
+  # an internal detail: the collision surfaces as the column error raised when
+  # the exposure or a weight can no longer be found.
+  transformed_data <- dplyr::bind_cols(
+    transformed_data,
+    vars_data,
+    .name_repair = "unique_quiet"
+  )
+
+  # Update var_names to include all transformed variables
+  var_names <- names(vars_data)
+
+  # Handle weights using proper NSE - capture quosure and check if null. A
+  # renamed selection names the method, so the column it reads is kept with it.
   .weights <- rlang::enquo(.weights)
   if (!rlang::quo_is_null(.weights)) {
-    wts_names <- names(tidyselect::eval_select(.weights, .data))
+    wts_selection <- tidyselect::eval_select(.weights, .data)
+    wts_names <- names(wts_selection)
+    validate_method_labels(wts_names, call = rlang::current_env())
+    weight_columns <- stats::setNames(names(.data)[wts_selection], wts_names)
   } else {
     wts_names <- NULL
+    weight_columns <- character(0)
   }
 
   # Validate exposure variable
   validate_column_exists(transformed_data, exposure_var, "data")
+
+  # The option is matched here rather than left to `match_exposure_type()` so
+  # that an unrecognized value raises a halfmoon-classed error like every other
+  # option argument in the package
+  exposure_type <- match_option(
+    exposure_type,
+    c("auto", "binary", "categorical", "continuous"),
+    "exposure_type",
+    call = rlang::current_env()
+  )
 
   exposure_type <- causalgenerics::match_exposure_type(
     exposure_type,
@@ -349,19 +386,17 @@ check_balance <- function(
 
   .metrics <- resolve_metrics(.metrics, exposure_type)
 
-  # A continuous exposure has no groups to compare, so the levels are neither
-  # computed nor needed
+  # A continuous exposure has no groups to compare, so neither the levels nor
+  # the reference level are computed or needed
   if (exposure_type == "continuous") {
     group_levels <- NULL
+    reference_level <- NULL
   } else {
-    if (is.factor(transformed_data[[exposure_var]])) {
-      group_levels <- levels(transformed_data[[exposure_var]])
-    } else {
-      group_levels <- transformed_data[[exposure_var]] |>
-        stats::na.omit() |>
-        unique() |>
-        sort()
-    }
+    group_levels <- extract_group_levels(
+      transformed_data[[exposure_var]],
+      require_binary = FALSE,
+      call = rlang::current_env()
+    )
 
     # Check for single-level groups
     only_correlation <- length(setdiff(.metrics, "correlation")) == 0
@@ -370,6 +405,18 @@ check_balance <- function(
         "Exposure variable must have at least two levels for metrics: {.val {setdiff(.metrics, 'correlation')}}. Got {length(group_levels)} level{?s}.",
         error_class = "halfmoon_group_error"
       )
+    }
+
+    # Resolve the reference once, so that every metric and every label in the
+    # results describes the same comparison
+    reference_level <- if (length(group_levels) >= 2) {
+      determine_reference_group(
+        transformed_data[[exposure_var]],
+        .reference_level,
+        call = rlang::current_env()
+      )
+    } else {
+      NULL
     }
   }
 
@@ -448,13 +495,16 @@ check_balance <- function(
     transformed_data = transformed_data,
     exposure_var = exposure_var,
     na.rm = na.rm,
-    .reference_level = .reference_level,
+    reference_level = reference_level,
     group_levels = group_levels,
-    var_names = var_names
+    var_names = var_names,
+    weight_columns = weight_columns
   )
 
   # Arrange results for better readability
   if (nrow(results) > 0) {
+    report_failed_combinations(results)
+    results$.failed <- NULL
     results <- dplyr::arrange(results, variable, metric, method)
   }
 
@@ -521,15 +571,38 @@ resolve_metrics <- function(
 # `bal_energy()` reads the exposure to choose between its continuous and its
 # discrete branch. Within check_balance() the resolved exposure type makes that
 # choice instead, so that every metric describes the same exposure.
+#
+# Every weight column of one call describes the same covariates and the same
+# exposure, and the distance matrix and target terms of the energy distance
+# depend on nothing else, so they are formed on the first column and reused.
 energy_metric <- function(exposure_type) {
+  init <- NULL
+
   function(.covariates, .exposure, .weights, na.rm) {
-    bal_energy_impl(
+    prepared <- bal_energy_prepare(
       .covariates = .covariates,
       .exposure = .exposure,
       .weights = .weights,
-      na.rm = na.rm,
-      exposure_type = exposure_type
+      criterion = "dependence",
+      exposure_type = exposure_type,
+      na.rm = na.rm
     )
+
+    if (is.null(prepared)) {
+      return(NA_real_)
+    }
+
+    # A weight column with missing values drops rows of its own, so it is
+    # measured on its own remaining sample rather than the shared one
+    if (prepared$weights_reduced_rows) {
+      return(bal_energy_evaluate(bal_energy_init(prepared), prepared$weights))
+    }
+
+    if (is.null(init)) {
+      init <<- bal_energy_init(prepared)
+    }
+
+    bal_energy_evaluate(init, prepared$weights)
   }
 }
 
@@ -543,15 +616,16 @@ compute_single_balance_metric <- function(
   transformed_data,
   exposure_var,
   na.rm,
-  .reference_level,
+  reference_level,
   group_levels,
-  var_names
+  var_names,
+  weight_columns
 ) {
   # Handle weights
   if (method == "observed") {
     weights_data <- NULL
   } else {
-    weights_data <- .data[[method]]
+    weights_data <- .data[[weight_columns[[method]]]]
   }
 
   # Get the appropriate function and compute
@@ -583,28 +657,16 @@ compute_single_balance_metric <- function(
           na.rm = na.rm
         )
       } else {
-        # For other metrics (smd, vr, ks)
+        # For other metrics (smd, vr, ks). The reference level is already
+        # resolved to a level value, so each function is given the same group.
         var_data <- transformed_data[[variable]]
         group_data <- transformed_data[[exposure_var]]
-        # Handle reference group parameter based on the function
-        ref_group_param <- if (metric == "smd") {
-          # bal_smd accepts both indices and group values
-          .reference_level
-        } else {
-          # bal_vr and bal_ks expect actual group values
-          # Always treat numeric .reference_level as index for consistency
-          if (is.numeric(.reference_level) && length(.reference_level) == 1) {
-            group_levels[.reference_level]
-          } else {
-            .reference_level
-          }
-        }
 
         estimate <- compute_fn(
           .covariate = var_data,
           .exposure = group_data,
           .weights = weights_data,
-          .reference_level = ref_group_param,
+          .reference_level = reference_level,
           na.rm = na.rm
         )
       }
@@ -616,16 +678,16 @@ compute_single_balance_metric <- function(
           !is.null(names(estimate))
       ) {
         # Categorical exposure - expand results
-        pattern <- "^(.+)_vs_(.+)$"
-        matches <- regexec(pattern, names(estimate))
-        comparison_info <- do.call(rbind, regmatches(names(estimate), matches))
-
         tibble::tibble(
           variable = variable,
-          group_level = as.character(comparison_info[, 2]),
+          group_level = strip_comparison_suffix(
+            names(estimate),
+            reference_level
+          ),
           method = method,
           metric = metric,
-          estimate = unname(estimate)
+          estimate = unname(estimate),
+          .failed = FALSE
         )
       } else {
         # Binary exposure - single result
@@ -637,14 +699,8 @@ compute_single_balance_metric <- function(
           # For energy, use NA since it's multivariate
           group_level <- NA_character_
         } else {
-          # For other metrics, determine the non-reference group level
-          if (.reference_level %in% group_levels) {
-            ref_level <- .reference_level
-          } else {
-            # If .reference_level is numeric index, get the corresponding level
-            ref_level <- group_levels[.reference_level]
-          }
-          group_level <- setdiff(group_levels, ref_level)[1]
+          # For other metrics, report the group compared against the reference
+          group_level <- setdiff(group_levels, reference_level)[1]
         }
 
         tibble::tibble(
@@ -652,25 +708,21 @@ compute_single_balance_metric <- function(
           group_level = as.character(group_level),
           method = method,
           metric = metric,
-          estimate = estimate
+          estimate = estimate,
+          .failed = FALSE
         )
       }
     },
     error = \(e) {
-      # Return NA for failed computations but preserve structure
+      # Return NA for failed computations but preserve structure. A categorical
+      # exposure has one comparison per non-reference level, so it takes one
+      # row each rather than a single row standing for all of them.
       error_group_level <- if (metric == "correlation") {
         exposure_var
       } else if (metric == "energy") {
         NA_character_
       } else {
-        setdiff(
-          group_levels,
-          if (.reference_level %in% group_levels) {
-            .reference_level
-          } else {
-            group_levels[.reference_level]
-          }
-        )[1]
+        setdiff(group_levels, reference_level)
       }
 
       tibble::tibble(
@@ -678,10 +730,64 @@ compute_single_balance_metric <- function(
         group_level = as.character(error_group_level),
         method = method,
         metric = metric,
-        estimate = NA_real_
+        estimate = NA_real_,
+        .failed = TRUE
       )
     }
   )
+}
+
+# Categorical results are named "{comparison}_vs_{reference}". A reference level
+# can itself contain "_vs_", so the suffix is removed by its own length rather
+# than matched with a pattern.
+strip_comparison_suffix <- function(comparison_names, reference_level) {
+  if (is.null(reference_level)) {
+    return(as.character(comparison_names))
+  }
+
+  suffix <- paste0("_vs_", reference_level)
+  stripped <- endsWith(comparison_names, suffix)
+  comparison_names[stripped] <- substr(
+    comparison_names[stripped],
+    1L,
+    nchar(comparison_names[stripped]) - nchar(suffix)
+  )
+
+  as.character(comparison_names)
+}
+
+# Statistics that no data can support are reported as NA rather than as an
+# error, so the combinations that failed are named once for the whole call
+report_failed_combinations <- function(results, call = rlang::caller_env()) {
+  failed <- results$.failed
+  if (!any(failed)) {
+    return(invisible(results))
+  }
+
+  n_failed <- sum(failed)
+  failed_metrics <- unique(results$metric[failed])
+  failed_variables <- unique(results$variable[failed])
+  failed_variables <- failed_variables[!is.na(failed_variables)]
+
+  bullets <- c(
+    "Could not compute {n_failed} balance combination{?s}, reported as {.code NA}.",
+    i = "{cli::qty(failed_metrics)}Affected metric{?s}: {.val {failed_metrics}}."
+  )
+  if (length(failed_variables) > 0) {
+    bullets <- c(
+      bullets,
+      i = "{cli::qty(failed_variables)}Affected variable{?s}: {.val {failed_variables}}."
+    )
+  }
+
+  warn(
+    bullets,
+    warning_class = "halfmoon_data_warning",
+    call = call,
+    .envir = rlang::current_env()
+  )
+
+  invisible(results)
 }
 
 # Prepare a variable for interaction terms

@@ -80,8 +80,8 @@ test_that("check_qq handles NA values correctly", {
 
   # Should work with na.rm = TRUE
   result <- check_qq(df, age, qsmk, na.rm = TRUE)
-  expect_false(any(is.na(result$exposed_quantiles)))
-  expect_false(any(is.na(result$unexposed_quantiles)))
+  expect_false(anyNA(result$exposed_quantiles))
+  expect_false(anyNA(result$unexposed_quantiles))
 
   # Should have NAs with na.rm = FALSE
   expect_halfmoon_error(check_qq(df, age, qsmk), "halfmoon_na_error")
@@ -95,7 +95,8 @@ test_that("check_qq handles NULL .reference_level correctly", {
   )
 
   result_factor <- check_qq(test_factor, x, group, quantiles = 0.5)
-  # Should use "Treatment" (last level) as reference
+  # "Control" (first level) is the reference, so the exposed quantiles come
+  # from "Treatment"
   expect_equal(as.numeric(result_factor$exposed_quantiles), 8) # median of 6:10
   expect_equal(as.numeric(result_factor$unexposed_quantiles), 3) # median of 1:5
 
@@ -106,9 +107,215 @@ test_that("check_qq handles NULL .reference_level correctly", {
   )
 
   result_numeric <- check_qq(test_numeric, x, group, quantiles = 0.5)
-  # Should use 1 (max value) as reference
+  # 0 (minimum value) is the reference
   expect_equal(as.numeric(result_numeric$exposed_quantiles), 8) # median of 6:10
   expect_equal(as.numeric(result_numeric$unexposed_quantiles), 3) # median of 1:5
+})
+
+test_that("check_qq names the reference group with .reference_level", {
+  test_data <- data.frame(
+    x = 1:10,
+    group = factor(rep(c("Control", "Treatment"), each = 5))
+  )
+
+  # The reference group supplies the unexposed quantiles
+  result <- check_qq(
+    test_data,
+    x,
+    group,
+    quantiles = 0.5,
+    .reference_level = "Treatment"
+  )
+  expect_equal(as.numeric(result$exposed_quantiles), 3) # median of 1:5
+  expect_equal(as.numeric(result$unexposed_quantiles), 8) # median of 6:10
+
+  # A numeric reference level is matched by value before position
+  numeric_data <- data.frame(x = 1:10, group = rep(c(0, 1), each = 5))
+  by_value <- check_qq(
+    numeric_data,
+    x,
+    group,
+    quantiles = 0.5,
+    .reference_level = 1
+  )
+  expect_equal(as.numeric(by_value$exposed_quantiles), 3)
+  expect_equal(as.numeric(by_value$unexposed_quantiles), 8)
+
+  # A level that is neither a value nor a valid position errors
+  expect_error(
+    check_qq(test_data, x, group, .reference_level = "nope"),
+    class = "halfmoon_reference_error"
+  )
+  expect_error(
+    check_qq(test_data, x, group, .reference_level = 5),
+    class = "halfmoon_range_error"
+  )
+})
+
+test_that("check_qq uses observed exposure levels", {
+  df <- data.frame(
+    x = c(1:10, 21:30),
+    g = factor(rep(c("a", "b"), each = 10), levels = c("a", "b", "c"))
+  )
+  dropped <- df
+  dropped$g <- droplevels(dropped$g)
+
+  expect_equal(
+    check_qq(df, x, g, quantiles = c(0.25, 0.75)),
+    check_qq(dropped, x, g, quantiles = c(0.25, 0.75))
+  )
+
+  one_level <- data.frame(
+    x = 1:10,
+    g = factor(rep("a", 10), levels = c("a", "b"))
+  )
+  expect_error(
+    check_qq(one_level, x, g),
+    class = "halfmoon_group_error"
+  )
+})
+
+test_that("check_qq validates missing weights", {
+  df <- data.frame(
+    x = c(1:10, 21:30),
+    g = rep(0:1, each = 10),
+    w = c(NA, rep(1, 19))
+  )
+
+  expect_halfmoon_error(
+    check_qq(df, x, g, .weights = w),
+    "halfmoon_na_error"
+  )
+
+  # na.rm = TRUE drops the rows with missing weights
+  result <- check_qq(
+    df,
+    x,
+    g,
+    .weights = w,
+    na.rm = TRUE,
+    include_observed = FALSE,
+    quantiles = c(0.25, 0.75)
+  )
+  complete <- df[!is.na(df$w), ]
+  expect_equal(
+    result$unexposed_quantiles,
+    unname(stats::quantile(complete$x[complete$g == 0], c(0.25, 0.75)))
+  )
+})
+
+test_that("check_qq agrees with the observed quantiles under unit weights", {
+  df <- nhefs_weights
+  df$unit_wt <- 1
+  probs <- seq(0.05, 0.95, 0.05)
+
+  result <- check_qq(df, wt71, qsmk, .weights = unit_wt, quantiles = probs)
+  observed <- result[result$method == "observed", ]
+  weighted <- result[result$method == "unit_wt", ]
+
+  expect_equal(weighted$exposed_quantiles, observed$exposed_quantiles)
+  expect_equal(weighted$unexposed_quantiles, observed$unexposed_quantiles)
+})
+
+test_that("weighted_quantile reproduces stats::quantile(type = 7)", {
+  withr::local_seed(2024)
+  probs <- c(0, 0.01, 0.25, 0.5, 0.75, 0.99, 1)
+
+  for (n in c(3, 5, 50)) {
+    values <- stats::rnorm(n)
+    expected <- unname(stats::quantile(values, probs, type = 7))
+
+    expect_equal(weighted_quantile(values, probs, rep(1, n)), expected)
+    # weights are scale invariant
+    expect_equal(weighted_quantile(values, probs, rep(2, n)), expected)
+    expect_equal(weighted_quantile(values, probs, rep(0.5, n)), expected)
+  }
+
+  # tied values are handled the same way as stats::quantile()
+  tied <- c(1, 1, 2, 2, 2, 5)
+  expect_equal(
+    weighted_quantile(tied, probs, rep(1, length(tied))),
+    unname(stats::quantile(tied, probs, type = 7))
+  )
+
+  # the documented example is exact
+  expect_equal(
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), rep(1, 10)),
+    unname(stats::quantile(1:10, c(0.25, 0.5, 0.75)))
+  )
+})
+
+test_that("weighted_quantile excludes zero-weight observations", {
+  values <- c(1, 2, 3, 4, 100)
+  weights <- c(1, 1, 1, 1, 0)
+  probs <- c(0.25, 0.5, 0.75)
+
+  expect_equal(
+    weighted_quantile(values, probs, weights),
+    unname(stats::quantile(values[weights > 0], probs))
+  )
+
+  # matching weights are 0/1, so the weighted quantiles are the quantiles of
+  # the matched subset
+  withr::local_seed(9)
+  matching_wts <- stats::rbinom(nrow(nhefs_weights), 1, 0.5)
+  expect_equal(
+    weighted_quantile(nhefs_weights$age, probs, matching_wts),
+    unname(stats::quantile(nhefs_weights$age[matching_wts == 1], probs))
+  )
+})
+
+test_that("weighted_quantile guards degenerate weights", {
+  # a single positive weight is not enough to interpolate
+  expect_equal(weighted_quantile(c(1, 2), 0.5, c(1, 0)), NA_real_)
+  expect_equal(
+    weighted_quantile(c(1, 2), c(0.1, 0.9), c(0, 0)),
+    rep(NA_real_, 2)
+  )
+  expect_equal(weighted_quantile(numeric(0), 0.5, numeric(0)), NA_real_)
+
+  # a constant variable has constant quantiles
+  expect_equal(weighted_quantile(c(5, 5, 5), c(0.1, 0.9), c(1, 2, 3)), c(5, 5))
+})
+
+test_that("weighted_quantile validates its arguments", {
+  expect_error(
+    weighted_quantile(1:10, c(-0.5, 0.5), rep(1, 10)),
+    class = "halfmoon_range_error"
+  )
+  expect_error(
+    weighted_quantile(1:10, 1.5, rep(1, 10)),
+    class = "halfmoon_range_error"
+  )
+  expect_error(
+    weighted_quantile(1:10, "a", rep(1, 10)),
+    class = "halfmoon_type_error"
+  )
+  expect_error(
+    weighted_quantile(1:10, 0.5, rep(-1, 10)),
+    class = "halfmoon_range_error"
+  )
+  expect_error(
+    weighted_quantile(1:10, 0.5, rep(1, 3)),
+    class = "halfmoon_length_error"
+  )
+})
+
+test_that("weighted_quantile reflects the weights", {
+  # hand-computed: distinct values 1, 2, 3 with weights 1, 1, 2 sit at
+  # probabilities 0, 0.4, and 1, so the median interpolates between 2 and 3
+  expect_equal(weighted_quantile(1:3, 0.5, c(1, 1, 2)), 2 + 1 / 6)
+
+  # quantiles are monotone in the probabilities
+  withr::local_seed(11)
+  values <- stats::rnorm(30)
+  weights <- stats::runif(30, 0, 5)
+  result <- weighted_quantile(values, seq(0, 1, 0.01), weights)
+  expect_true(all(diff(result) >= 0))
+
+  # upweighting the larger values pulls the quantiles up
+  heavy <- weighted_quantile(1:10, 0.5, c(rep(1, 5), rep(5, 5)))
+  expect_gt(heavy, stats::median(1:10))
 })
 
 test_that("check_qq returns expected quantile values", {
@@ -124,20 +331,186 @@ test_that("check_qq returns expected quantile values", {
   # Check that we get 3 quantiles
   expect_equal(nrow(result), 3)
 
-  # With default NULL .reference_level, B (last level) is reference group
-  # So exposed_quantiles are from B (higher values) and unexposed_quantiles from A (lower values)
+  # With default NULL .reference_level, A (first level) is the reference group,
+  # so exposed_quantiles are from B (higher values) and unexposed_quantiles
+  # from A (lower values)
   expect_true(all(result$exposed_quantiles > result$unexposed_quantiles))
 
-  # Test with explicit .reference_level = "A"
+  # Test with explicit .reference_level = "B"
   result_explicit <- check_qq(
     test_data,
     x,
     group,
     quantiles = c(0.25, 0.5, 0.75),
-    .reference_level = "A"
+    .reference_level = "B"
   )
-  # Now A is reference, so exposed_quantiles < unexposed_quantiles
+  # Now B is the reference, so exposed_quantiles < unexposed_quantiles
   expect_true(all(
     result_explicit$exposed_quantiles < result_explicit$unexposed_quantiles
   ))
+})
+
+test_that("check_qq rejects a weight method labeled observed", {
+  collided <- dplyr::rename(nhefs_weights, observed = w_ate)
+
+  expect_error(
+    check_qq(collided, age, qsmk, .weights = observed),
+    class = "halfmoon_arg_error"
+  )
+
+  expect_error(
+    check_qq(nhefs_weights, age, qsmk, .weights = c(observed = w_ate)),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("weighted_quantile applies the two-tier na.rm policy", {
+  values <- c(1:9, NA_real_)
+  weights <- rep(1, 10)
+
+  expect_equal(
+    weighted_quantile(values, c(0.25, 0.5, 0.75), weights),
+    rep(NA_real_, 3)
+  )
+
+  expect_equal(
+    weighted_quantile(values, c(0.25, 0.5, 0.75), weights, na.rm = TRUE),
+    unname(stats::quantile(1:9, c(0.25, 0.5, 0.75)))
+  )
+
+  # A missing weight is missing data too
+  missing_weight <- c(rep(1, 9), NA_real_)
+  expect_equal(
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), missing_weight),
+    rep(NA_real_, 3)
+  )
+  expect_equal(
+    weighted_quantile(
+      1:10,
+      c(0.25, 0.5, 0.75),
+      missing_weight,
+      na.rm = TRUE
+    ),
+    unname(stats::quantile(1:9, c(0.25, 0.5, 0.75)))
+  )
+
+  # Complete data is unaffected by either setting
+  expect_equal(
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), rep(1, 10)),
+    weighted_quantile(1:10, c(0.25, 0.5, 0.75), rep(1, 10), na.rm = TRUE)
+  )
+
+  expect_error(
+    weighted_quantile(1:10, 0.5, rep(1, 10), na.rm = "yes"),
+    class = "halfmoon_arg_error"
+  )
+})
+
+test_that("check_qq reads the column a renaming selection points at", {
+  renamed <- check_qq(nhefs_weights, age, qsmk, .weights = c(ate = w_ate))
+  plain <- check_qq(nhefs_weights, age, qsmk, .weights = w_ate)
+
+  expect_setequal(renamed$method, c("observed", "ate"))
+  expect_equal(
+    renamed[
+      renamed$method == "ate",
+      c("exposed_quantiles", "unexposed_quantiles")
+    ],
+    plain[
+      plain$method == "w_ate",
+      c("exposed_quantiles", "unexposed_quantiles")
+    ]
+  )
+})
+
+# A frozen copy of the plotting positions, kept here so that a rewrite of the
+# helper has to reproduce the endpoints it produces today rather than only the
+# quantiles they happen to interpolate to
+reference_quantile_positions <- function(values, weights) {
+  last <- c(values[-1] != values[-length(values)], TRUE)
+
+  upper_wt <- cumsum(weights)[last]
+  value_wt <- diff(c(0, upper_wt))
+  lower_wt <- upper_wt - value_wt
+  n_values <- diff(c(0, which(last)))
+  mean_wt <- value_wt / n_values
+
+  lower <- lower_wt + (mean_wt - mean_wt[1]) / 2
+  upper <- upper_wt - (mean_wt + mean_wt[1]) / 2
+
+  probs <- c(rbind(lower, upper)) / upper[length(upper)]
+  values <- rep(values[last], each = 2)
+  distinct <- !duplicated(probs)
+
+  list(probs = probs[distinct], values = values[distinct])
+}
+
+test_that("weighted_quantile_positions keeps every endpoint that differs", {
+  withr::local_seed(2024)
+
+  cases <- list(
+    all_singletons = list(values = 1:10, weights = rep(1, 10)),
+    heavy_ties = list(
+      values = sort(sample(1:5, 40, replace = TRUE)),
+      weights = stats::runif(40, 0.5, 3)
+    ),
+    mixed = list(
+      values = c(1, 1, 2, 3, 3, 3, 4),
+      weights = c(2, 1, 5, 1, 1, 1, 3)
+    ),
+    single_value = list(values = c(5, 5, 5), weights = c(1, 2, 3)),
+    two_singletons = list(values = c(1, 2), weights = c(1, 4)),
+    # A singleton whose two endpoints land an ulp apart rather than exactly
+    # equal, so both of them are still needed
+    inexact_singleton = list(
+      values = c(-0.7, -0.5, 0.2, 0.7, 1.7, 2.6),
+      weights = c(1.756, 2.19, 1.794, 2.087, 2.001, 2.76)
+    )
+  )
+
+  for (nm in names(cases)) {
+    expect_identical(
+      weighted_quantile_positions(cases[[nm]]$values, cases[[nm]]$weights),
+      reference_quantile_positions(cases[[nm]]$values, cases[[nm]]$weights),
+      info = nm
+    )
+  }
+
+  # The endpoints of a singleton are equal on paper but are computed through
+  # different expressions, so rounding can separate them. Six distinct values
+  # give twelve endpoints, of which five coincide exactly here and one pair
+  # does not.
+  positions <- weighted_quantile_positions(
+    cases$inexact_singleton$values,
+    cases$inexact_singleton$weights
+  )
+  expect_length(positions$probs, 7)
+})
+
+test_that("weighted_quantile_positions matches its reference under fuzzing", {
+  withr::local_seed(2024)
+
+  for (i in 1:500) {
+    n <- sample(2:12, 1)
+    values <- sort(round(stats::rnorm(n), 1))
+    weights <- round(stats::runif(n, 0.5, 3), 3)
+
+    expect_identical(
+      weighted_quantile_positions(values, weights),
+      reference_quantile_positions(values, weights),
+      info = paste("case", i)
+    )
+  }
+})
+
+test_that("weighted_quantile interpolates over distinct plotting positions", {
+  # A weight large enough to absorb the others leaves every position equal in
+  # floating point. Duplicated positions would make `stats::approx()` average
+  # across distinct values and warn about it, so they are dropped first.
+  absorbing_weight <- function() {
+    weighted_quantile(c(1, 2, 3, 4), c(0.25, 0.5, 0.75), c(1e16, 1, 1, 1))
+  }
+
+  expect_no_warning(absorbing_weight())
+  expect_equal(absorbing_weight(), c(1.25, 1.5, 1.75))
 })

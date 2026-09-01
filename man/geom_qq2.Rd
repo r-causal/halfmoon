@@ -40,9 +40,10 @@ combining with them.}
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{.reference_level}{The reference treatment level to use for comparisons.
-If \code{NULL} (default), uses the first level for factors or the minimum value
-for numeric variables.}
+\item{.reference_level}{The level of the \code{treatment} aesthetic to treat as
+the reference, the unexposed group plotted on the x axis. Either a level of
+\code{treatment} or its position among the observed levels. If \code{NULL} (default),
+the first observed level is used.}
 
 \item{...}{Other arguments passed on to layer().}
 }
@@ -69,6 +70,9 @@ for each group, QQ plots show \eqn{F_1^{-1}(p)} vs \eqn{F_2^{-1}(p)}, essentiall
 relationship. Both approaches visualize the same information about distributional
 differences, but QQ plots make it easier to spot deviations through a 45-degree
 reference line.
+
+The reference (unexposed) group is on the x axis and the exposed group, the
+treatment level that is not the reference, is on the y axis.
 }
 \examples{
 library(ggplot2)

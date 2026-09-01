@@ -10,7 +10,18 @@
 #' @param position Position adjustment. Default is "identity".
 #' @inheritParams ggplot2_params
 #' @param linewidth Width of the ROC curve line. Default is 0.5.
-#' @inheritParams treatment_param
+#' @param .focal_level The level of the `exposure` aesthetic to treat as the
+#'   event. Must be a level the data actually takes; a declared factor level
+#'   that no observation takes is not accepted. If `NULL` (default), the last
+#'   observed level is used, which is the maximum value for numeric exposures.
+#'
+#' @details
+#' A curve compares two exposure levels, so each curve is drawn from the rows
+#' that share an aesthetic signature, with the exposure level excluded from that
+#' signature. Mapping `group` explicitly makes each group a curve of its own,
+#' which keeps long data holding several weighting schemes from being pooled
+#' into a single curve. A group that holds only one observed exposure level is
+#' dropped with a warning, and the remaining curves are still drawn.
 #'
 #' @return A ggplot2 layer.
 #' @family ggplot2 functions
@@ -71,7 +82,10 @@ geom_roc <- function(
 #'
 #' @inheritParams ggplot2_params
 #' @param geom Geometric object to use. Default is "path".
-#' @inheritParams treatment_param
+#' @param .focal_level The level of the `exposure` aesthetic to treat as the
+#'   event. Must be a level the data actually takes; a declared factor level
+#'   that no observation takes is not accepted. If `NULL` (default), the last
+#'   observed level is used, which is the maximum value for numeric exposures.
 #'
 #' @return A ggplot2 layer.
 #' @export
@@ -102,6 +116,74 @@ stat_roc <- function(
   )
 }
 
+#' Resolve the focal level of the exposure aesthetic
+#'
+#' Levels are the OBSERVED levels, so a declared factor level that no
+#' observation takes is never chosen as the default and never accepted as a
+#' supplied value.
+#'
+#' @param exposure The exposure aesthetic for the whole layer
+#' @param .focal_level The supplied focal level, or NULL
+#'
+#' @return The focal level, or `NULL` when no exposure value is observed, which
+#'   leaves the empty result to the caller.
+#' @noRd
+resolve_roc_focal_level <- function(
+  exposure,
+  .focal_level = NULL,
+  call = rlang::caller_env()
+) {
+  observed_levels <- extract_group_levels(
+    exposure,
+    require_binary = FALSE,
+    call = call
+  )
+
+  # An exposure with nothing observed leaves no curve to draw. The layer is
+  # empty either way, but silently so would look like a plot with no data
+  # rather than a plot whose exposure is missing.
+  if (length(observed_levels) == 0) {
+    warn(
+      c(
+        "Drawing no ROC curve: {.field exposure} has no observed levels",
+        i = "Every value of {.field exposure} is missing."
+      ),
+      warning_class = "halfmoon_data_warning",
+      call = call
+    )
+
+    return(NULL)
+  }
+
+  if (length(observed_levels) != 2) {
+    abort(
+      c(
+        "{.field exposure} must have exactly two observed levels, not {length(observed_levels)}",
+        i = "Observed: {.val {observed_levels}}"
+      ),
+      error_class = "halfmoon_group_error",
+      call = call
+    )
+  }
+
+  if (is.null(.focal_level)) {
+    return(observed_levels[[2]])
+  }
+
+  if (!as.character(.focal_level) %in% as.character(observed_levels)) {
+    abort(
+      c(
+        "{.arg .focal_level} {.val {(.focal_level)}} is not an observed level of {.field exposure}",
+        i = "Observed: {.val {observed_levels}}"
+      ),
+      error_class = "halfmoon_reference_error",
+      call = call
+    )
+  }
+
+  .focal_level
+}
+
 #' @rdname stat_roc
 #' @format NULL
 #' @usage NULL
@@ -110,6 +192,7 @@ StatRoc <- ggplot2::ggproto(
   "StatRoc",
   ggplot2::Stat,
   required_aes = c("estimate", "exposure"),
+  non_missing_aes = "weight",
   default_aes = ggplot2::aes(
     x = ggplot2::after_stat(fpr), # 1 - specificity
     y = ggplot2::after_stat(tpr), # sensitivity
@@ -117,7 +200,34 @@ StatRoc <- ggplot2::ggproto(
   ),
   dropped_aes = "weight", # Tell ggplot2 to drop weight after computation
 
-  compute_panel = function(data, scales, na.rm = TRUE, .focal_level = NULL) {
+  setup_params = function(data, params) {
+    # `setup_params()` sees the whole layer before it is split into panels, so
+    # the focal level is resolved once here and carried into every panel.
+    # Resolving it per panel would let a panel holding a single exposure level
+    # take that level as the focal one.
+    if (!is.null(data$exposure)) {
+      params$.focal_level <- resolve_roc_focal_level(
+        data$exposure,
+        params$.focal_level,
+        call = quote(geom_roc())
+      )
+    }
+
+    params
+  },
+
+  compute_panel = function(data, scales, .focal_level = NULL) {
+    # Nothing observed to compare
+    empty_result <- data.frame(
+      fpr = numeric(0),
+      tpr = numeric(0),
+      group = integer(0)
+    )
+
+    if (is.null(.focal_level) || nrow(data) == 0) {
+      return(empty_result)
+    }
+
     # If we have multiple groups, identify which ones should be merged
     if ("group" %in% names(data) && length(unique(data$group)) > 1) {
       groups <- split(data, data$group)
@@ -140,10 +250,20 @@ StatRoc <- ggplot2::ggproto(
         )
       )
 
-      group_signatures <- purrr::map_chr(
+      group_signatures <- purrr::imap_chr(
         groups,
-        create_group_signature,
-        aes_cols = aes_cols
+        function(group_data, group_id) {
+          # ggplot2 builds the default group from every discrete aesthetic, the
+          # exposure included, so groups that differ only by exposure level are
+          # two halves of one curve. A group that already holds both exposure
+          # levels comes from an explicit `group` aesthetic and is a curve in
+          # its own right.
+          if (length(unique(group_data$exposure)) > 1) {
+            paste0("group_", group_id)
+          } else {
+            create_group_signature(group_data, aes_cols)
+          }
+        }
       )
 
       # Process groups with the same signature together
@@ -156,53 +276,47 @@ StatRoc <- ggplot2::ggproto(
         group_id <- groups[[matching_groups[1]]]$group[1]
 
         # Process the combined data
-        compute_roc_for_group(combined_data, na.rm, .focal_level, group_id)
+        compute_roc_for_group(combined_data, .focal_level, group_id)
       })
+
+      if (nrow(results) == 0) {
+        return(empty_result)
+      }
 
       results
     } else {
       # Single group or no groups
-      compute_roc_for_group(data, na.rm, .focal_level, data$group[1])
+      result <- compute_roc_for_group(data, .focal_level, data$group[1])
+      result %||% empty_result
     }
   }
 )
 
-# Helper function to compute ROC for a single group
-compute_roc_for_group <- function(data, na.rm, .focal_level, group_id) {
+# Helper function to compute ROC for a single curve. Returns `NULL` when the
+# curve holds a single observed exposure level, so that the curves that can be
+# computed are still drawn.
+compute_roc_for_group <- function(data, .focal_level, group_id) {
   # Extract estimate (predictor) and exposure
   estimate <- data$estimate
   exposure <- data$exposure
   weights <- data$weight %||% rep(1, length(estimate))
 
-  # Remove missing values if requested
-  if (na.rm) {
-    complete_cases <- stats::complete.cases(estimate, exposure, weights)
-    estimate <- estimate[complete_cases]
-    exposure <- exposure[complete_cases]
-    weights <- weights[complete_cases]
-  }
+  # One curve separates two exposure levels, so a curve that holds a single
+  # level is dropped on its own rather than costing every other curve in the
+  # panel
+  observed_levels <- extract_group_levels(exposure, require_binary = FALSE)
 
-  # Check that exposure has exactly 2 unique values
-  unique_exposure <- if (is.factor(exposure)) {
-    levels(exposure)
-  } else {
-    unique(exposure[!is.na(exposure)])
-  }
-
-  if (length(unique_exposure) != 2) {
-    abort(
-      "exposure must have exactly 2 unique values for ROC curve",
-      error_class = "halfmoon_group_error"
+  if (length(observed_levels) < 2) {
+    warn(
+      c(
+        "Dropping a group that does not have two observed exposure levels",
+        i = "Observed: {.val {observed_levels}}"
+      ),
+      warning_class = "halfmoon_data_warning",
+      call = quote(geom_roc())
     )
-  }
 
-  # Convert exposure to binary
-  if (is.null(.focal_level)) {
-    .focal_level <- if (is.factor(exposure)) {
-      levels(exposure)[length(levels(exposure))]
-    } else {
-      max(unique_exposure)
-    }
+    return(NULL)
   }
 
   # Handle both factor and non-factor exposure variables

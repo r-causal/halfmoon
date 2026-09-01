@@ -132,17 +132,44 @@ test_that("StatRoc handles edge cases", {
     ggplot_build(p_bad),
     class = "halfmoon_group_error"
   )
+})
 
-  # Test with missing values
+test_that("stat_roc drops rows that are missing an aesthetic", {
+  set.seed(1)
   na_data <- data.frame(
     x = c(runif(50), rep(NA, 10)),
-    y = factor(c(rep("A", 30), rep("B", 30)))
+    y = factor(rep(c("A", "B"), length.out = 60)),
+    w = c(rep(1, 45), rep(NA, 5), rep(1, 10))
+  )
+  complete_data <- na_data[stats::complete.cases(na_data), ]
+
+  expected <- layer_data(
+    ggplot(complete_data, aes(estimate = x, exposure = y, weight = w)) +
+      stat_roc(),
+    1
   )
 
-  # Should work with na.rm = TRUE (default)
-  p_na <- ggplot(na_data, aes(estimate = x, truth = y)) +
-    stat_roc(na.rm = TRUE)
-  expect_s3_class(p_na, "gg")
+  dropped <- layer_data(
+    ggplot(na_data, aes(estimate = x, exposure = y, weight = w)) +
+      stat_roc(na.rm = TRUE),
+    1
+  )
+
+  expect_false(anyNA(dropped$x))
+  expect_false(anyNA(dropped$y))
+  expect_equal(dropped[, c("x", "y")], expected[, c("x", "y")])
+
+  # `na.rm = FALSE` drops the same rows but reports them
+  expect_warning(
+    kept <- layer_data(
+      ggplot(na_data, aes(estimate = x, exposure = y, weight = w)) +
+        stat_roc(na.rm = FALSE),
+      1
+    ),
+    "Removed 15 rows"
+  )
+
+  expect_equal(kept[, c("x", "y")], expected[, c("x", "y")])
 })
 
 test_that("plot functions produce expected output structure", {
@@ -269,4 +296,17 @@ test_that("plot_roc_auc visual regression", {
     "roc-auc-balance-colors",
     plot_model_auc(test_auc)
   )
+})
+
+test_that("plot_model_roc_curve labels only the aesthetics it maps", {
+  single <- check_model_roc_curve(nhefs_weights, qsmk, .fitted)
+  expect_no_message(ggplot2::ggplot_build(plot_model_roc_curve(single)))
+
+  multiple <- check_model_roc_curve(
+    nhefs_weights,
+    qsmk,
+    .fitted,
+    c(w_ate, w_att)
+  )
+  expect_no_message(ggplot2::ggplot_build(plot_model_roc_curve(multiple)))
 })

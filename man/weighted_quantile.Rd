@@ -4,7 +4,7 @@
 \alias{weighted_quantile}
 \title{Compute weighted quantiles}
 \usage{
-weighted_quantile(values, quantiles, .weights)
+weighted_quantile(values, quantiles, .weights, na.rm = FALSE)
 }
 \arguments{
 \item{values}{Numeric vector of values to compute quantiles for.}
@@ -12,18 +12,47 @@ weighted_quantile(values, quantiles, .weights)
 \item{quantiles}{Numeric vector of probabilities with values between 0 and 1.}
 
 \item{.weights}{Numeric vector of non-negative weights, same length as \code{values}.}
+
+\item{na.rm}{Logical. If \code{FALSE} (default), a missing value or a missing
+weight makes every quantile missing. If \code{TRUE}, an observation with either
+one missing is dropped and the quantiles are computed from the rest.}
 }
 \value{
-Numeric vector of weighted quantiles corresponding to the requested probabilities.
+Numeric vector of weighted quantiles corresponding to the requested
+probabilities. Fewer than two observations with a positive weight leave the
+quantiles undefined, and the result is \code{NA_real_}, as does \code{na.rm = FALSE}
+with a missing value or a missing weight.
 }
 \description{
-Calculate quantiles of a numeric vector with associated weights. This function
-sorts the values and computes weighted cumulative distribution before
-interpolating the requested quantiles.
+Calculate quantiles of a numeric vector with associated weights, using the
+weighted generalization of the default definition in \code{\link[stats:quantile]{stats::quantile()}}.
+}
+\details{
+\code{\link[stats:quantile]{stats::quantile()}} with \code{type = 7}, its default, places the value of rank
+\code{i} among \code{n} values at probability \code{(i - 1) / (n - 1)} and interpolates
+linearly between them. \code{weighted_quantile()} generalizes those positions:
+each distinct value spans the probabilities implied by the total weight of
+the observations that take it, shortened at each end by half the average
+weight of those observations, and the positions are rescaled so that the
+smallest value sits at 0 and the largest at 1.
+
+The definition has the properties you would expect of one:
+\itemize{
+\item With a constant positive weight, the result is identical to
+\code{stats::quantile(values, quantiles)}, ties included.
+\item Multiplying every weight by a constant leaves the result unchanged.
+\item The result does not depend on the order of \code{values}.
+\item The result is monotone in \code{quantiles}.
+}
+
+Observations with zero weight contribute nothing and are excluded. This
+matters for matching weights, which are 0 or 1: the quantiles of a matched
+sample are the quantiles of the matched observations alone.
 }
 \examples{
 # Equal weights (same as regular quantiles)
 weighted_quantile(1:10, c(0.25, 0.5, 0.75), rep(1, 10))
+quantile(1:10, c(0.25, 0.5, 0.75))
 
 # Weighted towards higher values
 weighted_quantile(1:10, c(0.25, 0.5, 0.75), 1:10)

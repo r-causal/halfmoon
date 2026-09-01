@@ -84,12 +84,13 @@ plot_model_roc_curve <- function(
       alpha = 0.7
     )
 
-  # Formatting
+  # Formatting. A single method leaves colour unmapped, and labelling an
+  # aesthetic the plot does not use draws a message from ggplot2
   p <- p +
     ggplot2::labs(
       x = "1 - specificity",
       y = "sensitivity",
-      color = "method"
+      color = if (has_multiple_methods) "method" else NULL
     ) +
     ggplot2::coord_equal() +
     ggplot2::scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +

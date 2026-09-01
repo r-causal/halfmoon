@@ -311,3 +311,30 @@ test_that("plot_stratified_residuals visual regression tests", {
     )
   )
 })
+
+test_that("plot_stratified_residuals accepts an exposure with unused levels", {
+  set.seed(1)
+  df <- data.frame(
+    residuals = rnorm(100),
+    fitted = runif(100),
+    exposure = factor(
+      rep(c("treated", "control"), each = 50),
+      levels = c("control", "treated", "never")
+    )
+  )
+
+  p <- plot_stratified_residuals(
+    df,
+    exposure,
+    residuals,
+    fitted,
+    smooth = FALSE
+  )
+  built <- ggplot2::ggplot_build(p)
+
+  expect_setequal(
+    built$plot$scales$get_scales("colour")$get_limits(),
+    c("control", "treated")
+  )
+  expect_equal(nrow(ggplot2::layer_data(p, 1)), 100)
+})

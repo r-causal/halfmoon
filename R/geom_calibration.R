@@ -19,7 +19,14 @@
 #' @param window_size Numeric; size of each window for "windowed" method.
 #' @param step_size Numeric; distance between window centers for "windowed" method.
 #' @param k Integer; the basis dimension for GAM smoothing when method = "logistic" and smooth = `TRUE.` Default is 10.
-#' @param na.rm Logical; if `TRUE`, drop `NA` values before summarizing.
+#' @param na.rm Logical; if `TRUE` (the default), rows with a missing `.fitted`
+#'   or `.exposure` value are dropped before summarizing. If `FALSE` and any
+#'   such value is missing, the function raises `halfmoon_na_error`.
+#'
+#' @details
+#' `.exposure` must have exactly two observed levels. The default `.focal_level`
+#' is the last observed level, so declared factor levels that no observation
+#' takes are ignored rather than treated as the event.
 #'
 #' @return A tibble with columns:
 #'   - For "breaks" method:
@@ -60,7 +67,7 @@ check_model_calibration <- function(
   window_size = 0.1,
   step_size = window_size / 2,
   k = 10,
-  na.rm = FALSE
+  na.rm = TRUE
 ) {
   method <- rlang::arg_match(method)
   binning_method <- rlang::arg_match(binning_method)
@@ -80,25 +87,38 @@ check_model_calibration <- function(
   fitted_name <- get_column_name(fitted_quo, ".fitted")
   group_name <- get_column_name(group_quo, ".exposure")
 
-  group_var <- data[[group_name]]
-
-  check_columns(data, fitted_name, group_name, .focal_level)
-
-  treatment_indicator <- check_focal_level(group_var, .focal_level)
+  check_columns(data, fitted_name, group_name)
 
   df <- tibble::tibble(
     x_var = data[[fitted_name]],
-    y_var = treatment_indicator
+    y_var = data[[group_name]]
   )
 
   if (isTRUE(na.rm)) {
     df <- df |>
       dplyr::filter(!is.na(x_var) & !is.na(y_var))
+  } else if (anyNA(df$x_var) || anyNA(df$y_var)) {
+    abort(
+      "Missing values found and {.code na.rm = FALSE}",
+      error_class = "halfmoon_na_error"
+    )
   }
 
   if (nrow(df) == 0) {
-    return(empty_calibration(method))
+    result <- empty_calibration(method)
+    class(result) <- c("halfmoon_calibration", class(result))
+    return(result)
   }
+
+  # The focal level is resolved against the whole data, before any binning, so
+  # that both the default and a supplied value describe the same groups the
+  # summary reports
+  focal_level <- resolve_calibration_focal_level(
+    df$y_var,
+    .focal_level,
+    require_binary = TRUE
+  )
+  df$y_var <- create_treatment_indicator(df$y_var, focal_level)
 
   result <- if (method == "breaks") {
     compute_calibration_breaks_imp(df, bins, binning_method, conf_level)
@@ -139,45 +159,90 @@ empty_calibration <- function(method = "breaks") {
   }
 }
 
-check_focal_level <- function(group_var, .focal_level) {
-  # Validate treatment level exists if provided
-  if (!is.null(.focal_level)) {
-    unique_levels <- unique(group_var[!is.na(group_var)])
-    if (length(unique_levels) > 0 && !.focal_level %in% unique_levels) {
-      abort(
-        "{.code .focal_level} {.code {.focal_level}} not found in {.code .exposure} variable",
-        error_class = "halfmoon_reference_error"
-      )
-    }
+# Resolve the level of the exposure that counts as the event. Levels are the
+# OBSERVED levels, so a declared factor level that no observation takes is
+# never chosen as the default and never accepted as a supplied value. Callers
+# that summarize the whole data at once pass `require_binary = TRUE`; the plot
+# path leaves the level count alone so that a facet can hold more than two
+# groups. Returns `NULL` when nothing is observed, which leaves the empty
+# result to the caller.
+resolve_calibration_focal_level <- function(
+  group_var,
+  .focal_level = NULL,
+  require_binary = FALSE,
+  call = rlang::caller_env()
+) {
+  observed_levels <- extract_group_levels(
+    group_var,
+    require_binary = FALSE,
+    call = call
+  )
+
+  if (length(observed_levels) == 0) {
+    return(NULL)
   }
 
-  # Use the helper function to create treatment indicator
-  create_treatment_indicator(group_var, .focal_level)
+  if (require_binary && length(observed_levels) != 2) {
+    abort(
+      c(
+        "{.arg .exposure} must have exactly two observed levels, not {length(observed_levels)}",
+        i = "Observed: {.val {observed_levels}}"
+      ),
+      error_class = "halfmoon_group_error",
+      call = call
+    )
+  }
+
+  if (is.null(.focal_level)) {
+    if (length(observed_levels) < 2) {
+      abort(
+        c(
+          "{.arg .exposure} must have at least two observed levels to choose a focal level",
+          i = "Observed: {.val {observed_levels}}"
+        ),
+        error_class = "halfmoon_group_error",
+        call = call
+      )
+    }
+
+    return(observed_levels[[length(observed_levels)]])
+  }
+
+  focal_level <- .focal_level
+  if (!focal_level %in% observed_levels) {
+    abort(
+      c(
+        "{.arg .focal_level} {.val {focal_level}} not found in {.arg .exposure}",
+        i = "Observed levels: {.val {observed_levels}}"
+      ),
+      error_class = "halfmoon_reference_error",
+      call = call
+    )
+  }
+
+  focal_level
 }
 
 check_columns <- function(
   data,
   fitted_name,
   group_name,
-  .focal_level,
   call = rlang::caller_env()
 ) {
-  if (is.null(.focal_level)) {
-    if (!fitted_name %in% names(data)) {
-      abort(
-        "Column {.code {fitted_name}} not found in data",
-        error_class = "halfmoon_column_error",
-        call = call
-      )
-    }
+  if (!fitted_name %in% names(data)) {
+    abort(
+      "Column {.code {fitted_name}} not found in data",
+      error_class = "halfmoon_column_error",
+      call = call
+    )
+  }
 
-    if (!group_name %in% names(data)) {
-      abort(
-        "Column {.code {group_name}} not found in data",
-        error_class = "halfmoon_column_error",
-        call = call
-      )
-    }
+  if (!group_name %in% names(data)) {
+    abort(
+      "Column {.code {group_name}} not found in data",
+      error_class = "halfmoon_column_error",
+      call = call
+    )
   }
 }
 
@@ -192,56 +257,61 @@ compute_calibration_breaks_imp <- function(
 ) {
   # Determine breaks
   xs <- df$x_var
-  if (binning_method == "equal_width") {
-    brks <- seq(
-      min(xs, na.rm = TRUE),
-      max(xs, na.rm = TRUE),
-      length.out = bins + 1
+  fitted_range <- range(xs, na.rm = TRUE)
+  degenerate_range <- !all(is.finite(fitted_range)) ||
+    fitted_range[[1]] == fitted_range[[2]]
+
+  if (degenerate_range) {
+    # `cut()` cannot split a range of zero width, and there is only one group of
+    # predictions to report anyway
+    warn(
+      "{.code .fitted} is constant; returning a single calibration bin",
+      warning_class = "halfmoon_data_warning",
+      call = call
     )
+    bin_index <- rep(1L, nrow(df))
   } else {
-    probs <- seq(0, 1, length.out = bins + 1)
-    brks <- unique(stats::quantile(xs, probs = probs, na.rm = TRUE))
-    if (length(brks) <= 2) {
-      brks <- seq(
-        min(xs, na.rm = TRUE),
-        max(xs, na.rm = TRUE),
-        length.out = bins + 1
-      )
+    if (binning_method == "equal_width") {
+      brks <- seq(fitted_range[[1]], fitted_range[[2]], length.out = bins + 1)
+    } else {
+      probs <- seq(0, 1, length.out = bins + 1)
+      brks <- unique(stats::quantile(xs, probs = probs, na.rm = TRUE))
+      if (length(brks) <= 2) {
+        brks <- seq(fitted_range[[1]], fitted_range[[2]], length.out = bins + 1)
+      }
     }
+
+    bin_index <- as.integer(cut(
+      xs,
+      breaks = brks,
+      include.lowest = TRUE,
+      labels = FALSE
+    ))
   }
 
+  # Counts are the number of outcomes actually observed in the bin, so that the
+  # rate and the interval it carries are built from the same denominator
   result <- df |>
-    dplyr::mutate(
-      .bin = as.integer(cut(
-        xs,
-        breaks = brks,
-        include.lowest = TRUE,
-        labels = FALSE
-      ))
-    ) |>
+    dplyr::mutate(.bin = bin_index) |>
     dplyr::group_by(.bin) |>
     dplyr::summarise(
       predicted_rate = mean(x_var, na.rm = TRUE),
-      observed_rate = mean(y_var, na.rm = TRUE),
-      count = dplyr::n(),
+      n_events = sum(y_var, na.rm = TRUE),
+      count = sum(!is.na(y_var)),
       .groups = "drop"
     ) |>
     dplyr::arrange(.bin)
 
+  n_events <- result$n_events
   n_total <- result$count
-  n_events <- round(result$observed_rate * n_total)
+  result$observed_rate <- n_events / n_total
+  result <- result[c(".bin", "predicted_rate", "observed_rate", "count")]
 
-  # Handle edge cases up front:
-  # - total count must be positive
-  # - number of events must be non-negative
-  # - events cannot exceed total count
-  # - events must be greater than 0 (no empty bins)
-  # - events must be less than total (no full bins)
-  valid_mask <- n_total > 0 &
-    n_events >= 0 &
-    n_events <= n_total &
-    n_events > 0 &
-    n_events < n_total
+  # A bin needs observations to say anything about a rate. A bin in which every
+  # observation is an event, or none is, still does: `prop.test()` gives it a
+  # one sided interval, where the normal approximation would give it a width of
+  # zero and assert impossible certainty.
+  valid_mask <- n_total > 0
 
   # Check for small cell sizes that might cause warnings
   small_cells <- n_total < 10
@@ -276,19 +346,7 @@ compute_calibration_breaks_imp <- function(
     result$upper[valid_indices] <- purrr::map_dbl(ci_results, \(x) x$upper)
   }
 
-  # For edge cases, use normal approximation with purrr
-  edge_cases <- which(!valid_mask & n_total > 0)
-  if (length(edge_cases) > 0) {
-    edge_results <- purrr::map(
-      edge_cases,
-      \(x) calculate_normal_ci(result$observed_rate[x], n_total[x], conf_level)
-    )
-
-    result$lower[edge_cases] <- purrr::map_dbl(edge_results, \(x) x$lower)
-    result$upper[edge_cases] <- purrr::map_dbl(edge_results, \(x) x$upper)
-  }
-
-  # Set NA for completely invalid cases
+  # A bin holding no observations has no rate to bound
   invalid_mask <- n_total == 0
   result$lower[invalid_mask] <- NA_real_
   result$upper[invalid_mask] <- NA_real_
@@ -312,7 +370,11 @@ compute_calibration_logistic_imp <- function(
   }
 
   # Create prediction sequence
-  pred_seq <- seq(min(df$x_var), max(df$x_var), length.out = 100)
+  pred_seq <- seq(
+    min(df$x_var, na.rm = TRUE),
+    max(df$x_var, na.rm = TRUE),
+    length.out = 100
+  )
   new_data <- data.frame(x_var = pred_seq)
 
   # Get predictions with confidence intervals
@@ -341,7 +403,6 @@ compute_calibration_windowed_imp <- function(
 ) {
   steps <- seq(0, 1, by = step_size)
   n_steps <- length(steps)
-  z_score <- get_z_score(conf_level)
   half_window <- window_size / 2
 
   window_results <- purrr::map(
@@ -350,7 +411,6 @@ compute_calibration_windowed_imp <- function(
     data_x = df$x_var,
     data_y = df$y_var,
     half_window = half_window,
-    z_score = z_score,
     conf_level = conf_level
   )
 
@@ -404,7 +464,6 @@ calculate_window_statistics <- function(
   data_x,
   data_y,
   half_window,
-  z_score,
   conf_level
 ) {
   {
@@ -412,8 +471,13 @@ calculate_window_statistics <- function(
     lower_bound <- max(0, .x - half_window)
     upper_bound <- min(1, .x + half_window)
 
-    # Find observations in this window
-    in_window <- data_x >= lower_bound & data_x <= upper_bound
+    # Find observations in this window. A window holds the observations whose
+    # prediction and outcome are both known, so that its count is the
+    # denominator of its rate.
+    in_window <- !is.na(data_x) &
+      !is.na(data_y) &
+      data_x >= lower_bound &
+      data_x <= upper_bound
     n_total <- sum(in_window)
 
     if (n_total > 0) {
@@ -421,31 +485,20 @@ calculate_window_statistics <- function(
       n_events <- sum(data_y[in_window])
       event_rate <- n_events / n_total
 
-      # Calculate confidence intervals
-      if (n_events > 0 && n_events < n_total) {
-        ci <- calculate_prop_ci(n_events, n_total, conf_level)
-        list(
-          predicted_rate = .x,
-          observed_rate = event_rate,
-          lower = ci$lower,
-          upper = ci$upper,
-          valid = TRUE,
-          n_total = n_total,
-          n_events = n_events
-        )
-      } else {
-        # For edge cases, use normal approximation
-        ci <- calculate_normal_ci(event_rate, n_total, conf_level)
-        list(
-          predicted_rate = .x,
-          observed_rate = event_rate,
-          lower = ci$lower,
-          upper = ci$upper,
-          valid = TRUE,
-          n_total = n_total,
-          n_events = n_events
-        )
-      }
+      # A window in which every observation is an event, or none is, gets the
+      # same one sided interval as any other, rather than the width of zero the
+      # normal approximation gives at a rate of 0 or 1
+      ci <- calculate_prop_ci(n_events, n_total, conf_level)
+
+      list(
+        predicted_rate = .x,
+        observed_rate = event_rate,
+        lower = ci$lower,
+        upper = ci$upper,
+        valid = TRUE,
+        n_total = n_total,
+        n_events = n_events
+      )
     } else {
       # Invalid window
       list(valid = FALSE)
@@ -476,6 +529,19 @@ StatCalibration <- ggplot2::ggproto(
     params$step_size <- params$step_size %||% (params$window_size / 2)
     params$.focal_level <- params$.focal_level %||% NULL
     params$k <- params$k %||% 10
+
+    # `setup_params()` sees the whole layer before it is split into panels, so
+    # the focal level is resolved once here and carried into every panel.
+    # Resolving it per panel would let a panel holding a single group take that
+    # group as the event and report a rate of 1 throughout.
+    if (!is.null(data[[".exposure"]])) {
+      params$.focal_level <- resolve_calibration_focal_level(
+        data[[".exposure"]],
+        params$.focal_level,
+        call = quote(geom_calibration())
+      )
+    }
+
     params
   },
   compute_panel = function(
@@ -572,20 +638,17 @@ compute_calibration_for_group <- function(
   group_id,
   call = rlang::caller_env()
 ) {
-  # Convert to binary using helper function
-  exposure <- data$.exposure
-  treatment_indicator <- create_treatment_indicator(exposure, .focal_level)
-
-  # Create data frame for calibration computation
-  df <- tibble::tibble(
-    x_var = data$.fitted,
-    y_var = treatment_indicator
+  # Missing values follow the ggplot2 convention for a stat: they are always
+  # dropped, and `na.rm = FALSE` reports how many rows went
+  df <- ggplot2::remove_missing(
+    tibble::tibble(
+      x_var = data$.fitted,
+      exposure = data$.exposure
+    ),
+    na.rm = na.rm,
+    vars = c("x_var", "exposure"),
+    name = "stat_calibration"
   )
-
-  if (isTRUE(na.rm)) {
-    df <- df |>
-      dplyr::filter(!is.na(x_var) & !is.na(y_var))
-  }
 
   if (nrow(df) == 0) {
     return(data.frame(
@@ -593,10 +656,17 @@ compute_calibration_for_group <- function(
       observed_rate = numeric(0),
       lower = numeric(0),
       upper = numeric(0),
-      PANEL = data$PANEL[1],
-      group = group_id
+      PANEL = data$PANEL[integer(0)],
+      group = group_id[integer(0)]
     ))
   }
+
+  # Convert to binary using helper function. The focal level is resolved per
+  # panel because a panel may legitimately hold only one of the groups.
+  df <- tibble::tibble(
+    x_var = df$x_var,
+    y_var = create_treatment_indicator(df$exposure, .focal_level)
+  )
 
   # Compute calibration based on method
   calibration_result <- if (method == "breaks") {
@@ -817,6 +887,7 @@ geom_calibration <- function(
     params = list(
       method = method,
       bins = bins,
+      binning_method = binning_method,
       smooth = smooth,
       conf_level = conf_level,
       window_size = window_size,

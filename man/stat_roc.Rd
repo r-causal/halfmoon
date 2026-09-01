@@ -38,9 +38,10 @@ If \code{TRUE}, missing values are silently removed.}
 \item{inherit.aes}{If \code{FALSE}, overrides the default aesthetics, rather than
 combining with them.}
 
-\item{.focal_level}{The level of the outcome variable to consider as the
-treatment/event. If \code{NULL} (default), uses the last level for factors or
-the maximum value for numeric variables.}
+\item{.focal_level}{The level of the \code{exposure} aesthetic to treat as the
+event. Must be a level the data actually takes; a declared factor level
+that no observation takes is not accepted. If \code{NULL} (default), the last
+observed level is used, which is the maximum value for numeric exposures.}
 
 \item{...}{Other arguments passed on to layer().}
 }

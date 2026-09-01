@@ -9,7 +9,8 @@
 #' QQ plots display the quantiles of one distribution against the quantiles of
 #' another. Perfect distributional balance appears as points along the 45-degree
 #' line (y = x). This function automatically adds this reference line and
-#' appropriate axis labels.
+#' appropriate axis labels. The reference (unexposed) group is on the x axis and
+#' the exposed group is on the y axis.
 #'
 #' For an alternative visualization of the same information, see [`geom_ecdf()`],
 #' which shows the empirical cumulative distribution functions directly.
@@ -25,9 +26,13 @@
 #'   `seq(0.01, 0.99, 0.01)` for 99 quantiles.
 #' @param include_observed Logical. If using `.weights`, also show observed
 #'   (unweighted) QQ plot? Defaults to TRUE.
-#' @param .reference_level The reference treatment level to use for comparisons.
-#'   If `NULL` (default), uses the last level for factors or the maximum value for numeric variables.
-#' @param na.rm Logical; if TRUE, drop NA values before computation.
+#' @param .reference_level The level of `.exposure` to treat as the reference,
+#'   the unexposed group plotted on the x axis. Either a level of `.exposure` or
+#'   its position among the observed levels. If `NULL` (default), the first
+#'   observed level is used.
+#' @param na.rm Logical. If `FALSE` (default), missing values in `.var`,
+#'   `.exposure`, or `.weights` raise an error. If `TRUE`, rows with missing
+#'   values are dropped before computation.
 #'
 #' @return A ggplot2 object.
 #'
@@ -99,61 +104,35 @@ plot_qq.default <- function(
     )
   }
 
-  # Check for NA values
-  if (!na.rm && any(is.na(.data[[var_name]]))) {
-    abort(
-      "Variable contains missing values. Use `na.rm = TRUE` to drop them.",
-      error_class = "halfmoon_na_error"
-    )
-  }
-
-  group_var <- .data[[group_name]]
-  group_levels <- if (is.factor(group_var)) {
-    levels(group_var)
+  wts_quo <- rlang::enquo(.weights)
+  wts_names <- if (!rlang::quo_is_null(wts_quo)) {
+    names(tidyselect::eval_select(wts_quo, .data))
   } else {
-    sort(unique(group_var[!is.na(group_var)]))
+    character(0)
   }
 
-  if (length(group_levels) != 2) {
-    abort(
-      "Exposure variable must have exactly 2 levels",
-      error_class = "halfmoon_group_error"
+  # Check for NA values
+  if (!na.rm) {
+    validate_qq_complete(
+      .data,
+      var_name = var_name,
+      exposure_name = group_name,
+      wt_names = wts_names
     )
   }
 
-  # Handle NULL .reference_level
-  if (is.null(.reference_level)) {
-    if (is.factor(group_var)) {
-      # For factors, use the last level
-      .reference_level <- group_levels[length(group_levels)]
-    } else {
-      # For numeric, use the maximum value
-      .reference_level <- max(group_levels)
-    }
-  }
+  # Only observed levels count, so a factor that declares levels no observation
+  # takes is still binary input.
+  group_var <- .data[[group_name]]
+  group_levels <- extract_group_levels(group_var)
 
-  # Validate .reference_level exists
-  if (!.reference_level %in% group_levels) {
-    abort(
-      "{.arg .reference_level} '{(.reference_level)}' not found in {.arg .exposure} levels: {.val {group_levels}}",
-      error_class = "halfmoon_reference_error"
-    )
-  }
-
+  # The reference level is the unexposed group; the other level is exposed
+  .reference_level <- determine_reference_group(group_var, .reference_level)
   ref_group <- .reference_level
-  comp_group <- setdiff(group_levels, .reference_level)
-
-  # Get variable name for labels
-  var_name <- get_column_name(var_quo, ".var")
+  comp_group <- setdiff(group_levels, ref_group)
 
   # Prepare data in long format
-  wts_quo <- rlang::enquo(.weights)
-
-  if (!rlang::quo_is_null(wts_quo)) {
-    # Get weight columns
-    wts_cols <- tidyselect::eval_select(wts_quo, .data)
-    wts_names <- names(wts_cols)
-
+  if (length(wts_names) > 0) {
     # Create long format data
     # Convert psw weight columns to numeric for compatibility with pivot_longer
     for (wts_name in wts_names) {
@@ -220,7 +199,8 @@ plot_qq.default <- function(
     ggplot2::labs(
       x = paste0(var_name, " (", group_name, " = ", ref_group, ")"),
       y = paste0(var_name, " (", group_name, " = ", comp_group, ")")
-    )
+    ) +
+    ggplot2::coord_equal()
 }
 
 #' @rdname plot_qq
@@ -263,6 +243,5 @@ plot_qq.halfmoon_qq <- function(.data, ...) {
       x = "Unexposed group quantiles",
       y = "Exposed group quantiles"
     ) +
-    ggplot2::theme_minimal() +
     ggplot2::coord_equal()
 }

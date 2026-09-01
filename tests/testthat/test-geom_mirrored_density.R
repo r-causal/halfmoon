@@ -329,3 +329,44 @@ test_that("geom_mirrored_density fill behavior matches documentation", {
   expect_length(group2_fill, 1)
   expect_false(group1_fill == group2_fill)
 })
+
+test_that("geom_mirror_density mirrors every computed statistic", {
+  built <- ggplot2::layer_data(
+    ggplot2::ggplot(nhefs_weights, ggplot2::aes(.fitted)) +
+      geom_mirror_density(
+        ggplot2::aes(group = qsmk, weight = w_ate),
+        bw = 0.02
+      ),
+    1
+  )
+
+  for (statistic in c("density", "count", "scaled", "ndensity", "wdensity")) {
+    mirrored <- built[[statistic]][built$group == 1]
+    upright <- built[[statistic]][built$group == 2]
+
+    expect_true(all(mirrored <= 0), info = statistic)
+    expect_true(any(mirrored < 0), info = statistic)
+    expect_true(all(upright >= 0), info = statistic)
+  }
+
+  # the number of observations behind a group is a sample size, not a height
+  expect_true(all(built$n > 0))
+})
+
+test_that("geom_mirror_density mirrors a statistic chosen with after_stat()", {
+  built <- ggplot2::layer_data(
+    ggplot2::ggplot(nhefs_weights, ggplot2::aes(.fitted)) +
+      geom_mirror_density(
+        ggplot2::aes(
+          group = qsmk,
+          weight = w_ate,
+          y = ggplot2::after_stat(wdensity)
+        ),
+        bw = 0.02
+      ),
+    1
+  )
+
+  expect_lt(min(built$y), 0)
+  expect_gt(max(built$y), 0)
+})

@@ -16,7 +16,7 @@
 #' 3. Returns these scores for balance assessment
 #'
 #' This approach is particularly useful when:
-#' - The outcome model includes non-linearities or interactions
+#' - The outcome model includes nonlinear terms or interactions
 #' - You want to ensure balance on outcome-relevant variables
 #' - Traditional propensity score balance checks may miss important imbalances
 #'
@@ -41,7 +41,11 @@
 #'   continuous outcomes. Use `binomial()` for binary outcomes.
 #' @param .weights Optional weights for the outcome model. Can be a numeric vector
 #'   or bare name of a variable in `.data`.
-#' @param na.rm Logical. Should missing values be removed? Defaults to FALSE.
+#' @param na.rm Logical. If `TRUE` (the default), rows with a missing value in
+#'   any model variable, the exposure, or the weights are dropped before the
+#'   model is fit, and the returned vector is shorter than `.data` by that many
+#'   rows. If `FALSE` and any such value is missing, the function raises
+#'   `halfmoon_na_error` rather than returning scores that are silently missing.
 #' @param ... Additional arguments passed to `glm()`.
 #'
 #' @return A numeric vector of prognostic scores with the same length as the
@@ -93,7 +97,7 @@ bal_prognostic_score <- function(
   .reference_level = NULL,
   family = gaussian(),
   .weights = NULL,
-  na.rm = FALSE,
+  na.rm = TRUE,
   ...
 ) {
   validate_data_frame(.data)
@@ -202,45 +206,59 @@ bal_prognostic_score <- function(
     model_weights <- NULL
   }
 
-  # Determine control group
-  exposure_levels <- extract_group_levels(.data[[exposure_var]])
+  # Determine control group. The exposure vector itself is passed so that a
+  # factor keeps its declared level order.
+  exposure <- .data[[exposure_var]]
+  validate_prognostic_exposure(
+    exposure,
+    exposure_var,
+    call = rlang::current_env()
+  )
   control_level <- determine_reference_group(
-    exposure_levels,
-    .reference_level
+    exposure,
+    .reference_level,
+    call = rlang::current_env()
   )
 
   # Create control group indicator
-  is_control <- .data[[exposure_var]] == control_level
+  is_control <- exposure == control_level
 
-  # Handle NAs if requested
+  # Handle NAs
+  model_vars <- intersect(
+    unique(c(all.vars(model_formula), exposure_var)),
+    names(.data)
+  )
+  complete_idx <- stats::complete.cases(.data[model_vars])
+
+  if (!is.null(model_weights)) {
+    complete_idx <- complete_idx & !is.na(model_weights)
+  }
+
   if (na.rm) {
-    # Get all variables used in the model
-    model_vars <- unique(c(all.vars(model_formula), exposure_var))
-    complete_idx <- stats::complete.cases(.data[model_vars])
-
-    if (!is.null(model_weights)) {
-      complete_idx <- complete_idx & !is.na(model_weights)
-    }
-
     .data <- .data[complete_idx, ]
     is_control <- is_control[complete_idx]
 
     if (!is.null(model_weights)) {
       model_weights <- model_weights[complete_idx]
     }
+  } else if (!all(complete_idx)) {
+    # A prognostic score is fit and then predicted from, so a missing value
+    # returns silently as a missing score that later models would carry
+    abort(
+      "Missing values found and {.code na.rm = FALSE}",
+      error_class = "halfmoon_na_error",
+      call = rlang::current_env()
+    )
   }
 
-  # Check we have control observations
+  # The prognostic model is fit on the control group alone, so it needs rows
+  # left in that group after the missing-value policy has been applied
   n_control <- sum(is_control, na.rm = TRUE)
   if (n_control == 0) {
     abort(
-      paste0(
-        "No control observations found. ",
-        "Control level '",
-        control_level,
-        "' not present in treatment variable."
-      ),
-      error_class = "halfmoon_reference_error"
+      "No observations left in the control group {.val {control_level}} of {.arg {exposure_var}}",
+      error_class = "halfmoon_group_error",
+      call = rlang::current_env()
     )
   }
 
@@ -255,6 +273,52 @@ bal_prognostic_score <- function(
   )
 
   prognostic_scores
+}
+
+# A prognostic score is fit on the control group and predicted for everyone, so
+# both groups have to be present. A factor whose declared control level is never
+# taken is reported as such rather than as a bare level count.
+validate_prognostic_exposure <- function(
+  exposure,
+  exposure_var,
+  call = rlang::caller_env()
+) {
+  observed_levels <- extract_group_levels(
+    exposure,
+    require_binary = FALSE,
+    call = call
+  )
+
+  if (length(observed_levels) == 2) {
+    return(invisible(observed_levels))
+  }
+
+  absent_levels <- if (is.factor(exposure)) {
+    setdiff(levels(exposure), observed_levels)
+  } else {
+    character(0)
+  }
+
+  if (length(observed_levels) < 2 && length(absent_levels) > 0) {
+    abort(
+      c(
+        "No control observations found in {.arg .exposure} ({.code {exposure_var}}).",
+        x = "Declared level{?s} {.val {absent_levels}} never observed.",
+        i = "A prognostic score is fit on the control group, so both groups must be present."
+      ),
+      error_class = "halfmoon_group_error",
+      call = call
+    )
+  }
+
+  abort(
+    c(
+      "{.arg .exposure} ({.code {exposure_var}}) must have exactly two observed levels, not {length(observed_levels)}.",
+      i = "Observed: {.val {observed_levels}}"
+    ),
+    error_class = "halfmoon_group_error",
+    call = call
+  )
 }
 
 bal_prognostic_fit_model <- function(

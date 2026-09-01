@@ -9,24 +9,24 @@ test_that("backward compatibility: all functions work with numeric weights", {
   numeric_weights <- runif(n, 0.5, 2.0)
 
   # Test all balance functions with numeric weights
-  expect_no_error(smd_result <- bal_smd(x, g, .weights = numeric_weights))
+  smd_result <- expect_no_error(bal_smd(x, g, .weights = numeric_weights))
   expect_true(is.finite(smd_result))
 
-  expect_no_error(vr_result <- bal_vr(x, g, .weights = numeric_weights))
+  vr_result <- expect_no_error(bal_vr(x, g, .weights = numeric_weights))
   expect_true(is.finite(vr_result) && vr_result > 0)
 
-  expect_no_error(ks_result <- bal_ks(x, g, .weights = numeric_weights))
+  ks_result <- expect_no_error(bal_ks(x, g, .weights = numeric_weights))
   expect_true(is.finite(ks_result) && ks_result >= 0 && ks_result <= 1)
 
   # Test correlation with numeric weights
   y <- 2 * x + rnorm(n, sd = 0.5)
-  expect_no_error(corr_result <- bal_corr(x, y, .weights = numeric_weights))
+  corr_result <- expect_no_error(bal_corr(x, y, .weights = numeric_weights))
   expect_true(is.finite(corr_result) && corr_result >= -1 && corr_result <= 1)
 
   # Test energy balance with numeric weights
   covariates <- data.frame(x1 = x, x2 = rnorm(n))
-  expect_no_error(
-    energy_result <- bal_energy(covariates, g, .weights = numeric_weights)
+  energy_result <- expect_no_error(
+    bal_energy(covariates, g, .weights = numeric_weights)
   )
   expect_true(is.finite(energy_result) && energy_result >= 0)
 
@@ -37,8 +37,8 @@ test_that("backward compatibility: all functions work with numeric weights", {
     g = g,
     w = numeric_weights
   )
-  expect_no_error(
-    balance_results <- check_balance(
+  balance_results <- expect_no_error(
+    check_balance(
       test_data,
       c(x, y),
       g,

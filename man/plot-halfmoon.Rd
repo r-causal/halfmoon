@@ -28,9 +28,11 @@
 \item{...}{Additional arguments passed to autoplot()}
 }
 \value{
-Invisibly returns the ggplot2 object after printing
+A ggplot2 object
 }
 \description{
 These methods provide standard plot generation for halfmoon data objects.
-They create the plot using autoplot() and then print it.
+Each method builds the plot with \code{\link[ggplot2:autoplot]{ggplot2::autoplot()}} and returns it. The
+plot is drawn when the returned object is printed, which happens
+automatically at the top level of an interactive session.
 }

@@ -42,12 +42,12 @@ test_that("bal_model_roc_curve handles missing values", {
 test_that("bal_model_roc_curve validates inputs", {
   expect_halfmoon_error(
     bal_model_roc_curve(nhefs_weights, nonexistent, .fitted),
-    class = "halfmoon_arg_error"
+    class = "halfmoon_column_error"
   )
 
   expect_halfmoon_error(
     bal_model_roc_curve(nhefs_weights, qsmk, nonexistent),
-    class = "halfmoon_arg_error"
+    class = "halfmoon_column_error"
   )
 
   # Multiple weights should error
@@ -74,4 +74,61 @@ test_that("bal_model_roc_curve matches check_model_roc_curve for single method",
   expect_equal(roc_single$threshold, roc_check$threshold)
   expect_equal(roc_single$sensitivity, roc_check$sensitivity)
   expect_equal(roc_single$specificity, roc_check$specificity)
+})
+
+test_that("bal_model_roc_curve requires exactly two observed exposure levels", {
+  set.seed(20240120)
+  three_level <- tibble::tibble(
+    truth = factor(rep(c("a", "b", "c"), length.out = 60)),
+    score = runif(60)
+  )
+  expect_error(
+    bal_model_roc_curve(three_level, truth, score),
+    class = "halfmoon_group_error"
+  )
+
+  unused <- tibble::tibble(
+    truth = factor(rep(c("a", "c"), 30), levels = c("a", "b", "c")),
+    score = runif(60)
+  )
+  dropped <- unused
+  dropped$truth <- droplevels(dropped$truth)
+  expect_equal(
+    bal_model_roc_curve(unused, truth, score),
+    bal_model_roc_curve(dropped, truth, score)
+  )
+})
+
+test_that("bal_model_roc_curve drops zero and negative weights", {
+  set.seed(11)
+  n <- 40
+  negative <- tibble::tibble(
+    truth = factor(rep(c(0, 1), n / 2)),
+    score = runif(n),
+    weight = runif(n, 0.5, 2)
+  )
+  negative$weight[negative$truth == "0"][1:6] <- -2
+
+  expect_warning(
+    roc_negative <- bal_model_roc_curve(negative, truth, score, weight),
+    class = "halfmoon_data_warning"
+  )
+  expect_true(all(
+    roc_negative$specificity >= 0 & roc_negative$specificity <= 1
+  ))
+  expect_true(all(
+    roc_negative$sensitivity >= 0 & roc_negative$sensitivity <= 1
+  ))
+
+  roc_check <- suppressWarnings(
+    check_model_roc_curve(
+      negative,
+      truth,
+      score,
+      weight,
+      include_observed = FALSE
+    )
+  )
+  expect_equal(roc_negative$sensitivity, roc_check$sensitivity)
+  expect_equal(roc_negative$specificity, roc_check$specificity)
 })

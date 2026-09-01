@@ -1,7 +1,7 @@
 # check_balance rejects discrete metrics for a continuous exposure
 
     Code
-      expr
+      check_balance(data, c(z1, z2), exposure, .metrics = c("smd", "energy"))
     Condition <halfmoon_metric_type_error>
       Error in `check_balance()`:
       ! Metric "smd" cannot be computed for a "continuous" exposure.
@@ -11,7 +11,7 @@
 # check_balance rejects correlation for a binary exposure
 
     Code
-      expr
+      check_balance(nhefs_weights, age, qsmk, .metrics = "correlation")
     Condition <halfmoon_metric_type_error>
       Error in `check_balance()`:
       ! Metric "correlation" cannot be computed for a "binary" exposure.
@@ -21,7 +21,8 @@
 # check_balance rejects correlation for a categorical exposure
 
     Code
-      expr
+      check_balance(nhefs_weights, age, alcoholfreq_cat, .metrics = c("correlation",
+        "energy"))
     Condition <halfmoon_metric_type_error>
       Error in `check_balance()`:
       ! Metric "correlation" cannot be computed for a "categorical" exposure.
@@ -31,7 +32,8 @@
 # check_balance requires a numeric exposure treated as continuous
 
     Code
-      expr
+      check_balance(nhefs_weights, age, qsmk, .metrics = "correlation",
+        exposure_type = "continuous")
     Condition <halfmoon_type_error>
       Error in `check_balance()`:
       ! Exposure variable must be numeric when treated as continuous
@@ -39,7 +41,7 @@
 ---
 
     Code
-      expr
+      check_balance(nhefs_weights, age, qsmk, .metrics = "energy", exposure_type = "continuous")
     Condition <halfmoon_type_error>
       Error in `check_balance()`:
       ! Exposure variable must be numeric when treated as continuous
@@ -47,7 +49,7 @@
 # check_balance still rejects unknown metric names
 
     Code
-      expr
+      check_balance(nhefs_weights, age, qsmk, .metrics = "invalid")
     Condition <halfmoon_arg_error>
       Error in `check_balance()`:
       ! Invalid metric: "invalid"

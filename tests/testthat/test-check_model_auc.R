@@ -63,6 +63,9 @@ test_that("check_auc computes correct AUC values", {
     weight1 = rep(1, 200)
   )
 
+  # "B" is the last level of `truth`, so it is the event
+  truth_binary <- as.integer(test_data$truth == "B")
+
   # Test good separation
   auc_good <- check_model_auc(
     test_data,
@@ -72,9 +75,12 @@ test_that("check_auc computes correct AUC values", {
   )
   expect_s3_class(auc_good, "tbl_df")
   expect_equal(colnames(auc_good), c("method", "auc"))
-  # Note: AUC depends on which level is considered "positive"
-  # For causal inference, we're less concerned with direction
-  expect_true(abs(auc_good$auc[auc_good$method == "observed"] - 0.5) > 0.4)
+  expect_equal(auc_good$auc[auc_good$method == "observed"], 1)
+  expect_equal(
+    auc_good$auc[auc_good$method == "observed"],
+    weighted_concordance_auc(truth_binary, test_data$estimate_good),
+    tolerance = 1e-10
+  )
 
   # Test random separation
   auc_random <- check_model_auc(
@@ -83,7 +89,12 @@ test_that("check_auc computes correct AUC values", {
     estimate_random,
     include_observed = TRUE
   )
-  expect_true(abs(auc_random$auc[auc_random$method == "observed"] - 0.5) < 0.1)
+  expect_equal(auc_random$auc[auc_random$method == "observed"], 0.5332)
+  expect_equal(
+    auc_random$auc[auc_random$method == "observed"],
+    weighted_concordance_auc(truth_binary, test_data$estimate_random),
+    tolerance = 1e-10
+  )
 
   # Test with weights
   auc_weighted <- check_model_auc(test_data, truth, estimate_good, weight1)
@@ -308,7 +319,7 @@ test_that("weighted ROC/AUC integrates with check_balance patterns", {
 })
 
 test_that(".focal_level parameter works correctly", {
-  # Test with default (second level)
+  # Test with default (last level)
   roc_default <- check_model_roc_curve(
     nhefs_weights,
     qsmk,
@@ -372,4 +383,221 @@ test_that("compute_auc handles edge cases", {
   x <- c(0, 0.5, 1)
   y <- c(0, 0.5, 1)
   expect_equal(compute_auc(x, y), 0.5)
+})
+
+test_that("compute_auc integrates the curve in its own order", {
+  # Truth (1, 0, 1, 0) with scores (4, 3, 2, 1) produces a staircase whose
+  # false positive rate is tied across two pairs of points. Re-sorting those
+  # points by false positive rate reverses each vertical run and pairs the
+  # trapezoids with the wrong corners.
+  tied <- tibble::tibble(
+    truth = factor(c(1, 0, 1, 0)),
+    score = c(4, 3, 2, 1)
+  )
+
+  expect_equal(weighted_concordance_auc(c(1, 0, 1, 0), c(4, 3, 2, 1)), 0.75)
+  expect_equal(bal_model_auc(tied, truth, score), 0.75)
+  expect_equal(
+    check_model_auc(tied, truth, score)$auc[[1]],
+    0.75
+  )
+})
+
+test_that("unweighted AUC matches the Mann-Whitney concordance", {
+  auc_observed <- bal_model_auc(nhefs_weights, qsmk, .fitted)
+  expect_equal(
+    auc_observed,
+    weighted_concordance_auc(
+      as.integer(as.character(nhefs_weights$qsmk)),
+      nhefs_weights$.fitted
+    ),
+    tolerance = 1e-10
+  )
+})
+
+test_that("weighted AUC matches the weighted concordance with tied scores", {
+  set.seed(20240117)
+  n <- 50
+  tied <- tibble::tibble(
+    truth = factor(rbinom(n, 1, 0.5)),
+    score = sample(1:12, n, replace = TRUE),
+    weight = round(runif(n, 0.5, 3), 1)
+  )
+  truth_binary <- as.integer(as.character(tied$truth))
+  expected <- weighted_concordance_auc(truth_binary, tied$score, tied$weight)
+
+  expect_equal(expected, 0.546651978158827, tolerance = 1e-12)
+  expect_equal(
+    bal_model_auc(tied, truth, score, weight),
+    expected,
+    tolerance = 1e-10
+  )
+  expect_equal(
+    check_model_auc(tied, truth, score, weight, include_observed = FALSE)$auc,
+    expected,
+    tolerance = 1e-10
+  )
+
+  # The same weights carried as a psw object must give the same answer
+  tied$weight <- propensity::psw(tied$weight, estimand = "ate")
+  expect_equal(
+    bal_model_auc(tied, truth, score, weight),
+    expected,
+    tolerance = 1e-10
+  )
+  expect_equal(
+    check_model_auc(tied, truth, score, weight, include_observed = FALSE)$auc,
+    expected,
+    tolerance = 1e-10
+  )
+})
+
+test_that("check_model_roc_curve drops rows with missing weights", {
+  nhefs_na <- nhefs_weights
+  nhefs_na$weight <- as.numeric(nhefs_na$w_ate)
+  nhefs_na$weight[1:20] <- NA
+
+  roc_na <- check_model_roc_curve(
+    nhefs_na,
+    qsmk,
+    .fitted,
+    weight,
+    include_observed = FALSE
+  )
+  expect_false(anyNA(roc_na$sensitivity))
+  expect_false(anyNA(roc_na$specificity))
+  expect_true(all(roc_na$sensitivity >= 0 & roc_na$sensitivity <= 1))
+  expect_true(all(roc_na$specificity >= 0 & roc_na$specificity <= 1))
+
+  complete <- nhefs_na[!is.na(nhefs_na$weight), , drop = FALSE]
+  expect_equal(
+    check_model_auc(
+      nhefs_na,
+      qsmk,
+      .fitted,
+      weight,
+      include_observed = FALSE
+    )$auc,
+    weighted_concordance_auc(
+      as.integer(as.character(complete$qsmk)),
+      complete$.fitted,
+      complete$weight
+    ),
+    tolerance = 1e-10
+  )
+})
+
+test_that("check_model_roc_curve rejects missing weights with na.rm = FALSE", {
+  nhefs_na <- nhefs_weights
+  nhefs_na$weight <- as.numeric(nhefs_na$w_ate)
+  nhefs_na$weight[1:20] <- NA
+
+  expect_halfmoon_error(
+    check_model_roc_curve(nhefs_na, qsmk, .fitted, weight, na.rm = FALSE),
+    "halfmoon_na_error"
+  )
+})
+
+test_that("check_model_* use observed levels of the exposure", {
+  set.seed(3)
+  unused <- tibble::tibble(
+    truth = factor(rep(c("a", "c"), 30), levels = c("a", "b", "c")),
+    score = runif(60)
+  )
+  dropped <- unused
+  dropped$truth <- droplevels(dropped$truth)
+
+  expect_equal(
+    check_model_auc(unused, truth, score)$auc,
+    check_model_auc(dropped, truth, score)$auc
+  )
+  expect_equal(
+    check_model_roc_curve(unused, truth, score),
+    check_model_roc_curve(dropped, truth, score)
+  )
+})
+
+test_that("check_model_* report a missing column against the call the user made", {
+  expect_halfmoon_error(
+    check_model_roc_curve(nhefs_weights, nonexistent, .fitted),
+    "halfmoon_column_error"
+  )
+
+  expect_halfmoon_error(
+    check_model_roc_curve(nhefs_weights, qsmk, .fitted, nonexistent),
+    "halfmoon_column_error"
+  )
+
+  expect_halfmoon_error(
+    check_model_auc(nhefs_weights, qsmk, nonexistent, w_ate),
+    "halfmoon_column_error"
+  )
+})
+
+test_that("check_model_roc_curve reports the user-facing call for .focal_level", {
+  err <- rlang::catch_cnd(
+    check_model_roc_curve(
+      nhefs_weights,
+      qsmk,
+      .fitted,
+      .focal_level = "invalid"
+    )
+  )
+  expect_s3_class(err, "halfmoon_reference_error")
+  expect_equal(
+    rlang::call_name(conditionCall(err)),
+    "check_model_roc_curve"
+  )
+})
+
+test_that("AUC entry points agree with each other and with the curve", {
+  set.seed(20240118)
+  n <- 200
+  shared <- tibble::tibble(
+    truth = factor(rbinom(n, 1, 0.4)),
+    score = round(runif(n), 2),
+    weight = runif(n, 0.5, 3)
+  )
+
+  from_check <- check_model_auc(
+    shared,
+    truth,
+    score,
+    weight,
+    include_observed = FALSE
+  )$auc
+  from_bal <- bal_model_auc(shared, truth, score, weight)
+
+  curve <- check_model_roc_curve(
+    shared,
+    truth,
+    score,
+    weight,
+    include_observed = FALSE
+  )
+  from_curve <- compute_auc(1 - curve$specificity, curve$sensitivity)
+
+  expected <- weighted_concordance_auc(
+    as.integer(as.character(shared$truth)),
+    shared$score,
+    shared$weight
+  )
+
+  expect_equal(from_check, from_bal, tolerance = 1e-10)
+  expect_equal(from_check, from_curve, tolerance = 1e-10)
+  expect_equal(from_check, expected, tolerance = 1e-10)
+})
+
+test_that("check_model_roc_curve errors on a weight column that is not numeric", {
+  labelled <- dplyr::mutate(nhefs_weights, w_label = as.character(w_ate))
+
+  expect_error(
+    check_model_roc_curve(labelled, qsmk, .fitted, .weights = w_label),
+    class = "halfmoon_type_error"
+  )
+
+  expect_error(
+    check_model_auc(labelled, qsmk, .fitted, .weights = w_label),
+    class = "halfmoon_type_error"
+  )
 })

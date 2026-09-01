@@ -13,6 +13,7 @@ geom_ecdf(
   n = NULL,
   pad = TRUE,
   na.rm = FALSE,
+  orientation = NA,
   show.legend = NA,
   inherit.aes = TRUE
 )
@@ -101,6 +102,9 @@ and (Inf, 1)}
 \item{na.rm}{If \code{FALSE} (the default), removes missing values with
 a warning.  If \code{TRUE} silently removes missing values.}
 
+\item{orientation}{The axis the curve runs along, \code{"x"} or \code{"y"}. Defaults to
+\code{NA}, which reads the orientation from the aesthetics the layer is given.}
+
 \item{show.legend}{logical. Should this layer be included in the legends?
 \code{NA}, the default, includes if any aesthetics are mapped.
 \code{FALSE} never includes, and \code{TRUE} always includes.
@@ -140,6 +144,10 @@ information:
 Choose ECDF plots when you want to see the full cumulative distribution or when
 comparing multiple groups simultaneously. Choose QQ plots when you want to directly
 compare two groups with an easy-to-interpret 45-degree reference line.
+
+\code{geom_ecdf()} supports both orientations. Mapping the variable to \code{y}, or
+passing \code{orientation = "y"}, computes the same weighted curve and draws it
+across the panel instead of up it.
 }
 \section{Aesthetics}{
  In addition to the aesthetics for

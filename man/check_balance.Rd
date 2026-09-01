@@ -12,7 +12,7 @@ check_balance(
   .metrics = NULL,
   exposure_type = c("auto", "binary", "categorical", "continuous"),
   include_observed = TRUE,
-  .reference_level = 1L,
+  .reference_level = NULL,
   na.rm = FALSE,
   make_dummy_vars = TRUE,
   squares = FALSE,
@@ -47,8 +47,11 @@ from the data and reports what it found.}
 \item{include_observed}{Logical. If using \code{.weights}, also calculate observed
 (unweighted) metrics? Defaults to TRUE.}
 
-\item{.reference_level}{The reference group level to use for comparisons.
-Defaults to 1 (first level). Ignored for a continuous exposure.}
+\item{.reference_level}{The level of \code{.exposure} the other levels are
+compared against. If \code{NULL} (default), the first observed level. A value
+that matches a level is taken as that level; a numeric value that matches
+no level is taken as a position among the observed levels. Ignored for a
+continuous exposure.}
 
 \item{na.rm}{A logical value indicating whether to remove missing values
 before computation. If \code{FALSE} (default), missing values in the input

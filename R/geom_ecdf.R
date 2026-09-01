@@ -21,11 +21,17 @@
 #' comparing multiple groups simultaneously. Choose QQ plots when you want to directly
 #' compare two groups with an easy-to-interpret 45-degree reference line.
 #'
+#' `geom_ecdf()` supports both orientations. Mapping the variable to `y`, or
+#' passing `orientation = "y"`, computes the same weighted curve and draws it
+#' across the panel instead of up it.
+#'
 #' @section Aesthetics: In addition to the aesthetics for
 #'   [`ggplot2::stat_ecdf()`], `geom_ecdf()` also accepts: \itemize{ \item
 #'   weights }
 #'
 #' @inheritParams ggplot2::stat_ecdf
+#' @param orientation The axis the curve runs along, `"x"` or `"y"`. Defaults to
+#'   `NA`, which reads the orientation from the aesthetics the layer is given.
 #'
 #' @return a geom
 #' @family ggplot2 functions
@@ -56,6 +62,7 @@ geom_ecdf <- function(
   n = NULL,
   pad = TRUE,
   na.rm = FALSE,
+  orientation = NA,
   show.legend = NA,
   inherit.aes = TRUE
 ) {
@@ -67,29 +74,136 @@ geom_ecdf <- function(
     position = position,
     show.legend = show.legend,
     inherit.aes = inherit.aes,
-    params = list(n = n, pad = pad, na.rm = na.rm, ...)
+    params = list(
+      n = n,
+      pad = pad,
+      na.rm = na.rm,
+      orientation = orientation,
+      ...
+    )
   )
+}
+
+#' Evaluate a weighted ECDF on the same grid `stat_ecdf()` uses
+#'
+#' @param x The variable the ECDF is computed over
+#' @param weights The weight of each observation, already numeric
+#' @param n Number of points to interpolate along, or `NULL` for the observed
+#'   values
+#' @param pad Add `-Inf` and `Inf` so the curve spans the panel?
+#'
+#' @return A data frame of `x` and `ecdf`, or `NULL` when the weights carry no
+#'   mass and there is no curve to draw.
+#' @noRd
+compute_weighted_ecdf <- function(x, weights, n = NULL, pad = TRUE) {
+  # A negative weight would make the cumulative sum non-monotone, which sends
+  # the curve back down and outside [0, 1]. `validate_weights()` refuses one
+  # everywhere else, so the geom does too.
+  if (any(weights < 0, na.rm = TRUE)) {
+    abort(
+      "{.field weights} cannot contain negative values",
+      error_class = "halfmoon_range_error",
+      call = quote(geom_ecdf())
+    )
+  }
+
+  total <- sum(weights)
+
+  # Every observation would have to contribute nothing, which leaves no
+  # distribution to describe rather than a curve of zeroes
+  if (total <= 0) {
+    warn(
+      "Dropping a group whose {.field weights} sum to {.val {total}}",
+      warning_class = "halfmoon_data_warning",
+      call = quote(geom_ecdf())
+    )
+
+    return(NULL)
+  }
+
+  ordered <- order(x)
+  x <- x[ordered]
+  weights <- weights[ordered]
+
+  # `x` is sorted, so the running weight at the last observation of each
+  # distinct value is already that value's aggregate; tied observations need no
+  # separate grouping pass
+  last <- c(x[-1] != x[-length(x)], TRUE)
+  values <- x[last]
+  cumulative <- cumsum(weights)[last]
+
+  grid <- if (is.null(n)) values else seq(min(x), max(x), length.out = n)
+  if (pad) {
+    grid <- c(-Inf, grid, Inf)
+  }
+
+  # A single observed value leaves nothing to interpolate between, so the step
+  # is placed by hand
+  ecdf <- if (length(values) == 1) {
+    ifelse(grid < values, 0, 1)
+  } else {
+    stats::approxfun(
+      values,
+      cumulative / total,
+      method = "constant",
+      yleft = 0,
+      yright = 1,
+      f = 0,
+      ties = "ordered"
+    )(grid)
+  }
+
+  data.frame(x = grid, ecdf = ecdf)
 }
 
 StatWeightedECDF <- ggplot2::ggproto(
   "StatWeightedECDF",
   ggplot2::StatEcdf,
-  compute_group = function(data, scales, n = NULL, pad = NULL) {
+  setup_data = function(data, params) {
+    # A weight of `NA` would otherwise spread through the cumulative sum and
+    # take the whole curve with it. `remove_missing()` reports the dropped rows
+    # unless `na.rm = TRUE` asks for them to go quietly.
     if ("weights" %in% names(data)) {
-      # Extract numeric data from psw weights if present
       data$weights <- extract_weight_data(data$weights)
-      data <- data[order(data$x), ]
-      # ggplot2 3.4.1 changed this stat's name from `y` to `ecdf`
-      if (packageVersion("ggplot2") >= "3.4.1") {
-        data$ecdf <- cumsum(data$weights) / sum(data$weights)
-      } else {
-        data$y <- cumsum(data$weights) / sum(data$weights)
-      }
-      data
-    } else {
-      ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad)
     }
+
+    ggplot2::remove_missing(
+      data,
+      na.rm = params$na.rm %||% FALSE,
+      vars = intersect(c("x", "weights"), names(data)),
+      name = "geom_ecdf"
+    )
   },
-  required_aes = c("x"),
-  optional_aes = "weights"
+  compute_group = function(
+    data,
+    scales,
+    n = NULL,
+    pad = TRUE,
+    flipped_aes = FALSE
+  ) {
+    # The curve is always computed over `x`; a flipped orientation swaps the
+    # aesthetics on the way in and back again on the way out, as the ggplot2
+    # stats do
+    data <- ggplot2::flip_data(data, flipped_aes)
+
+    result <- if (!"weights" %in% names(data)) {
+      ggplot2::StatEcdf$compute_group(data, scales, n = n, pad = pad)
+    } else if (nrow(data) == 0) {
+      data.frame(x = numeric(0), ecdf = numeric(0))
+    } else {
+      compute_weighted_ecdf(data$x, data$weights, n = n, pad = pad)
+    }
+
+    # A group whose weights carry no mass is dropped rather than drawn
+    if (is.null(result)) {
+      return(NULL)
+    }
+
+    result$y <- result$ecdf
+    result$flipped_aes <- flipped_aes
+    ggplot2::flip_data(result, flipped_aes)
+  },
+  required_aes = c("x|y"),
+  optional_aes = "weights",
+  dropped_aes = c("weight", "weights")
 )

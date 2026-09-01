@@ -38,9 +38,10 @@ combining with them.}
 
 \item{linewidth}{Width of the ROC curve line. Default is 0.5.}
 
-\item{.focal_level}{The level of the outcome variable to consider as the
-treatment/event. If \code{NULL} (default), uses the last level for factors or
-the maximum value for numeric variables.}
+\item{.focal_level}{The level of the \code{exposure} aesthetic to treat as the
+event. Must be a level the data actually takes; a declared factor level
+that no observation takes is not accepted. If \code{NULL} (default), the last
+observed level is used, which is the maximum value for numeric exposures.}
 
 \item{...}{Other arguments passed on to layer().}
 }
@@ -50,6 +51,14 @@ A ggplot2 layer.
 \description{
 A ggplot2 geom for plotting ROC curves with optional weighting.
 Emphasizes the balance interpretation where AUC around 0.5 indicates good balance.
+}
+\details{
+A curve compares two exposure levels, so each curve is drawn from the rows
+that share an aesthetic signature, with the exposure level excluded from that
+signature. Mapping \code{group} explicitly makes each group a curve of its own,
+which keeps long data holding several weighting schemes from being pooled
+into a single curve. A group that holds only one observed exposure level is
+dropped with a warning, and the remaining curves are still drawn.
 }
 \examples{
 # Basic usage

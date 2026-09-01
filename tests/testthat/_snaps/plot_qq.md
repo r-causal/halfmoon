@@ -1,7 +1,15 @@
+# plot_qq uses observed exposure levels
+
+    Code
+      plot_qq(one_level, x, g)
+    Condition <halfmoon_group_error>
+      Error in `plot_qq()`:
+      ! Exposure variable must have exactly two levels, got 1
+
 # plot_qq validates missing arguments
 
     Code
-      expr
+      plot_qq(nhefs_weights)
     Condition <halfmoon_arg_error>
       Error in `plot_qq()`:
       ! Argument `.var` is required
@@ -9,7 +17,7 @@
 ---
 
     Code
-      expr
+      plot_qq(nhefs_weights, age)
     Condition <halfmoon_arg_error>
       Error in `plot_qq()`:
       ! Argument `.exposure` is required
@@ -17,7 +25,7 @@
 # plot_qq errors with missing columns
 
     Code
-      expr
+      plot_qq(nhefs_weights, missing_var, qsmk)
     Condition <halfmoon_column_error>
       Error in `plot_qq()`:
       ! Column `missing_var` not found in data
@@ -25,7 +33,7 @@
 ---
 
     Code
-      expr
+      plot_qq(nhefs_weights, age, missing_group)
     Condition <halfmoon_column_error>
       Error in `plot_qq()`:
       ! Column `missing_group` not found in data
@@ -33,16 +41,16 @@
 # plot_qq errors with non-binary groups
 
     Code
-      expr
+      plot_qq(df, age, three_groups)
     Condition <halfmoon_group_error>
       Error in `plot_qq()`:
-      ! Exposure variable must have exactly 2 levels
+      ! Exposure variable must have exactly two levels, got 3
 
 # plot_qq handles NA values
 
     Code
-      expr
+      plot_qq(df, age, qsmk)
     Condition <halfmoon_na_error>
       Error in `plot_qq()`:
-      ! Variable contains missing values. Use `na.rm = TRUE` to drop them.
+      ! Variable `age` contains missing values and `na.rm = FALSE`
 

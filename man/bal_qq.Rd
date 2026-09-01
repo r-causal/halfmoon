@@ -27,18 +27,22 @@ unweighted quantiles.}
 \item{quantiles}{Numeric vector of quantiles to compute. Default is
 \code{seq(0.01, 0.99, 0.01)} for 99 quantiles.}
 
-\item{.reference_level}{The reference group level for comparisons. Can be either
-a group level value or a numeric index. If \code{NULL} (default), uses the first level.}
+\item{.reference_level}{The level of \code{.exposure} to treat as the reference,
+the unexposed group whose quantiles are returned in \code{unexposed_quantiles}.
+Either a level of \code{.exposure} or its position among the observed levels.
+If \code{NULL} (default), the first observed level is used.}
 
-\item{na.rm}{A logical value indicating whether to remove missing values
-before computation. If \code{FALSE} (default), missing values in the input
-will produce \code{NA} in the output.}
+\item{na.rm}{Logical. If \code{FALSE} (default), missing values in \code{.var},
+\code{.exposure}, or \code{.weights} raise an error. If \code{TRUE}, rows with missing
+values are dropped before computation.}
 }
 \value{
 A tibble with columns:
 \item{quantile}{Numeric. The quantile probability (0-1).}
-\item{exposed_quantiles}{Numeric. The quantile value for the exposed group.}
-\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed group.}
+\item{exposed_quantiles}{Numeric. The quantile value for the exposed group,
+the level of \code{.exposure} that is not the reference level.}
+\item{unexposed_quantiles}{Numeric. The quantile value for the unexposed
+group, the reference level of \code{.exposure}.}
 }
 \description{
 Calculate quantile-quantile data comparing the distribution of a variable
@@ -47,10 +51,11 @@ This function computes the quantiles for both groups and returns a data frame
 suitable for plotting or further analysis.
 }
 \details{
-This function computes the data needed for quantile-quantile plots by calculating
-corresponding quantiles from two distributions. The computation uses the inverse
-of the empirical cumulative distribution function (ECDF). For weighted data,
-it first computes the weighted ECDF and then inverts it to obtain quantiles.
+This function computes the data needed for quantile-quantile plots by
+calculating corresponding quantiles from two distributions. Unweighted
+quantiles come from \code{\link[stats:quantile]{stats::quantile()}}; weighted quantiles come from
+\code{\link[=weighted_quantile]{weighted_quantile()}}, which uses the same definition, so a constant weight
+reproduces the observed quantiles.
 
 When the distributions of a variable are similar between treatment groups
 (indicating good balance), the QQ plot points will lie close to the diagonal

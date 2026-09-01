@@ -22,6 +22,8 @@
 #' @param .exposure The treatment/outcome variable.
 #' @param .fitted The propensity score or fitted values.
 #' @param .weights Weighting variables (supports tidyselect).
+#' @param na.rm A logical value indicating whether to remove missing values
+#'   before computation. Defaults to `TRUE`.
 #' @inheritParams check_params
 #' @inheritParams balance_params
 #' @inheritParams treatment_param
@@ -50,16 +52,15 @@ check_model_auc <- function(
   na.rm = TRUE,
   .focal_level = NULL
 ) {
-  validate_data_frame(.data)
-
-  roc_data <- check_model_roc_curve(
+  roc_data <- check_model_roc_curve_imp(
     .data,
-    {{ .exposure }},
-    {{ .fitted }},
-    {{ .weights }},
-    include_observed,
-    na.rm,
-    .focal_level
+    rlang::enquo(.exposure),
+    rlang::enquo(.fitted),
+    rlang::enquo(.weights),
+    include_observed = include_observed,
+    na.rm = na.rm,
+    .focal_level = .focal_level,
+    call = rlang::current_env()
   )
 
   # Calculate AUC for each method
@@ -105,7 +106,8 @@ compute_method_auc <- function(method, roc_data) {
 #' @param include_observed Include unweighted results? Default TRUE.
 #' @param na.rm Remove missing values? Default TRUE.
 #' @param .focal_level The level of `.exposure` to consider as the treatment/event.
-#'   Default is NULL, which uses the second level.
+#'   Default is NULL, which uses the last observed level for factors or the
+#'   maximum value for numeric variables.
 #'
 #' @return A tibble with class "halfmoon_roc" containing ROC curve data.
 #' @family balance functions
@@ -146,73 +148,70 @@ check_model_roc_curve <- function(
   na.rm = TRUE,
   .focal_level = NULL
 ) {
-  truth_quo <- rlang::enquo(.exposure)
-  estimate_quo <- rlang::enquo(.fitted)
-  wts_quo <- rlang::enquo(.weights)
+  check_model_roc_curve_imp(
+    .data,
+    rlang::enquo(.exposure),
+    rlang::enquo(.fitted),
+    rlang::enquo(.weights),
+    include_observed = include_observed,
+    na.rm = na.rm,
+    .focal_level = .focal_level,
+    call = rlang::current_env()
+  )
+}
 
-  validate_data_frame(.data)
+# The curve is built here so that check_model_auc() can reuse it while every
+# condition still reports the function the user called
+check_model_roc_curve_imp <- function(
+  .data,
+  truth_quo,
+  estimate_quo,
+  wts_quo,
+  include_observed = TRUE,
+  na.rm = TRUE,
+  .focal_level = NULL,
+  call = rlang::caller_env()
+) {
+  validate_data_frame(.data, call = call)
 
   # Extract column names
-  truth_name <- names(tidyselect::eval_select(truth_quo, .data))
-  estimate_name <- names(tidyselect::eval_select(estimate_quo, .data))
+  truth_name <- eval_select_safely(truth_quo, .data, ".exposure", call = call)
+  estimate_name <- eval_select_safely(
+    estimate_quo,
+    .data,
+    ".fitted",
+    call = call
+  )
 
   if (length(truth_name) != 1) {
     abort(
       "{.arg .exposure} must select exactly one variable",
       error_class = "halfmoon_select_error",
-      call = rlang::current_env()
+      call = call
     )
   }
   if (length(estimate_name) != 1) {
     abort(
       "{.arg .fitted} must select exactly one variable",
       error_class = "halfmoon_select_error",
-      call = rlang::current_env()
+      call = call
     )
   }
 
   # Handle weights
-  if (!rlang::quo_is_null(wts_quo)) {
-    weight_vars <- names(tidyselect::eval_select(wts_quo, .data))
-  } else {
+  if (rlang::quo_is_null(wts_quo) || rlang::quo_is_missing(wts_quo)) {
     weight_vars <- character(0)
+  } else {
+    weight_vars <- eval_select_safely(wts_quo, .data, ".weights", call = call)
   }
 
   # Extract data
   truth <- .data[[truth_name]]
   estimate <- .data[[estimate_name]]
 
-  # Convert truth to factor if needed
-  if (!is.factor(truth)) {
-    if (is.character(truth) || is.logical(truth)) {
-      truth <- as.factor(truth)
-    } else if (is.numeric(truth)) {
-      unique_vals <- unique(truth[!is.na(truth)])
-      if (length(unique_vals) == 2) {
-        truth <- factor(truth, levels = sort(unique_vals))
-      } else {
-        abort(
-          "{.arg .exposure} must have exactly 2 unique values",
-          error_class = "halfmoon_group_error"
-        )
-      }
-    } else {
-      abort(
-        "{.arg .exposure} must be a factor, character, logical, or binary numeric",
-        error_class = "halfmoon_type_error"
-      )
-    }
-  }
+  truth <- coerce_roc_truth(truth, call = call)
 
-  if (length(levels(truth)) != 2) {
-    abort(
-      "{.arg .exposure} must have exactly 2 levels",
-      error_class = "halfmoon_group_error",
-      call = rlang::current_env()
-    )
-  }
-
-  validate_numeric(estimate, ".fitted")
+  validate_numeric(estimate, ".fitted", call = call)
 
   if (na.rm) {
     complete_cases <- stats::complete.cases(truth, estimate)
@@ -220,10 +219,11 @@ check_model_roc_curve <- function(
     estimate <- estimate[complete_cases]
     .data <- .data[complete_cases, , drop = FALSE]
   } else {
-    if (any(is.na(truth)) || any(is.na(estimate))) {
+    if (anyNA(truth) || anyNA(estimate)) {
       abort(
         "Missing values found and {.code na.rm = FALSE}",
-        error_class = "halfmoon_na_error"
+        error_class = "halfmoon_na_error",
+        call = call
       )
     }
   }
@@ -237,7 +237,8 @@ check_model_roc_curve <- function(
       truth,
       estimate,
       weights = NULL,
-      .focal_level = .focal_level
+      .focal_level = .focal_level,
+      call = call
     )
     observed_curve$method <- "observed"
     results$observed <- observed_curve
@@ -247,42 +248,44 @@ check_model_roc_curve <- function(
   for (wt_name in weight_vars) {
     weights <- .data[[wt_name]]
 
-    # Validate weights
-    if (!is.numeric(weights)) {
-      warn(
-        "Skipping non-numeric weight variable: {wt_name}",
-        warning_class = "halfmoon_data_warning",
-        call = rlang::current_env()
-      )
-      next
-    }
+    # A column that does not hold weights is an error rather than a method
+    # quietly missing from the result
+    validate_weight_type(
+      weights,
+      arg_name = wt_name,
+      allow_null = FALSE,
+      call = call
+    )
 
     weights <- extract_weight_data(weights)
 
-    # Handle zero and negative weights
-    if (any(weights <= 0, na.rm = TRUE)) {
-      n_zero_neg <- sum(weights <= 0, na.rm = TRUE)
-      warn(
-        "Removing {n_zero_neg} observations with zero or negative weights from {wt_name}",
-        warning_class = "halfmoon_data_warning",
-        call = rlang::current_env()
-      )
-
-      valid_weights <- weights > 0 & !is.na(weights)
-      truth_wt <- truth[valid_weights]
-      estimate_wt <- estimate[valid_weights]
-      weights_wt <- weights[valid_weights]
+    # Missing weights are dropped or refused per `na.rm`, and zero and negative
+    # weights are dropped, in a single mask so that the curve never sees them
+    if (na.rm) {
+      keep <- !is.na(weights)
     } else {
-      truth_wt <- truth
-      estimate_wt <- estimate
-      weights_wt <- weights
+      if (anyNA(weights)) {
+        abort(
+          "Missing values found in {.code {wt_name}} and {.code na.rm = FALSE}",
+          error_class = "halfmoon_na_error",
+          call = call
+        )
+      }
+      keep <- rep(TRUE, length(weights))
     }
+
+    keep <- keep & drop_nonpositive_weights(weights, wt_name, call = call)
+
+    truth_wt <- truth[keep]
+    estimate_wt <- estimate[keep]
+    weights_wt <- weights[keep]
 
     weighted_curve <- compute_roc_curve_imp(
       truth_wt,
       estimate_wt,
       weights = weights_wt,
-      .focal_level = .focal_level
+      .focal_level = .focal_level,
+      call = call
     )
     weighted_curve$method <- wt_name
     results[[wt_name]] <- weighted_curve
@@ -292,7 +295,8 @@ check_model_roc_curve <- function(
   if (length(results) == 0) {
     abort(
       "No valid results to return",
-      error_class = "halfmoon_empty_error"
+      error_class = "halfmoon_empty_error",
+      call = call
     )
   }
 
@@ -302,6 +306,93 @@ check_model_roc_curve <- function(
   class(result) <- c("halfmoon_roc", class(result))
 
   result
+}
+
+# tidyselect reports an unknown column with a vctrs condition that names an
+# internal call, so selection is wrapped to report a halfmoon condition against
+# the function the user called
+eval_select_safely <- function(
+  quo,
+  .data,
+  arg_name,
+  call = rlang::caller_env()
+) {
+  label <- rlang::as_label(quo)
+
+  rlang::try_fetch(
+    names(tidyselect::eval_select(quo, .data)),
+    vctrs_error_subscript = function(cnd) {
+      abort(
+        c(
+          "{.arg {arg_name}} must name a column in {.arg .data}",
+          x = "Column {.code {label}} does not exist"
+        ),
+        error_class = "halfmoon_column_error",
+        call = call
+      )
+    }
+  )
+}
+
+# A weighted ROC curve is built from binary truth, so the exposure is read as a
+# factor with exactly two OBSERVED levels. Unused declared levels are dropped
+# rather than treated as groups that could be picked as the event.
+coerce_roc_truth <- function(truth, call = rlang::caller_env()) {
+  if (!is.factor(truth)) {
+    if (is.character(truth) || is.logical(truth)) {
+      truth <- as.factor(truth)
+    } else if (is.numeric(truth)) {
+      unique_vals <- sort(unique(truth[!is.na(truth)]))
+      if (length(unique_vals) != 2) {
+        abort(
+          "{.arg .exposure} must have exactly 2 unique values",
+          error_class = "halfmoon_group_error",
+          call = call
+        )
+      }
+      truth <- factor(truth, levels = unique_vals)
+    } else {
+      abort(
+        "{.arg .exposure} must be a factor, character, logical, or binary numeric",
+        error_class = "halfmoon_type_error",
+        call = call
+      )
+    }
+  }
+
+  truth <- droplevels(truth)
+
+  if (nlevels(truth) != 2) {
+    abort(
+      "{.arg .exposure} must have exactly 2 levels",
+      error_class = "halfmoon_group_error",
+      call = call
+    )
+  }
+
+  truth
+}
+
+# Zero and negative weights make the cumulative true and false positive totals
+# non-monotone, which sends sensitivity and specificity outside [0, 1], so they
+# are dropped with a warning. Returns the mask of rows to keep.
+drop_nonpositive_weights <- function(
+  weights,
+  weight_name,
+  call = rlang::caller_env()
+) {
+  nonpositive <- !is.na(weights) & weights <= 0
+
+  if (any(nonpositive)) {
+    n_zero_neg <- sum(nonpositive)
+    warn(
+      "Removing {n_zero_neg} observations with zero or negative weights from {weight_name}",
+      warning_class = "halfmoon_data_warning",
+      call = call
+    )
+  }
+
+  !nonpositive
 }
 
 compute_roc_curve_imp <- function(
@@ -341,41 +432,31 @@ compute_roc_curve_imp <- function(
     weights <- extract_weight_data(weights)
   }
 
+  # Every package caller coerces the exposure before it gets here. A truth that
+  # arrives in another shape goes through the same coercion, so one policy
+  # decides which levels exist and which of them can be the event.
+  if (!is.factor(truth)) {
+    truth <- coerce_roc_truth(truth, call = call)
+  }
+
   # Convert to binary (1 = event, 0 = non-event)
   # Determine which level is the treatment/event
-  if (is.factor(truth)) {
-    truth_levels <- levels(truth)
-    if (!is.null(.focal_level)) {
-      # User specified treatment level
-      if (!.focal_level %in% truth_levels) {
-        abort(
-          "{.arg .focal_level} '{(.focal_level)}' not found in {.arg truth} levels: {.val {truth_levels}}",
-          error_class = "halfmoon_reference_error"
-        )
-      }
-      event_level <- .focal_level
-    } else {
-      # Default: use second level as event
-      event_level <- truth_levels[[2]]
+  truth_levels <- levels(truth)
+  if (!is.null(.focal_level)) {
+    # User specified treatment level
+    if (!.focal_level %in% truth_levels) {
+      abort(
+        "{.arg .focal_level} '{(.focal_level)}' not found in {.arg .exposure} levels: {.val {truth_levels}}",
+        error_class = "halfmoon_reference_error",
+        call = call
+      )
     }
-    truth_binary <- as.integer(truth == event_level)
+    event_level <- .focal_level
   } else {
-    # For non-factors, determine event level
-    unique_vals <- sort(unique(truth))
-    if (!is.null(.focal_level)) {
-      if (!.focal_level %in% unique_vals) {
-        abort(
-          "{.arg .focal_level} '{(.focal_level)}' not found in {.arg truth} values: {.val {unique_vals}}",
-          error_class = "halfmoon_reference_error"
-        )
-      }
-      event_level <- .focal_level
-    } else {
-      # Default: use second unique value as event
-      event_level <- unique_vals[[2]]
-    }
-    truth_binary <- as.integer(truth == event_level)
+    # Default: use the last level as event
+    event_level <- truth_levels[[length(truth_levels)]]
   }
+  truth_binary <- as.integer(truth == event_level)
 
   # Sort by decreasing estimate
   order_idx <- order(estimate, decreasing = TRUE)
@@ -460,15 +541,19 @@ compute_auc <- function(x, y) {
     return(NA_real_)
   }
 
-  # Ensure x is sorted
-  if (is.unsorted(x)) {
-    ord <- order(x)
-    x <- x[ord]
-    y <- y[ord]
+  n <- length(x)
+
+  # The points arrive in curve order, which may run either way along the
+  # x axis. Reversing a descending curve preserves the pairing of each point
+  # with its neighbors; re-sorting the points by x would reorder the ties that
+  # a vertical run of the curve produces and pair the trapezoids with the
+  # wrong corners.
+  if (x[[1]] > x[[n]]) {
+    x <- rev(x)
+    y <- rev(y)
   }
 
   # Trapezoidal rule
-  n <- length(x)
   dx <- x[-1] - x[-n]
   height <- (y[-n] + y[-1]) / 2
 

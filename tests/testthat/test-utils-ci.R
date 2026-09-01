@@ -25,31 +25,6 @@ test_that("calculate_prop_ci works correctly", {
   expect_true(is.na(ci_error$upper))
 })
 
-test_that("calculate_normal_ci works correctly", {
-  # Normal case
-  ci <- calculate_normal_ci(0.5, 100, 0.95)
-  expect_true(is.list(ci))
-  expect_named(ci, c("lower", "upper"))
-  expect_true(ci$lower >= 0 && ci$lower <= 1)
-  expect_true(ci$upper >= 0 && ci$upper <= 1)
-  expect_true(ci$lower < ci$upper)
-
-  # Bounds are respected
-  ci_low <- calculate_normal_ci(0.01, 100, 0.95)
-  expect_true(ci_low$lower >= 0)
-
-  ci_high <- calculate_normal_ci(0.99, 100, 0.95)
-  expect_true(ci_high$upper <= 1)
-
-  # Different sample sizes
-  ci_small <- calculate_normal_ci(0.5, 10, 0.95)
-  ci_large <- calculate_normal_ci(0.5, 1000, 0.95)
-  expect_true(ci_small$upper - ci_small$lower > ci_large$upper - ci_large$lower)
-
-  # Symmetric around rate
-  expect_equal(ci$lower + ci$upper, 1, tolerance = 0.01)
-})
-
 test_that("get_z_score works correctly", {
   # Standard confidence levels
   expect_equal(get_z_score(0.95), qnorm(0.975))

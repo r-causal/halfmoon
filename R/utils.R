@@ -62,7 +62,8 @@ get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
         error = function(e2) {
           abort(
             "{.code {arg_name}} must be a column name (quoted or unquoted)",
-            error_class = "halfmoon_type_error"
+            error_class = "halfmoon_type_error",
+            call = call
           )
         }
       )
@@ -75,7 +76,8 @@ get_column_name <- function(quo, arg_name, call = rlang::caller_env()) {
       } else {
         abort(
           "{.code {arg_name}} must be a column name (quoted or unquoted)",
-          error_class = "halfmoon_type_error"
+          error_class = "halfmoon_type_error",
+          call = call
         )
       }
     }
@@ -191,6 +193,10 @@ create_dummy_variables <- function(
   binary_as_single = TRUE,
   return_mapping = FALSE
 ) {
+  # A logical column is already a 0/1 indicator, so it is read as one rather
+  # than expanded into dummies for TRUE and FALSE
+  data <- purrr::modify_if(data, is.logical, as.numeric)
+
   # Identify categorical variables (factors and character variables)
   categorical_vars <- purrr::map_lgl(
     data,
@@ -288,6 +294,22 @@ create_group_signature <- function(group_data, aes_cols) {
   } else {
     "no_aes"
   }
+}
+
+# Reflect a mirrored group's computed statistics below the axis. Every
+# statistic the underlying stat computes is negated, not only the count, so
+# that `after_stat()` picks up the mirroring whichever one it asks for. Which
+# statistics a stat computes depends on the stat and on the ggplot2 version, so
+# only the columns present are touched. The count of observations, `n`, is a
+# sample size rather than a height and stays positive.
+mirror_computed_stats <- function(data) {
+  computed <- c("count", "density", "scaled", "ncount", "ndensity", "wdensity")
+
+  for (column in intersect(computed, names(data))) {
+    data[[column]] <- -data[[column]]
+  }
+
+  data
 }
 
 # Extract numeric data from weights (handles both numeric and psw objects)

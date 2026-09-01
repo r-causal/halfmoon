@@ -34,3 +34,8 @@ test_that("ess handles NA values", {
   expect_equal(ess(c(1, 1, NA, 1), na.rm = TRUE), 3)
   expect_true(ess(c(0.5, 2, NA, 0.1), na.rm = TRUE) < 3)
 })
+
+test_that("ess gives `NaN` for an empty vector", {
+  # sum(numeric(0)) = 0, sum(numeric(0)^2) = 0 -> 0/0 is NaN
+  expect_true(is.nan(ess(numeric(0))))
+})

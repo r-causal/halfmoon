@@ -1,7 +1,7 @@
 # bal_smd error handling
 
     Code
-      expr
+      bal_smd(.covariate = data$x_cont, .exposure = rep(1, 100))
     Condition <halfmoon_group_error>
       Error in `bal_smd()`:
       ! Exposure variable must have exactly two levels, got 1
@@ -9,7 +9,7 @@
 ---
 
     Code
-      expr
+      bal_smd(.covariate = data$x_cont[1:50], .exposure = data$g_balanced)
     Condition <halfmoon_length_error>
       Error in `bal_smd()`:
       ! `.covariate` and `.exposure` must have the same length
@@ -17,7 +17,8 @@
 ---
 
     Code
-      expr
+      bal_smd(.covariate = data$x_cont, .exposure = data$g_balanced, .weights = data$
+        w_uniform[1:50])
     Condition <halfmoon_length_error>
       Error in `bal_smd()`:
       ! `.weights` must have length 100, got 50
@@ -25,15 +26,15 @@
 # bal_vr error handling
 
     Code
-      expr
+      bal_vr(.covariate = data$x_cont, .exposure = rep(1, 100))
     Condition <halfmoon_group_error>
-      Error in `split_by_group()`:
+      Error in `bal_vr()`:
       ! Exposure variable must have exactly two levels, got 1
 
 ---
 
     Code
-      expr
+      bal_vr(.covariate = data$x_cont[1:50], .exposure = data$g_balanced)
     Condition <halfmoon_length_error>
       Error in `bal_vr()`:
       ! `.covariate` and `.exposure` must have the same length
@@ -41,7 +42,8 @@
 ---
 
     Code
-      expr
+      bal_vr(.covariate = data$x_cont, .exposure = data$g_balanced, .weights = data$
+        w_uniform[1:50])
     Condition <halfmoon_length_error>
       Error in `bal_vr()`:
       ! `.weights` must have length 100, got 50
@@ -49,15 +51,15 @@
 # bal_ks error handling
 
     Code
-      expr
+      bal_ks(.covariate = data$x_cont, .exposure = rep(1, 100))
     Condition <halfmoon_group_error>
-      Error in `split_by_group()`:
+      Error in `bal_ks()`:
       ! Exposure variable must have exactly two levels, got 1
 
 ---
 
     Code
-      expr
+      bal_ks(.covariate = data$x_cont[1:50], .exposure = data$g_balanced)
     Condition <halfmoon_length_error>
       Error in `bal_ks()`:
       ! `.covariate` and `.exposure` must have the same length
@@ -65,7 +67,8 @@
 ---
 
     Code
-      expr
+      bal_ks(.covariate = data$x_cont, .exposure = data$g_balanced, .weights = data$
+        w_uniform[1:50])
     Condition <halfmoon_length_error>
       Error in `bal_ks()`:
       ! `.weights` must have length 100, got 50
@@ -73,7 +76,7 @@
 # bal_corr handles edge cases
 
     Code
-      expr
+      cor_zero <- bal_corr(x_zero, y_normal)
     Condition <simpleWarning>
       Warning in `stats::cor()`:
       the standard deviation is zero
@@ -81,7 +84,7 @@
 ---
 
     Code
-      expr
+      cor_both_zero <- bal_corr(x_zero, y_zero)
     Condition <simpleWarning>
       Warning in `stats::cor()`:
       the standard deviation is zero
@@ -89,7 +92,7 @@
 # bal_corr error handling
 
     Code
-      expr
+      bal_corr(data$x_cont[1:50], data$x_skewed)
     Condition <halfmoon_length_error>
       Error in `bal_corr()`:
       ! `.x` and `.y` must have the same length
@@ -97,7 +100,7 @@
 ---
 
     Code
-      expr
+      bal_corr(data$x_cont, data$x_skewed, .weights = data$w_uniform[1:50])
     Condition <halfmoon_length_error>
       Error in `bal_corr()`:
       ! `.weights` must have length 100, got 50
@@ -105,23 +108,16 @@
 # bal_energy handles continuous treatments
 
     Code
-      expr
+      bal_energy(.covariates = covs, .exposure = continuous_treatment, estimand = "ATE")
     Condition <halfmoon_arg_error>
       Error in `bal_energy()`:
       ! For continuous treatments, `estimand` must be `NULL`
 
-# bal_energy handles missing values
-
-    Code
-      expr
-    Condition <halfmoon_na_error>
-      Error in `bal_energy()`:
-      ! Energy distance cannot be computed with missing values in `.covariates`. Set `na.rm = TRUE` or remove missing values.
-
 # bal_energy error handling
 
     Code
-      expr
+      bal_energy(.covariates = data.frame(x = data$x_cont[1:50]), .exposure = data$
+        g_balanced)
     Condition <halfmoon_length_error>
       Error in `bal_energy()`:
       ! `.exposure` and `.covariates` must have the same length
@@ -129,7 +125,7 @@
 ---
 
     Code
-      expr
+      bal_energy(.covariates = data.frame(x = data$x_cont), .exposure = rep(1, 100))
     Condition <halfmoon_group_error>
       Error in `bal_energy()`:
       ! Exposure variable must have at least two levels
@@ -137,7 +133,8 @@
 ---
 
     Code
-      expr
+      bal_energy(.covariates = data.frame(x = data$x_cont), .exposure = data$
+        g_balanced, .weights = c(-1, rep(1, 99)))
     Condition <halfmoon_range_error>
       Error in `bal_energy()`:
       ! `.weights` cannot contain negative values

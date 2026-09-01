@@ -75,7 +75,7 @@ test_that("check_balance announces nothing when exposure_type is supplied", {
 test_that("check_balance rejects an unknown exposure_type", {
   expect_error(
     check_balance(nhefs_weights, age, qsmk, exposure_type = "ordinal"),
-    "ordinal"
+    class = "halfmoon_arg_error"
   )
 })
 
@@ -90,9 +90,17 @@ test_that("check_balance defaults to discrete metrics for a binary exposure", {
 })
 
 test_that("check_balance defaults to discrete metrics for a categorical exposure", {
-  result <- check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat)
+  categorical_balance <- function() {
+    check_balance(nhefs_weights, c(age, wt71), alcoholfreq_cat)
+  }
 
+  # `alcoholfreq_cat` has missing values that the default `na.rm = FALSE` asks
+  # to keep, so the energy row reports `NA` without comment
+  expect_no_warning(categorical_balance())
+
+  result <- categorical_balance()
   expect_setequal(unique(result$metric), c("smd", "vr", "ks", "energy"))
+  expect_true(all(is.na(result$estimate[result$metric == "energy"])))
 })
 
 test_that("check_balance defaults to continuous metrics for a continuous exposure", {
@@ -341,7 +349,12 @@ test_that("default results for discrete exposures are unchanged", {
     defaults$binary_weighted
   )
   expect_equal(
-    check_balance(nhefs_weights, c(age, wt71, sex), alcoholfreq_cat),
+    check_balance(
+      nhefs_weights,
+      c(age, wt71, sex),
+      alcoholfreq_cat,
+      na.rm = TRUE
+    ),
     defaults$categorical_observed
   )
   expect_equal(
@@ -349,7 +362,8 @@ test_that("default results for discrete exposures are unchanged", {
       nhefs_weights,
       c(age, wt71, sex),
       alcoholfreq_cat,
-      .weights = c(w_cat_ate, w_cat_att_2_3wk)
+      .weights = c(w_cat_ate, w_cat_att_2_3wk),
+      na.rm = TRUE
     ),
     defaults$categorical_weighted
   )

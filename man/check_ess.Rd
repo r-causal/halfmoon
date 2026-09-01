@@ -10,7 +10,8 @@ check_ess(
   .exposure = NULL,
   include_observed = TRUE,
   n_tiles = 4,
-  tile_labels = NULL
+  tile_labels = NULL,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -32,14 +33,22 @@ groups to create. Default is 4 (quartiles).}
 
 \item{tile_labels}{Optional character vector of labels for the quantile groups
 when \code{.exposure} is continuous. If NULL, uses "Q1", "Q2", etc.}
+
+\item{na.rm}{Logical. If \code{FALSE} (default), a missing weight makes the
+effective sample size for that weighting method \code{NA}. If \code{TRUE},
+observations with a missing weight are dropped before computation.}
 }
 \value{
 A tibble with columns:
 \item{method}{Character. The weighting method ("observed" or weight variable name).}
-\item{group}{Character. The exposure level (if \code{.exposure} is provided).}
-\item{n}{Integer. The number of observations in the group.}
+\item{group}{The exposure level, present only when \code{.exposure} is
+provided. It keeps the type of \code{.exposure}, so a factor exposure gives a
+factor and a numeric one gives a numeric. A continuous exposure is cut
+into quantile groups, which gives a factor of \code{tile_labels}.}
+\item{n}{Integer. The number of observations in the group whose weight is
+not missing.}
 \item{ess}{Numeric. The effective sample size.}
-\item{ess_pct}{Numeric. ESS as a percentage of the actual sample size.}
+\item{ess_pct}{Numeric. ESS as a percentage of \code{n}.}
 }
 \description{
 Computes the effective sample size (ESS) for one or more weighting schemes,
@@ -60,6 +69,15 @@ When \code{.exposure} is provided, ESS is calculated separately for each exposur
 \item For continuous exposures: The variable is divided into quantiles (using
 \code{dplyr::ntile()}) and ESS is computed within each quantile
 }
+
+A missing weight is a weight of unknown size, so with \code{na.rm = FALSE}, the
+default, \code{ess} and \code{ess_pct} are \code{NA} for a weighting method that has any
+missing weight. With \code{na.rm = TRUE}, the observations with a missing weight
+are dropped. Either way, \code{n} counts the observations whose weight is not
+missing, which is what \code{ess} is a share of, so \code{ess_pct} compares the
+effective sample size against the sample it was computed from. \code{n} therefore
+differs across weighting methods when they are missing for different
+observations.
 
 The function returns results in a tidy format suitable for plotting or
 further analysis.
@@ -84,6 +102,11 @@ check_ess(nhefs_weights, .weights = w_ate, .exposure = age,
 # Without unweighted comparison
 check_ess(nhefs_weights, .weights = w_ate, .exposure = qsmk,
           include_observed = FALSE)
+
+# Drop observations with a missing weight
+weights_with_na <- nhefs_weights
+weights_with_na$w_ate[1:5] <- NA
+check_ess(weights_with_na, .weights = w_ate, na.rm = TRUE)
 
 }
 \seealso{
