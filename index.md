@@ -19,13 +19,24 @@ You can install the most recent version of halfmoon from CRAN with:
 install.packages("halfmoon")
 ```
 
-You can also install the development version of halfmoon from
-[GitHub](https://github.com/) with:
+You can install the development version of halfmoon from
+[r-causal.r-universe.dev](https://r-causal.r-universe.dev/) with:
 
 ``` r
 
-# install.packages("devtools")
-devtools::install_github("r-causal/halfmoon")
+install.packages(
+  "halfmoon",
+  repos = c("https://r-causal.r-universe.dev", getOption("repos"))
+)
+```
+
+You can also install the development version of halfmoon from source
+from [GitHub](https://github.com/r-causal/halfmoon) with:
+
+``` r
+
+# install.packages("pak")
+pak::pak("r-causal/halfmoon")
 ```
 
 ## Example: Weighting
