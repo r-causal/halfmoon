@@ -12,6 +12,8 @@ coverage](https://codecov.io/gh/r-causal/halfmoon/branch/main/graph/badge.svg)](
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/halfmoon)](https://CRAN.R-project.org/package=halfmoon)
+[![R-universe
+version](https://r-causal.r-universe.dev/halfmoon/badges/version)](https://r-causal.r-universe.dev/halfmoon)
 <!-- badges: end -->
 
 > Within light there is darkness, but do not try to understand that
@@ -32,12 +34,22 @@ You can install the most recent version of halfmoon from CRAN with:
 install.packages("halfmoon")
 ```
 
-You can also install the development version of halfmoon from
-[GitHub](https://github.com/) with:
+You can install the development version of halfmoon from
+[r-causal.r-universe.dev](https://r-causal.r-universe.dev/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("r-causal/halfmoon")
+install.packages(
+  "halfmoon",
+  repos = c("https://r-causal.r-universe.dev", getOption("repos"))
+)
+```
+
+You can also install the development version of halfmoon from source
+from [GitHub](https://github.com/r-causal/halfmoon) with:
+
+``` r
+# install.packages("pak")
+pak::pak("r-causal/halfmoon")
 ```
 
 ## Example: Weighting
